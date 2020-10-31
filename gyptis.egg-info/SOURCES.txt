@@ -1,0 +1,16 @@
+README.rst
+setup.py
+gyptis/__about__.py
+gyptis/__init__.py
+gyptis/complex.py
+gyptis/core.py
+gyptis/geom.py
+gyptis/helpers.py
+gyptis.egg-info/PKG-INFO
+gyptis.egg-info/SOURCES.txt
+gyptis.egg-info/dependency_links.txt
+gyptis.egg-info/requires.txt
+gyptis.egg-info/top_level.txt
+gyptis/common/__init__.py
+gyptis/common/constants.py
+gyptis/common/material.py

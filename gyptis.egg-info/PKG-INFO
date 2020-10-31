@@ -1,0 +1,19 @@
+Metadata-Version: 2.1
+Name: gyptis
+Version: 0.0.1
+Summary: Computational Photonics in Python
+Home-page: https://benvial.github.io/gyptis
+Author: Benjamin Vial
+Author-email: benjamin.vial84@gmail.com
+License: License :: OSI Approved :: MIT License
+Project-URL: Documentation, https://benvial.github.io/gyptis
+Description: UNKNOWN
+Platform: any
+Classifier: Development Status :: 1 - Planning
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Physics
+Description-Content-Type: text/x-rst
