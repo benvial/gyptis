@@ -47,7 +47,7 @@ test:
 
 clean:
 	@find . | grep -E "(jitfailure*|__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
-	@rm -rf .pytest_cache gyptis.egg-info/ build/ dist/ tmp/
+	@rm -rf .pytest_cache gyptis.egg-info/ build/ dist/ tmp/ htmlcov/
 	cd docs && make clean
 
 
