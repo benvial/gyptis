@@ -4,7 +4,7 @@
 # License: MIT
 
 
-from gyptis import *
+from gyptis.core import Material, Box, PML
 import pytest
 import numpy as np
 

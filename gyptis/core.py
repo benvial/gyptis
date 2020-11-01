@@ -14,7 +14,7 @@ import numpy as np
 import dolfin as df
 import pygmsh as pg
 import meshio
-from geom import _init_pmls
+from .geom import _init_pmls
 
 # from collections import namedtupless
 

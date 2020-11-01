@@ -42,12 +42,12 @@ gh:
 publish: tag pipy
 
 test:
-	pytest ./tests -s --cov=./
+	pytest -v ./tests -s --cov=./ --cov-report html
 
 
 clean:
 	@find . | grep -E "(jitfailure*|__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
-	@rm -rf gyptis_pip.egg-info/ build/ dist/ tmp/
+	@rm -rf .pytest_cache gyptis.egg-info/ build/ dist/ tmp/
 	cd docs && make clean
 
 
