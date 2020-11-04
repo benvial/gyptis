@@ -2,4 +2,4 @@ numpy
 fenics
 dolfin-adjoint
 meshio
-pygmsh
+gmsh

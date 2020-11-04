@@ -4,9 +4,10 @@
 # License: MIT
 
 
-from gyptis.complex import *
 import pytest
-
+from gyptis.complex import *
+import numpy as np
+import dolfin as df
 
 np.random.seed(1234)
 
@@ -17,7 +18,6 @@ def test_simple(tol=1e-15):
     z1 = Complex(x1, y1)
     q = x + 1j * y
     q1 = x1 + 1j * y1
-    print(z)
     assert repr(z) == "Complex" + f"({x}, {y})"
     assert z == q
     assert -z == Complex(-x, -y)
@@ -51,7 +51,6 @@ def test_simple(tol=1e-15):
     with pytest.raises(NotImplementedError):
         z**z
     
-    NotImplementedError
 
     Z = Complex([1, 2], [3, 2])
     for i, r in enumerate(Z):
@@ -99,8 +98,9 @@ def test_complex(tol=1e-15):
     F = F.real + F.imag
 
     ufunc = u.real.ufl_operands[0]
-
-    bcre, bcim = DirichletBC(W, qre + 1j * qim, boundary)
+    
+    u_dirichlet = qre + 1j * qim
+    bcre, bcim = DirichletBC(W, u_dirichlet, boundary)
 
     bcs = [bcre, bcim]
     Lh = df.rhs(F)

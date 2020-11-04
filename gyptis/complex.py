@@ -5,7 +5,7 @@
 
 """
 Support for complex finite element forms.
-This module provides a class::Complex class and overrides some `dolfin` functions 
+This module provides a :class:`Complex` class and overrides some ``dolfin`` functions 
 to easily deal with complex problems by spliting real and imaginary parts.
 """
 
@@ -83,6 +83,21 @@ def _complexify_vector(func):
 
 
 class Complex(object):
+    """A complex object.
+
+    Parameters
+    ----------
+    real : type
+        Real part.
+    imag : type
+        Imaginary part (the default is 0.0).
+
+    Attributes
+    ----------
+    real
+    imag
+
+    """
     def __init__(self, real, imag=0.0):
         self.real = real
         self.imag = imag
@@ -159,6 +174,7 @@ class Complex(object):
 
     @property
     def module(self):
+        """Module of the complex number"""
         return self.__abs__()
 
     @property
@@ -190,7 +206,7 @@ class Complex(object):
             raise NotImplementedError("complex exponent not implemented")
         else:
             A, phi = self.polar()
-            return self.polar2cart((A ** power, phi * power))
+            return self.polar2cart(A ** power, phi * power)
 
     def __angle__(self):
         x, y = self.real, self.imag
@@ -207,23 +223,60 @@ class Complex(object):
                 ),
             )
 
-    @staticmethod
-    def polar2cart(t):
-        A, phi = t
-        # if A<0:
-        #     raise ValueError("amplitude must be positive")
-        return A * Complex(df.cos(phi), df.sin(phi))
-
-    def polar(self):
-        return self.__abs__(), self.__angle__()
-
     def __call__(self, *args, **kwargs):
+        "Calls the complex function if base objects are callable"
         return Complex(
             self.real.__call__(*args, **kwargs), self.imag.__call__(*args, **kwargs),
         )
 
 
+    @staticmethod
+    def polar2cart(module,phase):
+        """Polar to cartesian representation.
+
+        Parameters
+        ----------
+        module : type
+            The module (positive).
+        phase : type
+            The polar angle.
+
+        Returns
+        -------
+        Complex
+            The complex number in cartesian representation.
+
+        """
+        return module * Complex(df.cos(phase), df.sin(phase))
+
+    def polar(self):
+        """Polar representation.
+
+        Returns
+        -------
+        tuple
+            Modulus and phase.
+
+        """
+        return self.__abs__(), self.__angle__()
+
+
+
+
 def iscomplex(z):
+    """Checks if object is complex.
+
+    Parameters
+    ----------
+    z : type
+        Object.
+
+    Returns
+    -------
+    bool
+        True if z is complex, else False.
+
+    """
     if hasattr(z, "real") and hasattr(z, "imag") and not np.all(z.imag == 0):
         return True
     else:

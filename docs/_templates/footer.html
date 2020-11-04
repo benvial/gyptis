@@ -1,0 +1,50 @@
+
+<a href="#" id="return-to-top"><i class="fas fa-chevron-up"></i></a>
+
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      {%- if show_pip_install %}
+      <div class="col-md-8">
+        <div class="foot-fa">
+          <a href=https://pypi.org/project/{{pipname}} target="_blank">
+            <i class="fab fa-python"></i>
+          </a>
+          {%- if github %}
+          <a href=https://github.com/{{repo}} target="_blank">
+            <i class="fab fa-github fa-1x"></i>
+          </a>
+          {%- else %}
+          <a href=https://gitlab.com/{{repo}} target="_blank">
+            <i class="fab fa-gitlab fa-1x"></i>
+          </a>
+          {%- endif %}
+        </div>
+      </div>
+      {%- endif %}
+      {%- if show_fork %}
+      <div class="col-md-4">
+
+        <div class="footer-copyright">
+          {{project}} version {{version}}.
+          {%- if show_copyright %}
+          {%- if hasdoc('copyright') %}
+          {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}. {% endtrans %}
+          {%- else %}
+          {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}. {% endtrans %}
+          {%- endif %}
+          {%- endif %}
+          {%- if last_updated %}
+          {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}. {% endtrans %}
+          {%- endif %}
+          {%- if show_sphinx %}
+          {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx-doc.org/" target="_blank">Sphinx</a> {{ sphinx_version }}.{% endtrans %}<br />
+          {%- endif %}
+
+        </div>
+      </div>
+      {%- endif %}
+
+    </div>
+  </div>
+</footer>

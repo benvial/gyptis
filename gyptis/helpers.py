@@ -10,15 +10,13 @@ from functools import cached_property
 import numpy as np
 from copy import copy
 from scipy.interpolate import griddata
-from dolfin import Measure as __Measure__
-from dolfin import DirichletBC as __DirichletBC__
+from dolfin import Measure as _Measure
+from dolfin import DirichletBC as _DirichletBC
 import dolfin as df
 import meshio
 
 
-
-
-class Measure(__Measure__):
+class Measure(_Measure):
     def __init__(
         self,
         integral_type,
@@ -28,6 +26,7 @@ class Measure(__Measure__):
         subdomain_data=None,
         subdomain_dict=None,
     ):
+
         self.subdomain_dict = subdomain_dict
         if (
             self.subdomain_dict
@@ -64,7 +63,7 @@ class Measure(__Measure__):
             return self.__call_single__(subdomain_id=subdomain_id, **kwargs)
 
 
-class DirichletBC(__DirichletBC__):
+class DirichletBC(_DirichletBC):
     def __init__(self, *args, **kwargs):
         self.subdomain_dict = args[-1]
         if not callable(args[2]):
@@ -74,7 +73,7 @@ class DirichletBC(__DirichletBC__):
         super().__init__(*args)
 
 
-# 
+#
 # tol = DOLFIN_EPS
 # parameters["krylov_solver"]["error_on_nonconvergence"] = False
 # parameters["form_compiler"]["cpp_optimize"] = True
@@ -96,21 +95,48 @@ def make_unit_vectors(dim):
 
 
 def mpi_print(s):
-    if MPI.rank(MPI.comm_world) == 0:
+    if df.MPI.rank(df.MPI.comm_world) == 0:
         print(s)
         sys.stdout.flush()
 
 
-def array2mesh(a, A):
+def array2function(a, A):
+    """Convert a numpy array to a fenics Function.
+
+    Parameters
+    ----------
+    a : numpy array
+        The array to convert.
+    A : FunctionSpace
+        The function space to interpolate on.
+
+    Returns
+    -------
+    Function
+        The converted array.
+
+    """
     u = Function(A)
     u.vector().set_local(a)
-    a = u
-    as_backend_type(a.vector()).update_ghost_values()
-    a.vector().apply("insert")
-    return a
+    as_backend_type(u.vector()).update_ghost_values()
+    u.vector().apply("insert")
+    return u
 
 
-def mesh2array(a):
+def function2array(f):
+    """Convert a fenics Function to a numpy array.
+
+    Parameters
+    ----------
+    f : Function
+        The function to convert.
+
+    Returns
+    -------
+    numpy array
+        The converted function.
+
+    """
     return a.vector().get_local()
 
 
@@ -126,13 +152,22 @@ def matfmt(m, ndigit=4, extra_space=0, cplx=False):
 
     if dim == 3:
         if cplx:
-            b = f"[{a[0]}{printim(a[1])} {a[2]}{printim(a[3])} {a[4]}{printim(a[5])}] \n{pad}[{a[6]}{printim(a[7])} {a[8]}{printim(a[9])} {a[10]}{printim(a[11])}] \n{pad}[{a[12]}{printim(a[13])} {a[14]}{printim(a[15])} {a[16]}{printim(a[17])}]"
+            b = f"""[{a[0]}{printim(a[1])} {a[2]}{printim(a[3])} 
+            {a[4]}{printim(a[5])}] \n{pad}[{a[6]}{printim(a[7])} 
+            {a[8]}{printim(a[9])} {a[10]}{printim(a[11])}] 
+            \n{pad}[{a[12]}{printim(a[13])} {a[14]}{printim(a[15])} 
+            {a[16]}{printim(a[17])}]
+            """
 
         else:
-            b = f"[{a[0]} {a[1]} {a[2]}] \n{pad}[{a[3]} {a[4]} {a[5]}] \n{pad}[{a[6]} {a[7]} {a[8]}]"
+            b = f"""[{a[0]} {a[1]} {a[2]}] \n{pad}[{a[3]} {a[4]} {a[5]}]
+             \n{pad}[{a[6]} {a[7]} {a[8]}]
+             """
     else:
         if cplx:
-            b = f"[{a[0]}{printim(a[1])} {a[2]}{printim(a[3])}] \n{pad}[{a[4]}{printim(a[5])} {a[6]}{printim(a[7])}]"
+            b = f"""[{a[0]}{printim(a[1])} {a[2]}{printim(a[3])}] 
+            \n{pad}[{a[4]}{printim(a[5])} {a[6]}{printim(a[7])}]
+            """
         else:
             b = f"[{a[0]} {a[1]}] \n{pad}[{a[2]} {a[3]}]"
     return b
@@ -156,23 +191,24 @@ def printim(y):
 def tanh(x):
     return (exp(2 * x) - 1) / (exp(2 * x) + 1)
 
-# 
+
+#
 # #### geometry
-# 
-# 
+#
+#
 # def boundary_L(x, on_boundary):
 #     return on_boundary and (near(x[1], 0, tol))
-# 
-# 
+#
+#
 # def boundary_R(x, on_boundary):
 #     return on_boundary and (near(x[1], 1, tol))
-# 
-# 
+#
+#
 # class InnerBoundary(SubDomain):
 #     """
 #     The inner boundaries of the mesh
 #     """
-# 
+#
 #     def inside(self, x, on_boundary):
 #         return (
 #             x[0] > DOLFIN_EPS
@@ -181,11 +217,11 @@ def tanh(x):
 #             and x[1] < 1 - DOLFIN_EPS
 #             and on_boundary
 #         )
-# 
-# 
-# 
+#
+#
+#
 # class PeriodicBoundary2D(SubDomain):
-# 
+#
 #     # Left boundary is "target domain" G
 #     def inside(self, x, on_boundary):
 #         # return True if on left or bottom boundary AND NOT on one of the two corners (0, 1) and (1, 0)
@@ -199,7 +235,7 @@ def tanh(x):
 #             )
 #             and on_boundary
 #         )
-# 
+#
 #     def map(self, x, y):
 #         if near(x[0], 1) and near(x[1], 1):
 #             y[0] = x[0] - 1.0
@@ -210,10 +246,10 @@ def tanh(x):
 #         else:  # near(x[1], 1)
 #             y[0] = x[0]
 #             y[1] = x[1] - 1.0
-# 
-# 
+#
+#
 # class PeriodicBoundary3D(SubDomain):
-# 
+#
 #     # Left boundary is "target domain" G
 #     def inside(self, x, on_boundary):
 #         # return True if on left or bottom boundary AND NOT on one of the two slave edges
@@ -229,10 +265,10 @@ def tanh(x):
 #             )
 #             and on_boundary
 #         )
-# 
+#
 #     # Map right boundary (H) to left boundary (G)
 #     def map(self, x, y):
-# 
+#
 #         if near(x[0], 1) and near(x[2], 1):
 #             y[0] = x[0] - 1
 #             y[1] = x[1]
@@ -257,8 +293,8 @@ def tanh(x):
 #             y[0] = -1000
 #             y[1] = -1000
 #             y[2] = -1000
-# 
-# 
+#
+#
 # class DomainBoundary(InnerBoundary):
 #     def __init__(self, geom, *args, tol=1e-6, **kwargs):
 #         super().__init__(*args, **kwargs)
@@ -266,7 +302,7 @@ def tanh(x):
 #         self.p1 = geom.first_corner().array()
 #         self.p2 = geom.second_corne().array()
 #         self.tol = tol
-# 
+#
 #     #
 #     # def inside(self, x, on_boundary):
 #     #     return (
@@ -276,7 +312,7 @@ def tanh(x):
 #     #         and x[1] > self.p1[1] - self.tol
 #     #         and x[1] < self.p2[1] + self.tol
 #     #     )
-# 
+#
 #     def inside(self, x, on_boundary):
 #         inside_rect = (
 #             x[0] > self.p1[0] - self.tol
@@ -332,70 +368,3 @@ class Permittivity(object):
             return _PermittivityCpp(markers, subdomains, value, **kwargs)
         else:
             return _PermittivityPy(markers, subdomains, value, **kwargs)
-
-
-def read_mesh(mesh_file, data_dir="./data"):
-    t = -time.time()
-    msh = meshio.read(mesh_file)
-    t += time.time()
-    mpi_print(f"      meshio time: {t:0.3f}s")
-    
-
-    face_cells = []
-    for cell in msh.cells:
-        if cell.type == "tetra":
-            tetra_cells = cell.data
-        elif cell.type == "triangle":
-            if len(face_cells) == 0:
-                face_cells = cell.data
-            else:
-                face_cells = np.vstack([face_cells, cell.data])
-
-    face_data = []
-    for key in msh.cell_data_dict["gmsh:physical"].keys():
-        if key == "triangle":
-            if len(face_data) == 0:
-                face_data = msh.cell_data_dict["gmsh:physical"][key]
-            else:
-                face_data = np.vstack(
-                    [face_data, msh.cell_data_dict["gmsh:physical"][key]]
-                )
-        elif key == "tetra":
-            tetra_data = msh.cell_data_dict["gmsh:physical"][key]
-
-    tetra_mesh = meshio.Mesh(points=msh.points, cells={"tetra": tetra_cells},)
-    tetra_mesh_data = meshio.Mesh(
-        points=msh.points,
-        cells={"tetra": tetra_cells},
-        cell_data={"subdomain": [tetra_data]},
-    )
-    triangle_mesh_data = meshio.Mesh(
-        points=msh.points,
-        cells={"triangle": face_cells},
-        cell_data={"subdomain": [face_data]},
-    )
-    
-    
-    t = -time.time()
-    meshio.write(f"{data_dir}/mesh.xdmf", tetra_mesh)
-    meshio.xdmf.write(f"{data_dir}/mf.xdmf", tetra_mesh_data)
-    meshio.xdmf.write(f"{data_dir}/mf_surf.xdmf", triangle_mesh_data)
-    t += time.time()
-    mpi_print(f"      xdmf write time: {t:0.3f}s")
-    t = -time.time()
-    ### markers
-    mesh_model = Mesh()
-    with XDMFFile(f"{data_dir}/mesh.xdmf") as infile:
-        infile.read(mesh_model)
-    mvc = MeshValueCollection("size_t", mesh_model, 3)
-    with XDMFFile(f"{data_dir}/mf.xdmf") as infile:
-        infile.read(mvc, "subdomain")
-    markers = cpp.mesh.MeshFunctionSizet(mesh_model, mvc)
-    mvc_surf = MeshValueCollection("size_t", mesh_model, 2)
-    with XDMFFile(f"{data_dir}/mf_surf.xdmf") as infile:
-        infile.read(mvc_surf, "subdomain")
-    markers_surf = cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
-    t += time.time()
-    mpi_print(f"      xdmf read time: {t:0.3f}s")
-
-    return mesh_model, markers, markers_surf
