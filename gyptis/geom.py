@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # License: MIT
-import pygmsh as pg
 import numpy as np
+import pygmsh as pg
 
 #
 #
@@ -108,7 +108,12 @@ def add_pml(self, geom):
     cx, cy = self.corner
     wx, wy = self.width
     geom.add_rectangle(
-        cx, cx + wx, cy, cy + wy, 0, self.lcar,
+        cx,
+        cx + wx,
+        cy,
+        cy + wy,
+        0,
+        self.lcar,
     )
     return geom
 
@@ -116,7 +121,6 @@ def add_pml(self, geom):
 def _init_pmls(box):
     # if hasattr(box.pml_width,"__len__"):
     width_pml = box.pml_width
-
 
     is_pml_dict = type(width_pml) == dict
 
@@ -175,13 +179,14 @@ def _init_pmls(box):
 
 if __name__ == "__main__":
 
-    import os
-    import core
     import importlib
+    import os
+
+    import core
 
     importlib.reload(core)
     import core
-    
+
     box_width = (6, 9)
     box = core.Box(width=box_width, pml_width=(2, 4))
     geom = make_box(box)
@@ -190,7 +195,6 @@ if __name__ == "__main__":
         pml = core.PML(**box.pml_dict[pos])
         geom = add_pml(pml, geom)
         pmls.append(pml)
-
 
     code = geom.get_code()  # .replace("'", "")
     geom_filename = "test.geo"
@@ -201,12 +205,12 @@ if __name__ == "__main__":
 
     os.system(f"gmsh -2 {geom_filename}")
     os.system(f"gmsh -m {geom_filename} {mesh_filename}")
-    
+
     #### ------------------------------
     box_width = (6, 9)
-    bx,by = box_width
-    htop, hbot, hright, hleft = 2,5,0.4,7
-    
+    bx, by = box_width
+    htop, hbot, hright, hleft = 2, 5, 0.4, 7
+
     width_pml = {
         "top": (bx, htop),
         "bottom": (bx, hbot),
@@ -217,8 +221,7 @@ if __name__ == "__main__":
         "top right": (hright, htop),
         "bottom right": (hright, hbot),
     }
-    
-    
+
     box = core.Box(width=box_width, pml_width=width_pml)
     geom = make_box(box)
     pmls = []
@@ -226,7 +229,6 @@ if __name__ == "__main__":
         pml = core.PML(**box.pml_dict[pos])
         geom = add_pml(pml, geom)
         pmls.append(pml)
-
 
     code = geom.get_code()  # .replace("'", "")
     geom_filename = "test.geo"
@@ -237,4 +239,3 @@ if __name__ == "__main__":
 
     os.system(f"gmsh -2 {geom_filename}")
     os.system(f"gmsh -m {geom_filename} {mesh_filename}")
-    

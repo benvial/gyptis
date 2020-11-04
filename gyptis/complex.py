@@ -9,9 +9,10 @@ This module provides a :class:`Complex` class and overrides some ``dolfin`` func
 to easily deal with complex problems by spliting real and imaginary parts.
 """
 
-import numpy as np
 import dolfin as df
+import numpy as np
 import ufl
+
 from .helpers import DirichletBC as __DirichletBC__
 
 
@@ -98,6 +99,7 @@ class Complex(object):
     imag
 
     """
+
     def __init__(self, real, imag=0.0):
         self.real = real
         self.imag = imag
@@ -226,12 +228,12 @@ class Complex(object):
     def __call__(self, *args, **kwargs):
         "Calls the complex function if base objects are callable"
         return Complex(
-            self.real.__call__(*args, **kwargs), self.imag.__call__(*args, **kwargs),
+            self.real.__call__(*args, **kwargs),
+            self.imag.__call__(*args, **kwargs),
         )
 
-
     @staticmethod
-    def polar2cart(module,phase):
+    def polar2cart(module, phase):
         """Polar to cartesian representation.
 
         Parameters
@@ -259,8 +261,6 @@ class Complex(object):
 
         """
         return self.__abs__(), self.__angle__()
-
-
 
 
 def iscomplex(z):

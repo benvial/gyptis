@@ -4,14 +4,16 @@
 # License: MIT
 
 
+import os
+import tempfile
+import time
+from functools import wraps  # This convenience func preserves name and docstring
+
 import gmsh
 import numpy as np
-import os
-import time
-import tempfile
-from gyptis.mesh import read_mesh
+
 from gyptis.helpers import Measure
-from functools import wraps  # This convenience func preserves name and docstring
+from gyptis.mesh import read_mesh
 
 
 def _add_method(cls, func, name):
@@ -72,7 +74,7 @@ class Model(object):
     Attributes
     ----------
     subdomains : dict
-        Dictionary containing mapping from physical domains names to their 
+        Dictionary containing mapping from physical domains names to their
         index.
     model_name
     mesh_name
@@ -82,7 +84,12 @@ class Model(object):
     """
 
     def __init__(
-        self, model_name="geometry", mesh_name="mesh.msh", data_dir=None, dim=3,kill=False,
+        self,
+        model_name="geometry",
+        mesh_name="mesh.msh",
+        data_dir=None,
+        dim=3,
+        kill=False,
     ):
         self.model_name = model_name
         self.mesh_name = mesh_name
@@ -406,22 +413,20 @@ class BoxPML3D(Model):
         self.add_physical(pml3, "pmlxyz")
 
 
-
 class BoxPML(object):
-    def __new__(self,dim=3,*args,**kwargs):
-        if dim not in [2,3]:
+    def __new__(self, dim=3, *args, **kwargs):
+        if dim not in [2, 3]:
             raise ValueError("dimension must be 2 or 3")
         if dim == 3:
-            return BoxPML3D(*args,**kwargs)
+            return BoxPML3D(*args, **kwargs)
         else:
-            return BoxPML2D(*args,**kwargs)
-        
-    
+            return BoxPML2D(*args, **kwargs)
+
 
 if __name__ == "__main__":
-    
+
     # cds
-    # 
+    #
     # model = BoxPML3D()
     # sphere = model.addSphere(0, 0, 0, 0.1)
     # sphere, model.box = model.fragmentize(sphere, model.box)
@@ -431,8 +436,8 @@ if __name__ == "__main__":
     # model.set_size(model.pmls, 0.1)
     # model.set_size(sphere, 0.04)
     # mesh_object = model.build(interactive=True, generate_mesh=True)
-    # 
-    # 
+    #
+    #
     # csc
 
     model = BoxPML(2)

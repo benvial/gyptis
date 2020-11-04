@@ -3,10 +3,12 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import pytest
-from gyptis.geometry import *
 import dolfin as df
+import pytest
 from numpy import pi
+
+from gyptis.geometry import *
+
 
 def geom2D(square_size=1, radius=0.3, mesh_size=0.1):
     model = Model("Cylinder", dim=2)
@@ -61,13 +63,11 @@ def test_3D():
         "curves": {},
         "points": {},
     }
-    
 
 
 def test_box_pml():
     with pytest.raises(ValueError):
         BoxPML(dim=1)
-    
 
 
 def test_box_pml_2D():
@@ -81,8 +81,6 @@ def test_box_pml_2D():
     model.set_size(cyl, 0.01)
     mesh_object = model.build()
 
-    
-
 
 def test_box_pml_3D():
     model = BoxPML(dim=3)
@@ -95,4 +93,5 @@ def test_box_pml_3D():
     model.set_size(sphere, 0.04)
     mesh_object = model.build()
 
-# 
+
+#

@@ -10,10 +10,11 @@ Finite Element model for solving Maxwell's equations in 2D media
 
 """
 
-import numpy as np
 import dolfin as df
-import pygmsh as pg
 import meshio
+import numpy as np
+import pygmsh as pg
+
 from .geom import _init_pmls
 
 # from collections import namedtupless
@@ -131,7 +132,7 @@ class Box(object):
         lcar=0.1,
         material=vacuum,
         bcs="dirichlet",
-        pml_width = (1,1),
+        pml_width=(1, 1),
         name="computational domain",
     ):
         self.name = name
@@ -141,9 +142,8 @@ class Box(object):
         # dictionary or string (if string, then applies to all)
         self.material = material
         self.lcar = lcar
-        self.pml_width = pml_width # tuple or dict of tuples
+        self.pml_width = pml_width  # tuple or dict of tuples
         self.pml_dict, self.pml_positions = _init_pmls(self)
-        
 
     def __str__(self):
         return str(self.name)

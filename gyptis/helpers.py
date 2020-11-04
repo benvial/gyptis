@@ -3,17 +3,18 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import time
-import sys
 import os
-from functools import cached_property
-import numpy as np
+import sys
+import time
 from copy import copy
-from scipy.interpolate import griddata
-from dolfin import Measure as _Measure
-from dolfin import DirichletBC as _DirichletBC
+from functools import cached_property
+
 import dolfin as df
 import meshio
+import numpy as np
+from dolfin import DirichletBC as _DirichletBC
+from dolfin import Measure as _Measure
+from scipy.interpolate import griddata
 
 
 class Measure(_Measure):

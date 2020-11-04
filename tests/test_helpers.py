@@ -3,11 +3,12 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import pytest
-from gyptis.helpers import *
-from test_geom import geom2D
 import dolfin as df
+import pytest
 from numpy import pi
+from test_geom import geom2D
+
+from gyptis.helpers import *
 
 # m.geometric_dimension()
 

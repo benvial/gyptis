@@ -29,7 +29,6 @@ import sphinx_gallery
 
 import gyptis as package
 
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -84,11 +83,11 @@ master_doc = "index"
 project = package.__name__
 # copyright = package.__copyright__
 author = package.__author__
-copyright = u"{}, {}".format(date.today().year, author)
+copyright = "{}, {}".format(date.today().year, author)
 
 
 host = "gitlab"
-github = (host == "github")
+github = host == "github"
 
 
 html_context = {
@@ -138,8 +137,6 @@ todo_include_todos = True
 html_theme = "bootstrap"
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_static_path = ["_custom/static"]
-
-
 
 
 def setup(app):
@@ -331,7 +328,9 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, package.__name__, package.__name__ + " Documentation", [author], 1)]
+man_pages = [
+    (master_doc, package.__name__, package.__name__ + " Documentation", [author], 1)
+]
 
 
 # -- Options for Texinfo output -------------------------------------------

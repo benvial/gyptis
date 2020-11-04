@@ -4,10 +4,11 @@
 # License: MIT
 
 
-import pytest
-from gyptis.complex import *
-import numpy as np
 import dolfin as df
+import numpy as np
+import pytest
+
+from gyptis.complex import *
 
 np.random.seed(1234)
 
@@ -47,10 +48,9 @@ def test_simple(tol=1e-15):
 
     with pytest.raises(ValueError):
         len(Complex([1], [3, 2]))
-    
+
     with pytest.raises(NotImplementedError):
-        z**z
-    
+        z ** z
 
     Z = Complex([1, 2], [3, 2])
     for i, r in enumerate(Z):
@@ -98,7 +98,7 @@ def test_complex(tol=1e-15):
     F = F.real + F.imag
 
     ufunc = u.real.ufl_operands[0]
-    
+
     u_dirichlet = qre + 1j * qim
     bcre, bcim = DirichletBC(W, u_dirichlet, boundary)
 
@@ -107,17 +107,18 @@ def test_complex(tol=1e-15):
     bh = assemble(Lh)
     ah = df.lhs(F)
     Ah = assemble(ah)
-    def _solve(solver,tol, tol_local):
+
+    def _solve(solver, tol, tol_local):
         for bc in bcs:
             bc.apply(Ah, bh)
         solver.solve(Ah, ufunc.vector(), bh)
         assert abs(assemble((u - sol) * dx)) < tol
         assert abs((u((0.5, 0.5)) - sol((0.5, 0.5)))) < tol_local
-    
-    _solve(df.LUSolver(Ah),1e-12,1e-12)
-    _solve(df.PETScKrylovSolver(),1e-6,1e-4)
-    
+
+    _solve(df.LUSolver(Ah), 1e-12, 1e-12)
+    _solve(df.PETScKrylovSolver(), 1e-6, 1e-4)
+
     uproj = project(u.real, W0)
-    inner(u.real,u)
-    inner(u,u.imag)
-    inner(u.real,u.imag)
+    inner(u.real, u)
+    inner(u, u.imag)
+    inner(u.real, u.imag)

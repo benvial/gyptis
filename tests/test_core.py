@@ -4,9 +4,10 @@
 # License: MIT
 
 
-from gyptis.core import Material, Box, PML
-import pytest
 import numpy as np
+import pytest
+
+from gyptis.core import PML, Box, Material
 
 air = Material(1, 1)
 eps = [
@@ -29,9 +30,11 @@ def test_material():
     assert Material(np.array([1])).is_isotropic()[0], "anisotropic"
     assert Material(12 * np.eye(3)).is_isotropic()[0], "anisotropic"
 
+
 def test_box():
     box = Box(material=air)
     boxa = Box(material=aniso)
+
 
 def test_pml():
     pml = PML()

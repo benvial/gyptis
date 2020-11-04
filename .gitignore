@@ -42,6 +42,7 @@ wheels/
 MANIFEST
 .coverage
 bin
+package-lock.json
 
 # Logs and databases #
 ######################
@@ -85,5 +86,9 @@ auto_examples/
 .hypothesis/
 htmlcov/
 
+
+
+
 # Docs css (we use less to generate those):
 docs/_custom/static/css/*.css
+docs/generated
