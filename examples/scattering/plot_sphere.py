@@ -22,6 +22,5 @@ outer_bnds = model.get_boundaries(box)
 model.add_physical(sphere, "sphere")
 model.add_physical(box, "box")
 model.add_physical(outer_bnds, "outer_bnds", dim=2)
-print(model.subdomains)
-model.mesh()
-model.build(interactive=False)
+
+mesh_info = model.build(interactive=False)

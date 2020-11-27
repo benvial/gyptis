@@ -7,7 +7,7 @@
 import numpy as np
 import pytest
 
-from gyptis.core import PML, Box, Material
+from gyptis.core import PML, Material
 
 air = Material(1, 1)
 eps = [
@@ -16,7 +16,6 @@ eps = [
     [1.11233134, 2.11233134, 3.11233134],
 ]
 aniso = Material(epsilon=eps, mu=12 - 2j, name="dielectric")
-print(repr(aniso))
 
 
 def test_material():
@@ -29,11 +28,7 @@ def test_material():
     assert Material([1]).is_isotropic()[0], "anisotropic"
     assert Material(np.array([1])).is_isotropic()[0], "anisotropic"
     assert Material(12 * np.eye(3)).is_isotropic()[0], "anisotropic"
-
-
-def test_box():
-    box = Box(material=air)
-    boxa = Box(material=aniso)
+    s = repr(aniso)
 
 
 def test_pml():

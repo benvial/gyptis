@@ -65,15 +65,15 @@ ehthumbs.db
 Thumbs.db
 
 
-# python, gmsh and getdp generated #
+# python, gmsh and paraview generated #
 ###################
-*.pre
-*.res
+
 *.msh
-*.pos
 *.pyc
-*.dat
 *.npz
+*.pvtu
+*.vtu
+*.pvd
 
 # data, tmp and pycache #
 ###################
@@ -85,8 +85,6 @@ auto_examples/
 .pytest_cache/
 .hypothesis/
 htmlcov/
-
-
 
 
 # Docs css (we use less to generate those):

@@ -19,6 +19,7 @@ def test_simple(tol=1e-15):
     z1 = Complex(x1, y1)
     q = x + 1j * y
     q1 = x1 + 1j * y1
+    assert str(z) == f"({x} + {y}j)"
     assert repr(z) == "Complex" + f"({x}, {y})"
     assert z == q
     assert -z == Complex(-x, -y)
@@ -55,6 +56,12 @@ def test_simple(tol=1e-15):
     Z = Complex([1, 2], [3, 2])
     for i, r in enumerate(Z):
         assert r == Z[i]
+
+    ss = Constant((1 + 6 * 1j, 6 - 0.23j), name="test")
+    v = Constant((1 + 6 * 1j, 6 - 0.23j))
+    c = Constant(3 + 1j)
+    c = Constant(12)
+    c = Constant((1, 2))
 
 
 def test_complex(tol=1e-15):
@@ -97,7 +104,7 @@ def test_complex(tol=1e-15):
     )
     F = F.real + F.imag
 
-    ufunc = u.real.ufl_operands[0]
+    ufunc = u.real
 
     u_dirichlet = qre + 1j * qim
     bcre, bcim = DirichletBC(W, u_dirichlet, boundary)

@@ -6,7 +6,7 @@
 import dolfin as df
 import pytest
 from numpy import pi
-from test_geom import geom2D
+from test_geometry import geom2D
 
 from gyptis.helpers import *
 
@@ -74,11 +74,12 @@ def test_dirichlet(model=model, tol=1e-13):
 
     bc1 = DirichletBC(W, 1, markers_line, "outer_bnds", boundaries_dict)
     bc2 = DirichletBC(W, ubnd, markers_line, "cyl_bnds", boundaries_dict)
-    u = df.Function(W)
+    u = df.TrialFunction(W)
     v = df.TestFunction(W)
-    F = df.inner(df.grad(u), df.grad(v)) * dx + u * v * dx
-
-    df.solve(F == 0, u, [bc1, bc2])
+    a = df.inner(df.grad(u), df.grad(v)) * dx + u * v * dx
+    L = df.Constant(0) * v * dx
+    u = df.Function(W)
+    df.solve(a == L, u, [bc1, bc2])
     a = df.assemble(u * ds("outer_bnds"))
     assert np.abs(a - 4 * model.square_size) ** 2 < 1e-10
 

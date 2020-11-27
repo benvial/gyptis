@@ -18,9 +18,10 @@ from gyptis.mesh import read_mesh
 
 def _add_method(cls, func, name):
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, sync=True, **kwargs):
         out = func(*args, **kwargs)
-        occ.synchronize()
+        if sync:
+            occ.synchronize()
         return out
 
     setattr(cls, name, wrapper)
@@ -38,8 +39,8 @@ def _dimtag(tag, dim=3):
     return [(dim, t) for t in tag]
 
 
-def remove(id, dim=3):
-    occ.remove(_dimtag(id, dim=3), True)
+# def remove(id, dim=3):
+#     occ.remove(_dimtag(id, dim=3), True)
 
 
 def _get_bnd(id, dim):
@@ -47,14 +48,15 @@ def _get_bnd(id, dim):
     return [b[1] for b in out]
 
 
-def make_group(dic, dim=3):
-    subdomain_dict = {}
-    for id, tag in dic.items():
-        if not isinstance(tag, list):
-            tag = list([tag])
-        subdomain_dict[id] = gmsh.model.addPhysicalGroup(dim, tag)
-        gmsh.model.setPhysicalName(dim, subdomain_dict[id], id)
-    return subdomain_dict
+#
+# def make_group(dic, dim=3):
+#     subdomain_dict = {}
+#     for id, tag in dic.items():
+#         if not isinstance(tag, list):
+#             tag = list([tag])
+#         subdomain_dict[id] = gmsh.model.addPhysicalGroup(dim, tag)
+#         gmsh.model.setPhysicalName(dim, subdomain_dict[id], id)
+#     return subdomain_dict
 
 
 class Model(object):
@@ -89,6 +91,7 @@ class Model(object):
         mesh_name="mesh.msh",
         data_dir=None,
         dim=3,
+        gmsh_args=["-format", "msh2"],
         kill=False,
     ):
         self.model_name = model_name
@@ -108,7 +111,9 @@ class Model(object):
                 gmsh.finalize()
             except ValueError:
                 pass
-        gmsh.initialize(["-format", "msh2"])
+
+        self.gmsh_args = gmsh_args
+        gmsh.initialize(self.gmsh_args)
 
     def add_physical(self, id, name, dim=None):
         """Add a physical domain.
@@ -127,6 +132,7 @@ class Model(object):
         if not isinstance(id, list):
             id = list([id])
         self.subdomains[dicname][name] = gmsh.model.addPhysicalGroup(dim, id)
+        gmsh.model.removePhysicalName(name)
         gmsh.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
 
     def dimtag(self, id, dim=None):
@@ -164,51 +170,66 @@ class Model(object):
         )  # Get all points
         gmsh.model.mesh.setSize(p, s)
 
+    def _check_subdomains(self):
+        groups = gmsh.model.getPhysicalGroups()
+        names = [gmsh.model.getPhysicalName(*g) for g in groups]
+        for subtype, subitems in self.subdomains.items():
+            for id in subitems.copy().keys():
+                if id not in names:
+                    subitems.pop(id)
+
     def build(
-        self, interactive=False, generate_mesh=True, write_mesh=True, finalize=True
+        self,
+        interactive=False,
+        generate_mesh=True,
+        write_mesh=True,
+        read_info=True,
+        finalize=True,
     ):
+        self._check_subdomains()
         self.mesh_object = {}
         if generate_mesh:
             self.mesh_object = self._mesh(generate=generate_mesh, write=write_mesh)
 
             self.measure = {}
-            if self.dim == 2:
-                marker_dim = "triangle"
-                sub_dim = "surfaces"
-                marker_dim_minus_1 = "line"
-                sub_dim_dim_minus_1 = "curves"
-            else:
-                marker_dim = "tetra"
-                sub_dim = "volumes"
-                marker_dim_minus_1 = "triangle"
-                sub_dim_dim_minus_1 = "surfaces"
+            if read_info:
+                if self.dim == 2:
+                    marker_dim = "triangle"
+                    sub_dim = "surfaces"
+                    marker_dim_minus_1 = "line"
+                    sub_dim_dim_minus_1 = "curves"
+                else:
+                    marker_dim = "tetra"
+                    sub_dim = "volumes"
+                    marker_dim_minus_1 = "triangle"
+                    sub_dim_dim_minus_1 = "surfaces"
 
-            self.measure["dx"] = Measure(
-                "dx",
-                domain=self.mesh_object["mesh"],
-                subdomain_data=self.mesh_object["markers"][marker_dim],
-                subdomain_dict=self.subdomains[sub_dim],
-            )
-
-            ## exterior_facets
-            if (marker_dim_minus_1 in self.mesh_object["markers"].keys()) and (
-                sub_dim_dim_minus_1 in self.subdomains.keys()
-            ):
-                self.measure["ds"] = Measure(
-                    "ds",
+                self.measure["dx"] = Measure(
+                    "dx",
                     domain=self.mesh_object["mesh"],
-                    subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
-                    subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
+                    subdomain_data=self.mesh_object["markers"][marker_dim],
+                    subdomain_dict=self.subdomains[sub_dim],
                 )
 
-                ## interior_facets
+                ## exterior_facets
+                if (marker_dim_minus_1 in self.mesh_object["markers"].keys()) and (
+                    sub_dim_dim_minus_1 in self.subdomains.keys()
+                ):
+                    self.measure["ds"] = Measure(
+                        "ds",
+                        domain=self.mesh_object["mesh"],
+                        subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
+                        subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
+                    )
 
-                self.measure["dS"] = Measure(
-                    "dS",
-                    domain=self.mesh_object["mesh"],
-                    subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
-                    subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
-                )
+                    ## interior_facets
+
+                    self.measure["dS"] = Measure(
+                        "dS",
+                        domain=self.mesh_object["mesh"],
+                        subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
+                        subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
+                    )
 
         if interactive:
             gmsh.fltk.run()
@@ -293,6 +314,8 @@ class BoxPML2D(Model):
 
         self.box = box
         self.pmls = all_dom[1:]
+
+        self.fragmentize(self.box, self.pmls)
 
         self.add_physical([pmlxp, pmlxm], "pmlx")
         self.add_physical([pmlyp, pmlym], "pmly")
@@ -400,6 +423,8 @@ class BoxPML3D(Model):
         self.pmls = pml1 + pml2 + pml3
 
         _translate([self.box] + self.pmls, self.box_center)
+
+        self.fragmentize(self.box, self.pmls)
         #
 
         self.add_physical(pmlx, "pmlx")
@@ -421,79 +446,3 @@ class BoxPML(object):
             return BoxPML3D(*args, **kwargs)
         else:
             return BoxPML2D(*args, **kwargs)
-
-
-if __name__ == "__main__":
-
-    # cds
-    #
-    # model = BoxPML3D()
-    # sphere = model.addSphere(0, 0, 0, 0.1)
-    # sphere, model.box = model.fragmentize(sphere, model.box)
-    # model.add_physical(sphere, "sphere")
-    # model.add_physical(model.box, "box")
-    # model.set_size(model.box, 0.06)
-    # model.set_size(model.pmls, 0.1)
-    # model.set_size(sphere, 0.04)
-    # mesh_object = model.build(interactive=True, generate_mesh=True)
-    #
-    #
-    # csc
-
-    model = BoxPML(2)
-    cyl = model.addDisk(0, 0, 0, 0.1, 0.1)
-    cyl, model.box = model.fragmentize(cyl, model.box)
-    model.add_physical(cyl, "cyl")
-    model.add_physical(model.box, "box")
-    model.set_size(model.box, 0.03)
-    model.set_size(model.pmls, 0.1)
-    model.set_size(cyl, 0.01)
-
-    # box = model.addRectangle(-1, -1, 0, 2, 2)
-    mesh_object = model.build(interactive=True, generate_mesh=True)
-
-    xsa
-
-    #
-    # 2D
-    model = Model("Scattering from a cylinder", dim=2)
-    box = model.addRectangle(-1, -1, 0, 2, 2)
-    outer_bnds = model.get_boundaries(box)
-    cyl = model.addDisk(0, 0, 0, 0.5, 0.5)
-
-    rect = model.addRectangle(0, 0, 0, 0.8, 0.8)
-    cyl = model.join(cyl, rect)
-
-    cyl, box = model.fragmentize(cyl, box)
-
-    model.set_size(box, 0.1)
-    model.set_size(cyl, 0.04)
-
-    model.add_physical(cyl, "cyl")
-    model.add_physical(box, "box")
-    model.add_physical(outer_bnds, "outer_bnds", dim=1)
-    print(model.subdomains)
-    mesh_object = model.build(interactive=True)
-
-    # import dolfin as df
-    #
-    # df.File(f"mesh.pvd") << mesh_object["mesh"]
-    # df.File(f"markers_bnd.pvd") << mesh_object["markers"]["line"]
-    # df.File(f"markers.pvd") << mesh_object["markers"]["triangle"]
-    #
-    #
-    # # 3D
-    # model = Model("Scattering from a sphere")
-    # box = model.addBox(-1, -1, -1, 2, 2, 2)
-    # sphere = model.addSphere(0, 0, 0, 0.5)
-    # sphere,box = model.fragmentize(sphere,box)
-    # model.set_size(box, 0.1)
-    # model.set_size(sphere, 0.1)
-    # outer_bnds = model.get_boundaries(box)
-    #
-    # model.add_physical(sphere, "sphere")
-    # model.add_physical(box, "box")
-    # model.add_physical(outer_bnds, "outer_bnds",dim=2)
-    # print(model.subdomains)
-    # model.mesh()
-    # model.build(interactive=True)

@@ -7,8 +7,13 @@ Gyptis
 
 Gyptis is an open-source Python package to solve problems 
 in Photonics and Electromagnetism using the Finite Element method. 
-It relies on ``gmsh`` for geometry definition and meshing 
-and ``fenics`` for solving Maxwell's equations.
+It relies on Gmsh_ for geometry definition and meshing 
+and Fenics_ for solving Maxwell's equations.
+
+
+.. _Gmsh: https://gmsh.info/
+.. _Fenics: https://fenicsproject.org/
+
 
 .. .. toctree::
 ..    :maxdepth: 1
@@ -34,27 +39,28 @@ submodules.
 API Reference
 -------------
 
-The exact API of all functions and classes, as given by the docstrings. The API
-documents expected types and allowed features for all functions, and all
-parameters available for the algorithms.
+:mod:`gyptis.geometry`: Defining geometry and generating meshes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: gyptis.geometry
+    :no-members:
+    :no-inherited-members:
+
+Base classes
+""""""""""""
+.. currentmodule:: gyptis
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+   :template: class.rst
+   
+   geometry.Model
+   geometry.BoxPML
 
 
-.. 
-.. Functions
-.. ---------
-.. .. currentmodule:: sklearn
-.. 
-.. .. autosummary::
-..    :toctree: generated/
-..    :template: function.rst
-.. 
-..    base.clone
-..    base.is_classifier
-..    base.is_regressor
-..    config_context
-..    get_config
-..    set_config
-..    show_versions
+
+-------------------------------------
 
 
 

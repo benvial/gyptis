@@ -17,6 +17,14 @@ from dolfin import Measure as _Measure
 from scipy.interpolate import griddata
 
 
+def get_coords(A):
+    n = A.dim()
+    d = A.mesh().geometry().dim()
+    dof_coordinates = A.tabulate_dof_coordinates()
+    dof_coordinates.resize((n, d))
+    return dof_coordinates
+
+
 class Measure(_Measure):
     def __init__(
         self,
@@ -138,7 +146,7 @@ def function2array(f):
         The converted function.
 
     """
-    return a.vector().get_local()
+    return f.vector().get_local()
 
 
 def matfmt(m, ndigit=4, extra_space=0, cplx=False):
@@ -198,11 +206,11 @@ def tanh(x):
 #
 #
 # def boundary_L(x, on_boundary):
-#     return on_boundary and (near(x[1], 0, tol))
+#     return on_boundary and (df.near(x[1], 0, tol))
 #
 #
 # def boundary_R(x, on_boundary):
-#     return on_boundary and (near(x[1], 1, tol))
+#     return on_boundary and (df.near(x[1], 1, tol))
 #
 #
 # class InnerBoundary(SubDomain):
@@ -221,81 +229,79 @@ def tanh(x):
 #
 #
 #
-# class PeriodicBoundary2D(SubDomain):
-#
-#     # Left boundary is "target domain" G
-#     def inside(self, x, on_boundary):
-#         # return True if on left or bottom boundary AND NOT on one of the two corners (0, 1) and (1, 0)
-#         return bool(
-#             (near(x[0], 0) or near(x[1], 0))
-#             and (
-#                 not (
-#                     (near(x[0], 0) and near(x[1], 1))
-#                     or (near(x[0], 1) and near(x[1], 0))
-#                 )
-#             )
-#             and on_boundary
-#         )
-#
-#     def map(self, x, y):
-#         if near(x[0], 1) and near(x[1], 1):
-#             y[0] = x[0] - 1.0
-#             y[1] = x[1] - 1.0
-#         elif near(x[0], 1):
-#             y[0] = x[0] - 1.0
-#             y[1] = x[1]
-#         else:  # near(x[1], 1)
-#             y[0] = x[0]
-#             y[1] = x[1] - 1.0
-#
-#
-# class PeriodicBoundary3D(SubDomain):
-#
-#     # Left boundary is "target domain" G
-#     def inside(self, x, on_boundary):
-#         # return True if on left or bottom boundary AND NOT on one of the two slave edges
-#         return bool(
-#             (near(x[0], 0) or near(x[1], 0) or near(x[2], 0))
-#             and (
-#                 not (
-#                     (near(x[0], 1) and near(x[2], 0))
-#                     or (near(x[0], 0) and near(x[2], 1))
-#                     or (near(x[1], 1) and near(x[2], 0))
-#                     or (near(x[1], 0) and near(x[2], 1))
-#                 )
-#             )
-#             and on_boundary
-#         )
-#
-#     # Map right boundary (H) to left boundary (G)
-#     def map(self, x, y):
-#
-#         if near(x[0], 1) and near(x[2], 1):
-#             y[0] = x[0] - 1
-#             y[1] = x[1]
-#             y[2] = x[2] - 1
-#         elif near(x[1], 1) and near(x[2], 1):
-#             y[0] = x[0]
-#             y[1] = x[1] - 1
-#             y[2] = x[2] - 1
-#         elif near(x[0], 1):
-#             y[0] = x[0] - 1
-#             y[1] = x[1]
-#             y[2] = x[2]
-#         elif near(x[1], 1):
-#             y[0] = x[0]
-#             y[1] = x[1] - 1
-#             y[2] = x[2]
-#         elif near(x[2], 1):
-#             y[0] = x[0]
-#             y[1] = x[1]
-#             y[2] = x[2] - 1
-#         else:
-#             y[0] = -1000
-#             y[1] = -1000
-#             y[2] = -1000
-#
-#
+class PeriodicBoundary2DX(df.SubDomain):
+    def __init__(self, period, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.period = period
+
+    def inside(self, x, on_boundary):
+        return bool(df.near(x[0], -self.period / 2) and on_boundary)
+
+    # # Left boundary is "target domain" G
+    # def inside(self, x, on_boundary):
+    #     return bool(
+    #         x[0] - self.period / 2 < df.DOLFIN_EPS
+    #         and x[0] - self.period / 2 > -df.DOLFIN_EPS
+    #         and on_boundary
+    #     )
+
+    def map(self, x, y):
+        y[0] = x[0] - self.period
+        y[1] = x[1]
+
+    #
+    # def map(self, x, y):
+    #     if df.near(x[0], self.period / 2):
+    #         y[0] = x[0] - self.period
+    #         y[1] = x[1]
+    #     else:
+    #         y[0] = -1000
+    #         y[1] = -1000
+
+
+class BiPeriodicBoundary3D(df.SubDomain):
+    def __init__(self, period, **kwargs):
+        self.period = period
+        super().__init__(**kwargs)
+
+    def inside(self, x, on_boundary):
+        return bool(
+            (df.near(x[0], -self.period[0] / 2) or df.near(x[1], -self.period[1] / 2))
+            and (
+                not (
+                    (
+                        df.near(x[0], -self.period[0] / 2)
+                        and df.near(x[1], self.period[1] / 2)
+                    )
+                    or (
+                        df.near(x[0], self.period[0] / 2)
+                        and df.near(x[1], -self.period[1] / 2)
+                    )
+                )
+            )
+            and on_boundary
+        )
+
+    def map(self, x, y):
+
+        if df.near(x[0], self.period[0] / 2) and df.near(x[1], self.period[1] / 2):
+            y[0] = x[0] - self.period[0]
+            y[1] = x[1] - self.period[1]
+            y[2] = x[2]
+        elif df.near(x[0], self.period[0] / 2):
+            y[0] = x[0] - self.period[0]
+            y[1] = x[1]
+            y[2] = x[2]
+        elif df.near(x[1], self.period[1] / 2):
+            y[0] = x[0]
+            y[1] = x[1] - self.period[1]
+            y[2] = x[2]
+        else:
+            y[0] = -1000
+            y[1] = -1000
+            y[2] = -1000
+
+
 # class DomainBoundary(InnerBoundary):
 #     def __init__(self, geom, *args, tol=1e-6, **kwargs):
 #         super().__init__(*args, **kwargs)
@@ -328,44 +334,3 @@ def tanh(x):
 #             or x[1] > self.p2[1] - self.tol
 #         )
 #         return inside_rect and outside_rect
-
-
-class _PermittivityPy(df.UserExpression):
-    def __init__(self, markers, subdomains, value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.markers = markers
-        self.subdomains = subdomains
-        self.value = value
-
-    def eval_cell(self, values, x, cell):
-        for sub, val in self.value.items():
-            if self.markers[cell.index] == self.subdomains[sub]:
-                if callable(val):
-                    values[:] = val(x)
-                else:
-                    values[:] = val
-                # values[:] = val
-
-    def value_shape(self):
-        return ()
-
-
-class _PermittivityCpp(df.CompiledExpression):
-    def __init__(self, markers, subdomains, value, **kwargs):
-        with open("epsilon.cpp") as f:
-            permittivity_code = f.read()
-        compiled_cpp = df.compile_cpp_code(permittivity_code).PermittivityCpp()
-        super().__init__(
-            compiled_cpp, markers=markers, subdomains=subdomains, value=value, **kwargs
-        )
-        self.markers = markers
-        self.subdomains = subdomains
-        self.value = value
-
-
-class Permittivity(object):
-    def __new__(self, markers, subdomains, value, cpp=True, **kwargs):
-        if cpp:
-            return _PermittivityCpp(markers, subdomains, value, **kwargs)
-        else:
-            return _PermittivityPy(markers, subdomains, value, **kwargs)

@@ -9,6 +9,8 @@ This module provides a :class:`Complex` class and overrides some ``dolfin`` func
 to easily deal with complex problems by spliting real and imaginary parts.
 """
 
+from typing import Iterable
+
 import dolfin as df
 import numpy as np
 import ufl
@@ -31,8 +33,6 @@ def _complexcheck(func):
 
 
 def _complexify_linear(func):
-    """Wrapper to check if arguments are complex"""
-
     def wrapper(z, *args, **kwargs):
         if isinstance(z, Complex):
             return Complex(func(z.real, *args, **kwargs), func(z.imag, *args, **kwargs))
@@ -69,7 +69,17 @@ def _complexify_bilinear(func):
 def _complexify_vector(func):
     def wrapper(*args, **kwargs):
         v = func(*args, **kwargs)
-        return Complex(v[0], v[1])
+        re, im = df.split(v)
+        return Complex(re, im)
+
+    return wrapper
+
+
+def _complexify_vector_alt(func):
+    def wrapper(*args, **kwargs):
+        v = func(*args, **kwargs)
+        re, im = v.split()  # (deepcopy=True)
+        return Complex(re, im)
 
     return wrapper
 
@@ -204,7 +214,7 @@ class Complex(object):
         return "Complex" + f"({self.real.__repr__()}, {self.imag.__repr__()})"
 
     def __pow__(self, power):
-        if iscomplex(power):
+        if iscomplex(power) and power.imag != 0:
             raise NotImplementedError("complex exponent not implemented")
         else:
             A, phi = self.polar()
@@ -277,7 +287,7 @@ def iscomplex(z):
         True if z is complex, else False.
 
     """
-    if hasattr(z, "real") and hasattr(z, "imag") and not np.all(z.imag == 0):
+    if hasattr(z, "real") and hasattr(z, "imag"):  # and not np.all(z.imag == 0):
         return True
     else:
         return False
@@ -301,16 +311,86 @@ class DirichletBC(__DirichletBC__):
         return bcre, bcim
 
 
+def _cplx_iter(f):
+    def wrapper(v, *args, **kwargs):
+        iterable = isinstance(v, Iterable)
+        cplx = any([iscomplex(v_) for v_ in v]) if iterable else iscomplex(v)
+        if cplx:
+            if iterable:
+                v_ = np.array(v)
+                v_re = v_.real
+                v_im = v_.imag
+            else:
+                v_re, v_im = v.real, v.imag
+            return Complex(f(v_re, *args, **kwargs), f(v_im, *args, **kwargs))
+        else:
+            return f(v, *args, **kwargs)
+
+    return wrapper
+
+
+# def Constant(v, *args,**kwargs):
+#     iterable = isinstance(v, Iterable)
+#     cplx = any([iscomplex(v_) for v_ in v]) if iterable else iscomplex(v)
+#     if cplx:
+#         if iterable:
+#             v_re = tuple([a.real] for a in v)
+#             v_im = tuple([a.imag] for a in v)
+#         else:
+#             v_re, v_im = v.real,v.imag
+#         return Complex(df.Constant(v_re,*args,**kwargs), df.Constant(v_im,*args,**kwargs))
+#     else:
+#         return df.Constant(v,*args,**kwargs)
+#
+
+
+interpolate = _complexify_linear(df.interpolate)
 assemble = _complexify_linear(df.assemble)
-Function = _complexify_vector(df.Function)
+Function = _complexify_vector_alt(df.Function)
 TrialFunction = _complexify_vector(df.TrialFunction)
 TestFunction = _complexify_vector(df.TestFunction)
 grad = _complexify_linear(df.grad)
-div = _complexify_linear(df.grad)
+div = _complexify_linear(df.div)
+curl = _complexify_linear(df.curl)
 project = _complexify_linear(df.project)
 inner = _complexify_bilinear(df.inner)
 dot = _complexify_bilinear(df.dot)
-curl = _complexify_bilinear(df.curl)
+cross = _complexify_bilinear(df.cross)
+
+as_tensor = _cplx_iter(df.as_tensor)
+as_vector = _cplx_iter(df.as_vector)
+
+Constant = _cplx_iter(df.Constant)
+
+
+def _invert_3by3_complex_matrix(m):
+    m1, m2, m3, m4, m5, m6, m7, m8, m9 = [m[i][j] for i in range(3) for j in range(3)]
+
+    determinant = (
+        m1 * m5 * m9
+        + m4 * m8 * m3
+        + m7 * m2 * m6
+        - m1 * m6 * m8
+        - m3 * m5 * m7
+        - m2 * m4 * m9
+    )
+    inv = [
+        [m5 * m9 - m6 * m8, m3 * m8 - m2 * m9, m2 * m6 - m3 * m5],
+        [m6 * m7 - m4 * m9, m1 * m9 - m3 * m7, m3 * m4 - m1 * m6],
+        [m4 * m8 - m5 * m7, m2 * m7 - m1 * m8, m1 * m5 - m2 * m4],
+    ]
+    # inv_df = df.as_tensor(inv)
+    invre = np.zeros((3, 3), dtype=object)
+    invim = np.zeros((3, 3), dtype=object)
+    for i in range(3):
+        for j in range(3):
+            q = inv[i][j] / determinant
+            invre[i, j] = q.real
+            invim[i, j] = q.imag
+    invre = invre.tolist()
+    invim = invim.tolist()
+
+    return Complex(df.as_tensor(invre), df.as_tensor(invim))
 
 
 # TODO:
