@@ -3,31 +3,31 @@ from pytheas import Periodic3D, genmat
 
 fem = Periodic3D()
 fem.rm_tmp_dir()
-fem.lambda0 = 1.1
+fem.lambda0 = 40
 fem.theta_deg = 0
 fem.phi_deg = 0
 fem.psi_deg = 0
-fem.period_x = 1.0  #: flt: periodicity in x-direction
-fem.period_y = 1.0  #: flt: periodicity in y-direction
-fem.thick_L1 = 1
-fem.thick_L2 = 0.1
-fem.thick_L3 = 0.5
-fem.thick_L4 = 0.1
-fem.thick_L5 = 0.1
-fem.thick_L6 = 1
-fem.PML_top = 1.1  #: flt: thickness pml top
-fem.PML_bot = 1.1  #: flt: thickness pml bot
+fem.period_x = 20  #: flt: periodicity in x-direction
+fem.period_y = 20  #: flt: periodicity in y-direction
+fem.thick_L1 = 40
+fem.thick_L2 = 1
+fem.thick_L3 = 8
+fem.thick_L4 = 1
+fem.thick_L5 = 1
+fem.thick_L6 = 40
+fem.PML_top = 40  #: flt: thickness pml top
+fem.PML_bot = 40  #: flt: thickness pml bot
 fem.eps_L2 = 1 - 0.0 * 1j  #: flt: permittivity layer 2
-fem.eps_L3 = 1 - 0.1 * 1j  #: flt: permittivity layer 3
+fem.eps_L3 = 3 - 0.1 * 1j  #: flt: permittivity layer 3
 fem.eps_L4 = 1 - 0.0 * 1j  #: flt: permittivity layer 4
 fem.eps_L5 = 1 - 0.0 * 1j  #: flt: permittivity layer 5
 
 
 fem.eps_L1 = 1 - 0.0 * 1j  #: flt: permittivity superstrate
-fem.eps_L6 = 3 - 0.0 * 1j  #: flt: permittivity substrate
+fem.eps_L6 = 5 - 0.0 * 1j  #: flt: permittivity substrate
 
-fem.parmesh_des = 12
-fem.parmesh = 6
+fem.parmesh_des = 20
+fem.parmesh = 20
 fem.parmesh_pml = fem.parmesh * 2 / 3
 fem.N_d_order = 0
 fem.el_order = 1  #: int: order of basis function (1 or 2)
@@ -38,9 +38,8 @@ fem.gmsh_verbose = 4
 fem.python_verbose = 1
 fem.initialize()
 
-layer_diopter = fem.ancillary_problem()
+# layer_diopter = fem.ancillary_problem()
 
-dasd
 
 fem.make_mesh()
 

@@ -25,8 +25,7 @@ def _add_method(cls, func, name):
         return out
 
     setattr(cls, name, wrapper)
-    # Note we are not binding func, but wrapper which accepts self but does exactly the same as func
-    return func  # returning func means func can still be used normally
+    return func
 
 
 occ = gmsh.model.occ

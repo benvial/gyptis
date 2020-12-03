@@ -5,9 +5,13 @@
 
 from collections import OrderedDict
 
+import dolfin as df
 import numpy as np
 from numpy.linalg import inv
 from scipy.constants import c, epsilon_0, mu_0
+
+from gyptis.complex import *
+from gyptis.sources import *
 
 pi = np.pi
 
@@ -181,77 +185,145 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
     return phi, alpha0, beta0, gamma, R, T
 
 
-import dolfin as df
+def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
 
-from gyptis.sources import *
-
-
-def field_stack_3D(phi, alpha0, beta0, gamma, zshift=0, degree=1, domain=None):
-
-    Kplus = vector(sp.symbols("alpha0, beta0, -gamma", real=True))
-    Kminus = vector(sp.symbols("alpha0, beta0, gamma", real=True))
-    deltaZ = vector((0, 0, sp.symbols("z0", real=True)))
-
-    Prop_plus = sp.exp(1j * Kplus.dot(X - deltaZ))
-    Prop_minus = sp.exp(1j * Kminus.dot(X - deltaZ))
-
-    def build(P):
-        re, im = P.as_real_imag()
-        code = [sp.printing.ccode(p) for p in (re, im)]
-        e = df.Expression(
-            code,
-            alpha0=alpha0,
-            beta0=beta0,
-            gamma=gamma,
-            z0=zshift,
-            degree=degree,
-            domain=domain,
-        )
-        return Complex(e[0], e[1])
-
-    prop_plus = build(Prop_plus)
-    prop_minus = build(Prop_minus)
-
-    Phi_plus = Complex(df.as_tensor([*phi[0::2].real]), df.as_tensor([*phi[0::2].imag]))
-    Phi_minus = Complex(
-        df.as_tensor([*phi[1::2].real]), df.as_tensor([*phi[1::2].imag])
+    alpha0_re, alpha0_im, beta0_re, beta0_im = sp.symbols(
+        "alpha0_re,alpha0_im, beta0_re,beta0_im", real=True
     )
-    E_plus = Phi_plus * prop_plus
-    E_minus = Phi_minus * prop_minus
-    return E_plus + E_minus
+    alpha0 = alpha0_re + 1j * alpha0_im
+    beta0 = beta0_re + 1j * beta0_im
+    Kplus = vector((alpha0, beta0, 0))
+    Kminus = vector((alpha0, -beta0, 0))
+    deltaY = vector((0, sp.symbols("yshift", real=True), 0))
+    pw = lambda K: sp.exp(1j * K.dot(X - deltaY))
+    phi_plus_re, phi_plus_im = sp.symbols("phi_plus_re,phi_plus_im", real=True)
+    phi_minus_re, phi_minus_im = sp.symbols("phi_minus_re,phi_minus_im", real=True)
+    phi_plus = phi_plus_re + 1j * phi_plus_im
+    phi_minus = phi_minus_re + 1j * phi_minus_im
+    field = phi_plus * pw(Kplus) + phi_minus * pw(Kminus)
 
-
-def field_stack_2D(phi, alpha0, beta, yshift=0, degree=1, domain=None):
-
-    Kplus = vector(sp.symbols("alpha0, beta, 0", real=True))
-    Kminus = vector(sp.symbols("alpha0, -beta, 0", real=True))
-    deltaY = vector((0, sp.symbols("y0", real=True), 0))
-
-    Prop_plus = sp.exp(1j * Kplus.dot(X - deltaY))
-    Prop_minus = sp.exp(1j * Kminus.dot(X - deltaY))
-
-    def build(P):
-        re, im = P.as_real_imag()
-        re, im = (p.subs(x[2], 0) for p in (re, im))
-        code = [sp.printing.ccode(p) for p in (re, im)]
-        e = df.Expression(
-            code,
-            alpha0=alpha0,
-            beta=beta,
-            y0=yshift,
+    re, im = field.as_real_imag()
+    re, im = (p.subs(x[2], 0) for p in (re, im))
+    code = [sp.printing.ccode(p) for p in (re, im)]
+    expr = [
+        df.Expression(
+            c,
+            alpha0_re=alpha.real,
+            alpha0_im=alpha.imag,
+            beta0_re=beta.real,
+            beta0_im=beta.imag,
+            phi_plus_re=phi[0].real,
+            phi_plus_im=phi[0].imag,
+            phi_minus_re=phi[1].real,
+            phi_minus_im=phi[1].imag,
+            yshift=yshift,
             degree=degree,
             domain=domain,
         )
-        return Complex(e[0], e[1])
+        for c in code
+    ]
+    return Complex(*expr)
 
-    prop_plus = build(Prop_plus)
-    prop_minus = build(Prop_minus)
 
-    Phi_plus = Complex(phi[0].real, phi[0].imag)
-    Phi_minus = Complex(phi[1].real, phi[1].imag)
-    E_plus = Phi_plus * prop_plus
-    E_minus = Phi_minus * prop_minus
-    return E_plus + E_minus
+#
+# phi, alpha, beta, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
+#     config, self.lambda0, self.theta0, self.phi0, self.psi0,
+# )
+
+
+def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
+    alpha0_re, alpha0_im, beta0_re, beta0_im, gamma0_re, gamma0_im = sp.symbols(
+        "alpha0_re, alpha0_im, beta0_re, beta0_im, gamma0_re, gamma0_im", real=True
+    )
+    alpha0 = alpha0_re + 1j * alpha0_im
+    beta0 = beta0_re + 1j * beta0_im
+    gamma0 = gamma0_re + 1j * gamma0_im
+    Kplus = vector((alpha0, beta0, gamma0))
+    Kminus = vector((alpha0, beta0, -gamma0))
+    deltaZ = vector((0, 0, sp.symbols("zshift", real=True)))
+    pw = lambda K: sp.exp(1j * K.dot(X - deltaZ))
+    fields = []
+    for comp in ["x", "y", "z"]:
+        phi_plus_re, phi_plus_im = sp.symbols(
+            f"phi_plus_{comp}_re,phi_plus_{comp}_im", real=True
+        )
+        phi_minus_re, phi_minus_im = sp.symbols(
+            f"phi_minus_{comp}_re,phi_minus_{comp}_im", real=True
+        )
+        phi_plus = phi_plus_re + 1j * phi_plus_im
+        phi_minus = phi_minus_re + 1j * phi_minus_im
+        field = phi_plus * pw(Kplus) + phi_minus * pw(Kminus)
+        fields.append(field)
+    code = [[sp.printing.ccode(p) for p in f.as_real_imag()] for f in fields]
+    code = np.ravel(code).tolist()
+    expr = [
+        df.Expression(
+            c,
+            alpha0_re=alpha.real,
+            alpha0_im=alpha.imag,
+            beta0_re=beta.real,
+            beta0_im=beta.imag,
+            gamma0_re=gamma.real,
+            gamma0_im=gamma.imag,
+            phi_plus_x_re=phi[0].real,
+            phi_plus_x_im=phi[0].imag,
+            phi_minus_x_re=phi[1].real,
+            phi_minus_x_im=phi[1].imag,
+            phi_plus_y_re=phi[2].real,
+            phi_plus_y_im=phi[2].imag,
+            phi_minus_y_re=phi[3].real,
+            phi_minus_y_im=phi[3].imag,
+            phi_plus_z_re=phi[4].real,
+            phi_plus_z_im=phi[4].imag,
+            phi_minus_z_re=phi[5].real,
+            phi_minus_z_im=phi[5].imag,
+            zshift=zshift,
+            degree=degree,
+            domain=domain,
+        )
+        for c in code
+    ]
+
+    return Complex(
+        as_tensor([expr[0], expr[2], expr[4]]), as_tensor([expr[1], expr[3], expr[5]])
+    )
+
+
+#
+#
+# def field_stack_3D(phi, alpha0, beta0, gamma, zshift=0, degree=1, domain=None):
+#
+#     Kplus = vector(sp.symbols("alpha0, beta0, -gamma", real=True))
+#     Kminus = vector(sp.symbols("alpha0, beta0, gamma", real=True))
+#     deltaZ = vector((0, 0, sp.symbols("z0", real=True)))
+#
+#     Prop_plus = sp.exp(1j * Kplus.dot(X - deltaZ))
+#     Prop_minus = sp.exp(1j * Kminus.dot(X - deltaZ))
+#
+#     def build(P):
+#         re, im = P.as_real_imag()
+#         code = [sp.printing.ccode(p) for p in (re, im)]
+#         e = df.Expression(
+#             code,
+#             alpha0=alpha0,
+#             beta0=beta0,
+#             gamma=gamma,
+#             z0=zshift,
+#             degree=degree,
+#             domain=domain,
+#         )
+#         return Complex(e[0], e[1])
+#
+#     prop_plus = build(Prop_plus)
+#     prop_minus = build(Prop_minus)
+#
+#     Phi_plus = Complex(df.as_tensor([*phi[0::2].real]), df.as_tensor([*phi[0::2].imag]))
+#     Phi_minus = Complex(
+#         df.as_tensor([*phi[1::2].real]), df.as_tensor([*phi[1::2].imag])
+#     )
+#     E_plus = Phi_plus * prop_plus
+#     E_minus = Phi_minus * prop_minus
+#     return E_plus + E_minus
 
 
 if __name__ == "__main__":

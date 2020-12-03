@@ -129,48 +129,27 @@ class Layered2D(Model):
         return s
 
 
-def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
-
-    alpha0_re, alpha0_im, beta0_re, beta0_im = sp.symbols(
-        "alpha0_re,alpha0_im, beta0_re,beta0_im", real=True
-    )
-    alpha0 = alpha0_re + 1j * alpha0_im
-    beta0 = beta0_re + 1j * beta0_im
-    Kplus = vector((alpha0, beta0, 0))
-    Kminus = vector((alpha0, -beta0, 0))
-    deltaY = vector((0, sp.symbols("yshift", real=True), 0))
-    pw = lambda K: sp.exp(1j * K.dot(X - deltaY))
-    P = pw(Kplus)
-    phi_plus_re, phi_plus_im = sp.symbols("phi_plus_re,phi_plus_im", real=True)
-    phi_minus_re, phi_minus_im = sp.symbols("phi_minus_re,phi_minus_im", real=True)
-    phi_plus = phi_plus_re + 1j * phi_plus_im
-    phi_minus = phi_minus_re + 1j * phi_minus_im
-    field = phi_plus * pw(Kplus) + phi_minus * pw(Kminus)
-
-    re, im = field.as_real_imag()
-    re, im = (p.subs(x[2], 0) for p in (re, im))
-    code = [sp.printing.ccode(p) for p in (re, im)]
-    expr = [
-        df.Expression(
-            c,
-            alpha0_re=alpha.real,
-            alpha0_im=alpha.imag,
-            beta0_re=beta.real,
-            beta0_im=beta.imag,
-            phi_plus_re=phi[0].real,
-            phi_plus_im=phi[0].imag,
-            phi_minus_re=phi[1].real,
-            phi_minus_im=phi[1].imag,
-            yshift=yshift,
-            degree=degree,
-            domain=domain,
-        )
-        for c in code
-    ]
-    return Complex(expr[0], expr[1])
+class Simulation2D(object):
+    def __init__(
+        self,
+        geom,
+        degree=1,
+        boundary_conditions={},
+    ):
+        self.geom = geom
+        self.degree = degree
+        self.mesh = geom.mesh_object["mesh"]
+        self.markers = geom.mesh_object["markers"]["triangle"]
+        self.domains = geom.subdomains["surfaces"]
+        self.surfaces = geom.subdomains["curves"]
+        self.dx = geom.measure["dx"]
+        self.ds = geom.measure["ds"]
+        self.dS = geom.measure["dS"]
+        self.boundary_conditions = boundary_conditions
+        self.unit_normal_vector = df.FacetNormal(self.mesh)
 
 
-class Grating2D(object):
+class Grating2D(Simulation2D):
     def __init__(
         self,
         geom,
@@ -184,22 +163,14 @@ class Grating2D(object):
         boundary_conditions={},
     ):
 
-        self.geom = geom  # geometry model
-        self.degree = degree
+        super().__init__(geom, degree=degree, boundary_conditions=boundary_conditions)
+
         self.lambda0 = lambda0
         self.theta0 = theta0
         self.polarization = polarization
         self.epsilon = epsilon
         self.mu = mu
         self.pml_stretch = pml_stretch
-
-        self.mesh = geom.mesh_object["mesh"]
-        self.markers = geom.mesh_object["markers"]["triangle"]
-        self.domains = geom.subdomains["surfaces"]
-        self.surfaces = geom.subdomains["curves"]
-        self.dx = geom.measure["dx"]
-        self.boundary_conditions = boundary_conditions
-
         self.N_d_order = 0
         self.nb_slice = 20
         self.scan_dist_ratio = 5
@@ -210,11 +181,8 @@ class Grating2D(object):
         self.complex_space = ComplexFunctionSpace(
             self.mesh, "CG", self.degree, constrained_domain=self.periodic_bcs
         )
-        # self.real_space = df.FunctionSpace(
-        #     self.mesh, "CG", self.degree, constrained_domain=self.periodic_bcs
-        # )
         self.real_space = df.FunctionSpace(
-            self.mesh, "CG", 2, constrained_domain=self.periodic_bcs
+            self.mesh, "CG", self.degree, constrained_domain=self.periodic_bcs
         )
 
         self.no_source_dom = ["substrate", "pml_top", "pml_bottom", "superstrate"]
@@ -224,24 +192,29 @@ class Grating2D(object):
 
     def _prepare_bcs(self):
         self._boundary_conditions = []
+        self.pec_bnds = []
         for bnd, cond in self.boundary_conditions.items():
             if cond != "PEC":
                 raise ValueError(f"unknown boundary condition {cond}")
             else:
-                if self.polarization == "TM":
-                    raise NotImplementedError(
-                        f"PEC not yet implemented for TM polarization"
-                    )
-                    # FIXME: implement PEC for TM polarzation (Robin BC)
-                else:
-                    curves = self.geom.subdomains["curves"]
-                    markers_curves = self.geom.mesh_object["markers"]["line"]
-                    ubnd_vec = -self.ustack_coeff * self.phasor.conj
-                    ubnd = df.as_vector((ubnd_vec.real, ubnd_vec.imag))
-                    bc = DirichletBC(
-                        self.complex_space, ubnd, markers_curves, bnd, curves
-                    )
-                    self._boundary_conditions.append(bc)
+                self.pec_bnds.append(bnd)
+        for bnd in self.pec_bnds:
+            # if self.polarization == "TM":
+            #     raise NotImplementedError(
+            #         f"PEC not yet implemented for TM polarization"
+            #     )
+            #     # FIXME: implement PEC for TM polarization (Robin BC)
+            # else:
+            if self.polarization == "TE":
+                curves = self.geom.subdomains["curves"]
+                markers_curves = self.geom.mesh_object["markers"]["line"]
+                ubnd = -self.ustack_coeff * self.phasor.conj
+                # ubnd = df.as_vector((ubnd_vec.real, ubnd_vec.imag))
+                ubnd_proj = project(ubnd, self.real_space)
+                bc = DirichletBC(
+                    self.complex_space, ubnd_proj, markers_curves, bnd, curves
+                )
+                [self._boundary_conditions.append(b) for b in bc]
 
     @property
     def k0(self):
@@ -349,34 +322,22 @@ class Grating2D(object):
             _psi,
         )
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
-        # phi2D = [[p[0], p[1]] for p in phi]
-        # eps = [d["epsilon"] for d in config.values() ]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
         self.phi = (np.array(self.phi) / self.phi[0][0]).tolist()
 
-        tcum = np.cumsum([0] + thick).tolist()
-        tcum += [tcum[-1]]
-        # phi2D_phased = []
-        # for p, e, b in zip(phi2D, tcum, beta):
-        #     dp, dm = np.exp(1j * b * e), np.exp(-1j * b * e)
-        #     pp_ = [p[0] * dp, p[1] * dm]
-        #     phi2D_phased.append(pp_)
         self.u_stack = [
             field_stack_2D(p, alpha0, b, yshift=0, domain=self.mesh)
-            for p, b, e in zip(self.phi, beta, tcum)
+            for p, b in zip(self.phi, beta)
         ]
         self.phi0 = [self.phi[0][0], 0]
         self.u_0 = field_stack_2D(
             self.phi0, alpha0, beta[0], yshift=0, domain=self.mesh
         )
-        # W0 = df.FunctionSpace(self.mesh, "DG", 0)
-        W0 = self.real_space
         estack = {k: v for k, v in zip(config.keys(), self.u_stack)}
         for dom in self.source_dom:
             estack[dom] = estack["superstrate"]
         estack["pml_bottom"] = estack["pml_top"] = 0
-        e0 = dict()
-        e0["superstrate"] = self.u_0  # project(u_0, W0)
+        e0 = {"superstrate": self.u_0}
         for dom in self.source_dom:
             e0[dom] = e0["superstrate"]
         e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = 0
@@ -404,38 +365,54 @@ class Grating2D(object):
         self._prepare_bcs()
         W = self.complex_space
         dx = self.dx
+        ds = self.ds
         self.u = Function(W)
         utrial = TrialFunction(W)
         utest = TestFunction(W)
         dxi = self.xi - self.xi_annex
         dchi = self.chi - self.chi_annex
+        n = self.unit_normal_vector
 
         # self.alpha_vect = Complex(df.as_vector([self.alpha, 0]), df.as_vector([0, 0]))
 
-        self.alpha_vect = as_vector([self.alpha, 0])
+        # self.alpha_vect = as_vector([self.alpha, 0])
+        self.ex = as_vector([1.0, 0.0])
 
-        L = (
+        L = [
             -dot(self.xi * grad(utrial), grad(utest)) * dx,
             1j
             * (
-                dot(self.alpha_vect, self.xi * grad(utrial) * utest)
-                - dot(self.alpha_vect, self.xi * grad(utest) * utrial)
+                dot(self.ex, self.xi * grad(utrial) * utest)
+                - dot(self.ex, self.xi * grad(utest) * utrial)
             )
             * dx,
-            -dot(self.xi * self.alpha_vect, self.alpha_vect) * utrial * utest * dx,
+            -dot(self.xi * self.ex, self.ex) * utrial * utest * dx,
             self.chi * utrial * utest * dx,
-        )
-        b = (
+        ]
+
+        b = [
             -dot(dxi * grad(self.ustack_coeff), grad(utest))
             * self.phasor.conj
             * dx(self.source_dom),
             1j
-            * dot(dxi * grad(self.ustack_coeff), self.alpha_vect)
+            * dot(dxi * grad(self.ustack_coeff), self.ex)
             * utest
             * self.phasor.conj
             * dx(self.source_dom),
             dchi * self.ustack_coeff * utest * self.phasor.conj * dx(self.source_dom),
-        )
+        ]
+        # surface term for PEC in TM polarization
+        if self.polarization == "TM" and len(self.pec_bnds) > 0:
+            L.append(
+                -1j * dot(self.xi * self.ex, n) * utrial * utest * ds(self.pec_bnds)
+            )
+            b.append(
+                dot(self.xi_annex * grad(self.ustack_coeff), n)
+                * utest
+                * self.phasor.conj
+                * ds(self.pec_bnds),
+            )
+
         self.lhs = [t.real + t.imag for t in L]
         self.rhs = [t.real + t.imag for t in b]
 
@@ -450,12 +427,16 @@ class Grating2D(object):
         self.assemble_rhs()
 
     def solve(self, direct=True):
-        ufunc = self.u.real  # .ufl_operands[0]
+        ufunc = self.u.real
         Ah = self.Ah[0] + self.k0 ** 2 * self.Ah[3]
         bh = -self.bh[0] - self.k0 ** 2 * self.bh[2]
         if self.alpha != 0:
-            Ah += self.Ah[1] + self.Ah[2]
-            bh -= self.bh[1]
+            Ah += self.alpha * self.Ah[1] + self.alpha ** 2 * self.Ah[2]
+            bh -= self.alpha * self.bh[1]
+            if self.polarization == "TM" and len(self.pec_bnds) > 0:
+                Ah += self.alpha * self.Ah[4]
+        if self.polarization == "TM" and len(self.pec_bnds) > 0:
+            bh += self.bh[3]
         for bc in self._boundary_conditions:
             bc.apply(Ah, bh)
 
@@ -633,62 +614,29 @@ class Grating2D(object):
 
         u_tot = self.u + self.ustack_coeff
 
-        nrj_chi_dens = -0.5 * chi_0 * omega * self.chi.imag * abs(u_tot) ** 2
+        nrj_chi_dens = (
+            df.Constant(-0.5 * chi_0 * omega) * self.chi * abs(u_tot) ** 2
+        ).imag
 
-        Qchi = assemble(nrj_chi_dens * self.dx(doms_no_pml)) / P0
-
-        Qchi = {d: assemble(nrj_chi_dens * self.dx(d)) / P0 for d in doms_no_pml}
-
-        # ## calculate dual
-        # inv_mu = _invert_3by3_complex_matrix(self.mu_coeff)
-        # # inv_mu = project(inv_mu,self.real_space)
-        # #
-        # # inv_mu = [project(inv_mu[i][j],self.real_space) for i in range(2) for j in range(2)]
-        # #
-        # # inv_mu = as_tensor(inv_mu)
-        #
-        # E = Complex(df.as_vector((0, 0, u_tot.real)), df.as_vector((0, 0, u_tot.imag)))
-        # curlE = curl(u_tot)
-        #
-        # H = 1 / (1j * omega * mu_0) * inv_mu * curlE
-        # H = Complex(
-        #     df.as_vector((H[0].real, H[1].real, 0)),
-        #     df.as_vector((H[0].imag, H[1].imag, 0)),
-        # )
-
-        # grad_u_tot = self.phasor * (1j*self.alpha_vect * self.uper + grad(self.uper)) + grad(
-        #     self.ustack_coeff
-        # )
         nrj_xi_dens = (
-            -0.5
-            * 1
-            / (omega * xi_0)
+            df.Constant(-0.5 * 1 / (omega * xi_0))
             * dot(grad(u_tot), (self.xi * grad(u_tot)).conj).imag
         )
-        # nrj_xi_dens = (
-        #     -0.5
-        #     * 1
-        #     / (omega * mu_0)
-        #     * dot(grad_u_tot, (self.xi * grad_u_tot).conj).imag
-        # )
 
-        # nrj_mag_dens = (dot(self.mu_coeff * H, H.conj)).imag
-
-        # doms_mu_abs = [d for d in doms_no_pml if self.mu[d].imag != 0]
-        # if len(doms_mu_abs) != 0:
-        #     nrj_xi =  assemble(nrj_xi_dens * self.dx(doms_mu_abs))
-        # else:
-        #     nrj_xi = 0
-        #
-        # Qxi = assemble(nrj_xi_dens * self.dx(doms_no_pml)) / P0
-        Qxi = {d: assemble(nrj_xi_dens * self.dx(d)) / P0 for d in doms_no_pml}
+        if subdomain_absorption:
+            Qchi = {d: assemble(nrj_chi_dens * self.dx(d)) / P0 for d in doms_no_pml}
+            Qxi = {d: assemble(nrj_xi_dens * self.dx(d)) / P0 for d in doms_no_pml}
+            Q = sum(Qxi.values()) + sum(Qchi.values())
+        else:
+            Qchi = assemble(nrj_chi_dens * self.dx(doms_no_pml)) / P0
+            Qxi = assemble(nrj_xi_dens * self.dx(doms_no_pml)) / P0
+            Q = Qxi + Qchi
 
         if self.polarization == "TE":
             Q_domains = {"electric": Qchi, "magnetic": Qxi}
         else:
             Q_domains = {"electric": Qxi, "magnetic": Qchi}
 
-        Q = sum(Qxi.values()) + sum(Qchi.values())
         self.Qtot = Q
 
         B = T + R + Q  # energy balance

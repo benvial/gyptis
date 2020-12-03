@@ -83,6 +83,11 @@ def _apply(item, fun):
 
 def isiter(v):
     return hasattr(v, "__contains__")
+    # test = v.real if iscomplex(v) else v
+    # if hasattr(test, "ufl_shape"):
+    #     return test.ufl_shape != ()
+    # else:
+    #     return hasattr(test, "__contains__")
 
 
 def _make_tensor(mapping):

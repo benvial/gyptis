@@ -284,11 +284,7 @@ class BiPeriodicBoundary3D(df.SubDomain):
 
     def map(self, x, y):
 
-        if df.near(x[0], self.period[0] / 2) and df.near(x[1], self.period[1] / 2):
-            y[0] = x[0] - self.period[0]
-            y[1] = x[1] - self.period[1]
-            y[2] = x[2]
-        elif df.near(x[0], self.period[0] / 2):
+        if df.near(x[0], self.period[0] / 2):
             y[0] = x[0] - self.period[0]
             y[1] = x[1]
             y[2] = x[2]
