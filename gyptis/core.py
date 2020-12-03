@@ -13,7 +13,6 @@ Finite Element model for solving Maxwell's equations in 2D media
 import dolfin as df
 import meshio
 import numpy as np
-import pygmsh as pg
 
 
 def _matfmt(mat, fmt=".4g", extraspace=[0, 0, 0]):
