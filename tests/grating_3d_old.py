@@ -352,9 +352,15 @@ class Grating3D(object):
         self.lhs = [t.real + t.imag for t in L]
         self.rhs = [t.real + t.imag for t in b]
 
-    def assemble(self):
+    def assemble_lhs(self):
         self.Ah = [assemble(A) for A in self.lhs]
+
+    def assemble_rhs(self):
         self.bh = [assemble(b) for b in self.rhs]
+
+    def assemble(self):
+        self.assemble_lhs()
+        self.assemble_rhs()
 
     def solve(self, direct=True):
         Efunc = self.E.real

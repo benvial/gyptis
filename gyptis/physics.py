@@ -40,7 +40,6 @@ class Scatt2D(object):
         self.dx = geom.measure["dx"]
         self.boundary_conditions = boundary_conditions
 
-        self.u0 = plane_wave_2D(self.lambda0, self.theta0, domain=self.mesh)
         self._prepare_materials()
 
         self.complex_space = ComplexFunctionSpace(self.mesh, "CG", self.degree)
@@ -117,6 +116,9 @@ class Scatt2D(object):
         dx = self.dx
 
         k0 = self.k0
+        self.u0, self.gradu0 = plane_wave_2D(
+            self.lambda0, self.theta0, domain=self.mesh, grad=True
+        )
         self.u = Function(W)
         utrial = TrialFunction(W)
         utest = TestFunction(W)
@@ -127,15 +129,21 @@ class Scatt2D(object):
             self.chi * utrial * utest * dx,
         )
         b = (
-            -dot(dxi * grad(self.u0), grad(utest)) * dx(self.source_dom),
+            -dot(dxi * self.gradu0, grad(utest)) * dx(self.source_dom),
             dchi * self.u0 * utest * dx(self.source_dom),
         )
         self.lhs = [t.real + t.imag for t in L]
         self.rhs = [t.real + t.imag for t in b]
 
-    def assemble(self):
+    def assemble_lhs(self):
         self.Ah = [assemble(A) for A in self.lhs]
+
+    def assemble_rhs(self):
         self.bh = [assemble(b) for b in self.rhs]
+
+    def assemble(self):
+        self.assemble_lhs()
+        self.assemble_rhs()
 
     def solve(self):
         ufunc = self.u.real
@@ -152,13 +160,19 @@ class Scatt2D(object):
         for i, w in enumerate(wavelengths):
             t = -time.time()
             self.lambda0 = w
-            self.u0 = plane_wave_2D(self.lambda0, self.theta0, domain=self.mesh)
+            self.u0, self.gradu0 = plane_wave_2D(
+                self.lambda0, self.theta0, domain=self.mesh, grad=True
+            )
             self.weak_form()
             if i == 0:
                 self.assemble()
+
+                df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
             else:
-                self.bh = [assemble(b) for b in self.rhs]
+                self.assemble_rhs()
             self.solve()
+
+            df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
             wl_sweep.append(self.u)
             t += time.time()
             print(f"iter {t:0.2f}s")

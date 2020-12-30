@@ -21,9 +21,6 @@ HAS_CONDA=True
 endif
 
 
-## install requirements with conda, if not found use pip
-
-
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -155,7 +152,9 @@ showhtmldoc:
 
 ## Run the test suite
 test:
-	source activate $(PROJECT_NAME)
+	# source activate $(PROJECT_NAME)
+	echo $(CONDA_DEFAULT_ENV)
+	
 	pytest ./tests -s -vv --cov=./$(PROJECT_NAME) --cov-report html
 
 ## Tag and push tags

@@ -28,6 +28,7 @@ def _add_method(cls, func, name):
     return func
 
 
+# gmsh.option.setNumber("Mesh.IgnorePeriodicity",1)
 occ = gmsh.model.occ
 setnum = gmsh.option.setNumber
 
@@ -91,6 +92,7 @@ class Model(object):
         data_dir=None,
         dim=3,
         gmsh_args=["-format", "msh2"],
+        # gmsh_args=["-ignore_periocity"],
         kill=False,
     ):
         self.model_name = model_name
@@ -113,6 +115,14 @@ class Model(object):
 
         self.gmsh_args = gmsh_args
         gmsh.initialize(self.gmsh_args)
+        # setnum("Mesh.MshFileVersion", 2)
+        # setnum("Mesh.IgnoreParametrization",1)
+        # setnum("Mesh.PreserveNumberingMsh2",1)
+        # setnum("Mesh.Renumber",0)
+        # setnum("Mesh.SaveElementTagType",0)
+
+        # setnum("Mesh.SaveTopology",1)
+        # setnum("Mesh.SaveAll",1)
 
     def add_physical(self, id, name, dim=None):
         """Add a physical domain.

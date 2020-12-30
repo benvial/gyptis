@@ -7,7 +7,7 @@
 import dolfin as df
 import numpy as np
 
-from gyptis.complex import Complex, iscomplex
+from gyptis.complex import *
 
 
 class _SubdomainPy(df.UserExpression):
@@ -190,3 +190,36 @@ class Subdomain(object):
         else:
             ClassReturn = SubdomainScalarComplex if cplx else SubdomainScalarReal
         return ClassReturn(markers, subdomains, mapping, cpp=cpp, **kwargs)
+
+
+def tensor_const(T):
+    def _treal(T):
+        m = []
+        for i in range(3):
+            col = []
+            for j in range(3):
+                col.append(df.Constant(T[i, j]))
+            m.append(col)
+        return df.as_tensor(m)
+
+    assert T.shape == (3, 3)
+    if hasattr(T, "real") and hasattr(T, "imag"):
+        return Complex(_treal(T.real), _treal(T.imag))
+    else:
+        return _treal(T)
+
+
+def make_constant_property(prop, inv=False):
+    new_prop = {}
+    for d, p in prop.items():
+        if hasattr(p, "__len__") and len(p) > 1:
+            k = np.linalg.inv(np.array(p)) if inv else np.array(p)
+            new_prop[d] = tensor_const(k)
+        else:
+            k = 1 / p + 0j if inv else p + 0j
+            new_prop[d] = Constant(k)
+    return new_prop
+
+
+def complex_vector(V):
+    return Complex(df.as_tensor([q.real for q in V]), df.as_tensor([q.imag for q in V]))

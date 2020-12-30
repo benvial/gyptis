@@ -10,6 +10,8 @@ import pytest
 
 from gyptis.physics import *
 
+df.set_log_level(20)
+
 
 def test_scatt2D():
 
