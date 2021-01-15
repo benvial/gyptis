@@ -221,5 +221,92 @@ def make_constant_property(prop, inv=False):
     return new_prop
 
 
+def tensor_const_2d(T):
+    def _treal(T):
+        m = []
+        for i in range(2):
+            col = []
+            for j in range(2):
+                col.append(df.Constant(T[i, j]))
+            m.append(col)
+        return df.as_tensor(m)
+
+    assert T.shape == (2, 2)
+    if hasattr(T, "real") and hasattr(T, "imag"):
+        return Complex(_treal(T.real), _treal(T.imag))
+    else:
+        return _treal(T)
+
+
+def make_constant_property_2d(prop):
+    new_prop = {}
+    for d, p in prop.items():
+        if hasattr(p, "__len__"):
+            try:
+                lenp = len(p)
+            except NotImplementedError:
+                lenp = 1
+        if hasattr(p, "__len__") and lenp > 1:
+            p = np.array(p)
+            if p.shape != (2, 2):
+                p = p[:2, :2]
+            k = np.array(p)
+            new_prop[d] = tensor_const_2d(k)
+        else:
+            k = p + 0j
+            if callable(k):
+                new_prop[d] = k
+            else:
+                new_prop[d] = Constant(k)
+    return new_prop
+
+
 def complex_vector(V):
     return Complex(df.as_tensor([q.real for q in V]), df.as_tensor([q.imag for q in V]))
+
+
+## xi
+def get_xi(prop):
+    new_prop = {}
+    for d, p in prop.items():
+        if hasattr(p, "__len__"):
+            try:
+                lenp = len(p)
+            except NotImplementedError:
+                lenp = 1
+        if hasattr(p, "__len__") and lenp > 1:
+            p = np.array(p)
+            k = p[:2, :2].T
+            k /= np.linalg.det(k)
+        else:
+            k = 1 / p + 0j
+        new_prop[d] = k
+    return new_prop
+
+
+## chi
+def get_chi(prop):
+    new_prop = {}
+    for d, p in prop.items():
+        if hasattr(p, "__len__"):
+            try:
+                lenp = len(p)
+            except NotImplementedError:
+                lenp = 1
+        if hasattr(p, "__len__") and lenp > 1:
+            p = np.array(p)
+            k = p[2, 2]
+        else:
+            k = p + 0j
+        new_prop[d] = k
+    return new_prop
+
+
+#
+#
+# xi = get_xi(g.epsilon)
+# chi = get_chi(g.mu)
+#
+#
+# xi_ = make_constant_property_2d(xi)
+# chi_ = make_constant_property_2d(chi)

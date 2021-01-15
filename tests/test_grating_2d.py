@@ -3,7 +3,19 @@
 # Author: Benjamin Vial
 # License: MIT
 
-from gyptis.grating_2d import *
+import sys
+import time
+from pprint import pprint
+
+try:
+    old = bool(sys.argv[1])
+except:
+    old = False
+
+if old:
+    from gyptis.grating_2d_old import *
+else:
+    from gyptis.grating_2d import *
 
 # def test_grating_2d():
 
@@ -12,39 +24,40 @@ if __name__ == "__main__":
 
     polarization = "TE"
     lambda0 = 40
-    theta0 = 20 * np.pi / 180
-    parmesh = 8
+    theta0 = 0 * np.pi / 180
+    parmesh = 20
     parmesh_pml = parmesh * 2 / 3
     period = 20
 
-    tr = pi / 5
+    tr = 0  # pi / 5
     rot = lambda t: np.array(
         [[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]]
     )
 
     R = rot(tr)
-    eps_island = np.diag([6 - 0.01j, 4 - 0.02j, 3 - 0.03j])
+    eps_island = np.diag([6 - 0.2j, 4 - 0.21j, 3 - 0.21j])
     eps_island = R.T @ eps_island @ R
     # eps_off_diag = 3 - 10.1j
     # eps_island[0, 1] = eps_off_diag
     # eps_island[1, 0] = np.conj(eps_off_diag)
-    # eps_island = 6 - 1j
-    mu_island = np.diag([5 - 0.01j, 3 - 0.02j, 2 - 0.01j])
+    # eps_island = 12
+
+    mu_island = np.diag([5 - 0.0j, 3 - 0.0j, 2 - 0.0j])
     mu_island = R.T @ mu_island @ R
     # mu_off_diag = 0  # 3.3 - 1.2j
     # mu_island[1, 0] = mu_island[0, 1] = mu_off_diag
-    # mu_island = 1
+    mu_island = 1
 
     order = 2
 
     thicknesses = OrderedDict(
         {
-            "pml_bottom": 1 * lambda0,
-            "substrate": 1 * lambda0,
+            "pml_bottom": 1.32 * lambda0,
+            "substrate": 1.3456 * lambda0,
             "sublayer": 10,
             "groove": 10,
-            "superstrate": 1 * lambda0,
-            "pml_top": 1 * lambda0,
+            "superstrate": 1.3456 * lambda0,
+            "pml_top": 1.22 * lambda0,
         }
     )
     #
@@ -52,11 +65,12 @@ if __name__ == "__main__":
     eps_sublayer = df.Expression(
         "3 + exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=period / 6
     )
-    eps_sublayer = 2
+    eps_sublayer = 1
+    eps_substrate = 1
 
     epsilon = dict(
         {
-            "substrate": 3,
+            "substrate": eps_substrate,
             "groove": 1,
             "sublayer": eps_sublayer,
             "island": eps_island,
@@ -65,7 +79,7 @@ if __name__ == "__main__":
     )
     mu = dict(
         {
-            "substrate": 2,
+            "substrate": 1,
             "groove": 1,
             "sublayer": 1,
             "island": mu_island,
@@ -188,26 +202,154 @@ if __name__ == "__main__":
     #     DirichletBC(g.complex_space, [0] * 6, markers_surf, f, surfaces)
     #     for f in ["face_top", "face_bottom"]
     # ]
-
-    from pprint import pprint
-
+    t = -time.time()
     g.weak_form()
+    #
+    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+
+    # g.assemble_rhs()
+    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+    # g.assemble_lhs()
+    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+    #
     g.assemble()
     g.solve(direct=True)
-    # g.solve(direct=False)
+
+    t += time.time()
+
     df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
 
-    # g.N_d_order=1
+    print(t)
 
-    g.N_d_order = 1
+    t = -time.time()
+    # g.solve(direct=False)
+    g.N_d_order = 0
     effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effs)  # ,sort_dicts=False)
     print("Qtot", g.Qtot)
+    t += time.time()
+
+    df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+    print(t)
+
+    sys.exit(0)
+
+    import matplotlib.pyplot as plt
+
+    plt.ion()
+    cb = df.plot(g.ustack_coeff.real, mesh=g.mesh)
+    plt.colorbar(cb)
+
+    plt.figure()
+
+    for d in g.domains:
+        delt = g.annex_field["stack"][d] - g.ustack_coeff
+        test = assemble(delt * g.dx(d))
+        q = assemble(g.ustack_coeff * g.dx(d))
+        if q != 0:
+            test /= q
+        print(f">>> {d} : {test}")
+
+    for d in g.domains:
+        cb = df.plot(g.annex_field["stack"][d].imag - g.ustack_coeff.imag, mesh=g.mesh)
+        plt.colorbar(cb)
+
+    d = "pml_top"
+
+    cb = df.plot(g.annex_field["stack"][d].real, mesh=g.mesh)
+    plt.colorbar(cb)
+
+    sys.exit(0)
+    #
+    #
+    #
+    # for d in g.domains:
+    #     if d in ["pml_top","pml_bottom"]:
+    #         print("PMLS")
+    #     else:
+    #         cb = df.plot(g.annex_field["stack"][d].real- g.ustack_coeff.real,mesh=g.mesh)
+    #         plt.colorbar(cb)
+    #
+
+    cb = df.plot(g.u.real)
+    plt.colorbar(cb)
+    plt.show()
+
+    ex = as_tensor([1 + 0j, 0 + 0j])
+    ey = as_tensor([0 + 0j, 1 + 0j])
+    [assemble(dot(g.xi * ex, ex) * g.dx(d)) for d in g.domains]
+    [assemble(dot(g.xi * ey, ey) * g.dx(d)) for d in g.domains]
+    [assemble(dot(g.xi * ex, ey) * g.dx(d)) for d in g.domains]
+    [assemble(dot(g.xi * ey, ex) * g.dx(d)) for d in g.domains]
+
+    ex = as_tensor([1 + 0j, 0 + 0j])
+    ey = as_tensor([0 + 0j, 1 + 0j])
+    [assemble(dot(g.xi[d] * ex, ex) * g.dx(d)) for d in g.domains]
+    [assemble(dot(g.xi[d] * ey, ey) * g.dx(d)) for d in g.domains]
+    [assemble(dot(g.xi[d] * ex, ey) * g.dx(d)) for d in g.domains]
+    [assemble(dot(g.xi[d] * ey, ex) * g.dx(d)) for d in g.domains]
+
+    [assemble(g.ustack_coeff * g.dx(d)) for d in g.domains]
+
+    [assemble(g.annex_field["stack"][d] * g.dx(d)) for d in g.domains]
+    [assemble(g.annex_field["incident"][d] * g.dx(d)) for d in g.domains]
+
+    xsa
+
+    g.lambda0 *= 1.1
+    g.weak_form()
+    g.assemble_rhs()
+
+    g.solve(direct=True)
+
+    df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+
+    # g.N_d_order=1
 
     g.polarization = "TM"
     g.weak_form()
     g.assemble()
     g.solve(direct=True)
+    df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
     effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effs)  # ,sort_dicts=False)
     print("Qtot", g.Qtot)
+
+    b = 2 * np.pi / g.lambda0
+    t = {}
+    for dom in g.domains:
+        phi = np.random.rand(2) + 1j * np.random.rand(2)
+        t[dom] = field_stack_2D(phi, 0, b, yshift=0, domain=g.mesh)
+        # t[dom] = Complex(np.random.rand(1)[0] , np.random.rand(1)[0])
+
+    a1 = [assemble(t[d] * g.dx(d)) for d in g.domains]
+
+    a1 = np.array([a.real + 1j * a.imag for a in a1])
+
+    test = Subdomain(g.markers, g.domains, t, degree=2, domain=g.mesh)
+
+    a2 = [assemble(test * g.dx(d)) for d in g.domains]
+    a2 = np.array([a.real + 1j * a.imag for a in a2])
+
+    print(a1)
+    print(a2)
+    err = np.abs(a1 - a2) / np.abs(a1)
+    print(err)
+
+    err_re = (a1 - a2).real / (a1).real
+    err_im = (a1 - a2).imag / (a1).imag
+    for i, d in enumerate(g.domains):
+        print(f">>> {d} : {err[i]}")
+        print(f">>> {d} : {err_re[i]} (real)")
+        print(f">>> {d} : {err_im[i]} (imag)")
+
+
+q = [assemble(g.annex_field["stack"][d] * g.dx(d)) for d in g.domains]
+q = np.array([a.real + 1j * a.imag for a in q])
+
+np.sum(q)
+assemble(g.ustack_coeff * g.dx)
+
+q = [assemble(g.ustack_coeff * g.dx(d)) for d in g.domains]
+q = np.array([a.real + 1j * a.imag for a in q])
+np.sum(q)

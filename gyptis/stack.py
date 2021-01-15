@@ -188,7 +188,7 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
 def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
 
     alpha0_re, alpha0_im, beta0_re, beta0_im = sp.symbols(
-        "alpha0_re,alpha0_im, beta0_re,beta0_im", real=True
+        "alpha0_re,alpha0_im,beta0_re,beta0_im", real=True
     )
     alpha0 = alpha0_re + 1j * alpha0_im
     beta0 = beta0_re + 1j * beta0_im

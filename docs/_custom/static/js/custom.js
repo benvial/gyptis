@@ -12,3 +12,11 @@ $('#return-to-top').click(function() {      // When arrow is clicked
         scrollTop : 0                       // Scroll to top of body
     }, 500);
 });
+
+
+
+// ===== Adds target=_blank to external links (open links in a new tab) ===== 
+
+$(document).ready(function () {
+  $('a[href^="http://"], a[href^="https://"]').not('a[class*=internal]').attr('target', '_blank');
+});

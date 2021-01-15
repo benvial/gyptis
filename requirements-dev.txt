@@ -4,6 +4,7 @@ wheel
 sphinx
 sphinx_bootstrap_theme
 sphinx_gallery
+memory_profiler
 numpydoc
 coverage
 flake8

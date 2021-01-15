@@ -7,7 +7,7 @@
 import os
 import tempfile
 import time
-from functools import wraps  # This convenience func preserves name and docstring
+from functools import wraps
 
 import gmsh
 import numpy as np
@@ -28,7 +28,6 @@ def _add_method(cls, func, name):
     return func
 
 
-# gmsh.option.setNumber("Mesh.IgnorePeriodicity",1)
 occ = gmsh.model.occ
 setnum = gmsh.option.setNumber
 
@@ -39,24 +38,9 @@ def _dimtag(tag, dim=3):
     return [(dim, t) for t in tag]
 
 
-# def remove(id, dim=3):
-#     occ.remove(_dimtag(id, dim=3), True)
-
-
 def _get_bnd(id, dim):
     out = gmsh.model.getBoundary(_dimtag(id, dim=dim), False, False, False)
     return [b[1] for b in out]
-
-
-#
-# def make_group(dic, dim=3):
-#     subdomain_dict = {}
-#     for id, tag in dic.items():
-#         if not isinstance(tag, list):
-#             tag = list([tag])
-#         subdomain_dict[id] = gmsh.model.addPhysicalGroup(dim, tag)
-#         gmsh.model.setPhysicalName(dim, subdomain_dict[id], id)
-#     return subdomain_dict
 
 
 class Model(object):
@@ -148,12 +132,22 @@ class Model(object):
         dim = dim or self.dim
         return _dimtag(id, dim=dim)
 
-    def fragmentize(self, id1, id2, dim1=None, dim2=None, sync=True):
+    def fragmentize(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = dim1 if dim1 else self.dim
         dim2 = dim2 if dim2 else self.dim
         a1 = self.dimtag(id1, dim1)
         a2 = self.dimtag(id2, dim2)
-        ov, ovv = occ.fragment(a1, a2)
+        ov, ovv = occ.fragment(a1, a2, **kwargs)
+        if sync:
+            occ.synchronize()
+        return [o[1] for o in ov]
+
+    def chop(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
+        dim1 = dim1 if dim1 else self.dim
+        dim2 = dim2 if dim2 else self.dim
+        a1 = self.dimtag(id1, dim1)
+        a2 = self.dimtag(id2, dim2)
+        ov, ovv = occ.cut(a1, a2, **kwargs)
         if sync:
             occ.synchronize()
         return [o[1] for o in ov]
@@ -186,6 +180,12 @@ class Model(object):
             for id in subitems.copy().keys():
                 if id not in names:
                     subitems.pop(id)
+
+    def set_mesh_size(self, params, dim=2):
+        type_entity = "surfaces" if dim == 2 else "curves"
+        for sub, num in self.subdomains[type_entity].items():
+            n = gmsh.model.getEntitiesForPhysicalGroup(dim, num)[0]
+            self.set_size(n, params[sub], dim=dim)
 
     def build(
         self,

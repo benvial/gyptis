@@ -366,4 +366,5 @@ sphinx_gallery_conf = {
     # Modules for which function level galleries are created.
     "doc_module": package.__name__,
     "default_thumb_file": html_logo,
+    "show_memory": True,
 }
