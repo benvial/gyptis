@@ -162,11 +162,35 @@ class Model(object):
             occ.synchronize()
         return [o[1] for o in ov]
 
-    def get_boundaries(self, id, dim=None):
+    def get_boundaries(self, id, dim=None, physical=True):
         dim = dim if dim else self.dim
-        return _get_bnd(id, dim=dim)
+        if isinstance(id, str):
+            if dim == 3:
+                type_entity = "volumes"
+            elif dim == 2:
+                type_entity = "surfaces"
+            else:
+                type_entity = "curves"
+            id = self.subdomains[type_entity][id]
 
-    def set_size(self, id, s, dim=None):
+            n = gmsh.model.getEntitiesForPhysicalGroup(dim, id)
+            bnds = [_get_bnd(n_, dim=dim) for n_ in n]
+            bnds = [item for sublist in bnds for item in sublist]
+            return list(dict.fromkeys(bnds))
+        else:
+            if physical:
+                n = gmsh.model.getEntitiesForPhysicalGroup(dim, id)[0]
+            else:
+                n = id
+            return _get_bnd(n, dim=dim)
+
+    # def get_boundaries(self, id, dim=None):
+    #     dim = dim if dim else self.dim
+    #
+    #     n = gmsh.model.getEntitiesForPhysicalGroup(dim, id)[0]
+    #     return _get_bnd(n, dim=dim)
+
+    def _set_size(self, id, s, dim=None):
         dim = dim if dim else self.dim
         p = gmsh.model.getBoundary(
             self.dimtag(id, dim=dim), False, False, True
@@ -181,11 +205,31 @@ class Model(object):
                 if id not in names:
                     subitems.pop(id)
 
-    def set_mesh_size(self, params, dim=2):
-        type_entity = "surfaces" if dim == 2 else "curves"
+    def set_mesh_size(self, params, dim=None):
+        dim = dim if dim else self.dim
+        if dim == 3:
+            type_entity = "volumes"
+        elif dim == 2:
+            type_entity = "surfaces"
+        else:
+            type_entity = "curves"
         for sub, num in self.subdomains[type_entity].items():
-            n = gmsh.model.getEntitiesForPhysicalGroup(dim, num)[0]
-            self.set_size(n, params[sub], dim=dim)
+            if sub in params:
+                n = gmsh.model.getEntitiesForPhysicalGroup(dim, num)
+                for n_ in n:
+                    self._set_size(n_, params[sub], dim=dim)
+
+    def set_size(self, id, s, dim=None):
+        if hasattr(id, "__len__") and not isinstance(id, str):
+            for i, id_ in enumerate(id):
+                if hasattr(s, "__len__"):
+                    s_ = s[i]
+                else:
+                    s_ = s
+                params = {id_: s_}
+                self.set_mesh_size(params, dim=dim)
+        else:
+            self.set_mesh_size({id: s}, dim=dim)
 
     def build(
         self,

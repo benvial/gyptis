@@ -10,7 +10,7 @@ Finite Element model for solving Maxwell's equations in 2D media
 
 """
 
-import dolfin as df
+
 import meshio
 import numpy as np
 

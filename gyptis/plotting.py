@@ -3,7 +3,7 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import dolfin as df
+
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang

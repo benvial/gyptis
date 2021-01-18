@@ -5,7 +5,6 @@
 
 from collections import OrderedDict
 
-import dolfin as df
 import numpy as np
 from numpy.linalg import inv
 from scipy.constants import c, epsilon_0, mu_0

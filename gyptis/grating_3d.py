@@ -6,7 +6,6 @@
 
 from collections import OrderedDict
 
-import dolfin as df
 import numpy as np
 import pytest
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
@@ -94,6 +93,8 @@ class Layered3D(Model):
 
         self.removeAllDuplicates()
         self.synchronize()
+        for sub, num in self.subdomains["volumes"].items():
+            self.add_physical(num, sub)
 
     def make_layer(self, z_position, thickness):
         dx, dy = self.period
@@ -540,6 +541,7 @@ class Grating3D(object):
         X_t, Y_t = np.meshgrid(x_t, y_t)
         phasor_slice = np.exp(1j * (self.alpha0 * X_t + self.beta0 * Y_t))
 
+        # reflection
         Er = []
         Eper_interp = np.zeros(
             (self.ninterv_integ, self.ninterv_integ, self.nb_slice, 3), dtype=complex
@@ -555,12 +557,14 @@ class Grating3D(object):
         for comp in range(3):
             eslice = []
             for iz, z in enumerate(z_slice_r):
-                prm = np.exp(1j * layer_diopter[0]["gamma"] * z)
+                prm = np.exp(-1j * layer_diopter[0]["gamma"] * z)
                 eper = Eper_interp[:, :, iz, comp]
                 p = phiminus[comp] * prm
                 ecomp = (eper + p) * phasor_slice
                 eslice.append(ecomp.T)
             Er.append(eslice)
+
+        # transmission
 
         Et = []
         Eper_interp = np.zeros(
@@ -706,9 +710,23 @@ class Grating3D(object):
                             + gammatr[n9, m9] ** 2 * np.abs(ez_nm_r[n9, m9]) ** 2
                         )
                     )
+
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.plot(AXsir[1, 1].real)
+        plt.plot(AXsit[1, 1].real, "--")
+        print("STD")
+        print("---")
+        print("R", np.std(AXsir[1, 1]))
+        print("T", np.std(AXsit[1, 1]))
+        AXsir[1, 1]
+        plt.show()
+
         Q = self.postpro_absorption()
         Tnm = np.mean(AXsit, axis=2).real
         Rnm = np.mean(AXsir, axis=2).real
+
         # energy = dict([('trans', Tnm), ('refl', Rnm), ('abs1', Q),
         #                ('refl_slices', AXsir), ('trans_slices', AXsit)])
         balance = np.sum(np.sum(Tnm)) + np.sum(np.sum(Rnm)) + Q

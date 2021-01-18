@@ -4,7 +4,6 @@
 # License: MIT
 
 
-import dolfin as df
 import numpy as np
 import sympy as sp
 from sympy.vector import CoordSys3D

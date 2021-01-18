@@ -4,10 +4,10 @@
 # License: MIT
 
 
-import dolfin as df
 import numpy as np
 import pytest
 
+from gyptis import dolfin as df
 from gyptis.physics import *
 
 df.set_log_level(20)

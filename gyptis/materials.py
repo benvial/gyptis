@@ -4,7 +4,6 @@
 # License: MIT
 
 
-import dolfin as df
 import numpy as np
 
 from gyptis.complex import *

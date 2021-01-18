@@ -3,13 +3,13 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import dolfin as df
 
-from gyptis.complex import *
-from gyptis.core import PML
-from gyptis.geometry import *
-from gyptis.materials import *
-from gyptis.sources import *
+from .complex import *
+from .core import PML
+from .geometry import *
+from .helpers import _get_form
+from .materials import *
+from .sources import *
 
 
 class Scatt2D(object):
@@ -51,7 +51,10 @@ class Scatt2D(object):
 
     def _make_subdomains(self, epsilon, mu):
         epsilon_coeff = Subdomain(
-            self.markers, self.domains, epsilon, degree=self.degree
+            self.markers,
+            self.domains,
+            epsilon,
+            degree=self.degree,
         )
         mu_coeff = Subdomain(self.markers, self.domains, mu, degree=self.degree)
         return epsilon_coeff, mu_coeff
@@ -147,11 +150,14 @@ class Scatt2D(object):
 
     def solve(self):
         ufunc = self.u.real
+        # ufunc = df.Function(self.real_space)
         Ah = self.Ah[0] + self.k0 ** 2 * self.Ah[1]
         bh = self.bh[0] + self.k0 ** 2 * self.bh[1]
         for bc in self.boundary_conditions:
             bc.apply(Ah, bh)
-        solver = df.LUSolver(Ah)
+        Ah.form = _get_form(self.Ah)
+        bh.form = _get_form(self.bh)
+        solver = df.LUSolver("mumps")
         solver.solve(Ah, ufunc.vector(), bh)
 
     def wavelength_sweep(self, wavelengths):

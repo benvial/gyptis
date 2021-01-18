@@ -3,18 +3,24 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import os
 import sys
-import time
-from copy import copy
-from functools import cached_property
 
-import dolfin as df
-import meshio
 import numpy as np
-from dolfin import DirichletBC as _DirichletBC
-from dolfin import Measure as _Measure
-from scipy.interpolate import griddata
+
+from . import dolfin as df
+
+_DirichletBC = df.DirichletBC
+_Measure = df.Measure
+
+
+def _get_form(u):
+    form = 0
+    for f in u:
+        try:
+            form += f.form
+        except:
+            return
+    return form
 
 
 def get_coords(A):

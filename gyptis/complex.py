@@ -11,10 +11,10 @@ to easily deal with complex problems by spliting real and imaginary parts.
 
 from typing import Iterable
 
-import dolfin as df
 import numpy as np
 import ufl
 
+from . import dolfin as df
 from .helpers import DirichletBC as __DirichletBC__
 
 

@@ -16,6 +16,9 @@ from gyptis.helpers import *
 model = geom2D(mesh_size=0.01)
 
 
+# tol=1e-13
+
+# if __name__=="__main__":
 def test_measure(model=model, tol=1e-13):
     dx = Measure(
         "dx",

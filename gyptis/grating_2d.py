@@ -6,7 +6,6 @@
 
 from collections import OrderedDict
 
-import dolfin as df
 import numpy as np
 import pytest
 from scipy.constants import c, epsilon_0, mu_0

@@ -122,7 +122,7 @@ def test_complex(tol=1e-15):
         assert abs(assemble((u - sol) * dx)) < tol
         assert abs((u((0.5, 0.5)) - sol((0.5, 0.5)))) < tol_local
 
-    _solve(df.LUSolver(Ah), 1e-12, 1e-12)
+    # _solve(df.LUSolver(Ah), 1e-12, 1e-12)
     _solve(df.PETScKrylovSolver(), 1e-6, 1e-4)
 
     uproj = project(u.real, W0)

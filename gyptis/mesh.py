@@ -3,9 +3,10 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import dolfin as df
 import meshio
 import numpy as np
+
+from . import dolfin as df
 
 
 def read_mesh(mesh_file, data_dir="./data", dim=3):
