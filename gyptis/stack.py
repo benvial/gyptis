@@ -205,7 +205,7 @@ def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
     re, im = (p.subs(x[2], 0) for p in (re, im))
     code = [sp.printing.ccode(p) for p in (re, im)]
     expr = [
-        df.Expression(
+        dolfin.Expression(
             c,
             alpha0_re=alpha.real,
             alpha0_im=alpha.imag,
@@ -256,7 +256,7 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
     code = [[sp.printing.ccode(p) for p in f.as_real_imag()] for f in fields]
     code = np.ravel(code).tolist()
     expr = [
-        df.Expression(
+        dolfin.Expression(
             c,
             alpha0_re=alpha.real,
             alpha0_im=alpha.imag,
@@ -302,7 +302,7 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
 #     def build(P):
 #         re, im = P.as_real_imag()
 #         code = [sp.printing.ccode(p) for p in (re, im)]
-#         e = df.Expression(
+#         e = dolfin.Expression(
 #             code,
 #             alpha0=alpha0,
 #             beta0=beta0,
@@ -316,9 +316,9 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
 #     prop_plus = build(Prop_plus)
 #     prop_minus = build(Prop_minus)
 #
-#     Phi_plus = Complex(df.as_tensor([*phi[0::2].real]), df.as_tensor([*phi[0::2].imag]))
+#     Phi_plus = Complex(dolfin.as_tensor([*phi[0::2].real]), dolfin.as_tensor([*phi[0::2].imag]))
 #     Phi_minus = Complex(
-#         df.as_tensor([*phi[1::2].real]), df.as_tensor([*phi[1::2].imag])
+#         dolfin.as_tensor([*phi[1::2].real]), dolfin.as_tensor([*phi[1::2].imag])
 #     )
 #     E_plus = Phi_plus * prop_plus
 #     E_minus = Phi_minus * prop_minus

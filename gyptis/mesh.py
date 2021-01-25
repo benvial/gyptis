@@ -6,7 +6,7 @@
 import meshio
 import numpy as np
 
-from . import dolfin as df
+from . import dolfin
 
 
 def read_mesh(mesh_file, data_dir="./data", dim=3):
@@ -46,11 +46,11 @@ def read_mesh(mesh_file, data_dir="./data", dim=3):
 
     ### markers
     mesh_object = {}
-    mesh_model = df.Mesh()
+    mesh_model = dolfin.Mesh()
 
     c = "tetra" if dim == 3 else "triangle"
     filename = f"{data_dir}/{c}.xdmf"
-    with df.XDMFFile(filename) as infile:
+    with dolfin.XDMFFile(filename) as infile:
         infile.read(mesh_model)
 
     mesh_object["mesh"] = mesh_model
@@ -61,13 +61,13 @@ def read_mesh(mesh_file, data_dir="./data", dim=3):
     for c in celltypes:
         filename = f"{data_dir}/{c}.xdmf"
         i = dim_map[c]
-        mvc = df.MeshValueCollection("size_t", mesh_model, i)
-        with df.XDMFFile(filename) as infile:
+        mvc = dolfin.MeshValueCollection("size_t", mesh_model, i)
+        with dolfin.XDMFFile(filename) as infile:
             infile.read(mvc, c)
-        markers[c] = df.cpp.mesh.MeshFunctionSizet(mesh_model, mvc)
+        markers[c] = dolfin.cpp.mesh.MeshFunctionSizet(mesh_model, mvc)
 
     mesh_object["markers"] = markers
-    # mesh_object["markers"]= df.cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
-    # mesh_object["markers"]= df.cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
+    # mesh_object["markers"]= dolfin.cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
+    # mesh_object["markers"]= dolfin.cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
 
     return mesh_object

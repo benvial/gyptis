@@ -3,11 +3,10 @@
 2D Dielectric Grating
 =====================
 
-Example of a dielectric diffration grating.
+Example of a dielectric diffraction grating.
 """
 
-import dolfin as df
-
+from gyptis import dolfin
 from gyptis.grating_2d import *
 from gyptis.plotting import *
 
@@ -89,10 +88,11 @@ grating = Grating2D(
 )
 
 grating.N_d_order = 1
-
+grating.prepare()
 grating.weak_form()
 grating.assemble()
-grating.solve(direct=True)
+grating.build_system()
+grating.solve()
 effs_TE = grating.diffraction_efficiencies(orders=True)
 
 E = grating.u + grating.ustack_coeff
@@ -112,8 +112,10 @@ print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 # We switch to TM polarization
 
 grating.polarization = "TM"
+grating.prepare()
 grating.weak_form()
 grating.assemble()
+grating.build_system()
 grating.solve()
 effs_TM = grating.diffraction_efficiencies(orders=True)
 
@@ -127,7 +129,7 @@ ylim = model.y_position["substrate"], model.y_position["pml_top"]
 
 fig, ax = plt.subplots(1, 2)
 plt.sca(ax[0])
-cb = df.plot(E.real, cmap="RdBu_r")
+cb = dolfin.plot(E.real, cmap="RdBu_r")
 plot_subdomains(grating.markers)
 plt.ylim(ylim)
 plt.colorbar(cb)
@@ -136,7 +138,7 @@ ax[0].set_title("$E_z$ (TE)")
 plt.tight_layout()
 
 plt.sca(ax[1])
-cb = df.plot(H.real, cmap="RdBu_r")
+cb = dolfin.plot(H.real, cmap="RdBu_r")
 plot_subdomains(grating.markers)
 plt.ylim(ylim)
 plt.colorbar(cb)

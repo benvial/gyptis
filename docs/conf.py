@@ -49,6 +49,7 @@ extensions = [
     # 'sphinx.ext.coverage',
     "sphinx.ext.mathjax",
     "sphinx_gallery.gen_gallery",
+    "sphinx_copybutton",
     # 'sphinx_issues',
 ]
 

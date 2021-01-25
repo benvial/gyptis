@@ -3,11 +3,11 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import dolfin as df
 import pytest
 from numpy import pi
 from test_geometry import geom2D
 
+from gyptis import dolfin
 from gyptis.helpers import *
 
 # m.geometric_dimension()
@@ -27,18 +27,18 @@ def test_measure(model=model, tol=1e-13):
         subdomain_dict=model.subdomains["surfaces"],
     )
 
-    _dx = df.Measure(
+    _dx = dolfin.Measure(
         "dx",
         domain=model.mesh_object["mesh"],
         subdomain_data=model.mesh_object["markers"]["triangle"],
     )
     assert dx == _dx
-    area = df.assemble(1 * dx)
-    assert area == df.assemble(1 * _dx)
+    area = dolfin.assemble(1 * dx)
+    assert area == dolfin.assemble(1 * _dx)
     assert abs(area - model.square_size ** 2) < tol
-    area_cyl = df.assemble(1 * dx("cyl"))
+    area_cyl = dolfin.assemble(1 * dx("cyl"))
     assert abs(area_cyl - pi * model.radius ** 2) < 1e-4
-    area_box = df.assemble(1 * dx("box"))
+    area_box = dolfin.assemble(1 * dx("box"))
     assert abs(area_box - (model.square_size ** 2 - pi * model.radius ** 2)) < 1e-4
 
     ## exterior_facets
@@ -59,9 +59,9 @@ def test_measure(model=model, tol=1e-13):
         subdomain_dict=model.subdomains["curves"],
     )
 
-    len_circ = df.assemble(1 * dS("cyl_bnds"))
+    len_circ = dolfin.assemble(1 * dS("cyl_bnds"))
     assert abs(len_circ - 2 * pi * model.radius) < 1e-4
-    len_box = df.assemble(1 * ds("outer_bnds"))
+    len_box = dolfin.assemble(1 * ds("outer_bnds"))
     assert abs(len_box - model.square_size * 4) < 1e-4
 
 
@@ -69,21 +69,21 @@ def test_dirichlet(model=model, tol=1e-13):
     dx = model.measure["dx"]
     ds = model.measure["ds"]
     dS = model.measure["dS"]
-    W = df.FunctionSpace(model.mesh_object["mesh"], "CG", 1)
+    W = dolfin.FunctionSpace(model.mesh_object["mesh"], "CG", 1)
     boundaries_dict = model.subdomains["curves"]
     markers_line = model.mesh_object["markers"]["line"]
 
-    ubnd = df.project(df.Expression("x[0]", degree=2), W)
+    ubnd = dolfin.project(dolfin.Expression("x[0]", degree=2), W)
 
     bc1 = DirichletBC(W, 1, markers_line, "outer_bnds", boundaries_dict)
     bc2 = DirichletBC(W, ubnd, markers_line, "cyl_bnds", boundaries_dict)
-    u = df.TrialFunction(W)
-    v = df.TestFunction(W)
-    a = df.inner(df.grad(u), df.grad(v)) * dx + u * v * dx
-    L = df.Constant(0) * v * dx
-    u = df.Function(W)
-    df.solve(a == L, u, [bc1, bc2])
-    a = df.assemble(u * ds("outer_bnds"))
+    u = dolfin.TrialFunction(W)
+    v = dolfin.TestFunction(W)
+    a = dolfin.inner(dolfin.grad(u), dolfin.grad(v)) * dx + u * v * dx
+    L = dolfin.Constant(0) * v * dx
+    u = dolfin.Function(W)
+    dolfin.solve(a == L, u, [bc1, bc2])
+    a = dolfin.assemble(u * ds("outer_bnds"))
     assert np.abs(a - 4 * model.square_size) ** 2 < 1e-10
 
     r = model.radius

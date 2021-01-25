@@ -6,37 +6,12 @@
 
 from collections import OrderedDict
 
-import numpy as np
-import pytest
-from scipy.constants import c, epsilon_0, mu_0
+from .base import *
+from .base import _coefs, _make_cst_mat
+from .helpers import DirichletBC, PeriodicBoundary2DX
+from .stack import *
 
-from gyptis.complex import *
-from gyptis.complex import _invert_3by3_complex_matrix
-from gyptis.core import PML
-from gyptis.geometry import *
-from gyptis.helpers import DirichletBC, PeriodicBoundary2DX
-from gyptis.materials import *
-from gyptis.sources import *
-from gyptis.stack import *
-
-pi = np.pi
-
-
-lu_params = {"report": True, "symmetric": False, "verbose": True}
-
-
-krylov_params = {
-    "absolute_tolerance": 1.0e-1,
-    "divergence_limit": 1000.0,
-    "error_on_nonconvergence": True,
-    "maximum_iterations": 500,
-    "monitor_convergence": True,
-    "nonzero_initial_guess": False,
-    "relative_tolerance": 1.0e-1,
-    "report": True,
-}
-
-df.set_log_level(20)
+# dolfin.set_log_level(20)
 
 
 def _translation_matrix(t):
@@ -96,18 +71,6 @@ class Layered2D(Model):
         for sub, num in self.subdomains["surfaces"].items():
             self.add_physical(num, sub)
 
-        #
-        # pg = gmsh.model.getPhysicalGroups()
-        # print(pg)
-        # pgnames = [ gmsh.model.getPhysicalName(*p) for p in pg]
-        # print(pgnames)
-        #
-
-        # self.removeAllDuplicates()
-        # self.synchronize()
-        # for id, layer in zip(self.thicknesses.keys(),self._phys_groups):
-        #     self.add_physical(layer, id)
-
     def make_layer(self, y_position, thickness):
         box = self.addRectangle(-self.period / 2, y_position, 0, self.period, thickness)
         return box
@@ -139,66 +102,36 @@ class Layered2D(Model):
         return s
 
 
-class Simulation2D(object):
-    def __init__(
-        self,
-        geom,
-        degree=1,
-        boundary_conditions={},
-    ):
-        self.geom = geom
-        self.degree = degree
-        self.mesh = geom.mesh_object["mesh"]
-        self.markers = geom.mesh_object["markers"]["triangle"]
-        self.domains = geom.subdomains["surfaces"]
-        self.surfaces = geom.subdomains["curves"]
-        self.dx = geom.measure["dx"]
-        self.ds = geom.measure["ds"] if self.surfaces else None
-        self.dS = geom.measure["dS"] if self.surfaces else None
-        self.boundary_conditions = boundary_conditions
-        self.unit_normal_vector = df.FacetNormal(self.mesh)
+class Grating2D(ElectroMagneticSimulation2D):
+    def __init__(self, geom, epsilon, mu, pml_stretch=1 - 1j, **kwargs):
 
+        super().__init__(geom, epsilon, mu, **kwargs)
 
-class Grating2D(Simulation2D):
-    def __init__(
-        self,
-        geom,
-        epsilon,
-        mu,
-        lambda0=1,
-        theta0=0,
-        polarization="TE",
-        degree=1,
-        pml_stretch=1 - 1j,
-        boundary_conditions={},
-    ):
-
-        super().__init__(geom, degree=degree, boundary_conditions=boundary_conditions)
-
-        self.lambda0 = lambda0
-        self.theta0 = theta0
-        self.polarization = polarization
-        self.epsilon = epsilon
-        self.mu = mu
+        self.period = self.geom.period
         self.pml_stretch = pml_stretch
         self.N_d_order = 0
         self.nb_slice = 20
         self.scan_dist_ratio = 5
         self.npt_integ = 401
 
-        self.periodic_bcs = PeriodicBoundary2DX(self.geom.period)
+        self.ex = as_vector([1.0, 0.0])
+
+        self.periodic_bcs = PeriodicBoundary2DX(self.period)
 
         self.complex_space = ComplexFunctionSpace(
             self.mesh, "CG", self.degree, constrained_domain=self.periodic_bcs
         )
-        self.real_space = df.FunctionSpace(
+        self.real_space = dolfin.FunctionSpace(
             self.mesh, "CG", self.degree, constrained_domain=self.periodic_bcs
         )
 
-        self.no_source_dom = ["substrate", "pml_top", "pml_bottom", "superstrate"]
-        self.source_dom = [
-            z for z in self.epsilon.keys() if z not in self.no_source_dom
+        self.no_source_domains = ["substrate", "pml_top", "pml_bottom", "superstrate"]
+        self.source_domains = [
+            z for z in self.domains if z not in self.no_source_domains
         ]
+
+        self.utrial = TrialFunction(self.complex_space)
+        self.utest = TestFunction(self.complex_space)
 
     def _prepare_bcs(self):
         self._boundary_conditions = []
@@ -216,22 +149,20 @@ class Grating2D(Simulation2D):
             #     # FIXME: implement PEC for TM polarization (Robin BC)
             # else:
             if self.polarization == "TE":
-                curves = self.geom.subdomains["curves"]
-                markers_curves = self.geom.mesh_object["markers"]["line"]
                 ubnd = -self.ustack_coeff * self.phasor.conj
-                # ubnd = df.as_vector((ubnd_vec.real, ubnd_vec.imag))
+                # ubnd = dolfin.as_vector((ubnd_vec.real, ubnd_vec.imag))
                 ubnd_proj = project(ubnd, self.real_space)
                 bc = DirichletBC(
-                    self.complex_space, ubnd_proj, markers_curves, bnd, curves
+                    self.complex_space,
+                    ubnd_proj,
+                    self.boundary_markers,
+                    bnd,
+                    self.boundaries,
                 )
                 [self._boundary_conditions.append(b) for b in bc]
 
-    @property
-    def k0(self):
-        return 2 * np.pi / self.lambda0
-
     def get_N_d_order(self):
-        a = self.geom.period / self.lambda0
+        a = self.period / self.lambda0
         b = np.sin(self.theta0)
         index = np.array(
             [
@@ -247,85 +178,12 @@ class Grating2D(Simulation2D):
     # def N_d_order(self, value):
     #     self._N_d_order = value
 
-    def _make_subdomains(self, epsilon, mu):
-        epsilon_coeff = Subdomain(
-            self.markers, self.domains, epsilon, degree=self.degree
-        )
-        mu_coeff = Subdomain(self.markers, self.domains, mu, degree=self.degree)
-        return epsilon_coeff, mu_coeff
-
-    def _prepare_materials(self):
-        epsilon = dict(superstrate=1, substrate=1)
-        mu = dict(superstrate=1, substrate=1)
-        epsilon.update(self.epsilon)
-        mu.update(self.mu)
-        self.epsilon_pml, self.mu_pml = self._make_pmls()
-        self.epsilon.update(self.epsilon_pml)
-        self.mu.update(self.mu_pml)
-        self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
-
-        mu_annex = self.mu.copy()
-        eps_annex = self.epsilon.copy()
-        for a in self.source_dom:
-            mu_annex[a] = self.mu["superstrate"]
-            eps_annex[a] = self.epsilon["superstrate"]
-        self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            eps_annex, mu_annex
-        )
-
-        self.epsilon_annex = eps_annex
-        self.mu_annex = mu_annex
-
-        def _make_cst_mat(a, b):
-            xi = get_xi(a)
-            chi = get_chi(b)
-            xi_ = make_constant_property_2d(xi)
-            chi_ = make_constant_property_2d(chi)
-            return xi_, chi_
-
-        if self.polarization == "TE":
-            self.xi, self.chi = _make_cst_mat(self.mu, self.epsilon)
-            self.xi_annex, self.chi_annex = _make_cst_mat(
-                self.mu_annex, self.epsilon_annex
-            )
-        else:
-            self.xi, self.chi = _make_cst_mat(self.epsilon, self.mu)
-            self.xi_annex, self.chi_annex = _make_cst_mat(
-                self.epsilon_annex, self.mu_annex
-            )
-
-    def _coefs(self, a, b):
-        # xsi = det Q^T/det Q
-        extract = lambda q: df.as_tensor([[q[0][0], q[1][0]], [q[0][1], q[1][1]]])
-        det = lambda M: M[0][0] * M[1][1] - M[1][0] * M[0][1]
-        a2 = Complex(extract(a.real), extract(a.imag))
-        xi = a2 / det(a2)
-        chi = b[2][2]
-        return xi, chi
-
-    def _make_coefs(self):
-        if self.polarization == "TE":
-            self.xi_coeff, self.chi_coeff = self._coefs(
-                self.mu_coeff, self.epsilon_coeff
-            )
-            self.xi_coeff_annex, self.chi_coeff_annex = self._coefs(
-                self.mu_coeff_annex, self.epsilon_coeff_annex
-            )
-        else:
-            self.xi_coeff, self.chi_coeff = self._coefs(
-                self.epsilon_coeff, self.mu_coeff
-            )
-            self.xi_coeff_annex, self.chi_coeff_annex = self._coefs(
-                self.epsilon_coeff_annex, self.mu_coeff_annex
-            )
-
     def _make_pmls(self):
+        pml_domains = ["substrate", "superstrate"]
         pml = PML("y", stretch=self.pml_stretch)
         t = pml.transformation_matrix()
-        eps_pml_ = [
-            (self.epsilon[d] * t).tolist() for d in ["substrate", "superstrate"]
-        ]
-        mu_pml_ = [(self.mu[d] * t).tolist() for d in ["substrate", "superstrate"]]
+        eps_pml_ = [(self.epsilon[d] * t).tolist() for d in pml_domains]
+        mu_pml_ = [(self.mu[d] * t).tolist() for d in pml_domains]
         epsilon_pml = dict(pml_bottom=eps_pml_[0], pml_top=eps_pml_[1])
         mu_pml = dict(pml_bottom=mu_pml_[0], pml_top=mu_pml_[1])
         return epsilon_pml, mu_pml
@@ -369,13 +227,13 @@ class Grating2D(Simulation2D):
             self.phi0, alpha0, beta[0], yshift=0, domain=self.mesh
         )
         estack = {k: v for k, v in zip(config.keys(), self.u_stack)}
-        for dom in self.source_dom:
+        for dom in self.source_domains:
             estack[dom] = estack["superstrate"]
         # estack["pml_bottom"] = estack["pml_top"] = Complex(0,0)
         estack["pml_bottom"] = estack["substrate"]
         estack["pml_top"] = estack["superstrate"]
         e0 = {"superstrate": self.u_0}
-        for dom in self.source_dom:
+        for dom in self.source_domains:
             e0[dom] = e0["superstrate"]
         e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(
             0, 0
@@ -396,155 +254,240 @@ class Grating2D(Simulation2D):
         self.annex_field = {"incident": inc_field, "stack": stack_field}
 
     def _phasor(self, *args, **kwargs):
-        phasor_re = df.Expression("cos(alpha*x[0])", *args, **kwargs)
-        phasor_im = df.Expression("sin(alpha*x[0])", *args, **kwargs)
+        phasor_re = dolfin.Expression("cos(alpha*x[0])", *args, **kwargs)
+        phasor_im = dolfin.Expression("sin(alpha*x[0])", *args, **kwargs)
         return Complex(phasor_re, phasor_im)
 
-    def weak_form(self):
+    def prepare(self):
         self.alpha = -self.k0 * np.sin(self.theta0)
         self.phasor = self._phasor(
             degree=self.degree, domain=self.mesh, alpha=self.alpha
         )
-        self._prepare_materials()
+        self._prepare_materials(ref_material="superstrate", pmls=True)
         self._make_coefs()
         self.make_stack()
         self._prepare_bcs()
-        W = self.complex_space
-        dx = self.dx
-        ds = self.ds
-        self.u = Function(W)
-        utrial = TrialFunction(W)
-        utest = TestFunction(W)
-        n = self.unit_normal_vector
-        self.ex = as_vector([1.0, 0.0])
 
-        self.lhs = {}
-        self.rhs = {}
-        for d in self.domains:
-            xi_dom = self.xi[d]
-            chi_dom = self.chi[d]
-            L = [
-                -dot(xi_dom * grad(utrial), grad(utest)),
-                1j
-                * (
-                    dot(self.ex, xi_dom * grad(utrial) * utest)
-                    - dot(self.ex, xi_dom * grad(utest) * utrial)
-                ),
-                -dot(xi_dom * self.ex, self.ex) * utrial * utest,
-                chi_dom * utrial * utest,
-            ]
-            self.lhs[d] = [t.real + t.imag for t in L]
-        L = []
-        for d in self.pec_bnds:
-            if self.polarization == "TM":
-                L.append(-1j * dot(self.xi_coeff * self.ex, n) * utrial * utest)
-                self.lhs[d] = [t.real + t.imag for t in L]
+    def build_rhs(self):
+        return build_rhs(
+            self.ustack_coeff,
+            # self.annex_field["stack"],
+            self.utest,
+            self.xi,
+            self.chi,
+            self.xi_annex,
+            self.chi_annex,
+            self.source_domains,
+            unit_vect=self.ex,
+            phasor=self.phasor,
+        )
 
-        for d in self.source_dom:
-            xi_dom = self.xi[d]
-            chi_dom = self.chi[d]
-            ustack_dom = self.ustack_coeff
-            # ustack_dom = self.annex_field["stack"][d]
-            if xi_dom.real.ufl_shape == (2, 2):
-                xi_annex = tensor_const_2d(np.eye(2) * self.xi_annex[d])
-            else:
-                xi_annex = self.xi_annex[d]
-            dxi = xi_dom - xi_annex
-            dchi = chi_dom - self.chi_annex[d]
+    def build_rhs_boundaries(self):
+        return build_rhs_boundaries(
+            self.ustack_coeff,
+            self.utest,
+            self.xi_coeff_annex,
+            self.pec_bnds,
+            self.unit_normal_vector,
+            phasor=self.phasor,
+        )
 
-            b = [
-                -dot(dxi * grad(ustack_dom), grad(utest)) * self.phasor.conj,
-                1j * dot(dxi * grad(ustack_dom), self.ex) * utest * self.phasor.conj,
-                dchi * ustack_dom * utest * self.phasor.conj,
-            ]
-            self.rhs[d] = [t.real + t.imag for t in b]
-        b = []
-        for d in self.pec_bnds:
-            if self.polarization == "TM":
-                # surface term for PEC in TM polarization
-                b.append(
-                    dot(self.xi_coeff_annex * grad(self.ustack_coeff), n)
-                    * utest
-                    * self.phasor.conj,
-                )
-                self.rhs[d] = [t.real + t.imag for t in b]
+    def build_lhs_boundaries(self):
+        return build_lhs_boundaries(
+            self.utrial,
+            self.utest,
+            self.xi_coeff,
+            self.pec_bnds,
+            self.unit_normal_vector,
+            unit_vect=self.ex,
+        )
+
+    def build_lhs(self):
+        return build_lhs(
+            self.utrial, self.utest, self.xi, self.chi, self.domains, unit_vect=self.ex
+        )
+
+    def weak_form(self):
+
+        self.lhs = self.build_lhs()
+
+        if self.polarization == "TM":
+            lhs_bnds = self.build_lhs_boundaries()
+            self.lhs.update(lhs_bnds)
+
+        self.rhs = self.build_rhs()
+
+        if self.polarization == "TM":
+            rhs_bnds = self.build_rhs_boundaries()
+            self.rhs.update(rhs_bnds)
 
     def assemble_lhs(self):
         self.Ah = {}
         for d in self.domains:
             self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
-        for d in self.pec_bnds:
-            if self.polarization == "TM":
+
+        if self.polarization == "TM":
+            for d in self.pec_bnds:
                 self.Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
 
     def assemble_rhs(self):
         self.bh = {}
-        for d in self.source_dom:
+        for d in self.source_domains:
             self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
-        for d in self.pec_bnds:
-            if self.polarization == "TM":
+        if self.polarization == "TM":
+            for d in self.pec_bnds:
                 self.bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
 
     def assemble(self):
         self.assemble_lhs()
         self.assemble_rhs()
 
+    def build_system(self):
+        self.matrix = make_system_matrix(
+            self.domains,
+            self.pec_bnds,
+            self.Ah,
+            self.k0,
+            alpha=self.alpha,
+            boundary=(self.polarization == "TM"),
+        )
+        self.vector = make_system_vector(
+            self.source_domains,
+            self.pec_bnds,
+            self.bh,
+            self.k0,
+            alpha=self.alpha,
+            boundary=(self.polarization == "TM"),
+        )
+        # Ah.form = _get_form(self.Ah)
+        # bh.form = _get_form(self.bh)
+
     def solve(self, direct=True):
-        ufunc = self.u.real
-        for i, d in enumerate(self.domains):
-            Ah_ = self.Ah[d][0] + self.k0 ** 2 * self.Ah[d][3]
-            if i == 0:
-                Ah = Ah_
-            else:
-                Ah += Ah_
-            if self.alpha != 0:
-                Ah += self.alpha * self.Ah[d][1] + self.alpha ** 2 * self.Ah[d][2]
-
-        for d in self.pec_bnds:
-            if self.polarization == "TM":
-                Ah += self.alpha * self.Ah[d][0]
-
-        for i, d in enumerate(self.source_dom):
-            bh_ = -self.bh[d][0] - self.k0 ** 2 * self.bh[d][2]
-            if i == 0:
-                bh = bh_
-            else:
-                bh += bh_
-
-            if self.alpha != 0:
-                bh -= self.alpha * self.bh[d][1]
-
-        for d in self.pec_bnds:
-            if self.polarization == "TM":
-                bh += self.bh[d][0]
 
         for bc in self._boundary_conditions:
-            bc.apply(Ah, bh)
+            bc.apply(self.matrix, self.vector)
+
+        # ufunc = self.u.real
+        VVect = dolfin.VectorFunctionSpace(
+            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
+        )
+        u = dolfin.Function(VVect)
+        # self.u = Function(self.complex_space)
+        # ufunc = self.u.real
 
         if direct:
-            # solver = df.LUSolver(Ah) ### direct
-            solver = df.PETScLUSolver("mumps")
-            solver.parameters.update(lu_params)
-            solver.solve(Ah, ufunc.vector(), bh)
+            # solver = dolfin.LUSolver(Ah) ### direct
+            # solver = dolfin.PETScLUSolver("mumps")  ## doesnt work for adjoint
+            solver = dolfin.LUSolver("mumps")
+            # solver.parameters.update(lu_params)
+            solver.solve(self.matrix, u.vector(), self.vector)
         else:
-            solver = df.PETScKrylovSolver()  ## iterative
-            solver.parameters.update(krylov_params)
-            solver.solve(Ah, ufunc.vector(), bh)
+            solver = dolfin.PETScKrylovSolver()  ## iterative
+            # solver.parameters.update(krylov_params)
+            solver.solve(self.matrix, u.vector(), self.vector)
 
-            # solver.set_operator(Ah)
-            # # Create vector that spans the null space and normalize
-            # null_vec = df.Vector(Efunc.vector())
-            # self.complex_space.dofmap().set(null_vec, 1.0)
-            # null_vec *= 1.0/null_vec.norm("l2")
-            #
-            # # Create null space basis object and attach to PETSc matrix
-            # null_space = df.VectorSpaceBasis([null_vec])
-            # df.as_backend_type(Ah).set_nullspace(null_space)
-            # null_space.orthogonalize(bh)
-            # solver.solve(Efunc.vector(), bh)
+        self.uper = Complex(*u.split())
+        self.u = self.uper * self.phasor
 
-        self.uper = self.u
-        self.u *= self.phasor
+    #
+    # def weak_form(self):
+    #     self.alpha = -self.k0 * np.sin(self.theta0)
+    #     self.phasor = self._phasor(
+    #         degree=self.degree, domain=self.mesh, alpha=self.alpha
+    #     )
+    #     self.prepare()
+    #
+    #     self.lhs = build_lhs(
+    #         utrial, utest, self.xi, self.chi, self.domains, unit_vect=self.ex
+    #     )
+    #
+    #     if self.polarization == "TM":
+    #         lhs_bnds = build_lhs_boundaries(
+    #             utrial, utest, self.xi_coeff, self.pec_bnds, self.unit_normal_vector, unit_vect=self.ex
+    #         )
+    #         self.lhs.update(lhs_bnds)
+    #
+    #     self.rhs = build_rhs(
+    #         self.ustack_coeff,
+    #         # self.annex_field["stack"],
+    #         utest,
+    #         self.xi,
+    #         self.chi,
+    #         self.xi_annex,
+    #         self.chi_annex,
+    #         self.source_domains,
+    #         unit_vect=self.ex,
+    #         phasor=self.phasor,
+    #     )
+    #
+    #     if self.polarization == "TM":
+    #         rhs_bnds = build_rhs_boundaries(
+    #             self.ustack_coeff,
+    #             utest,
+    #             self.xi_coeff_annex,
+    #             self.pec_bnds,
+    #             self.unit_normal_vector,
+    #             phasor=self.phasor,
+    #         )
+    #         self.rhs.update(rhs_bnds)
+    #
+    # def assemble_lhs(self):
+    #     self.Ah = {}
+    #     for d in self.domains:
+    #         self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
+    #
+    #     if self.polarization == "TM":
+    #         for d in self.pec_bnds:
+    #             self.Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
+    #
+    # def assemble_rhs(self):
+    #     self.bh = {}
+    #     for d in self.source_domains:
+    #         self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
+    #     if self.polarization == "TM":
+    #         for d in self.pec_bnds:
+    #             self.bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
+    #
+    # def assemble(self):
+    #     self.assemble_lhs()
+    #     self.assemble_rhs()
+    #
+    # def solve(self, direct=True):
+    #     Ah = make_system_matrix(
+    #         self.domains,
+    #         self.pec_bnds,
+    #         self.Ah,
+    #         self.k0,
+    #         alpha=self.alpha,
+    #         boundary=(self.polarization == "TM"),
+    #     )
+    #     bh = make_system_vector(
+    #         self.source_domains,
+    #         self.pec_bnds,
+    #         self.bh,
+    #         self.k0,
+    #         alpha=self.alpha,
+    #         boundary=(self.polarization == "TM"),
+    #     )
+    #
+    #     for bc in self._boundary_conditions:
+    #         bc.apply(Ah, bh)
+    #
+    #     VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
+    #     u = dolfin.Function(VVect)
+    #
+    #     if direct:
+    #         # solver = dolfin.LUSolver(Ah) ### direct
+    #         solver = dolfin.LUSolver("mumps")
+    #         # solver.parameters.update(lu_params)
+    #         solver.solve(Ah, u.vector(), bh)
+    #     else:
+    #         solver = dolfin.PETScKrylovSolver()  ## iterative
+    #         # solver.parameters.update(krylov_params)
+    #         solver.solve(Ah, ufunc.vector(), bh)
+    #
+    #     self.uper = self.u
+    #     self.u *= self.phasor
 
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
@@ -590,9 +533,7 @@ class Grating2D(Simulation2D):
                 (self.geom.y_position[k] + self.geom.thicknesses[k] - self.scan_dist),
             )
 
-        x_slice = np.linspace(
-            -self.geom.period / 2, self.geom.period / 2, self.npt_integ
-        )
+        x_slice = np.linspace(-self.period / 2, self.period / 2, self.npt_integ)
         y_slice_t = np.linspace(*self.ycut["substrate"], self.nb_slice)
         y_slice_r = np.linspace(*self.ycut["superstrate"], self.nb_slice)
         k_sub = (
@@ -647,8 +588,8 @@ class Grating2D(Simulation2D):
         # field_diff_t = np.fliplr(field_diff_t)
         # field_diff_r = np.fliplr(field_diff_r)
 
-        alphat_t = alpha_sup + 2 * np.pi / (self.geom.period) * No_order
-        alphat_r = alpha_sup + 2 * np.pi / (self.geom.period) * No_order
+        alphat_t = alpha_sup + 2 * np.pi / (self.period) * No_order
+        alphat_r = alpha_sup + 2 * np.pi / (self.period) * No_order
         betat_sup = np.conj(np.sqrt(k_sup ** 2 - alphat_r ** 2))
         betat_sub = np.conj(np.sqrt(k_sub ** 2 - alphat_t ** 2))
         for m1 in range(0, self.nb_slice):
@@ -658,8 +599,8 @@ class Grating2D(Simulation2D):
             for k in range(0, 2 * self.N_d_order + 1):
                 expalpha_t = np.exp(-1j * alphat_t[k] * x_slice)
                 expalpha_r = np.exp(-1j * alphat_r[k] * x_slice)
-                s_t[k] = np.trapz(slice_t * expalpha_t, x=x_slice) / self.geom.period
-                s_r[k] = np.trapz(slice_r * expalpha_r, x=x_slice) / self.geom.period
+                s_t[k] = np.trapz(slice_t * expalpha_t, x=x_slice) / self.period
+                s_r[k] = np.trapz(slice_r * expalpha_r, x=x_slice) / self.period
 
             Aeff_t[m1, :] = s_t * np.exp(-1j * betat_sub * (y_slice_t[m1]))
             Aeff_r[m1, :] = s_r * np.exp(
@@ -694,7 +635,7 @@ class Grating2D(Simulation2D):
         else:
             xi_0, chi_0 = epsilon_0, mu_0
 
-        P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.cos(self.theta0) * self.geom.period
+        P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.cos(self.theta0) * self.period
 
         u_tot = self.u + self.ustack_coeff
 
@@ -705,11 +646,13 @@ class Grating2D(Simulation2D):
 
                 # u_tot = self.u + self.annex_field["stack"][d]
                 nrj_chi_dens = (
-                    df.Constant(-0.5 * chi_0 * omega) * self.chi[d] * abs(u_tot) ** 2
+                    dolfin.Constant(-0.5 * chi_0 * omega)
+                    * self.chi[d]
+                    * abs(u_tot) ** 2
                 ).imag
 
                 nrj_xi_dens = (
-                    df.Constant(-0.5 * 1 / (omega * xi_0))
+                    dolfin.Constant(-0.5 * 1 / (omega * xi_0))
                     * dot(grad(u_tot), (self.xi[d] * grad(u_tot)).conj).imag
                 )
 
@@ -719,11 +662,11 @@ class Grating2D(Simulation2D):
         else:
 
             nrj_chi_dens = (
-                df.Constant(-0.5 * chi_0 * omega) * self.chi_coeff * abs(u_tot) ** 2
+                dolfin.Constant(-0.5 * chi_0 * omega) * self.chi_coeff * abs(u_tot) ** 2
             ).imag
 
             nrj_xi_dens = (
-                df.Constant(-0.5 * 1 / (omega * xi_0))
+                dolfin.Constant(-0.5 * 1 / (omega * xi_0))
                 * dot(grad(u_tot), (self.xi_coeff * grad(u_tot)).conj).imag
             )
             Qchi = assemble(nrj_chi_dens * self.dx(doms_no_pml)) / P0

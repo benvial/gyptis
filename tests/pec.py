@@ -98,7 +98,7 @@ curves = model.subdomains["curves"]
 markers_curves = model.mesh_object["markers"]["line"]
 
 
-ubnd = df.as_vector((-g.ustack_coeff.real, -g.ustack_coeff.imag))
+ubnd = dolfin.as_vector((-g.ustack_coeff.real, -g.ustack_coeff.imag))
 
 g.boundary_conditions = [
     DirichletBC(g.complex_space, ubnd, markers_curves, "PEC", curves)
@@ -116,14 +116,14 @@ g.solve(direct=True)
 effs = g.diffraction_efficiencies(orders=True)
 pprint(effs)
 
-W0 = df.FunctionSpace(g.mesh, "DG", 0)
+W0 = dolfin.FunctionSpace(g.mesh, "DG", 0)
 
 
 def plotcplx(toplot, ax):
 
     test = project(toplot, W0)
     plt.sca(ax[0])
-    p = df.plot(test.real, cmap="RdBu_r")
+    p = dolfin.plot(test.real, cmap="RdBu_r")
     cbar = plt.colorbar(p)
     v = test.real.vector().get_local()
     mn, mx = min(v), max(v)
@@ -131,7 +131,7 @@ def plotcplx(toplot, ax):
     cbar.set_ticks([mn, md, mx])
     cbar.set_ticklabels([mn, md, mx])
     plt.sca(ax[1])
-    p = df.plot(test.imag, cmap="RdBu_r")
+    p = dolfin.plot(test.imag, cmap="RdBu_r")
     cbar = plt.colorbar(p)
     v = test.imag.vector().get_local()
     mn, mx = min(v), max(v)
@@ -142,7 +142,7 @@ def plotcplx(toplot, ax):
 
 def plot(toplot):
     test = project(toplot, W0)
-    p = df.plot(test, cmap="inferno")
+    p = dolfin.plot(test, cmap="inferno")
     plt.colorbar(p)
 
 

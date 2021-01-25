@@ -4,103 +4,28 @@
 # License: MIT
 
 
-from .complex import *
-from .core import PML
-from .geometry import *
+from .base import *
+from .base import _coefs, _make_cst_mat
 from .helpers import _get_form
-from .materials import *
-from .sources import *
 
 
-class Scatt2D(object):
-    def __init__(
-        self,
-        geom,
-        epsilon,
-        mu,
-        polarization="TE",
-        lambda0=1,
-        theta0=0,
-        degree=1,
-        pml_stretch=1 - 1j,
-        boundary_conditions=[],
-    ):
-        self.geom = geom  # geometry model
-        self.degree = degree
-        self.lambda0 = lambda0
-        self.theta0 = theta0
-        self.polarization = polarization
-        self.epsilon = epsilon
-        self.mu = mu
+class Scatt2D(ElectroMagneticSimulation2D):
+    def __init__(self, geom, epsilon, mu, pml_stretch=1 - 1j, **kwargs):
+
+        super().__init__(geom, epsilon, mu, **kwargs)
         self.pml_stretch = pml_stretch
+        self.complex_space = ComplexFunctionSpace(self.mesh, self.element, self.degree)
+        self.real_space = dolfin.FunctionSpace(self.mesh, self.element, self.degree)
 
-        self.mesh = geom.mesh_object["mesh"]
-        self.markers = geom.mesh_object["markers"]["triangle"]
-        self.domains = geom.subdomains["surfaces"]
-        self.dx = geom.measure["dx"]
-        self.boundary_conditions = boundary_conditions
+        self.no_source_domains = ["box", "pmlx", "pmly", "pmlxy"]
+        self.source_domains = [
+            z for z in self.domains if z not in self.no_source_domains
+        ]
+        self.pec_bnds = []
+        self._boundary_conditions = self.boundary_conditions
 
-        self._prepare_materials()
-
-        self.complex_space = ComplexFunctionSpace(self.mesh, "CG", self.degree)
-        self.real_space = df.FunctionSpace(self.mesh, "CG", self.degree)
-
-    @property
-    def k0(self):
-        return 2 * np.pi / self.lambda0
-
-    def _make_subdomains(self, epsilon, mu):
-        epsilon_coeff = Subdomain(
-            self.markers,
-            self.domains,
-            epsilon,
-            degree=self.degree,
-        )
-        mu_coeff = Subdomain(self.markers, self.domains, mu, degree=self.degree)
-        return epsilon_coeff, mu_coeff
-
-    def _prepare_materials(self):
-        epsilon = dict(box=1)
-        mu = dict(box=1)
-        epsilon.update(self.epsilon)
-        mu.update(self.mu)
-        self.epsilon_pml, self.mu_pml = self._make_pmls()
-        self.epsilon.update(self.epsilon_pml)
-        self.mu.update(self.mu_pml)
-        self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
-        _no_source = ["box", "pmlx", "pmly", "pmlxy"]
-        self.source_dom = [z for z in self.mu.keys() if z not in _no_source]
-
-        mu_annex = self.mu.copy()
-        eps_annex = self.epsilon.copy()
-        for a in self.source_dom:
-            mu_annex[a] = self.mu["box"]
-            eps_annex[a] = self.epsilon["box"]
-        self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            eps_annex, mu_annex
-        )
-        self._make_coefs()
-
-    def _coefs(self, a, b):
-        # xsi = det Q^T/det Q
-        extract = lambda q: df.as_tensor([[q[0][0], q[1][0]], [q[0][1], q[1][1]]])
-        det = lambda M: M[0][0] * M[1][1] - M[1][0] * M[0][1]
-        a2 = Complex(extract(a.real), extract(a.imag))
-        xi = a2 / det(a2)
-        chi = b[2][2]
-        return xi, chi
-
-    def _make_coefs(self):
-        if self.polarization == "TE":
-            self.xi, self.chi = self._coefs(self.mu_coeff, self.epsilon_coeff)
-            self.xi_annex, self.chi_annex = self._coefs(
-                self.mu_coeff_annex, self.epsilon_coeff_annex
-            )
-        else:
-            self.xi, self.chi = self._coefs(self.epsilon_coeff, self.mu_coeff)
-            self.xi_annex, self.chi_annex = self._coefs(
-                self.epsilon_coeff_annex, self.mu_coeff_annex
-            )
+        self.utrial = TrialFunction(self.complex_space)
+        self.utest = TestFunction(self.complex_space)
 
     def _make_pmls(self):
         pmlx = PML("x", stretch=self.pml_stretch)
@@ -114,51 +39,139 @@ class Scatt2D(object):
         mu_pml = dict(pmlx=mu_pml_[0], pmly=mu_pml_[1], pmlxy=mu_pml_[2])
         return epsilon_pml, mu_pml
 
-    def weak_form(self):
-        W = self.complex_space
-        dx = self.dx
-
-        k0 = self.k0
+    def prepare(self):
+        self._prepare_materials(ref_material="box", pmls=True)
+        self._make_coefs()
         self.u0, self.gradu0 = plane_wave_2D(
             self.lambda0, self.theta0, domain=self.mesh, grad=True
         )
-        self.u = Function(W)
-        utrial = TrialFunction(W)
-        utest = TestFunction(W)
-        dxi = self.xi - self.xi_annex
-        dchi = self.chi - self.chi_annex
-        L = (
-            -inner(self.xi * grad(utrial), grad(utest)) * dx,
-            self.chi * utrial * utest * dx,
+
+    def build_rhs(self):
+        return build_rhs(
+            self.u0,
+            # self.annex_field["stack"],
+            self.utest,
+            self.xi,
+            self.chi,
+            self.xi_annex,
+            self.chi_annex,
+            self.source_domains,
         )
-        b = (
-            -dot(dxi * self.gradu0, grad(utest)) * dx(self.source_dom),
-            dchi * self.u0 * utest * dx(self.source_dom),
+
+    def build_lhs_boundaries(self):
+        return build_lhs_boundaries(
+            self.utrial,
+            self.utest,
+            self.xi_coeff,
+            self.pec_bnds,
+            self.unit_normal_vector,
         )
-        self.lhs = [t.real + t.imag for t in L]
-        self.rhs = [t.real + t.imag for t in b]
+
+    def build_lhs(self):
+        return build_lhs(self.utrial, self.utest, self.xi, self.chi, self.domains)
+
+    def build_rhs_boundaries(self):
+        return build_rhs_boundaries(
+            self.u0,
+            self.utest,
+            self.xi_coeff_annex,
+            self.pec_bnds,
+            self.unit_normal_vector,
+        )
+
+    def weak_form(self):
+
+        self.lhs = self.build_lhs()
+
+        if self.polarization == "TM":
+            lhs_bnds = self.build_lhs_boundaries()
+            self.lhs.update(lhs_bnds)
+
+        self.rhs = self.build_rhs()
+
+        if self.polarization == "TM":
+            rhs_bnds = self.build_rhs_boundaries()
+            self.rhs.update(rhs_bnds)
 
     def assemble_lhs(self):
-        self.Ah = [assemble(A) for A in self.lhs]
+        self.Ah = {}
+        for d in self.domains:
+            self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
+
+        if self.polarization == "TM":
+            for d in self.pec_bnds:
+                self.Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
 
     def assemble_rhs(self):
-        self.bh = [assemble(b) for b in self.rhs]
+        self.bh = {}
+        for d in self.source_domains:
+            self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
+        if self.polarization == "TM":
+            for d in self.pec_bnds:
+                self.bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
 
     def assemble(self):
         self.assemble_lhs()
         self.assemble_rhs()
 
-    def solve(self):
-        ufunc = self.u.real
-        # ufunc = df.Function(self.real_space)
-        Ah = self.Ah[0] + self.k0 ** 2 * self.Ah[1]
-        bh = self.bh[0] + self.k0 ** 2 * self.bh[1]
-        for bc in self.boundary_conditions:
-            bc.apply(Ah, bh)
-        Ah.form = _get_form(self.Ah)
-        bh.form = _get_form(self.bh)
-        solver = df.LUSolver("mumps")
-        solver.solve(Ah, ufunc.vector(), bh)
+    def build_system(self):
+        self.matrix = make_system_matrix(
+            self.domains,
+            self.pec_bnds,
+            self.Ah,
+            self.k0,
+            boundary=(self.polarization == "TM"),
+        )
+        self.vector = make_system_vector(
+            self.source_domains,
+            self.pec_bnds,
+            self.bh,
+            self.k0,
+            boundary=(self.polarization == "TM"),
+        )
+        # Ah.form = _get_form(self.Ah)
+        # bh.form = _get_form(self.bh)
+
+    def solve(self, direct=True):
+
+        for bc in self._boundary_conditions:
+            bc.apply(self.matrix, self.vector)
+
+        # ufunc = self.u.real
+        VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
+        u = dolfin.Function(VVect)
+        # self.u = Function(self.complex_space)
+        # ufunc = self.u.real
+
+        if direct:
+            # solver = dolfin.LUSolver(Ah) ### direct
+            # solver = dolfin.PETScLUSolver("mumps")  ## doesnt work for adjoint
+            solver = dolfin.LUSolver("mumps")
+            # solver.parameters.update(lu_params)
+            solver.solve(self.matrix, u.vector(), self.vector)
+        else:
+            solver = dolfin.PETScKrylovSolver()  ## iterative
+            # solver.parameters.update(krylov_params)
+            solver.solve(self.matrix, u.vector(), self.vector)
+
+        self.u = Complex(*u.split())
+
+    # def solve(self):
+    #     VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
+    #     Ah = self.Ah[0] + self.k0 ** 2 * self.Ah[1]
+    #     bh = self.bh[0] + self.k0 ** 2 * self.bh[1]
+    #     for bc in self.boundary_conditions:
+    #         bc.apply(Ah, bh)
+    #     Ah.form = _get_form(self.Ah)
+    #     bh.form = _get_form(self.bh)
+    #
+    #     self.u = dolfin.Function(VVect)
+    #     # ufunc = self.u.real
+    #     ufunc = self.u
+    #     solver = dolfin.LUSolver("mumps")
+    #     solver.solve(Ah, ufunc.vector(), bh)
+    #
+    #     self.u = Complex(*self.u.split())
 
     def wavelength_sweep(self, wavelengths):
 
@@ -173,12 +186,12 @@ class Scatt2D(object):
             if i == 0:
                 self.assemble()
 
-                df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+                dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
             else:
                 self.assemble_rhs()
             self.solve()
 
-            df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+            dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
             wl_sweep.append(self.u)
             t += time.time()
             print(f"iter {t:0.2f}s")

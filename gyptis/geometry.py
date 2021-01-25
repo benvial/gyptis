@@ -75,8 +75,7 @@ class Model(object):
         mesh_name="mesh.msh",
         data_dir=None,
         dim=3,
-        gmsh_args=["-format", "msh2"],
-        # gmsh_args=["-ignore_periocity"],
+        gmsh_args=None,
         kill=False,
     ):
         self.model_name = model_name
@@ -98,7 +97,10 @@ class Model(object):
                 pass
 
         self.gmsh_args = gmsh_args
-        gmsh.initialize(self.gmsh_args)
+        if gmsh_args is not None:
+            gmsh.initialize(self.gmsh_args)
+        else:
+            gmsh.initialize()
         # setnum("Mesh.MshFileVersion", 2)
         # setnum("Mesh.IgnoreParametrization",1)
         # setnum("Mesh.PreserveNumberingMsh2",1)
@@ -308,6 +310,7 @@ class BoxPML2D(Model):
         model_name="2D box with PMLs",
         mesh_name="mesh.msh",
         data_dir=None,
+        **kwargs,
     ):
         super().__init__(
             model_name=model_name, mesh_name=mesh_name, data_dir=data_dir, dim=2
@@ -384,6 +387,7 @@ class BoxPML3D(Model):
         model_name="3D box with PMLs",
         mesh_name="mesh.msh",
         data_dir=None,
+        **kwargs,
     ):
         super().__init__(
             model_name=model_name, mesh_name=mesh_name, data_dir=data_dir, dim=3

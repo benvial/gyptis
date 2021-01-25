@@ -6,7 +6,7 @@
 
 from collections import OrderedDict
 
-import dolfin as df
+import dolfin
 import numpy as np
 import pytest
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
@@ -37,8 +37,8 @@ krylov_params = {
     "report": True,
 }
 
-# df.set_log_level(10)
-# df.parameters["form_compiler"]["quadrature_degree"] = 5  #
+# dolfin.set_log_level(10)
+# dolfin.parameters["form_compiler"]["quadrature_degree"] = 5  #
 
 
 def translation_matrix(t):
@@ -191,7 +191,7 @@ class Grating3D(object):
         self.complex_space = ComplexFunctionSpace(
             self.mesh, "N1curl", self.degree, constrained_domain=self.periodic_bcs
         )
-        self.real_space = df.FunctionSpace(
+        self.real_space = dolfin.FunctionSpace(
             self.mesh, "N1curl", self.degree, constrained_domain=self.periodic_bcs
         )
 
@@ -200,8 +200,8 @@ class Grating3D(object):
         return 2 * np.pi / self.lambda0
 
     def _phasor(self, *args, **kwargs):
-        phasor_re = df.Expression("cos(alpha*x[0] + beta*x[1])", *args, **kwargs)
-        phasor_im = df.Expression("sin(alpha*x[0] + beta*x[1])", *args, **kwargs)
+        phasor_re = dolfin.Expression("cos(alpha*x[0] + beta*x[1])", *args, **kwargs)
+        phasor_im = dolfin.Expression("sin(alpha*x[0] + beta*x[1])", *args, **kwargs)
         return Complex(phasor_re, phasor_im)
 
     def _make_subdomains(self, epsilon, mu):
@@ -372,12 +372,12 @@ class Grating3D(object):
             bc.apply(Ah, bh)
 
         if direct:
-            # solver = df.LUSolver(Ah) ### direct
-            solver = df.PETScLUSolver("mumps")
+            # solver = dolfin.LUSolver(Ah) ### direct
+            solver = dolfin.PETScLUSolver("mumps")
             solver.parameters.update(lu_params)
             solver.solve(Ah, Efunc.vector(), bh)
         else:
-            solver = df.PETScKrylovSolver()  ## iterative
+            solver = dolfin.PETScKrylovSolver()  ## iterative
             solver.parameters.update(krylov_params)
             solver.solve(Ah, Efunc.vector(), bh)
 
@@ -403,7 +403,7 @@ class Grating3D(object):
             Interp = LinearNDInterpolator
         # x, y, z = self.complex_space.tabulate_dof_coordinates().T
         # if type(u.real) == ufl.tensors.ListTensor:
-        V_cg = df.VectorFunctionSpace(self.mesh, "CG", self.degree)
+        V_cg = dolfin.VectorFunctionSpace(self.mesh, "CG", self.degree)
         x, y, z = V_cg.tabulate_dof_coordinates().T
         points = x[::3], y[::3], z[::3]
         u = interpolate(u, V_cg)
@@ -766,32 +766,32 @@ if __name__ == "__main__":
     g.weak_form()
     g.assemble()
     g.solve(direct=True)
-    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
 
-    # rank = df.MPI.rank(df.MPI.comm_world)
-    # if df.MPI.rank(df.MPI.comm_world) == 0:
+    # rank = dolfin.MPI.rank(dolfin.MPI.comm_world)
+    # if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
 
     g.N_d_order = 0
 
     effs = g.diffraction_efficiencies()
     print(effs)
     print(g.Rstack, g.Tstack)
-    W0 = df.FunctionSpace(g.mesh, "CG", 1)
-    # W0 = df.FunctionSpace(g.mesh, "DG", 0)
+    W0 = dolfin.FunctionSpace(g.mesh, "CG", 1)
+    # W0 = dolfin.FunctionSpace(g.mesh, "DG", 0)
     fplot = g.E  # + g.Estack_coeff
     fplot = abs(g.Eper)
-    df.File("test.pvd") << project(fplot, W0)
-    df.File("markers.pvd") << g.markers
+    dolfin.File("test.pvd") << project(fplot, W0)
+    dolfin.File("markers.pvd") << g.markers
 
     # u_sol_gath = None
     # if rank == 0:
     #     u_sol_gath =  np.empty(numDataPerRank*size, dtype='f')
     #
     #
-    # Eper_re = df.MPI.comm_world.gather(g.Eper.real.vector().get_local(), root=0)
-    # Eper_im = df.MPI.comm_world.gather(g.Eper.imag.vector().get_local(), root=0)
+    # Eper_re = dolfin.MPI.comm_world.gather(g.Eper.real.vector().get_local(), root=0)
+    # Eper_im = dolfin.MPI.comm_world.gather(g.Eper.imag.vector().get_local(), root=0)
     # # g.Eper = Complex(Eper_re,Eper_im)
-    # size = df.MPI.comm_world.Get_size()
+    # size = dolfin.MPI.comm_world.Get_size()
     # if rank == 0:
     #     print("computing diffraction efficiencies")
     #     for i in range(size):

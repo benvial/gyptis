@@ -4,10 +4,11 @@
 # License: MIT
 
 
-import dolfin as df
 import numpy as np
 import pytest
 
+import gyptis
+from gyptis import dolfin
 from gyptis.complex import *
 
 np.random.seed(1234)
@@ -65,25 +66,26 @@ def test_simple(tol=1e-15):
 
 
 def test_complex(tol=1e-15):
+
     nx, ny = 50, 50
-    mesh = df.UnitSquareMesh(nx, ny)
+    mesh = dolfin.UnitSquareMesh(nx, ny)
 
     def boundary(x):
         return (
-            x[0] < df.DOLFIN_EPS
-            or x[0] > 1.0 - df.DOLFIN_EPS
-            or x[1] < df.DOLFIN_EPS
-            or x[1] > 1.0 - df.DOLFIN_EPS
+            x[0] < dolfin.DOLFIN_EPS
+            or x[0] > 1.0 - dolfin.DOLFIN_EPS
+            or x[1] < dolfin.DOLFIN_EPS
+            or x[1] > 1.0 - dolfin.DOLFIN_EPS
         )
 
     W = ComplexFunctionSpace(mesh, "CG", 1)
-    # W0 =  df.FunctionSpace(mesh,W.ufl_element().extract_component(0)[1])
-    W0 = df.FunctionSpace(mesh, "DG", 0)
+    # W0 =  dolfin.FunctionSpace(mesh,W.ufl_element().extract_component(0)[1])
+    W0 = dolfin.FunctionSpace(mesh, "DG", 0)
 
-    u = Function(W)
+    # u = Function(W)
     utrial = TrialFunction(W)
     utest = TestFunction(W)
-    dx = df.dx(domain=mesh)
+    dx = dolfin.dx(domain=mesh)
 
     k = 2
     qre, qim = 2, -1
@@ -91,11 +93,9 @@ def test_complex(tol=1e-15):
     expr = f"exp(-pow((x[0]-0.5)/{gamma},2)-pow((x[1]-0.5)/{gamma},2))"
     expr_re = f"{qre}" "+" + expr
     expr_im = f"{qim}" "+" + expr
-    sol = df.Expression((expr_re, expr_im), degree=1, domain=mesh)
+    sol = dolfin.Expression((expr_re, expr_im), degree=1, domain=mesh)
     sol = Complex(sol[0], sol[1])
     source = (k ** 2) * sol * utest + inner(grad(sol), grad(utest))
-    phase = u.phase
-    module = u.module
 
     F = (
         inner(grad(utrial), grad(utest)) * dx
@@ -104,28 +104,37 @@ def test_complex(tol=1e-15):
     )
     F = F.real + F.imag
 
-    ufunc = u.real
-
     u_dirichlet = qre + 1j * qim
     bcre, bcim = DirichletBC(W, u_dirichlet, boundary)
 
     bcs = [bcre, bcim]
-    Lh = df.rhs(F)
+    Lh = dolfin.rhs(F)
     bh = assemble(Lh)
-    ah = df.lhs(F)
+    ah = dolfin.lhs(F)
     Ah = assemble(ah)
+    VV = dolfin.VectorFunctionSpace(mesh, "CG", 2)
 
-    def _solve(solver, tol, tol_local):
+    # u = Function(W)
+
+    u = dolfin.Function(W)
+
+    def _solve(solver, u, tol, tol_local):
         for bc in bcs:
             bc.apply(Ah, bh)
-        solver.solve(Ah, ufunc.vector(), bh)
+        solver.solve(Ah, u.vector(), bh)
+
+        u = Complex(u[0], u[1])
         assert abs(assemble((u - sol) * dx)) < tol
         assert abs((u((0.5, 0.5)) - sol((0.5, 0.5)))) < tol_local
+        return u
 
-    # _solve(df.LUSolver(Ah), 1e-12, 1e-12)
-    _solve(df.PETScKrylovSolver(), 1e-6, 1e-4)
+    # _solve(dolfin.LUSolver(Ah), 1e-12, 1e-12)
+    u = _solve(dolfin.PETScKrylovSolver(), u, 1e-6, 1e-4)
 
     uproj = project(u.real, W0)
     inner(u.real, u)
     inner(u, u.imag)
     inner(u.real, u.imag)
+
+    phase = u.phase
+    module = u.module

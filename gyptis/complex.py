@@ -14,7 +14,7 @@ from typing import Iterable
 import numpy as np
 import ufl
 
-from . import dolfin as df
+from . import dolfin
 from .helpers import DirichletBC as __DirichletBC__
 
 
@@ -69,7 +69,7 @@ def _complexify_bilinear(func):
 def _complexify_vector(func):
     def wrapper(*args, **kwargs):
         v = func(*args, **kwargs)
-        re, im = df.split(v)
+        re, im = dolfin.split(v)
         return Complex(re, im)
 
     return wrapper
@@ -194,7 +194,7 @@ class Complex(object):
         return self.__angle__()
 
     def __abs__(self):
-        return df.sqrt(self.real ** 2 + self.imag ** 2)
+        return dolfin.sqrt(self.real ** 2 + self.imag ** 2)
 
     def __neg__(self):  # defines -c (c is Complex)
         return Complex(-self.real, -self.imag)
@@ -225,13 +225,13 @@ class Complex(object):
         try:
             return np.angle(x + 1j * y)
         except:
-            return df.conditional(
+            return dolfin.conditional(
                 ufl.eq(self.__abs__(), 0),
                 0,
-                df.conditional(
+                dolfin.conditional(
                     ufl.eq(self.__abs__() + x, 0),
-                    df.pi,
-                    2 * df.atan(y / (self.__abs__() + x)),
+                    dolfin.pi,
+                    2 * dolfin.atan(y / (self.__abs__() + x)),
                 ),
             )
 
@@ -259,7 +259,7 @@ class Complex(object):
             The complex number in cartesian representation.
 
         """
-        return module * Complex(df.cos(phase), df.sin(phase))
+        return module * Complex(dolfin.cos(phase), dolfin.sin(phase))
 
     def polar(self):
         """Polar representation.
@@ -293,7 +293,7 @@ def iscomplex(z):
         return False
 
 
-class ComplexFunctionSpace(df.FunctionSpace):
+class ComplexFunctionSpace(dolfin.FunctionSpace):
     """Complex function space"""
 
     def __init__(self, *args, **kwargs):
@@ -306,8 +306,9 @@ class DirichletBC(__DirichletBC__):
     def __new__(self, *args, **kwargs):
         W = args[0]
         value = args[1]
-        bcre = __DirichletBC__(W.sub(0), value.real, *args[2:], **kwargs)
-        bcim = __DirichletBC__(W.sub(1), value.imag, *args[2:], **kwargs)
+        Wre, Wim = W.split()
+        bcre = __DirichletBC__(Wre, value.real, *args[2:], **kwargs)
+        bcim = __DirichletBC__(Wim, value.imag, *args[2:], **kwargs)
         return bcre, bcim
 
 
@@ -338,29 +339,29 @@ def _cplx_iter(f):
 #             v_im = tuple([a.imag] for a in v)
 #         else:
 #             v_re, v_im = v.real,v.imag
-#         return Complex(df.Constant(v_re,*args,**kwargs), df.Constant(v_im,*args,**kwargs))
+#         return Complex(dolfin.Constant(v_re,*args,**kwargs), dolfin.Constant(v_im,*args,**kwargs))
 #     else:
-#         return df.Constant(v,*args,**kwargs)
+#         return dolfin.Constant(v,*args,**kwargs)
 #
 
 
-interpolate = _complexify_linear(df.interpolate)
-assemble = _complexify_linear(df.assemble)
-Function = _complexify_vector_alt(df.Function)
-TrialFunction = _complexify_vector(df.TrialFunction)
-TestFunction = _complexify_vector(df.TestFunction)
-grad = _complexify_linear(df.grad)
-div = _complexify_linear(df.div)
-curl = _complexify_linear(df.curl)
-project = _complexify_linear(df.project)
-inner = _complexify_bilinear(df.inner)
-dot = _complexify_bilinear(df.dot)
-cross = _complexify_bilinear(df.cross)
+interpolate = _complexify_linear(dolfin.interpolate)
+assemble = _complexify_linear(dolfin.assemble)
+Function = _complexify_vector_alt(dolfin.Function)
+TrialFunction = _complexify_vector(dolfin.TrialFunction)
+TestFunction = _complexify_vector(dolfin.TestFunction)
+grad = _complexify_linear(dolfin.grad)
+div = _complexify_linear(dolfin.div)
+curl = _complexify_linear(dolfin.curl)
+project = _complexify_linear(dolfin.project)
+inner = _complexify_bilinear(dolfin.inner)
+dot = _complexify_bilinear(dolfin.dot)
+cross = _complexify_bilinear(dolfin.cross)
 
-as_tensor = _cplx_iter(df.as_tensor)
-as_vector = _cplx_iter(df.as_vector)
+as_tensor = _cplx_iter(dolfin.as_tensor)
+as_vector = _cplx_iter(dolfin.as_vector)
 
-Constant = _cplx_iter(df.Constant)
+Constant = _cplx_iter(dolfin.Constant)
 
 
 def _invert_3by3_complex_matrix(m):
@@ -379,7 +380,7 @@ def _invert_3by3_complex_matrix(m):
         [m6 * m7 - m4 * m9, m1 * m9 - m3 * m7, m3 * m4 - m1 * m6],
         [m4 * m8 - m5 * m7, m2 * m7 - m1 * m8, m1 * m5 - m2 * m4],
     ]
-    # inv_df = df.as_tensor(inv)
+    # inv_df = dolfin.as_tensor(inv)
     invre = np.zeros((3, 3), dtype=object)
     invim = np.zeros((3, 3), dtype=object)
     for i in range(3):
@@ -390,7 +391,7 @@ def _invert_3by3_complex_matrix(m):
     invre = invre.tolist()
     invim = invim.tolist()
 
-    return Complex(df.as_tensor(invre), df.as_tensor(invim))
+    return Complex(dolfin.as_tensor(invre), dolfin.as_tensor(invim))
 
 
 # TODO:
@@ -446,13 +447,13 @@ def _invert_3by3_complex_matrix(m):
 #
 #
 #
-# are = df.Expression(code, degree=2, k=0)
+# are = dolfin.Expression(code, degree=2, k=0)
 #
 #
 # import matplotlib.pyplot as plt
 # plt.ion()
 # plt.clf()
-# cm = df.plot(df.project(are,W),cmap="RdBu")
+# cm = dolfin.plot(dolfin.project(are,W),cmap="RdBu")
 # plt.colorbar(cm)
 #
 # s = "x[0] +x[1] +x[2]"

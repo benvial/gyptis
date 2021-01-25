@@ -3,12 +3,15 @@
 2D PEC Grating
 ==============
 
-Example of a perfectly conducting diffration grating.
+Example of a perfectly conducting diffraction grating.
 """
 
-import dolfin as df
+from collections import OrderedDict
 
-from gyptis.grating_2d import *
+import numpy as np
+
+from gyptis import dolfin
+from gyptis.grating_2d import Grating2D, Layered2D
 
 ##############################################################################
 # We will study a classical benchmark of a perfectly conducting
@@ -16,14 +19,14 @@ from gyptis.grating_2d import *
 #
 
 lambda0 = 600
-theta0 = -20 * pi / 180
+theta0 = -20 * np.pi / 180
 
 period = 800
 h = 8
 w = 600
 
-pmesh = 20
-pmesh_rod = 20
+pmesh = 10
+pmesh_rod = 15
 
 thicknesses = OrderedDict(
     {
@@ -52,15 +55,15 @@ model = Layered2D(period, thicknesses, kill=False)
 groove = model.layers["groove"]
 y0 = model.y_position["groove"] + thicknesses["groove"] / 2
 rod = model.addEllipse(0, y0, 0, w / 2, h / 2)
-gmsh.model.occ.addCurveLoop([rod], rod)
+model.addCurveLoop([rod], rod)
 rod = model.addPlaneSurface([rod])
 groove = model.chop(groove, rod, removeTool=True)
 model.add_physical(groove, "groove")
 
-
-rod_bnds = model.get_boundaries(groove)[-1]
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 
+
+rod_bnds = model.get_boundaries("groove")[-1]
 model.add_physical(rod_bnds, "rod_bnds", dim=1)
 model.set_mesh_size(mesh_size)
 model.set_mesh_size({"rod_bnds": h / 8}, dim=1)
@@ -95,9 +98,11 @@ grating.boundary_conditions = {"rod_bnds": "PEC"}
 
 grating.N_d_order = 1
 
+grating.prepare()
 grating.weak_form()
 grating.assemble()
-grating.solve(direct=True)
+grating.build_system()
+grating.solve()
 effs_TE = grating.diffraction_efficiencies(orders=True)
 
 E = grating.u + grating.ustack_coeff
@@ -117,8 +122,10 @@ print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 # We switch to TM polarization
 
 grating.polarization = "TM"
+grating.prepare()
 grating.weak_form()
 grating.assemble()
+grating.build_system()
 grating.solve()
 effs_TM = grating.diffraction_efficiencies(orders=True)
 
@@ -134,7 +141,7 @@ ylim = model.y_position["substrate"], model.y_position["pml_top"]
 
 fig, ax = plt.subplots(1, 2)
 plt.sca(ax[0])
-cb = df.plot(E.real, cmap="RdBu_r")
+cb = dolfin.plot(E.real, cmap="RdBu_r")
 plot_subdomains(grating.markers)
 plt.ylim(ylim)
 plt.colorbar(cb)
@@ -143,7 +150,7 @@ ax[0].set_title("$E_z$ (TE)")
 plt.tight_layout()
 
 plt.sca(ax[1])
-cb = df.plot(H.real, cmap="RdBu_r")
+cb = dolfin.plot(H.real, cmap="RdBu_r")
 plot_subdomains(grating.markers)
 plt.ylim(ylim)
 plt.colorbar(cb)

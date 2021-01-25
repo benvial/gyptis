@@ -4,17 +4,17 @@
 # License: MIT
 
 
-import dolfin as df
 import pytest
 
+from gyptis import dolfin
 from gyptis.helpers import function2array, get_coords
 from gyptis.sources import *
 
 # def test_pw_2D():
 lambda0 = 0.1
 theta = np.pi / 6
-mesh = df.UnitSquareMesh(50, 50)
-W = df.FunctionSpace(mesh, "CG", 1)
+mesh = dolfin.UnitSquareMesh(50, 50)
+W = dolfin.FunctionSpace(mesh, "CG", 1)
 pw = plane_wave_2D(lambda0, theta, domain=mesh)
 uproj = project(pw, W)
 uarray = function2array(uproj.real) + 1j * function2array(uproj.imag)
@@ -36,7 +36,7 @@ uproj = project(gradpw[1], W)
 # plt.ion()
 # plt.close("all")
 # plt.clf()
-# cm = df.plot(uproj, cmap="RdBu")
+# cm = dolfin.plot(uproj, cmap="RdBu")
 # plt.colorbar(cm)
 
 
@@ -46,8 +46,8 @@ def test_pw_3D():
 
     pw = plane_wave_3D(lambda0, theta, phi, psi)
 
-    mesh = df.UnitCubeMesh(10, 10, 10)
-    W = df.FunctionSpace(mesh, "CG", 1)
+    mesh = dolfin.UnitCubeMesh(10, 10, 10)
+    W = dolfin.FunctionSpace(mesh, "CG", 1)
 
     x, y, z = get_coords(W).T
     k0 = 2 * np.pi / lambda0

@@ -9,7 +9,7 @@ import numpy as np
 from gyptis.complex import *
 
 
-class _SubdomainPy(df.UserExpression):
+class _SubdomainPy(dolfin.UserExpression):
     def __init__(self, markers, subdomains, mapping, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.markers = markers
@@ -28,14 +28,14 @@ class _SubdomainPy(df.UserExpression):
         return ()
 
 
-class _SubdomainCpp(df.CompiledExpression):
+class _SubdomainCpp(dolfin.CompiledExpression):
     def __init__(self, markers, subdomains, mapping, **kwargs):
         import os
 
         here = os.path.dirname(os.path.realpath(__file__))
         with open(os.path.join(here, "subdomain.cpp")) as f:
             subdomain_code = f.read()
-        compiled_cpp = df.compile_cpp_code(subdomain_code).SubdomainCpp()
+        compiled_cpp = dolfin.compile_cpp_code(subdomain_code).SubdomainCpp()
         super().__init__(
             compiled_cpp,
             markers=markers,
@@ -159,7 +159,7 @@ class SubdomainTensorReal(object):
             markers, subdomains, mapping_list, cpp=cpp, **kwargs
         )
         q = _apply(mapping_list, fun)
-        return df.as_tensor(q)
+        return dolfin.as_tensor(q)
 
 
 class SubdomainTensorComplex(object):
@@ -174,8 +174,8 @@ class SubdomainTensorComplex(object):
         )
         qre = _apply(mape_re, fun)
         qim = _apply(mape_im, fun)
-        Tre = df.as_tensor(qre)
-        Tim = df.as_tensor(qim)
+        Tre = dolfin.as_tensor(qre)
+        Tim = dolfin.as_tensor(qim)
         return Complex(Tre, Tim)
 
 
@@ -197,9 +197,9 @@ def tensor_const(T):
         for i in range(3):
             col = []
             for j in range(3):
-                col.append(df.Constant(T[i, j]))
+                col.append(dolfin.Constant(T[i, j]))
             m.append(col)
-        return df.as_tensor(m)
+        return dolfin.as_tensor(m)
 
     assert T.shape == (3, 3)
     if hasattr(T, "real") and hasattr(T, "imag"):
@@ -226,9 +226,9 @@ def tensor_const_2d(T):
         for i in range(2):
             col = []
             for j in range(2):
-                col.append(df.Constant(T[i, j]))
+                col.append(dolfin.Constant(T[i, j]))
             m.append(col)
-        return df.as_tensor(m)
+        return dolfin.as_tensor(m)
 
     assert T.shape == (2, 2)
     if hasattr(T, "real") and hasattr(T, "imag"):
@@ -261,7 +261,9 @@ def make_constant_property_2d(prop):
 
 
 def complex_vector(V):
-    return Complex(df.as_tensor([q.real for q in V]), df.as_tensor([q.imag for q in V]))
+    return Complex(
+        dolfin.as_tensor([q.real for q in V]), dolfin.as_tensor([q.imag for q in V])
+    )
 
 
 ## xi

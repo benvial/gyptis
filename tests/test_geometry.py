@@ -3,10 +3,11 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import dolfin as df
-import pytest
-from numpy import pi
+from math import pi
 
+import pytest
+
+from gyptis import dolfin
 from gyptis.geometry import *
 
 
@@ -26,8 +27,8 @@ def geom2D(square_size=1, radius=0.3, mesh_size=0.1):
     cyl_bnds = model.get_boundaries("cyl")
     model.add_physical(outer_bnds, "outer_bnds", dim=1)
     model.add_physical(cyl_bnds, "cyl_bnds", dim=1)
-    model.set_size("box", 10 * mesh_size)
-    model.set_size("cyl", 10 * mesh_size)
+    model.set_size("box", 1 * mesh_size)
+    model.set_size("cyl", 1 * mesh_size)
     model.set_size("cyl_bnds", mesh_size, dim=1)
     mesh_object = model.build(interactive=False)
     model.radius = radius
@@ -45,7 +46,7 @@ def test_2D():
     #     "points": {},
     # }
     dx = model.measure["dx"]
-    area_cyl = df.assemble(1 * dx("cyl"))
+    area_cyl = dolfin.assemble(1 * dx("cyl"))
     print(area_cyl)
     print(pi * model.radius ** 2)
     assert abs(area_cyl - pi * model.radius ** 2) < 1e-4

@@ -3,7 +3,7 @@
 3D Grating
 ==========
 
-An example of a bi-periodic diffration grating.
+An example of a bi-periodic diffraction grating.
 """
 
 from gyptis.grating_3d import *

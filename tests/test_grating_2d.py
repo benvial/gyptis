@@ -7,7 +7,13 @@ import sys
 import time
 from pprint import pprint
 
+import matplotlib.pyplot as plt
+
+import gyptis
 from gyptis.grating_2d import *
+from gyptis.plotting import *
+
+plt.ion()
 
 
 def test_grating_2d():
@@ -15,50 +21,33 @@ def test_grating_2d():
     # if __name__ == "__main__":
 
     polarization = "TE"
-    lambda0 = 40
-    theta0 = 0 * np.pi / 180
-    parmesh = 20
-    parmesh_pml = parmesh * 2 / 3
-    period = 20
+    lambda0 = 1
+    theta0 = 30 * np.pi / 180
 
-    tr = 0  # pi / 5
+    order = 2
+    parmesh = 10
+    parmesh_pml = parmesh * 2 / 3
+    period = 0.5
+    island_width = period * 3 / 4
+    island_thickness = 2 * period
+
+    tr = pi / 5
     rot = lambda t: np.array(
         [[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]]
     )
 
     R = rot(tr)
-    eps_island = np.diag([6 - 0.2j, 4 - 0.21j, 3 - 0.21j])
+    eps_island = np.diag([6 - 0.02j, 4 - 0.021j, 3 - 0.021j])
     eps_island = R.T @ eps_island @ R
-    # eps_off_diag = 3 - 10.1j
-    # eps_island[0, 1] = eps_off_diag
-    # eps_island[1, 0] = np.conj(eps_off_diag)
-    # eps_island = 12
 
-    mu_island = np.diag([5 - 0.0j, 3 - 0.0j, 2 - 0.0j])
+    mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
     mu_island = R.T @ mu_island @ R
-    # mu_off_diag = 0  # 3.3 - 1.2j
-    # mu_island[1, 0] = mu_island[0, 1] = mu_off_diag
-    mu_island = 1
 
-    order = 2
-
-    thicknesses = OrderedDict(
-        {
-            "pml_bottom": 1.32 * lambda0,
-            "substrate": 1.3456 * lambda0,
-            "sublayer": 10,
-            "groove": 10,
-            "superstrate": 1.3456 * lambda0,
-            "pml_top": 1.22 * lambda0,
-        }
-    )
-    #
-
-    eps_sublayer = df.Expression(
-        "3 + exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=period / 6
-    )
+    # eps_island=8
+    # mu_island=1
+    eps_substrate = 2
+    mu_substrate = 1.2
     eps_sublayer = 1
-    eps_substrate = 1
 
     epsilon = dict(
         {
@@ -87,16 +76,24 @@ def test_grating_2d():
     index["pml_bottom"] = index["substrate"]
     index["pml_top"] = index["superstrate"]
 
+    thicknesses = OrderedDict(
+        {
+            "pml_bottom": lambda0,
+            "substrate": lambda0,
+            "sublayer": lambda0 / 2,
+            "groove": island_thickness * 1.5,
+            "superstrate": lambda0,
+            "pml_top": lambda0,
+        }
+    )
+
     model = Layered2D(period, thicknesses, kill=False)
     #
     groove = model.layers["groove"]
     sublayer = model.layers["sublayer"]
     y0 = model.y_position["groove"]
-    island_width_top = 10
-    island_width_bottom = 10
-    island_thickness = 5
     island = model.addRectangle(
-        -island_width_bottom / 2, y0, 0, island_width_bottom, island_thickness
+        -island_width / 2, y0, 0, island_width, island_thickness
     )
     island, groove, sublayer = model.fragmentize(island, [groove, sublayer])
     # island, sublayer = model.fragmentize(island, sublayer)
@@ -132,6 +129,8 @@ def test_grating_2d():
     mesh_object = model.build()
     # sys.exit(0)
 
+    mesh = model.mesh_object["mesh"]
+
     g = Grating2D(
         model,
         epsilon,
@@ -142,56 +141,82 @@ def test_grating_2d():
         degree=order,
     )
 
-    #
-    # # df.File("test.pvd") << project(Estack[0].real[0], W0)
-    # df.File("test.pvd") << project(test.real, W0)
-    #
-    # cds
+    ctrl0 = dolfin.Expression("1", degree=2)
+    Actrl = dolfin.FunctionSpace(mesh, "DG", 0)
+    ctrl = dolfin.project(ctrl0, Actrl)
+    eps = Complex(4, 0) * ctrl
 
-    ### BCs
-    # domains = model.subdomains["volumes"]
-    # surfaces = model.subdomains["surfaces"]
-    # markers_surf = model.mesh_object["markers"]["triangle"]
-    # self.boundary_conditions = [
-    #     DirichletBC(g.complex_space, [0] * 6, markers_surf, f, surfaces)
-    #     for f in ["face_top", "face_bottom"]
-    # ]
+    epsilon["sublayer"] = eps
+
     t = -time.time()
+    g.prepare()
     g.weak_form()
-    #
-    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
-
-    # g.assemble_rhs()
-    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
-    # g.assemble_lhs()
-    # df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
-    #
     g.assemble()
-    g.solve(direct=True)
+    g.build_system()
+    g.solve()
+
+    field = g.u
+    J = assemble(inner(field, field.conj) * g.dx("substrate")).real
+
+    if gyptis.ADJOINT:
+        dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
 
     t += time.time()
-
-    df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
-
-    print(t)
+    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    print("-" * 60)
+    print(f"solution time {t:.4f}s")
+    print("-" * 60)
 
     t = -time.time()
     # g.solve(direct=False)
     g.N_d_order = 0
-    effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
-    pprint(effs)  # ,sort_dicts=False)
+    effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
+    pprint(effsTE)  # ,sort_dicts=False)
     print("Qtot", g.Qtot)
     t += time.time()
+    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    print("-" * 60)
+    print(f"postpro time {t:.4f}s")
+    print("-" * 60)
 
-    df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
-    print(t)
+    # if gyptis.ADJOINT:
+    #     J = effsTE["R"][1]
+    #     dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
+    #
 
-    import matplotlib.pyplot as plt
+    # cb = dolfin.plot(g.u.real + g.ustack_coeff.real, mesh=g.mesh)
+    fig, ax = plt.subplots(1, 2)
+    W0 = dolfin.FunctionSpace(g.mesh, "CG", 2)
+    plotcplx(g.u, ax=ax, W0=W0)
 
-    plt.ion()
-    # cb = df.plot(g.u.real + g.ustack_coeff.real, mesh=g.mesh)
-    cb = df.plot(g.u.real, mesh=g.mesh)
-    plt.colorbar(cb)
+    g.polarization = "TM"
+    t = -time.time()
+    g.prepare()
+    g.weak_form()
+    g.assemble()
+    g.build_system()
+    g.solve()
+    t += time.time()
+    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    print("-" * 60)
+    print(f"solution time {t:.4f}s")
+    print("-" * 60)
+
+    t = -time.time()
+    g.N_d_order = 0
+    effsTM = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
+    pprint(effsTM)
+    print("Qtot", g.Qtot)
+    t += time.time()
+    print("-" * 60)
+    print(f"postpro time {t:.4f}s")
+    print("-" * 60)
+    #
+    #
+    assert abs(effsTE["B"] - 1) < 1e-3
+    assert abs(effsTM["B"] - 1) < 1e-3
+
+    # plt.show()
     #
     # plt.figure()
     #
@@ -204,7 +229,7 @@ def test_grating_2d():
     #     print(f">>> {d} : {test}")
     #
     # for d in g.domains:
-    #     cb = df.plot(g.annex_field["stack"][d].imag - g.ustack_coeff.imag, mesh=g.mesh)
+    #     cb = dolfin.plot(g.annex_field["stack"][d].imag - g.ustack_coeff.imag, mesh=g.mesh)
     #     plt.colorbar(cb)
     #
     # d = "pml_top"
@@ -212,7 +237,7 @@ def test_grating_2d():
     #
     # plt.figure()
     #
-    # cb = df.plot(g.annex_field["stack"][d].real, mesh=g.mesh)
+    # cb = dolfin.plot(g.annex_field["stack"][d].real, mesh=g.mesh)
     # plt.colorbar(cb)
 
     #
@@ -222,13 +247,13 @@ def test_grating_2d():
     #     if d in ["pml_top","pml_bottom"]:
     #         print("PMLS")
     #     else:
-    #         cb = df.plot(g.annex_field["stack"][d].real- g.ustack_coeff.real,mesh=g.mesh)
+    #         cb = dolfin.plot(g.annex_field["stack"][d].real- g.ustack_coeff.real,mesh=g.mesh)
     #         plt.colorbar(cb)
     #
 
 
 #
-#     cb = df.plot(g.u.real)
+#     cb = dolfin.plot(g.u.real)
 #     plt.colorbar(cb)
 #     plt.show()
 #
@@ -257,7 +282,7 @@ def test_grating_2d():
 #
 #     g.solve(direct=True)
 #
-#     df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+#     dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
 #
 #     # g.N_d_order=1
 #
@@ -265,7 +290,7 @@ def test_grating_2d():
 #     g.weak_form()
 #     g.assemble()
 #     g.solve(direct=True)
-#     df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+#     dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
 #     effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
 #     pprint(effs)  # ,sort_dicts=False)
 #     print("Qtot", g.Qtot)
@@ -308,3 +333,7 @@ def test_grating_2d():
 # # q = [assemble(g.ustack_coeff * g.dx(d)) for d in g.domains]
 # # q = np.array([a.real + 1j * a.imag for a in q])
 # # np.sum(q)
+
+#
+# # dolfin.File("test.pvd") << project(Estack[0].real[0], W0)
+# dolfin.File("test.pvd") << project(test.real, W0)

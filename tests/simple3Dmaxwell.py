@@ -6,7 +6,7 @@
 
 from math import pi
 
-import dolfin as df
+import dolfin
 
 from gyptis.complex import *
 from gyptis.geometry import *
@@ -46,14 +46,14 @@ domains = model.subdomains["volumes"]
 dx = model.measure["dx"]
 #
 # nmesh = 16
-# mesh = df.UnitCubeMesh(nmesh, nmesh, nmesh)
+# mesh = dolfin.UnitCubeMesh(nmesh, nmesh, nmesh)
 
 lambda0 = 0.5
 k0 = 2 * pi / lambda0
 X2 = [f"pow((x[{i}]-0.5)/0.1,2)" for i in range(3)]
 Z = "+".join(X2)
 s = f"exp(-({Z}))"
-S = df.Expression((s, "0", "0"), degree=0, domain=mesh)
+S = dolfin.Expression((s, "0", "0"), degree=0, domain=mesh)
 
 S = plane_wave_3D(lambda0, 0, 0, 0, domain=mesh)
 
@@ -69,26 +69,26 @@ epsilon_doms_annex = Subdomain(markers, domains, epsilon_annex, degree=1)
 
 
 #
-# W = df.FunctionSpace(mesh, "N1curl", 1)
-# dx = df.dx
-# E = df.Function(W)
-# Etrial = df.TrialFunction(W)
-# Etest = df.TestFunction(W)
+# W = dolfin.FunctionSpace(mesh, "N1curl", 1)
+# dx = dolfin.dx
+# E = dolfin.Function(W)
+# Etrial = dolfin.TrialFunction(W)
+# Etest = dolfin.TestFunction(W)
 #
-# L = -df.inner(df.curl(Etrial), df.curl(Etest)) * dx + k0**2 * df.inner(Etrial, Etest) * dx
-# b = -df.dot(S, Etest) * dx
+# L = -dolfin.inner(dolfin.curl(Etrial), dolfin.curl(Etest)) * dx + k0**2 * dolfin.inner(Etrial, Etest) * dx
+# b = -dolfin.dot(S, Etest) * dx
 #
-# Ah = df.assemble(L)
-# bh = df.assemble(b)
-# solver = df.LUSolver(Ah)
+# Ah = dolfin.assemble(L)
+# bh = dolfin.assemble(b)
+# solver = dolfin.LUSolver(Ah)
 # solver.solve(Ah, E.vector(), bh)
 #
-# W0 = df.FunctionSpace(mesh, "DG", 0)
-# df.File("test.pvd") << df.project(E[0], W0)
+# W0 = dolfin.FunctionSpace(mesh, "DG", 0)
+# dolfin.File("test.pvd") << dolfin.project(E[0], W0)
 
 
 W = ComplexFunctionSpace(mesh, "N1curl", 1, constrained_domain=None)
-# dx = df.dx
+# dx = dolfin.dx
 E = Function(W)
 Etrial = TrialFunction(W)
 Etest = TestFunction(W)
@@ -107,13 +107,13 @@ b = b.real + b.imag
 
 Ah = assemble(L)
 bh = assemble(b)
-solver = df.LUSolver(Ah)
+solver = dolfin.LUSolver(Ah)
 
 
 Efunc = E[0].real.ufl_operands[0]
 solver.solve(Ah, Efunc.vector(), bh)
 
-W0 = df.FunctionSpace(mesh, "DG", 0)
-df.File("test.pvd") << project(E[0].real, W0)
-# df.File("test.pvd") << project(E[2].real, W0)
-# df.File("test.pvd") << project(E[0].imag, W0)
+W0 = dolfin.FunctionSpace(mesh, "DG", 0)
+dolfin.File("test.pvd") << project(E[0].real, W0)
+# dolfin.File("test.pvd") << project(E[2].real, W0)
+# dolfin.File("test.pvd") << project(E[0].imag, W0)

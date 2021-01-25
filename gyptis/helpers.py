@@ -7,10 +7,10 @@ import sys
 
 import numpy as np
 
-from . import dolfin as df
+from . import dolfin
 
-_DirichletBC = df.DirichletBC
-_Measure = df.Measure
+_DirichletBC = dolfin.DirichletBC
+_Measure = dolfin.Measure
 
 
 def _get_form(u):
@@ -110,7 +110,7 @@ def make_unit_vectors(dim):
 
 
 def mpi_print(s):
-    if df.MPI.rank(df.MPI.comm_world) == 0:
+    if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
         print(s)
         sys.stdout.flush()
 
@@ -131,9 +131,9 @@ def array2function(a, A):
         The converted array.
 
     """
-    u = Function(A)
+    u = dolfin.Function(A)
     u.vector().set_local(a)
-    as_backend_type(u.vector()).update_ghost_values()
+    dolfin.as_backend_type(u.vector()).update_ghost_values()
     u.vector().apply("insert")
     return u
 
@@ -212,11 +212,11 @@ def tanh(x):
 #
 #
 # def boundary_L(x, on_boundary):
-#     return on_boundary and (df.near(x[1], 0, tol))
+#     return on_boundary and (dolfin.near(x[1], 0, tol))
 #
 #
 # def boundary_R(x, on_boundary):
-#     return on_boundary and (df.near(x[1], 1, tol))
+#     return on_boundary and (dolfin.near(x[1], 1, tol))
 #
 #
 # class InnerBoundary(SubDomain):
@@ -235,19 +235,19 @@ def tanh(x):
 #
 #
 #
-class PeriodicBoundary2DX(df.SubDomain):
+class PeriodicBoundary2DX(dolfin.SubDomain):
     def __init__(self, period, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.period = period
 
     def inside(self, x, on_boundary):
-        return bool(df.near(x[0], -self.period / 2) and on_boundary)
+        return bool(dolfin.near(x[0], -self.period / 2) and on_boundary)
 
     # # Left boundary is "target domain" G
     # def inside(self, x, on_boundary):
     #     return bool(
-    #         x[0] - self.period / 2 < df.DOLFIN_EPS
-    #         and x[0] - self.period / 2 > -df.DOLFIN_EPS
+    #         x[0] - self.period / 2 < dolfin.DOLFIN_EPS
+    #         and x[0] - self.period / 2 > -dolfin.DOLFIN_EPS
     #         and on_boundary
     #     )
 
@@ -257,7 +257,7 @@ class PeriodicBoundary2DX(df.SubDomain):
 
     #
     # def map(self, x, y):
-    #     if df.near(x[0], self.period / 2):
+    #     if dolfin.near(x[0], self.period / 2):
     #         y[0] = x[0] - self.period
     #         y[1] = x[1]
     #     else:
@@ -265,23 +265,26 @@ class PeriodicBoundary2DX(df.SubDomain):
     #         y[1] = -1000
 
 
-class BiPeriodicBoundary3D(df.SubDomain):
+class BiPeriodicBoundary3D(dolfin.SubDomain):
     def __init__(self, period, **kwargs):
         self.period = period
         super().__init__(**kwargs)
 
     def inside(self, x, on_boundary):
         return bool(
-            (df.near(x[0], -self.period[0] / 2) or df.near(x[1], -self.period[1] / 2))
+            (
+                dolfin.near(x[0], -self.period[0] / 2)
+                or dolfin.near(x[1], -self.period[1] / 2)
+            )
             and (
                 not (
                     (
-                        df.near(x[0], -self.period[0] / 2)
-                        and df.near(x[1], self.period[1] / 2)
+                        dolfin.near(x[0], -self.period[0] / 2)
+                        and dolfin.near(x[1], self.period[1] / 2)
                     )
                     or (
-                        df.near(x[0], self.period[0] / 2)
-                        and df.near(x[1], -self.period[1] / 2)
+                        dolfin.near(x[0], self.period[0] / 2)
+                        and dolfin.near(x[1], -self.period[1] / 2)
                     )
                 )
             )
@@ -290,11 +293,11 @@ class BiPeriodicBoundary3D(df.SubDomain):
 
     def map(self, x, y):
 
-        if df.near(x[0], self.period[0] / 2):
+        if dolfin.near(x[0], self.period[0] / 2):
             y[0] = x[0] - self.period[0]
             y[1] = x[1]
             y[2] = x[2]
-        elif df.near(x[1], self.period[1] / 2):
+        elif dolfin.near(x[1], self.period[1] / 2):
             y[0] = x[0]
             y[1] = x[1] - self.period[1]
             y[2] = x[2]

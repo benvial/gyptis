@@ -3,11 +3,12 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import dolfin as df
+
 import pytest
 from numpy import e, pi
 from test_geometry import geom2D
 
+import gyptis
 from gyptis.complex import *
 from gyptis.geometry import *
 from gyptis.materials import *
@@ -15,7 +16,6 @@ from gyptis.materials import *
 model = geom2D(mesh_size=0.01)
 mesh = model.mesh_object["mesh"]
 dx = model.measure["dx"]
-
 r = model.radius
 l = model.square_size
 
@@ -23,7 +23,7 @@ markers = model.mesh_object["markers"]["triangle"]
 domains = model.subdomains["surfaces"]
 
 
-W = df.FunctionSpace(mesh, "CG", 1)
+W = dolfin.FunctionSpace(mesh, "CG", 1)
 
 
 def test_subdomain():
@@ -31,8 +31,8 @@ def test_subdomain():
     sub = Subdomain(markers, domains, values, degree=1)
     sub_py = Subdomain(markers, domains, values, degree=1, cpp=False)
 
-    a = df.assemble(sub * dx)
-    a_py = df.assemble(sub_py * dx)
+    a = dolfin.assemble(sub * dx)
+    a_py = dolfin.assemble(sub_py * dx)
     assert a == a_py
 
     a_cyl = pi * r ** 2
@@ -41,24 +41,24 @@ def test_subdomain():
 
     assert abs(a - a_test) ** 2 < 1e-6
     #
-    # W0 = df.FunctionSpace(mesh, "DG", 0)
-    # sub_plot = df.project(sub, W0)
+    # W0 = dolfin.FunctionSpace(mesh, "DG", 0)
+    # sub_plot = dolfin.project(sub, W0)
     #
     # import matplotlib.pyplot as plt
-    # # s = df.plot(sub_plot)
-    # s = df.plot(sub,mesh=mesh)
+    # # s = dolfin.plot(sub_plot)
+    # s = dolfin.plot(sub,mesh=mesh)
     # plt.colorbar(s)
     # plt.show()
 
-    f = df.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=r)
+    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=r)
 
     values = dict(cyl=f, box=1)
     sub_with_function = Subdomain(markers, domains, values, degree=1)
-    I = df.assemble(sub_with_function * dx("cyl"))
+    I = dolfin.assemble(sub_with_function * dx("cyl"))
     Iexact = pi * r ** 2 * (1 - 1 / e)
     assert abs(I - Iexact) ** 2 < 1e-7
     sub_with_function_python = Subdomain(markers, domains, values, degree=1, cpp=False)
-    I_python = df.assemble(sub_with_function_python * dx("cyl"))
+    I_python = dolfin.assemble(sub_with_function_python * dx("cyl"))
     assert abs(I_python - Iexact) ** 2 < 1e-7
 
 
@@ -81,7 +81,7 @@ def test_subdomain_complex():
     a_box = l ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
     assert abs(a - a_test) ** 2 < 1e-6
-    f = df.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=r)
+    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=r)
 
     eps_cyl = 2
     eps_box = f
@@ -125,7 +125,7 @@ def test_subdomain_complex():
 # if arg in ("+", "-"):
 # possible solution: check f.ufl_operands and project first
 #
-# class MySubdomain(df.UserExpression):
+# class MySubdomain(dolfin.UserExpression):
 #     def __init__(self, markers, val, *args, **kwargs):
 #         super().__init__(*args, **kwargs)
 #         self.markers=markers
@@ -133,7 +133,7 @@ def test_subdomain_complex():
 #         self.W =W
 #
 #         if callable(self.val) and self.val.ufl_operands:
-#             self.val = df.project(self.val, self.W)
+#             self.val = dolfin.project(self.val, self.W)
 #
 #     def eval_cell(self, values, x, cell):
 #         if self.markers[cell.index] == 1:
@@ -149,7 +149,7 @@ def test_subdomain_complex():
 #
 # import time
 #
-# f = df.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=1, r=r)
+# f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=1, r=r)
 #
 #
 # values["box"] = 2
@@ -173,7 +173,7 @@ def test_subdomain_complex():
 # t += time.time()
 # print(f"elapsed time: {t:.2f}s")
 #
-# values["box"] = df.project(2 * f, W)
+# values["box"] = dolfin.project(2 * f, W)
 # sub = Subdomain(markers, domains, values, degree=1)
 # t = -time.time()
 # project(sub, W)

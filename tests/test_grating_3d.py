@@ -7,7 +7,7 @@ from pprint import pprint
 
 from gyptis.grating_3d import *
 
-# df.set_log_level(10)
+# dolfin.set_log_level(10)
 
 
 # def test_grating_3d():
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     g.assemble()
     g.solve(direct=True)
 
-    df.list_timings(df.TimingClear.clear, [df.TimingType.wall])
+    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
 
     g.N_d_order = N_d_order
     g.ninterv_integ = ninterv_integ
@@ -169,13 +169,13 @@ if __name__ == "__main__":
     effs_stack = {"R": g.Rstack, "T": g.Tstack}
     pprint(effs_stack)
 
-    # W0 = df.FunctionSpace(g.mesh, "CG", 1)
-    # W0 = df.FunctionSpace(g.mesh, "DG", 0)
+    # W0 = dolfin.FunctionSpace(g.mesh, "CG", 1)
+    # W0 = dolfin.FunctionSpace(g.mesh, "DG", 0)
     # fplot = g.E[0].real  # + g.Estack_coeff
     # # fplot = abs(g.E+ g.Estack_coeff)
     # # fplot = abs(g.E+ g.Estack_coeff)
-    # df.File("test.pvd") << g.Eper.real#interpolate(fplot, W0)
-    # df.File("markers.pvd") << g.markers
+    # dolfin.File("test.pvd") << g.Eper.real#interpolate(fplot, W0)
+    # dolfin.File("markers.pvd") << g.markers
     #
     # W = g.complex_space
     # dx = g.dx
@@ -253,8 +253,8 @@ if __name__ == "__main__":
     #     )
     #
     # def _propa_z(*args, **kwargs):
-    #     phasor_re = df.Expression("cos(gamma*x[2])", *args, **kwargs)
-    #     phasor_im = df.Expression("sin(gamma*x[2])", *args, **kwargs)
+    #     phasor_re = dolfin.Expression("cos(gamma*x[2])", *args, **kwargs)
+    #     phasor_im = dolfin.Expression("sin(gamma*x[2])", *args, **kwargs)
     #     return Complex(phasor_re, phasor_im)
     #
     # dx, dy = g.geom.period

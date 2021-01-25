@@ -35,7 +35,8 @@ def plane_wave_2D(lambda0, theta, A=1, degree=1, domain=None, grad=False):
     re, im = (p.subs(x[2], 0) for p in (re, im))
     code = [sp.printing.ccode(p) for p in (re, im)]
     dexpr = [
-        df.Expression(c, kx=K[0], ky=K[1], degree=degree, domain=domain) for c in code
+        dolfin.Expression(c, kx=K[0], ky=K[1], degree=degree, domain=domain)
+        for c in code
     ]
     pw = Complex(*dexpr)
 
@@ -45,12 +46,12 @@ def plane_wave_2D(lambda0, theta, A=1, degree=1, domain=None, grad=False):
 
         code = [sp.printing.ccode(p) for p in gradre]
         dexpr_re = [
-            df.Expression(c, kx=K[0], ky=K[1], degree=degree, domain=domain)
+            dolfin.Expression(c, kx=K[0], ky=K[1], degree=degree, domain=domain)
             for c in code
         ]
         code = [sp.printing.ccode(p) for p in gradim]
         dexpr_im = [
-            df.Expression(c, kx=K[0], ky=K[1], degree=degree, domain=domain)
+            dolfin.Expression(c, kx=K[0], ky=K[1], degree=degree, domain=domain)
             for c in code
         ]
 
@@ -77,11 +78,13 @@ def plane_wave_3D(lambda0, theta, phi, psi, A=1, degree=1, domain=None):
     Propp = sp.exp(1j * K_.dot(X))
     re, im = Propp.as_real_imag()
     code = [sp.printing.ccode(p) for p in (re, im)]
-    prop = df.Expression(code, kx=K[0], ky=K[1], kz=K[2], degree=degree, domain=domain)
+    prop = dolfin.Expression(
+        code, kx=K[0], ky=K[1], kz=K[2], degree=degree, domain=domain
+    )
 
     cx = np.cos(psi) * np.cos(theta) * np.cos(phi) - np.sin(psi) * np.sin(phi)
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)
     cz = -np.cos(psi) * np.sin(theta)
 
-    C = df.as_tensor([cx, cy, cz])
+    C = dolfin.as_tensor([cx, cy, cz])
     return A * Complex(prop[0] * C, prop[1] * C)

@@ -3,13 +3,16 @@
 # Author: Benjamin Vial
 # License: MIT
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang
 from matplotlib.tri import Triangulation
 
-plt.ion()
+from gyptis.complex import *
+
+from . import dolfin
+
+# plt.ion()
 
 
 def get_bnds(markers):
@@ -70,7 +73,7 @@ def plot_lines(markers, ax=None, **kwargs):
 
 
 def plot_subdomains(markers, alpha=0.3):
-    a = df.plot(markers, cmap="binary", alpha=alpha, lw=0.00, edgecolor="face")
+    a = dolfin.plot(markers, cmap="binary", alpha=alpha, lw=0.00, edgecolor="face")
     return a
     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
@@ -80,44 +83,53 @@ def plot_subdomains(markers, alpha=1, **kwargs):
     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
-def plotcplx(test, ax, markers=None, W0=None, ref_cbar=False, **kwargs):
+def plotcplx(test, ax=None, markers=None, W0=None, ref_cbar=False, **kwargs):
+    if ax is None:
+        fig, ax = plt.subplots(1, 2)
 
     proj = W0 is not None
 
     if proj:
         test = project(test, W0)
-    plt.sca(ax[0])
-    p = df.plot(test.real, cmap="RdBu_r", **kwargs)
-    cbar = plt.colorbar(p)
-    if markers:
-        plot_subdomains(markers)
-    if ref_cbar:
-        v = test.real.vector().get_local()
-        mn, mx = min(v), max(v)
-        md = 0.5 * (mx + mn)
-        cbar.set_ticks([mn, md, mx])
-        lab = [f"{m:.2e}" for m in [mn, md, mx]]
-        cbar.set_ticklabels(lab)
-    plt.sca(ax[1])
-    p = df.plot(test.imag, cmap="RdBu_r", **kwargs)
-    cbar = plt.colorbar(p)
-    if markers:
-        plot_subdomains(markers)
-    if ref_cbar:
-        v = test.imag.vector().get_local()
-        mn, mx = min(v), max(v)
-        md = 0.5 * (mx + mn)
-        cbar.set_ticks([mn, md, mx])
-        lab = [f"{m:.2e}" for m in [mn, md, mx]]
-        cbar.set_ticklabels(lab)
-    return p, cbar
+    P, C = [], []
+    for a, t in zip(ax, [test.real, test.imag]):
+        plt.sca(a)
+        p = dolfin.plot(t, cmap="RdBu_r", **kwargs)
+        cbar = plt.colorbar(p)
+        if markers:
+            plot_subdomains(markers)
+        if ref_cbar:
+            v = test.real.vector().get_local()
+            mn, mx = min(v), max(v)
+            md = 0.5 * (mx + mn)
+            cbar.set_ticks([mn, md, mx])
+            lab = [f"{m:.2e}" for m in [mn, md, mx]]
+            cbar.set_ticklabels(lab)
+        P.append(p)
+        C.append(cbar)
+
+    # plt.sca(ax[1])
+    # p = dolfin.plot(test.imag, cmap="RdBu_r", **kwargs)
+    # cbar = plt.colorbar(p)
+    # if markers:
+    #     plot_subdomains(markers)
+    # if ref_cbar:
+    #     v = test.imag.vector().get_local()
+    #     mn, mx = min(v), max(v)
+    #     md = 0.5 * (mx + mn)
+    #     cbar.set_ticks([mn, md, mx])
+    #     lab = [f"{m:.2e}" for m in [mn, md, mx]]
+    #     cbar.set_ticklabels(lab)
+    return P, C
 
 
-def plot(test, W0=None, markers=None, **kwargs):
+def plot(test, ax=None, markers=None, W0=None, **kwargs):
     proj = W0 is not None
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
     if proj:
         test = project(test, W0)
-    p = df.plot(test, cmap="inferno", **kwargs)
+    p = dolfin.plot(test, cmap="inferno", **kwargs)
     cbar = plt.colorbar(p)
     if markers:
         plot_subdomains(markers)
