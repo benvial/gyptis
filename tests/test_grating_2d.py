@@ -16,18 +16,18 @@ from gyptis.plotting import *
 plt.ion()
 
 
-def test_grating_2d():
+# def test_grating_2d():
 
-    # if __name__ == "__main__":
+if __name__ == "__main__":
 
     polarization = "TE"
     lambda0 = 1
-    theta0 = 30 * np.pi / 180
+    theta0 = 0 * np.pi / 180
 
     order = 2
     parmesh = 10
     parmesh_pml = parmesh * 2 / 3
-    period = 0.5
+    period = 0.7
     island_width = period * 3 / 4
     island_thickness = 2 * period
 
@@ -43,10 +43,10 @@ def test_grating_2d():
     mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
     mu_island = R.T @ mu_island @ R
 
-    # eps_island=8
-    # mu_island=1
-    eps_substrate = 2
-    mu_substrate = 1.2
+    eps_island = 8
+    mu_island = 1
+    eps_substrate = 4
+    mu_substrate = 1
     eps_sublayer = 1
 
     epsilon = dict(
@@ -79,10 +79,10 @@ def test_grating_2d():
     thicknesses = OrderedDict(
         {
             "pml_bottom": lambda0,
-            "substrate": lambda0,
-            "sublayer": lambda0 / 2,
-            "groove": island_thickness * 1.5,
-            "superstrate": lambda0,
+            "substrate": 1.3*lambda0,
+            "sublayer": lambda0,
+            "groove": island_thickness + lambda0,
+            "superstrate": 1.3*lambda0,
             "pml_top": lambda0,
         }
     )
@@ -146,7 +146,7 @@ def test_grating_2d():
     ctrl = dolfin.project(ctrl0, Actrl)
     eps = Complex(4, 0) * ctrl
 
-    epsilon["sublayer"] = eps
+    epsilon["sublayer"] = 1  # eps
 
     t = -time.time()
     g.prepare()
@@ -162,7 +162,7 @@ def test_grating_2d():
         dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
 
     t += time.time()
-    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
     print("-" * 60)
     print(f"solution time {t:.4f}s")
     print("-" * 60)
@@ -173,6 +173,8 @@ def test_grating_2d():
     effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effsTE)  # ,sort_dicts=False)
     print("Qtot", g.Qtot)
+    
+    xs
     t += time.time()
     dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
     print("-" * 60)
