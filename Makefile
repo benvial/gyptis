@@ -131,6 +131,12 @@ less:
 
 
 
+## Build html doc only rebuilding examples that changed
+docfast: less
+	cd docs && make html && make postpro-html
+
+
+
 ## Build html doc
 doc: less
 	cd docs && make clean && make html && make postpro-html

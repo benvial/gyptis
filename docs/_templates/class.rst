@@ -5,8 +5,7 @@
 
 .. autoclass:: {{ objname }}
 
-.. include:: {{module}}.{{objname}}.examples
+.. _sphx_glr_backref_{{fullname}}:
 
-.. raw:: html
-
-    <div class="clearer"></div>
+.. minigallery:: {{fullname}}
+    :add-heading:

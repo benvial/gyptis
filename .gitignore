@@ -42,7 +42,7 @@ wheels/
 MANIFEST
 .coverage
 bin
-package-lock.json
+docs/package-lock.json
 
 # Logs and databases #
 ######################

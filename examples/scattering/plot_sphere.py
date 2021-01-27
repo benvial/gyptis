@@ -6,13 +6,12 @@ Sphere
 An example of scattering from a dielectric sphere
 """
 
-from gyptis import geometry
+from gyptis.geometry import BoxPML3D
 
 ##############################################################################
 # We first define the geometry
 
-# model = geometry.Model("Scattering from a sphere")
-model = geometry.BoxPML3D(name="Scattering from a sphere")
+model = BoxPML3D(name="Scattering from a sphere")
 
 
 # box = model.addBox(-1, -1, -1, 2, 2, 2)
