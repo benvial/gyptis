@@ -16,18 +16,18 @@ from gyptis.plotting import *
 plt.ion()
 
 
-def test_grating_2d():
+# def test_grating_2d():
 
-    # if __name__ == "__main__":
+if __name__ == "__main__":
 
     polarization = "TE"
     lambda0 = 1
-    theta0 = 30 * np.pi / 180
+    theta0 = 0 * np.pi / 180
 
     order = 2
     parmesh = 10
     parmesh_pml = parmesh * 2 / 3
-    period = 0.5
+    period = 0.7
     island_width = period * 3 / 4
     island_thickness = 2 * period
 
@@ -43,10 +43,10 @@ def test_grating_2d():
     mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
     mu_island = R.T @ mu_island @ R
 
-    # eps_island=8
-    # mu_island=1
-    eps_substrate = 2
-    mu_substrate = 1.2
+    eps_island=8
+    mu_island=1
+    eps_substrate = 4
+    mu_substrate = 1
     eps_sublayer = 1
 
     epsilon = dict(
@@ -146,7 +146,7 @@ def test_grating_2d():
     ctrl = dolfin.project(ctrl0, Actrl)
     eps = Complex(4, 0) * ctrl
 
-    epsilon["sublayer"] = eps
+    epsilon["sublayer"] = 1#eps
 
     t = -time.time()
     g.prepare()
@@ -155,17 +155,17 @@ def test_grating_2d():
     g.build_system()
     g.solve()
 
-    field = g.u
-    J = assemble(inner(field, field.conj) * g.dx("substrate")).real
-
-    if gyptis.ADJOINT:
-        dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
-
-    t += time.time()
-    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-    print("-" * 60)
-    print(f"solution time {t:.4f}s")
-    print("-" * 60)
+    # field = g.u
+    # J = assemble(inner(field, field.conj) * g.dx("substrate")).real
+    # 
+    # if gyptis.ADJOINT:
+    #     dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
+    # 
+    # t += time.time()
+    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    # print("-" * 60)
+    # print(f"solution time {t:.4f}s")
+    # print("-" * 60)
 
     t = -time.time()
     # g.solve(direct=False)
@@ -174,10 +174,12 @@ def test_grating_2d():
     pprint(effsTE)  # ,sort_dicts=False)
     print("Qtot", g.Qtot)
     t += time.time()
-    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
     print("-" * 60)
     print(f"postpro time {t:.4f}s")
     print("-" * 60)
+    
+    xs
 
     # if gyptis.ADJOINT:
     #     J = effsTE["R"][1]
