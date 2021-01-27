@@ -31,10 +31,10 @@ Starget = pi * rtarget ** 2
 
 geom = BoxPML(dim=2, box_size=(lx + lambda0 * 4, ly + lambda0 * 1), pml_width=(1, 1))
 
-lens = geom.addRectangle(-lx / 2, -ly / 2, 0, lx, ly)
-lens, geom.box = geom.fragmentize(lens, geom.box)
-target = geom.addDisk(xtarget, ytarget, 0, rtarget, rtarget)
-target, geom.box = geom.fragmentize(target, geom.box)
+lens = geom.add_rectangle(-lx / 2, -ly / 2, 0, lx, ly)
+lens, geom.box = geom.fragment(lens, geom.box)
+target = geom.add_disk(xtarget, ytarget, 0, rtarget, rtarget)
+target, geom.box = geom.fragment(target, geom.box)
 geom.add_physical(geom.box, "box")
 geom.add_physical(lens, "lens")
 geom.add_physical(target, "target")

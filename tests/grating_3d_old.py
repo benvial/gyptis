@@ -47,7 +47,7 @@ def translation_matrix(t):
     return M
 
 
-class Layered3D(Model):
+class Layered3D(Geometry):
     def __init__(
         self,
         period=(1, 1),
@@ -92,12 +92,12 @@ class Layered3D(Model):
             self.add_physical(layer, id)
             z0 += thickness
 
-        self.removeAllDuplicates()
+        self.remove_all_duplicates()
         self.synchronize()
 
     def make_layer(self, z_position, thickness):
         dx, dy = self.period
-        box = self.addBox(-dx / 2, -dy / 2, z_position, dx, dy, thickness)
+        box = self.add_box(-dx / 2, -dy / 2, z_position, dx, dy, thickness)
         return box
 
     def build(self, **kwargs):
@@ -707,14 +707,14 @@ if __name__ == "__main__":
     island_width_top = 10
     island_width_bottom = 14
     island_thickness = 8
-    island_bottom = model.addRectangle(
+    island_bottom = model.add_rectangle(
         -island_width_bottom / 2,
         -island_width_bottom / 2,
         z0,
         island_width_bottom,
         island_width_bottom,
     )
-    island_top = model.addRectangle(
+    island_top = model.add_rectangle(
         -island_width_top / 2,
         -island_width_top / 2,
         z0 + island_thickness,
@@ -723,8 +723,8 @@ if __name__ == "__main__":
     )
 
     island = model.addThruSections([island_bottom, island_top])
-    island, groove = model.fragmentize(island[-1][-1], groove)
-    model.removeAllDuplicates()
+    island, groove = model.fragment(island[-1][-1], groove)
+    model.remove_all_duplicates()
     model.synchronize()
     model.add_physical(groove, "groove")
     model.add_physical(island, "island")

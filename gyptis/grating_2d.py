@@ -20,11 +20,11 @@ def _translation_matrix(t):
     return M.ravel().tolist()
 
 
-class Layered2D(Model):
+class Layered2D(Geometry):
     def __init__(
         self,
         period=1,
-        thicknesses=None,
+        thicknesses=OrderedDict(),
         model_name="2D grating",
         mesh_name="mesh.msh",
         data_dir=None,
@@ -38,17 +38,8 @@ class Layered2D(Model):
             **kwargs,
         )
         self.period = period
-        self.thicknesses = thicknesses or OrderedDict(
-            {
-                "pml_bottom": 1,
-                "substrate": 1,
-                "groove": 2,
-                "superstrate": 1,
-                "pml_top": 1,
-            }
-        )
-
-        self.translation_x = _translation_matrix([self.period, 0, 0])
+        # assert isinstance(self.thicknesses == OrderedDict)
+        self.thicknesses = thicknesses
 
         self.total_thickness = sum(self.thicknesses.values())
 
@@ -65,20 +56,25 @@ class Layered2D(Model):
             self._phys_groups.append(layer)
             y0 += thickness
 
-        self.removeAllDuplicates()
+        self.remove_all_duplicates()
         self.synchronize()
 
         for sub, num in self.subdomains["surfaces"].items():
             self.add_physical(num, sub)
 
+    @property
+    def translation_x(self):
+        return _translation_matrix([self.period, 0, 0])
+
     def make_layer(self, y_position, thickness):
-        box = self.addRectangle(-self.period / 2, y_position, 0, self.period, thickness)
+        box = self.add_rectangle(
+            -self.period / 2, y_position, 0, self.period, thickness
+        )
         return box
 
     def build(self, **kwargs):
 
         s = self.get_periodic_bnds(self.y0, self.total_thickness)
-
         periodic_id = {}
         for k, v in s.items():
             periodic_id[k] = [S[-1] for S in v]
@@ -208,11 +204,7 @@ class Grating2D(ElectroMagneticSimulation2D):
             _psi = 0
             _phi_ind = 8
         phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            -self.theta0,
-            0,
-            _psi,
+            config, self.lambda0, -self.theta0, 0, _psi,
         )
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
@@ -367,13 +359,10 @@ class Grating2D(ElectroMagneticSimulation2D):
         for bc in self._boundary_conditions:
             bc.apply(self.matrix, self.vector)
 
-        # ufunc = self.u.real
         VVect = dolfin.VectorFunctionSpace(
             self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
         )
         u = dolfin.Function(VVect)
-        # self.u = Function(self.complex_space)
-        # ufunc = self.u.real
 
         if direct:
             # solver = dolfin.LUSolver(Ah) ### direct
@@ -386,8 +375,14 @@ class Grating2D(ElectroMagneticSimulation2D):
             # solver.parameters.update(krylov_params)
             solver.solve(self.matrix, u.vector(), self.vector)
 
-        self.uper = Complex(*u.split())
-        self.u = self.uper * self.phasor
+        uper = Complex(*u.split())
+        u = uper * self.phasor
+        utot = u + self.ustack_coeff
+
+        self.solution = {}
+        self.solution["periodic"] = uper
+        self.solution["diffracted"] = u
+        self.solution["total"] = utot
 
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
@@ -414,9 +409,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
             nu = 1 / self.epsilon["substrate"]
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
         k, beta = {}, {}
@@ -448,7 +441,10 @@ class Grating2D(ElectroMagneticSimulation2D):
                 ph_y = self._phasor(
                     degree=self.degree, domain=self.mesh, alpha=s * beta_n[d].real, i=1
                 )
-                Jn[d] = assemble(self.uper * ph_x * ph_y * self.dx(d)) / self.period
+                Jn[d] = (
+                    assemble(self.solution["periodic"] * ph_x * ph_y * self.dx(d))
+                    / self.period
+                )
 
                 ph_pos = np.exp(-s * 1j * beta_n[d] * ypos[d])
                 eff[d] = (delta * eff_annex[d] + Jn[d] / thickness[d]) * ph_pos
@@ -491,31 +487,27 @@ class Grating2D(ElectroMagneticSimulation2D):
         doms_no_pml = [
             z for z in self.epsilon.keys() if z not in ["pml_bottom", "pml_top"]
         ]
-        omega = self.k0 * c
 
-        if self.polarization == "TE":
-            xi_0, chi_0 = mu_0, epsilon_0
-        else:
-            xi_0, chi_0 = epsilon_0, mu_0
+        xi_0, chi_0 = (
+            (mu_0, epsilon_0) if self.polarization == "TE" else (epsilon_0, mu_0)
+        )
 
         P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.cos(self.theta0) * self.period
 
-        u_tot = self.u + self.ustack_coeff
-
         Qchi = {}
         Qxi = {}
+        u_tot = self.solution["total"]
         if subdomain_absorption:
             for d in doms_no_pml:
 
-                # u_tot = self.u + self.annex_field["stack"][d]
                 nrj_chi_dens = (
-                    dolfin.Constant(-0.5 * chi_0 * omega)
+                    dolfin.Constant(-0.5 * chi_0 * self.omega)
                     * self.chi[d]
                     * abs(u_tot) ** 2
                 ).imag
 
                 nrj_xi_dens = (
-                    dolfin.Constant(-0.5 * 1 / (omega * xi_0))
+                    dolfin.Constant(-0.5 * 1 / (self.omega * xi_0))
                     * dot(grad(u_tot), (self.xi[d] * grad(u_tot)).conj).imag
                 )
 
@@ -525,11 +517,13 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
 
             nrj_chi_dens = (
-                dolfin.Constant(-0.5 * chi_0 * omega) * self.chi_coeff * abs(u_tot) ** 2
+                dolfin.Constant(-0.5 * chi_0 * self.omega)
+                * self.chi_coeff
+                * abs(u_tot) ** 2
             ).imag
 
             nrj_xi_dens = (
-                dolfin.Constant(-0.5 * 1 / (omega * xi_0))
+                dolfin.Constant(-0.5 * 1 / (self.omega * xi_0))
                 * dot(grad(u_tot), (self.xi_coeff * grad(u_tot)).conj).imag
             )
             Qchi = assemble(nrj_chi_dens * self.dx(doms_no_pml)) / P0

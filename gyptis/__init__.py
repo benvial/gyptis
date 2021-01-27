@@ -22,7 +22,5 @@ if os.environ.get("GYPTIS_ADJOINT") is not None:
     dolfin.__dict__.update(dolfin_adjoint.__dict__)
     dolfin.__spec__.name = "dolfin"
     del dolfin_adjoint
-    print(">>>>>> gyptis has been configured with adjoint calculations")
 else:
     ADJOINT = False
-    print(">>>>>> gyptis has been configured without adjoint calculations")

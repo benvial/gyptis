@@ -14,9 +14,9 @@ from gyptis.geometry import BoxPML3D
 model = BoxPML3D(name="Scattering from a sphere")
 
 
-# box = model.addBox(-1, -1, -1, 2, 2, 2)
-sphere = model.addSphere(0, 0, 0, 0.3)
-sphere, box = model.fragmentize(sphere, model.box)
+# box = model.add_box(-1, -1, -1, 2, 2, 2)
+sphere = model.add_sphere(0, 0, 0, 0.3)
+sphere, box = model.fragment(sphere, model.box)
 model.set_size(box, 0.1)
 model.set_size(sphere, 0.1)
 

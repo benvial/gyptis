@@ -51,10 +51,10 @@ mesh_param = dict(
 model = Layered2D(period, thicknesses, kill=False)
 groove = model.layers["groove"]
 y0 = model.y_position["groove"] + thicknesses["groove"] / 2
-rod = model.addEllipse(0, y0, 0, w / 2, h / 2)
-gmsh.model.occ.addCurveLoop([rod], rod)
-rod = model.addPlaneSurface([rod])
-rod, groove = model.fragmentize(groove, rod, removeTool=True)
+rod = model.add_ellipse(0, y0, 0, w / 2, h / 2)
+model.add_curve_loop([rod], rod)
+rod = model.add_plane_surface([rod])
+rod, groove = model.fragment(groove, rod, removeTool=True)
 model.add_physical(rod, "rod")
 model.add_physical(groove, "groove")
 

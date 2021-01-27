@@ -12,12 +12,12 @@ from gyptis.geometry import *
 
 
 def geom2D(square_size=1, radius=0.3, mesh_size=0.1):
-    model = Model("Cylinder", dim=2)
-    box = model.addRectangle(
+    model = Geometry("Cylinder", dim=2)
+    box = model.add_rectangle(
         -square_size / 2, -square_size / 2, 0, square_size, square_size
     )
-    cyl = model.addDisk(0, 0, 0, radius, radius)
-    cyl, box = model.fragmentize(cyl, box)
+    cyl = model.add_disk(0, 0, 0, radius, radius)
+    cyl, box = model.fragment(cyl, box)
     model.synchronize()
 
     model.add_physical(box, "box")
@@ -53,10 +53,10 @@ def test_2D():
 
 
 def test_3D():
-    model = Model("Sphere")
-    box = model.addBox(-1, -1, -1, 2, 2, 2)
-    sphere = model.addSphere(0, 0, 0, 0.5)
-    sphere, box = model.fragmentize(sphere, box)
+    model = Geometry("Sphere")
+    box = model.add_box(-1, -1, -1, 2, 2, 2)
+    sphere = model.add_sphere(0, 0, 0, 0.5)
+    sphere, box = model.fragment(sphere, box)
     model.set_size(box, 0.3)
     model.set_size(sphere, 0.3)
     model.add_physical(sphere, "sphere")
@@ -79,8 +79,8 @@ def test_box_pml():
 
 def test_box_pml_2D():
     model = BoxPML(dim=2)
-    cyl = model.addDisk(0, 0, 0, 0.1, 0.1)
-    cyl, model.box = model.fragmentize(cyl, model.box)
+    cyl = model.add_disk(0, 0, 0, 0.1, 0.1)
+    cyl, model.box = model.fragment(cyl, model.box)
     model.add_physical(cyl, "cyl")
     model.add_physical(model.box, "box")
     model.set_size(model.box, 0.03)
@@ -91,8 +91,8 @@ def test_box_pml_2D():
 
 def test_box_pml_3D():
     model = BoxPML(dim=3)
-    sphere = model.addSphere(0, 0, 0, 0.1)
-    cyl, model.box = model.fragmentize(sphere, model.box)
+    sphere = model.add_sphere(0, 0, 0, 0.1)
+    cyl, model.box = model.fragment(sphere, model.box)
     model.add_physical(sphere, "sphere")
     model.add_physical(model.box, "box")
     model.set_size(model.box, 0.06)

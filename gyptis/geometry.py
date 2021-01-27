@@ -4,16 +4,48 @@
 # License: MIT
 
 
-import os
+"""
+Geometry definition using Gmsh api.
+For more information see Gmsh's `documentation <https://gmsh.info/doc/texinfo/gmsh.html>`_
+"""
+
+
+import numbers
+import re
 import tempfile
-import time
 from functools import wraps
 
 import gmsh
 import numpy as np
-
 from gyptis.helpers import Measure
 from gyptis.mesh import read_mesh
+
+
+geo = gmsh.model.geo
+occ = gmsh.model.occ
+setnum = gmsh.option.setNumber
+
+gmsh_options = gmsh.option
+
+
+def _set_opt_gmsh(name, value):
+    if isinstance(value, str):
+        return gmsh_options.setString(name, value)
+    elif isinstance(value, numbers.Number) or isinstance(value, bool):
+        if isinstance(value, bool):
+            value=int(value)
+        return gmsh_options.setNumber(name, value)
+    else:
+        raise ValueError("value must be string or number")
+
+def _get_opt_gmsh(name):
+    try:
+        return gmsh_options.getNumber(name)
+    except:
+        return gmsh_options.getString(name)
+
+setattr(gmsh_options, "set", _set_opt_gmsh)
+setattr(gmsh_options, "get", _get_opt_gmsh)
 
 
 def _add_method(cls, func, name):
@@ -28,10 +60,6 @@ def _add_method(cls, func, name):
     return func
 
 
-occ = gmsh.model.occ
-setnum = gmsh.option.setNumber
-
-
 def _dimtag(tag, dim=3):
     if not isinstance(tag, list):
         tag = list([tag])
@@ -43,7 +71,11 @@ def _get_bnd(id, dim):
     return [b[1] for b in out]
 
 
-class Model(object):
+def _convert_name(name):
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+
+
+class Geometry(object):
     """Base class for geometry models.
 
     Parameters
@@ -83,11 +115,17 @@ class Model(object):
         self.dim = dim
         self.subdomains = dict(volumes={}, surfaces={}, curves={}, points={})
         self.data_dir = data_dir if data_dir else tempfile.mkdtemp()
-
+        self.occ = occ
+        
         for object_name in dir(occ):
-            if not object_name.startswith("__") and object_name != "mesh":
+            if (
+                not object_name.startswith("__")
+                and object_name != "mesh"
+                and object_name not in dir(self)
+            ):
                 bound_method = getattr(occ, object_name)
-                name = bound_method.__name__
+                # name = bound_method.__name__
+                name = _convert_name(bound_method.__name__)
                 _add_method(self, bound_method, name)
 
         if kill:
@@ -101,14 +139,6 @@ class Model(object):
             gmsh.initialize(self.gmsh_args)
         else:
             gmsh.initialize()
-        # setnum("Mesh.MshFileVersion", 2)
-        # setnum("Mesh.IgnoreParametrization",1)
-        # setnum("Mesh.PreserveNumberingMsh2",1)
-        # setnum("Mesh.Renumber",0)
-        # setnum("Mesh.SaveElementTagType",0)
-
-        # setnum("Mesh.SaveTopology",1)
-        # setnum("Mesh.SaveAll",1)
 
     def add_physical(self, id, name, dim=None):
         """Add a physical domain.
@@ -131,10 +161,25 @@ class Model(object):
         gmsh.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
 
     def dimtag(self, id, dim=None):
+        """Convert a .
+
+        Parameters
+        ----------
+        id : int or list of int
+            Label or list of labels.
+        dim : type
+            Dimension.
+
+        Returns
+        -------
+        int or list of int
+            A tuple (dim, tag) or list of such tuples (gmsh DimTag notation).
+
+        """
         dim = dim or self.dim
         return _dimtag(id, dim=dim)
 
-    def fragmentize(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
+    def fragment(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = dim1 if dim1 else self.dim
         dim2 = dim2 if dim2 else self.dim
         a1 = self.dimtag(id1, dim1)
@@ -144,7 +189,7 @@ class Model(object):
             occ.synchronize()
         return [o[1] for o in ov]
 
-    def chop(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
+    def cut(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = dim1 if dim1 else self.dim
         dim2 = dim2 if dim2 else self.dim
         a1 = self.dimtag(id1, dim1)
@@ -154,7 +199,7 @@ class Model(object):
             occ.synchronize()
         return [o[1] for o in ov]
 
-    def join(self, id1, id2, dim1=None, dim2=None, sync=True):
+    def fuse(self, id1, id2, dim1=None, dim2=None, sync=True):
         dim1 = dim1 if dim1 else self.dim
         dim2 = dim2 if dim2 else self.dim
         a1 = self.dimtag(id1, dim1)
@@ -301,7 +346,7 @@ class Model(object):
             return read_mesh(msh, data_dir=self.data_dir, dim=self.dim)
 
 
-class BoxPML2D(Model):
+class BoxPML2D(Geometry):
     def __init__(
         self,
         box_size=(1, 1),
@@ -322,7 +367,7 @@ class BoxPML2D(Model):
         def _addrect_center(rect_size):
             corner = -np.array(rect_size) / 2
             corner = tuple(corner) + (0,)
-            return self.addRectangle(*corner, *rect_size)
+            return self.add_rectangle(*corner, *rect_size)
 
         def _translate(tag, t):
             translation = tuple(t) + (0,)
@@ -371,14 +416,14 @@ class BoxPML2D(Model):
         self.box = box
         self.pmls = all_dom[1:]
 
-        self.fragmentize(self.box, self.pmls)
+        self.fragment(self.box, self.pmls)
 
         self.add_physical([pmlxp, pmlxm], "pmlx")
         self.add_physical([pmlyp, pmlym], "pmly")
         self.add_physical([pmlxypp, pmlxypm, pmlxymm, pmlxymp], "pmlxy")
 
 
-class BoxPML3D(Model):
+class BoxPML3D(Geometry):
     def __init__(
         self,
         box_size=(1, 1, 1),
@@ -399,7 +444,7 @@ class BoxPML3D(Model):
         def _addbox_center(rect_size):
             corner = -np.array(rect_size) / 2
             corner = tuple(corner)
-            return self.addBox(*corner, *rect_size)
+            return self.add_box(*corner, *rect_size)
 
         def _translate(tag, t):
             translation = tuple(t)
@@ -481,7 +526,7 @@ class BoxPML3D(Model):
 
         _translate([self.box] + self.pmls, self.box_center)
 
-        self.fragmentize(self.box, self.pmls)
+        self.fragment(self.box, self.pmls)
         #
 
         self.add_physical(pmlx, "pmlx")

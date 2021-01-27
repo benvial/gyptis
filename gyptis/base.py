@@ -51,11 +51,7 @@ class Simulation2D(object):
     """Base class for 2D simulations"""
 
     def __init__(
-        self,
-        geom,
-        degree=1,
-        element="CG",
-        boundary_conditions={},
+        self, geom, degree=1, element="CG", boundary_conditions={},
     ):
         self.geom = geom
         self.dim = geom.dim
@@ -96,6 +92,10 @@ class ElectroMagneticSimulation2D(Simulation2D):
     def k0(self):
         return 2 * np.pi / self.lambda0
 
+    @property
+    def omega(self):
+        return self.k0 * c
+
     def _make_subdomains(self, epsilon, mu):
         epsilon_coeff = Subdomain(
             self.markers, self.domains, epsilon, degree=self.degree
@@ -114,8 +114,7 @@ class ElectroMagneticSimulation2D(Simulation2D):
             self.epsilon, self.mu, self.source_domains, ref_material
         )
         self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            self.epsilon_annex,
-            self.mu_annex,
+            self.epsilon_annex, self.mu_annex,
         )
         if self.polarization == "TE":
             self.xi, self.chi = _make_cst_mat(self.mu, self.epsilon)

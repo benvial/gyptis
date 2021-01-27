@@ -95,10 +95,10 @@ if __name__ == "__main__":
         island_params["width"],
     )
 
-    superstrate, substrate, island, groove = model.fragmentize(
+    superstrate, substrate, island, groove = model.fragment(
         [superstrate, substrate, groove], island
     )
-    # island, groove = model.fragmentize(island, groove)
+    # island, groove = model.fragment(island, groove)
     model.add_physical(groove, "groove")
     model.add_physical(island, "island")
     model.add_physical(substrate, "substrate")

@@ -55,7 +55,7 @@ Base classes
    :toctree: generated/
    :template: class.rst
    
-   geometry.Model
+   geometry.Geometry
    geometry.BoxPML
    geometry.BoxPML3D
 

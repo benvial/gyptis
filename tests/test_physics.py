@@ -28,8 +28,8 @@ def test_scatt2D():
 
     geom = BoxPML(dim=2, box_size=(6, 6), pml_width=(1, 1))
     r = 0.9
-    cyl = geom.addDisk(0, 0, 0, r, r)
-    cyl, geom.box = geom.fragmentize(cyl, geom.box)
+    cyl = geom.add_disk(0, 0, 0, r, r)
+    cyl, geom.box = geom.fragment(cyl, geom.box)
     geom.add_physical(geom.box, "box")
     geom.add_physical(cyl, "cyl")
 

@@ -49,15 +49,15 @@ island_width_top = 5
 island_width_bottom = 5
 island_thickness = 1
 
-island = model.addRectangle(
+island = model.add_rectangle(
     -island_width_bottom / 2, y0, 0, island_width_bottom, island_thickness
 )
-# island, groove = model.fragmentize(island, groove)
+# island, groove = model.fragment(island, groove)
 groove = model.cut(
     model.dimtag(groove), model.dimtag(island), removeObject=False, removeTool=False
 )
 groove = groove[0][-1][-1]
-model.removeAllDuplicates()
+model.remove_all_duplicates()
 model.synchronize()
 model.add_physical(groove, "groove")
 

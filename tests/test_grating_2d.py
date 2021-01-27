@@ -10,6 +10,7 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 
 import gyptis
+from gyptis.helpers import list_time
 from gyptis.grating_2d import *
 from gyptis.plotting import *
 
@@ -92,12 +93,12 @@ def test_grating_2d():
     groove = model.layers["groove"]
     sublayer = model.layers["sublayer"]
     y0 = model.y_position["groove"]
-    island = model.addRectangle(
+    island = model.add_rectangle(
         -island_width / 2, y0, 0, island_width, island_thickness
     )
-    island, sublayer, groove = model.fragmentize(island, [groove, sublayer])
-    # island, sublayer = model.fragmentize(island, sublayer)
-    # groove, sublayer = model.fragmentize(groove, sublayer)
+    island, sublayer, groove = model.fragment(island, [groove, sublayer])
+    # island, sublayer = model.fragment(island, sublayer)
+    # groove, sublayer = model.fragment(groove, sublayer)
     model.add_physical(groove, "groove")
     model.add_physical(island, "island")
     model.add_physical(sublayer, "sublayer")
@@ -154,45 +155,43 @@ def test_grating_2d():
     g.build_system()
     g.solve()
 
-    field = g.u
+    field = g.solution["total"]
     J = assemble(inner(field, field.conj) * g.dx("substrate")).real
 
     if gyptis.ADJOINT:
         dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
 
     t += time.time()
-    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    list_time()
     print("-" * 60)
     print(f"solution time {t:.4f}s")
     print("-" * 60)
 
     t = -time.time()
-    # g.solve(direct=False)
+    
     g.N_d_order = 2
     effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
-    pprint(effsTE)  # ,sort_dicts=False)
+    pprint(effsTE)
+    
+    print("Qtot", g.Qtot)
 
     if gyptis.ADJOINT:
         dRdx = dolfin.compute_gradient(effsTE["R"][g.N_d_order], dolfin.Control(ctrl))
         plot(dRdx, markers=g.markers)
 
-    # print("Qtot", g.Qtot)
 
     t += time.time()
-    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    # 
     print("-" * 60)
     print(f"postpro time {t:.4f}s")
     print("-" * 60)
 
-    # if gyptis.ADJOINT:
-    #     J = effsTE["R"][1]
-    #     dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
-    #
-
-    # cb = dolfin.plot(g.u.real + g.ustack_coeff.real, mesh=g.mesh)
     fig, ax = plt.subplots(1, 2)
     W0 = dolfin.FunctionSpace(g.mesh, "CG", 2)
-    plotcplx(g.u, ax=ax, W0=W0)
+    plotcplx(g.solution["diffracted"], ax=ax, W0=W0)
+    
+    
+    ### TM polarization ####
 
     g.polarization = "TM"
     t = -time.time()
@@ -202,7 +201,7 @@ def test_grating_2d():
     g.build_system()
     g.solve()
     t += time.time()
-    dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    list_time()
     print("-" * 60)
     print(f"solution time {t:.4f}s")
     print("-" * 60)
@@ -215,129 +214,7 @@ def test_grating_2d():
     print("-" * 60)
     print(f"postpro time {t:.4f}s")
     print("-" * 60)
-    #
-    #
+    
+    
     assert abs(effsTE["B"] - 1) < 1e-3
     assert abs(effsTM["B"] - 1) < 1e-3
-
-    # plt.show()
-    #
-    # plt.figure()
-    #
-    # for d in g.domains:
-    #     delt = g.annex_field["stack"][d] - g.ustack_coeff
-    #     test = assemble(delt * g.dx(d))
-    #     q = assemble(g.ustack_coeff * g.dx(d))
-    #     if q != 0:
-    #         test /= q
-    #     print(f">>> {d} : {test}")
-    #
-    # for d in g.domains:
-    #     cb = dolfin.plot(g.annex_field["stack"][d].imag - g.ustack_coeff.imag, mesh=g.mesh)
-    #     plt.colorbar(cb)
-    #
-    # d = "pml_top"
-    #
-    #
-    # plt.figure()
-    #
-    # cb = dolfin.plot(g.annex_field["stack"][d].real, mesh=g.mesh)
-    # plt.colorbar(cb)
-
-    #
-    #
-    #
-    # for d in g.domains:
-    #     if d in ["pml_top","pml_bottom"]:
-    #         print("PMLS")
-    #     else:
-    #         cb = dolfin.plot(g.annex_field["stack"][d].real- g.ustack_coeff.real,mesh=g.mesh)
-    #         plt.colorbar(cb)
-    #
-
-
-#
-#     cb = dolfin.plot(g.u.real)
-#     plt.colorbar(cb)
-#     plt.show()
-#
-#     ex = as_tensor([1 + 0j, 0 + 0j])
-#     ey = as_tensor([0 + 0j, 1 + 0j])
-#     [assemble(dot(g.xi * ex, ex) * g.dx(d)) for d in g.domains]
-#     [assemble(dot(g.xi * ey, ey) * g.dx(d)) for d in g.domains]
-#     [assemble(dot(g.xi * ex, ey) * g.dx(d)) for d in g.domains]
-#     [assemble(dot(g.xi * ey, ex) * g.dx(d)) for d in g.domains]
-#
-#     ex = as_tensor([1 + 0j, 0 + 0j])
-#     ey = as_tensor([0 + 0j, 1 + 0j])
-#     [assemble(dot(g.xi[d] * ex, ex) * g.dx(d)) for d in g.domains]
-#     [assemble(dot(g.xi[d] * ey, ey) * g.dx(d)) for d in g.domains]
-#     [assemble(dot(g.xi[d] * ex, ey) * g.dx(d)) for d in g.domains]
-#     [assemble(dot(g.xi[d] * ey, ex) * g.dx(d)) for d in g.domains]
-#
-#     [assemble(g.ustack_coeff * g.dx(d)) for d in g.domains]
-#
-#     [assemble(g.annex_field["stack"][d] * g.dx(d)) for d in g.domains]
-#     [assemble(g.annex_field["incident"][d] * g.dx(d)) for d in g.domains]
-#
-#     g.lambda0 *= 1.1
-#     g.weak_form()
-#     g.assemble_rhs()
-#
-#     g.solve(direct=True)
-#
-#     dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-#
-#     # g.N_d_order=1
-#
-#     g.polarization = "TM"
-#     g.weak_form()
-#     g.assemble()
-#     g.solve(direct=True)
-#     dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-#     effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
-#     pprint(effs)  # ,sort_dicts=False)
-#     print("Qtot", g.Qtot)
-#
-#     b = 2 * np.pi / g.lambda0
-#     t = {}
-#     for dom in g.domains:
-#         phi = np.random.rand(2) + 1j * np.random.rand(2)
-#         t[dom] = field_stack_2D(phi, 0, b, yshift=0, domain=g.mesh)
-#         # t[dom] = Complex(np.random.rand(1)[0] , np.random.rand(1)[0])
-#
-#     a1 = [assemble(t[d] * g.dx(d)) for d in g.domains]
-#
-#     a1 = np.array([a.real + 1j * a.imag for a in a1])
-#
-#     test = Subdomain(g.markers, g.domains, t, degree=2, domain=g.mesh)
-#
-#     a2 = [assemble(test * g.dx(d)) for d in g.domains]
-#     a2 = np.array([a.real + 1j * a.imag for a in a2])
-#
-#     print(a1)
-#     print(a2)
-#     err = np.abs(a1 - a2) / np.abs(a1)
-#     print(err)
-#
-#     err_re = (a1 - a2).real / (a1).real
-#     err_im = (a1 - a2).imag / (a1).imag
-#     for i, d in enumerate(g.domains):
-#         print(f">>> {d} : {err[i]}")
-#         print(f">>> {d} : {err_re[i]} (real)")
-#         print(f">>> {d} : {err_im[i]} (imag)")
-#
-#
-# # q = [assemble(g.annex_field["stack"][d] * g.dx(d)) for d in g.domains]
-# # q = np.array([a.real + 1j * a.imag for a in q])
-# #
-# # np.sum(q)
-# # assemble(g.ustack_coeff * g.dx)
-# #
-# # q = [assemble(g.ustack_coeff * g.dx(d)) for d in g.domains]
-# # q = np.array([a.real + 1j * a.imag for a in q])
-# # np.sum(q)
-
-#
-# # dolfin.File("test.pvd") << project(Estack[0].real[0], W0)
-# dolfin.File("test.pvd") << project(test.real, W0)

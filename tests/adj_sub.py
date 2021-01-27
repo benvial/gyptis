@@ -22,8 +22,8 @@ k0 = 2 * np.pi / lambda0
 
 geom = BoxPML(dim=2, box_size=(3, 3), pml_width=(1, 1))
 r = 1
-cyl = geom.addDisk(0, 0, 0, r, r)
-cyl, geom.box = geom.fragmentize(cyl, geom.box)
+cyl = geom.add_disk(0, 0, 0, r, r)
+cyl, geom.box = geom.fragment(cyl, geom.box)
 geom.add_physical(geom.box, "box")
 geom.add_physical(cyl, "cyl")
 pmls = [d for d in geom.subdomains["surfaces"] if d.startswith("pml")]

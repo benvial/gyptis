@@ -15,11 +15,11 @@ from gyptis.sources import *
 
 #
 #
-# model = Model("test")
-# box = model.addBox(0, 0, 0, 1, 1, 2)
-# other = model.addBox(0, 0, 1, 1, 1, 1)
+# model = Geometry("test")
+# box = model.add_box(0, 0, 0, 1, 1, 2)
+# other = model.add_box(0, 0, 1, 1, 1, 1)
 # # other = model.fragment(model.dimtag(other),model.dimtag(box))
-# other,box = model.fragmentize(other,box)
+# other,box = model.fragment(other,box)
 #
 # model.add_physical(box, "box")
 # model.add_physical(other, "other")
@@ -27,12 +27,12 @@ from gyptis.sources import *
 #
 # cdsdc
 
-model = Model("test")
-box = model.addBox(0, 0, 0, 1, 1, 1)
-other = model.addBox(0, 0, 0, 1, 1, 2)
-box, other = model.fragmentize(box, other)
-sphere = model.addSphere(0.5, 0.5, 0.5, 0.1)
-sphere, box = model.fragmentize(sphere, box)
+model = Geometry("test")
+box = model.add_box(0, 0, 0, 1, 1, 1)
+other = model.add_box(0, 0, 0, 1, 1, 2)
+box, other = model.fragment(box, other)
+sphere = model.add_sphere(0.5, 0.5, 0.5, 0.1)
+sphere, box = model.fragment(sphere, box)
 model.set_size(box, 0.1)
 model.set_size(sphere, 0.1)
 model.set_size(other, 0.1)
