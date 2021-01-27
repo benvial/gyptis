@@ -191,7 +191,7 @@ class Subdomain(object):
         return ClassReturn(markers, subdomains, mapping, cpp=cpp, **kwargs)
 
 
-def tensor_const(T):
+def _tensor_const(T,real=False):
     def _treal(T):
         m = []
         for i in range(3):
@@ -202,10 +202,19 @@ def tensor_const(T):
         return dolfin.as_tensor(m)
 
     assert T.shape == (3, 3)
-    if hasattr(T, "real") and hasattr(T, "imag"):
+    if hasattr(T, "real") and hasattr(T, "imag") and not real:
         return Complex(_treal(T.real), _treal(T.imag))
     else:
         return _treal(T)
+
+
+def tensor_const(T, dim=3,real=False):
+    if dim == 3:
+        return _tensor_const(T,real=real)
+    elif dim == 2:
+        return tensor_const_2d(T,real=real)
+    else:
+        raise NotImplementedError("only supports dim = 2 or 3")
 
 
 def make_constant_property(prop, inv=False):
@@ -220,7 +229,7 @@ def make_constant_property(prop, inv=False):
     return new_prop
 
 
-def tensor_const_2d(T):
+def tensor_const_2d(T,real=False):
     def _treal(T):
         m = []
         for i in range(2):
@@ -231,7 +240,7 @@ def tensor_const_2d(T):
         return dolfin.as_tensor(m)
 
     assert T.shape == (2, 2)
-    if hasattr(T, "real") and hasattr(T, "imag"):
+    if hasattr(T, "real") and hasattr(T, "imag") and not real:
         return Complex(_treal(T.real), _treal(T.imag))
     else:
         return _treal(T)

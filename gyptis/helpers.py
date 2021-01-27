@@ -100,6 +100,11 @@ class DirichletBC(_DirichletBC):
 # parameters["form_compiler"]["quadrature_degree"] = 2
 # parameters["allow_extrapolation"] = True
 
+def rot_matrix_2d(t):
+    return np.array(
+        [[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]]
+    )
+
 
 def make_unit_vectors(dim):
     if dim == 3:

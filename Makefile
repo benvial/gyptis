@@ -159,7 +159,6 @@ showhtmldoc:
 ## Run the test suite
 test:
 	# source activate $(PROJECT_NAME)
-	
 	unset GYPTIS_ADJOINT && pytest ./tests -s -vv --cov=./$(PROJECT_NAME) --cov-report html
 	GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
 	

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 import gyptis
 from gyptis.grating_2d import *
-from gyptis.helpers import list_time
+from gyptis.helpers import list_time, rot_matrix_2d
 from gyptis.plotting import *
 
 plt.ion()
@@ -33,11 +33,9 @@ def test_grating_2d():
     island_thickness = 0.4 * period
 
     tr = pi / 5
-    rot = lambda t: np.array(
-        [[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]]
-    )
 
-    R = rot(tr)
+
+    R = rot_matrix_2d(tr)
     eps_island = np.diag([6 - 0.02j, 4 - 0.021j, 3 - 0.021j])
     eps_island = R.T @ eps_island @ R
 
