@@ -16,18 +16,18 @@ from gyptis.plotting import *
 plt.ion()
 
 
-# def test_grating_2d():
+def test_grating_2d():
 
-if __name__ == "__main__":
+    # if __name__ == "__main__":
 
     polarization = "TE"
     lambda0 = 1
-    theta0 = 0 * np.pi / 180
+    theta0 = 30 * np.pi / 180
 
     order = 2
     parmesh = 10
     parmesh_pml = parmesh * 2 / 3
-    period = 0.7
+    period = 0.8
     island_width = period * 3 / 4
     island_thickness = 0.4 * period
 
@@ -42,7 +42,6 @@ if __name__ == "__main__":
 
     mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
     mu_island = R.T @ mu_island @ R
-
 
     eps_island = 8
     mu_island = 1
@@ -80,10 +79,10 @@ if __name__ == "__main__":
     thicknesses = OrderedDict(
         {
             "pml_bottom": lambda0,
-            "substrate": 1*lambda0,
-            "sublayer": 0.5*lambda0,
-            "groove": island_thickness *1.3,
-            "superstrate": 1*lambda0,
+            "substrate": 1 * lambda0,
+            "sublayer": 0.5 * lambda0,
+            "groove": island_thickness * 1.3,
+            "superstrate": 1 * lambda0,
             "pml_top": lambda0,
         }
     )
@@ -96,7 +95,7 @@ if __name__ == "__main__":
     island = model.addRectangle(
         -island_width / 2, y0, 0, island_width, island_thickness
     )
-    island, sublayer, groove  = model.fragmentize(island, [groove, sublayer])
+    island, sublayer, groove = model.fragmentize(island, [groove, sublayer])
     # island, sublayer = model.fragmentize(island, sublayer)
     # groove, sublayer = model.fragmentize(groove, sublayer)
     model.add_physical(groove, "groove")
@@ -124,12 +123,10 @@ if __name__ == "__main__":
     model.add_physical(face_top, "face_top", dim=1)
     model.add_physical(face_bottom, "face_bottom", dim=1)
 
-
     # mesh_object = model.build(
     #     interactive=True, generate_mesh=True, read_info=False, write_mesh=False
     # )
     mesh_object = model.build()
-    
 
     mesh = model.mesh_object["mesh"]
 
@@ -148,7 +145,7 @@ if __name__ == "__main__":
     ctrl = dolfin.project(ctrl0, Actrl)
     eps = Complex(4, 0) * ctrl
 
-    epsilon["sublayer"] = 1#eps
+    epsilon["sublayer"] = eps
 
     t = -time.time()
     g.prepare()
@@ -162,9 +159,6 @@ if __name__ == "__main__":
 
     if gyptis.ADJOINT:
         dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
-
-        
-        
 
     t += time.time()
     # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
@@ -180,23 +174,15 @@ if __name__ == "__main__":
 
     if gyptis.ADJOINT:
         dRdx = dolfin.compute_gradient(effsTE["R"][g.N_d_order], dolfin.Control(ctrl))
-        plot(dRdx,markers=g.markers)
-        
-        xa
-            
-    effsTEold = g.diffraction_efficiencies_old(orders=True, subdomain_absorption=True)
-    pprint(effsTEold)  # ,sort_dicts=False)
-    
-    
+        plot(dRdx, markers=g.markers)
+
     # print("Qtot", g.Qtot)
-    
+
     t += time.time()
     # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
     print("-" * 60)
     print(f"postpro time {t:.4f}s")
     print("-" * 60)
-    
-    xs
 
     # if gyptis.ADJOINT:
     #     J = effsTE["R"][1]
@@ -222,7 +208,6 @@ if __name__ == "__main__":
     print("-" * 60)
 
     t = -time.time()
-    g.N_d_order = 0
     effsTM = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effsTM)
     print("Qtot", g.Qtot)

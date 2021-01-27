@@ -208,7 +208,11 @@ class Grating2D(ElectroMagneticSimulation2D):
             _psi = 0
             _phi_ind = 8
         phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
-            config, self.lambda0, -self.theta0, 0, _psi,
+            config,
+            self.lambda0,
+            -self.theta0,
+            0,
+            _psi,
         )
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
@@ -409,7 +413,11 @@ class Grating2D(ElectroMagneticSimulation2D):
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
-        orders_num = np.linspace(-self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,)
+        orders_num = np.linspace(
+            -self.N_d_order,
+            self.N_d_order,
+            2 * self.N_d_order + 1,
+        )
 
         k, beta = {}, {}
         for d in ["substrate", "superstrate"]:
@@ -436,21 +444,19 @@ class Grating2D(ElectroMagneticSimulation2D):
             for d in ["substrate", "superstrate"]:
                 s = 1 if d == "superstrate" else -1
                 beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n ** 2)
-                ph_x = self._phasor(
-                    degree=self.degree, domain=self.mesh, alpha=-qn
-                )
+                ph_x = self._phasor(degree=self.degree, domain=self.mesh, alpha=-qn)
                 ph_y = self._phasor(
                     degree=self.degree, domain=self.mesh, alpha=s * beta_n[d].real, i=1
                 )
                 Jn[d] = assemble(self.uper * ph_x * ph_y * self.dx(d)) / self.period
 
                 ph_pos = np.exp(-s * 1j * beta_n[d] * ypos[d])
-                eff[d] = (delta * eff_annex[d] + Jn[d]  / thickness[d]) *  ph_pos
+                eff[d] = (delta * eff_annex[d] + Jn[d] / thickness[d]) * ph_pos
             r_, t_ = eff["superstrate"], eff["substrate"]
             sigma_r = beta_n["superstrate"] / beta["superstrate"]
-            R_n_ = (r_*r_.conj) * sigma_r
-            sigma_t =  beta_n["substrate"] / beta["superstrate"] * nu
-            T_n_ = (t_*t_.conj) * sigma_t
+            R_n_ = (r_ * r_.conj) * sigma_r
+            sigma_t = beta_n["substrate"] / beta["superstrate"] * nu
+            T_n_ = (t_ * t_.conj) * sigma_t
 
             r_n.append(r_)
             t_n.append(t_)
@@ -538,232 +544,3 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.Qtot = Q
         self.Qdomains = Qdomains
         return Q, Qdomains
-
-
-
-
-
-    def diffraction_efficiencies_old(
-        self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
-    ):
-        """Postprocess diffraction efficiencies.
-
-        Parameters
-        ----------
-        cplx_effs : bool
-            If `True`, return complex coefficients (amplitude reflection and transmission).
-            If `False`, return real coefficients (power reflection and transmission)
-        orders : bool
-            If `True`, computes the transmission and reflection for all the propagating diffraction orders.
-            If `False`, returns the sum of all the propagating diffraction orders.
-
-        Returns
-        -------
-        dict
-            A dictionary containing the diffraction efficiencies.
-
-        """
-        if self.polarization == "TE":
-            nu = 1 / self.mu["substrate"]
-        else:
-            nu = 1 / self.epsilon["substrate"]
-        No_order = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
-        )
-
-        self.scan_dist = (
-            min(
-                self.geom.thicknesses["substrate"], self.geom.thicknesses["superstrate"]
-            )
-            / self.scan_dist_ratio
-        )
-
-        self.ycut = dict()
-        for k in ["substrate", "superstrate"]:
-            self.ycut[k] = (
-                self.geom.y_position[k] + self.scan_dist,
-                (self.geom.y_position[k] + self.geom.thicknesses[k] - self.scan_dist),
-            )
-
-        x_slice = np.linspace(-self.period / 2, self.period / 2, self.npt_integ)
-        y_slice_t = np.linspace(*self.ycut["substrate"], self.nb_slice)
-        y_slice_r = np.linspace(*self.ycut["superstrate"], self.nb_slice)
-        k_sub = (
-            2
-            * np.pi
-            * np.sqrt(complex(self.epsilon["substrate"] * self.mu["substrate"]))
-            / self.lambda0
-        )
-        k_sup = (
-            2
-            * np.pi
-            * np.sqrt(complex(self.epsilon["superstrate"] * self.mu["superstrate"]))
-            / self.lambda0
-        )
-        alpha_sup = -k_sup * np.sin(self.theta0)
-        beta_sup = np.sqrt(k_sup ** 2 - alpha_sup ** 2)
-        # beta_sub = np.sqrt(k_sub ** 2 - alpha_sup ** 2)
-        s_t = np.zeros((1, (2 * self.N_d_order + 1)), complex)[0, :]
-        s_r = np.zeros((1, (2 * self.N_d_order + 1)), complex)[0, :]
-        Aeff_t = np.zeros((self.nb_slice, 2 * self.N_d_order + 1), complex)
-        Aeff_r = np.zeros((self.nb_slice, 2 * self.N_d_order + 1), complex)
-
-        def get_line(u, y):
-            re, im = [], []
-            for x_ in x_slice:
-                f = u(x_, y)
-                re.append(f.real)
-                im.append(f.imag)
-            return np.array(re) + 1j * np.array(im)
-
-        field_diff_t = []
-        field_diff_r = []
-        # u = project(self.u, self.real_space)
-
-        for y_ in y_slice_t:
-            l = get_line(self.uper, y_) * np.exp(1j * alpha_sup * x_slice)
-
-            l += get_line(self.annex_field["stack"]["substrate"], y_)
-            # l += get_line(self.u_stack[-1], y_)
-            field_diff_t.append(l)
-        for y_ in y_slice_r:
-            l = get_line(self.uper, y_) * np.exp(1j * alpha_sup * x_slice)
-            l += get_line(self.annex_field["stack"]["superstrate"], y_)
-            l -= get_line(self.annex_field["incident"]["superstrate"], y_)
-            # l += get_line(self.u_stack["0"], y_)
-            # l -= get_line(self.u_0, y_)
-            field_diff_r.append(l)
-
-        field_diff_t = np.array(field_diff_t)
-        field_diff_r = np.array(field_diff_r)
-
-        # field_diff_t = np.fliplr(field_diff_t)
-        # field_diff_r = np.fliplr(field_diff_r)
-
-        alphat_t = alpha_sup + 2 * np.pi / (self.period) * No_order
-        alphat_r = alpha_sup + 2 * np.pi / (self.period) * No_order
-        betat_sup = np.conj(np.sqrt(k_sup ** 2 - alphat_r ** 2))
-        betat_sub = np.conj(np.sqrt(k_sub ** 2 - alphat_t ** 2))
-        for m1 in range(0, self.nb_slice):
-            slice_t = field_diff_t[m1, :]
-            slice_r = field_diff_r[m1, :]
-
-            for k in range(0, 2 * self.N_d_order + 1):
-                expalpha_t = np.exp(-1j * alphat_t[k] * x_slice)
-                expalpha_r = np.exp(-1j * alphat_r[k] * x_slice)
-                s_t[k] = np.trapz(slice_t * expalpha_t, x=x_slice) / self.period
-                s_r[k] = np.trapz(slice_r * expalpha_r, x=x_slice) / self.period
-
-            Aeff_t[m1, :] = s_t * np.exp(-1j * betat_sub * (y_slice_t[m1]))
-            Aeff_r[m1, :] = s_r * np.exp(
-                1j
-                * betat_sup
-                * (y_slice_r[m1] - (self.ycut["substrate"][0] - self.scan_dist))
-            )
-
-        # Aeff_r = -np.conj(Aeff_r)
-
-        Beff_t = (np.abs(Aeff_t)) ** 2 * betat_sub / beta_sup * nu
-        Beff_r = (np.abs(Aeff_r)) ** 2 * betat_sup / beta_sup
-
-        # print(Aeff_r)
-        # print(Aeff_t)
-
-        rcplx = np.mean(Aeff_r, axis=0)
-        tcplx = np.mean(Aeff_t, axis=0)
-
-        Rorders = np.mean(Beff_r.real, axis=0)
-        Torders = np.mean(Beff_t.real, axis=0)
-        R = np.sum(Rorders, axis=0)
-        T = np.sum(Torders, axis=0)
-
-        doms_no_pml = [
-            z for z in self.epsilon.keys() if z not in ["pml_bottom", "pml_top"]
-        ]
-        omega = self.k0 * c
-
-        if self.polarization == "TE":
-            xi_0, chi_0 = mu_0, epsilon_0
-        else:
-            xi_0, chi_0 = epsilon_0, mu_0
-
-        P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.cos(self.theta0) * self.period
-
-        u_tot = self.u + self.ustack_coeff
-
-        Qchi = {}
-        Qxi = {}
-        if subdomain_absorption:
-            for d in doms_no_pml:
-
-                # u_tot = self.u + self.annex_field["stack"][d]
-                nrj_chi_dens = (
-                    dolfin.Constant(-0.5 * chi_0 * omega)
-                    * self.chi[d]
-                    * abs(u_tot) ** 2
-                ).imag
-
-                nrj_xi_dens = (
-                    dolfin.Constant(-0.5 * 1 / (omega * xi_0))
-                    * dot(grad(u_tot), (self.xi[d] * grad(u_tot)).conj).imag
-                )
-
-                Qchi[d] = assemble(nrj_chi_dens * self.dx(d)) / P0
-                Qxi[d] = assemble(nrj_xi_dens * self.dx(d)) / P0
-            Q = sum(Qxi.values()) + sum(Qchi.values())
-        else:
-
-            nrj_chi_dens = (
-                dolfin.Constant(-0.5 * chi_0 * omega) * self.chi_coeff * abs(u_tot) ** 2
-            ).imag
-
-            nrj_xi_dens = (
-                dolfin.Constant(-0.5 * 1 / (omega * xi_0))
-                * dot(grad(u_tot), (self.xi_coeff * grad(u_tot)).conj).imag
-            )
-            Qchi = assemble(nrj_chi_dens * self.dx(doms_no_pml)) / P0
-            Qxi = assemble(nrj_xi_dens * self.dx(doms_no_pml)) / P0
-            Q = Qxi + Qchi
-
-        if self.polarization == "TE":
-            Q_domains = {"electric": Qchi, "magnetic": Qxi}
-        else:
-            Q_domains = {"electric": Qxi, "magnetic": Qchi}
-
-        self.Qtot = Q
-
-        B = T + R + Q  # energy balance
-
-        if verbose:
-            print("  Energy balance")
-            print(
-                "    R =",
-                "%0.6f" % R,
-                "    (std slice2slice =",
-                "%0.6e" % np.std(np.sum(Beff_r.real, axis=1)),
-                ")",
-            )
-            print(
-                "    T =",
-                "%0.6f" % T,
-                "    (std slice2slice =",
-                "%0.6e" % np.std(np.sum(Beff_t.real, axis=1)),
-                ")",
-            )
-            print("    Q =", "%0.6f" % Q)
-            print("    ------------------------")
-            print("    B =", "%0.6f" % (B))
-
-        if cplx_effs:
-            R, T = rcplx, tcplx
-        else:
-            if orders:
-                R, T = Rorders, Torders
-        eff = dict()
-        eff["R"] = R
-        eff["T"] = T
-        eff["Q"] = Q_domains if subdomain_absorption else Q
-        eff["B"] = B
-        return eff
