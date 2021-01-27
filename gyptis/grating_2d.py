@@ -17,7 +17,7 @@ from .stack import *
 def _translation_matrix(t):
     M = np.eye(4)
     M[:3, -1] = t
-    return M
+    return M.ravel().tolist()
 
 
 class Layered2D(Model):
@@ -48,7 +48,7 @@ class Layered2D(Model):
             }
         )
 
-        self.translation_x = _translation_matrix([self.period, 0, 0]).ravel().tolist()
+        self.translation_x = _translation_matrix([self.period, 0, 0])
 
         self.total_thickness = sum(self.thicknesses.values())
 
@@ -208,11 +208,7 @@ class Grating2D(ElectroMagneticSimulation2D):
             _psi = 0
             _phi_ind = 8
         phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            -self.theta0,
-            0,
-            _psi,
+            config, self.lambda0, -self.theta0, 0, _psi,
         )
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
@@ -253,9 +249,9 @@ class Grating2D(ElectroMagneticSimulation2D):
             stack_field[dom] = estack[dom]
         self.annex_field = {"incident": inc_field, "stack": stack_field}
 
-    def _phasor(self, *args, **kwargs):
-        phasor_re = dolfin.Expression("cos(alpha*x[0])", *args, **kwargs)
-        phasor_im = dolfin.Expression("sin(alpha*x[0])", *args, **kwargs)
+    def _phasor(self, *args, i=0, **kwargs):
+        phasor_re = dolfin.Expression(f"cos(alpha*x[{i}])", *args, **kwargs)
+        phasor_im = dolfin.Expression(f"sin(alpha*x[{i}])", *args, **kwargs)
         return Complex(phasor_re, phasor_im)
 
     def prepare(self):
@@ -389,107 +385,165 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.uper = Complex(*u.split())
         self.u = self.uper * self.phasor
 
-    #
-    # def weak_form(self):
-    #     self.alpha = -self.k0 * np.sin(self.theta0)
-    #     self.phasor = self._phasor(
-    #         degree=self.degree, domain=self.mesh, alpha=self.alpha
-    #     )
-    #     self.prepare()
-    #
-    #     self.lhs = build_lhs(
-    #         utrial, utest, self.xi, self.chi, self.domains, unit_vect=self.ex
-    #     )
-    #
-    #     if self.polarization == "TM":
-    #         lhs_bnds = build_lhs_boundaries(
-    #             utrial, utest, self.xi_coeff, self.pec_bnds, self.unit_normal_vector, unit_vect=self.ex
-    #         )
-    #         self.lhs.update(lhs_bnds)
-    #
-    #     self.rhs = build_rhs(
-    #         self.ustack_coeff,
-    #         # self.annex_field["stack"],
-    #         utest,
-    #         self.xi,
-    #         self.chi,
-    #         self.xi_annex,
-    #         self.chi_annex,
-    #         self.source_domains,
-    #         unit_vect=self.ex,
-    #         phasor=self.phasor,
-    #     )
-    #
-    #     if self.polarization == "TM":
-    #         rhs_bnds = build_rhs_boundaries(
-    #             self.ustack_coeff,
-    #             utest,
-    #             self.xi_coeff_annex,
-    #             self.pec_bnds,
-    #             self.unit_normal_vector,
-    #             phasor=self.phasor,
-    #         )
-    #         self.rhs.update(rhs_bnds)
-    #
-    # def assemble_lhs(self):
-    #     self.Ah = {}
-    #     for d in self.domains:
-    #         self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
-    #
-    #     if self.polarization == "TM":
-    #         for d in self.pec_bnds:
-    #             self.Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
-    #
-    # def assemble_rhs(self):
-    #     self.bh = {}
-    #     for d in self.source_domains:
-    #         self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
-    #     if self.polarization == "TM":
-    #         for d in self.pec_bnds:
-    #             self.bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
-    #
-    # def assemble(self):
-    #     self.assemble_lhs()
-    #     self.assemble_rhs()
-    #
-    # def solve(self, direct=True):
-    #     Ah = make_system_matrix(
-    #         self.domains,
-    #         self.pec_bnds,
-    #         self.Ah,
-    #         self.k0,
-    #         alpha=self.alpha,
-    #         boundary=(self.polarization == "TM"),
-    #     )
-    #     bh = make_system_vector(
-    #         self.source_domains,
-    #         self.pec_bnds,
-    #         self.bh,
-    #         self.k0,
-    #         alpha=self.alpha,
-    #         boundary=(self.polarization == "TM"),
-    #     )
-    #
-    #     for bc in self._boundary_conditions:
-    #         bc.apply(Ah, bh)
-    #
-    #     VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
-    #     u = dolfin.Function(VVect)
-    #
-    #     if direct:
-    #         # solver = dolfin.LUSolver(Ah) ### direct
-    #         solver = dolfin.LUSolver("mumps")
-    #         # solver.parameters.update(lu_params)
-    #         solver.solve(Ah, u.vector(), bh)
-    #     else:
-    #         solver = dolfin.PETScKrylovSolver()  ## iterative
-    #         # solver.parameters.update(krylov_params)
-    #         solver.solve(Ah, ufunc.vector(), bh)
-    #
-    #     self.uper = self.u
-    #     self.u *= self.phasor
-
     def diffraction_efficiencies(
+        self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
+    ):
+        """Postprocess diffraction efficiencies.
+
+        Parameters
+        ----------
+        cplx_effs : bool
+            If `True`, return complex coefficients (amplitude reflection and transmission).
+            If `False`, return real coefficients (power reflection and transmission)
+        orders : bool
+            If `True`, computes the transmission and reflection for all the propagating diffraction orders.
+            If `False`, returns the sum of all the propagating diffraction orders.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the diffraction efficiencies.
+
+        """
+        if self.polarization == "TE":
+            nu = 1 / self.mu["substrate"]
+        else:
+            nu = 1 / self.epsilon["substrate"]
+        orders_num = np.linspace(-self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,)
+
+        k, beta = {}, {}
+        for d in ["substrate", "superstrate"]:
+            k[d] = self.k0 * np.sqrt(complex(self.epsilon[d] * self.mu[d]))
+            beta[d] = np.conj(np.sqrt(k[d] ** 2 - self.alpha ** 2))
+
+        def K(beta, y0, h):
+            return (
+                np.exp(1j * beta * y0) * (np.exp(1j * beta * h) - 1) / (1j * beta * h)
+            )
+
+        r_annex = self.phi[0][-1]
+        t_annex = self.phi[-1][0]
+        eff_annex = dict(substrate=t_annex, superstrate=r_annex)
+        ypos = self.geom.y_position
+        thickness = self.geom.thicknesses
+        r_n, t_n = [], []
+        R_n, T_n = [], []
+        for n in orders_num:
+            delta = 1 if n == 0 else 0
+            qn = n * 2 * np.pi / self.period
+            alpha_n = self.alpha + qn
+            Jn, beta_n, eff = {}, {}, {}
+            for d in ["substrate", "superstrate"]:
+                s = 1 if d == "superstrate" else -1
+                beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n ** 2)
+                ph_x = self._phasor(
+                    degree=self.degree, domain=self.mesh, alpha=-qn
+                )
+                ph_y = self._phasor(
+                    degree=self.degree, domain=self.mesh, alpha=s * beta_n[d].real, i=1
+                )
+                Jn[d] = assemble(self.uper * ph_x * ph_y * self.dx(d)) / self.period
+
+                ph_pos = np.exp(-s * 1j * beta_n[d] * ypos[d])
+                eff[d] = (delta * eff_annex[d] + Jn[d]  / thickness[d]) *  ph_pos
+            r_, t_ = eff["superstrate"], eff["substrate"]
+            sigma_r = beta_n["superstrate"] / beta["superstrate"]
+            R_n_ = (r_*r_.conj) * sigma_r
+            sigma_t =  beta_n["substrate"] / beta["superstrate"] * nu
+            T_n_ = (t_*t_.conj) * sigma_t
+
+            r_n.append(r_)
+            t_n.append(t_)
+            R_n.append(R_n_.real)
+            T_n.append(T_n_.real)
+
+        R = np.sum(R_n, axis=0)
+        T = np.sum(T_n, axis=0)
+
+        Q, Qdomains = self.compute_absorption(subdomain_absorption=subdomain_absorption)
+
+        B = T + R + Q  # energy balance
+
+        if verbose:
+            print(f"  Energy balance")
+            print(f"  R = {R:0.6f}")
+            print(f"  T = {T:0.6f}")
+            print(f"  Q = {Q:0.6f}")
+            print(f"  ------------------------")
+            print(f"  B = {B:0.6f}")
+
+        eff = dict()
+        eff["R"] = r_n if cplx_effs else (R_n if orders else R)
+        eff["T"] = t_n if cplx_effs else (T_n if orders else T)
+        eff["Q"] = Qdomains if subdomain_absorption else Q
+        eff["B"] = B
+        return eff
+
+    def compute_absorption(self, subdomain_absorption=False):
+        ##### absorption
+
+        doms_no_pml = [
+            z for z in self.epsilon.keys() if z not in ["pml_bottom", "pml_top"]
+        ]
+        omega = self.k0 * c
+
+        if self.polarization == "TE":
+            xi_0, chi_0 = mu_0, epsilon_0
+        else:
+            xi_0, chi_0 = epsilon_0, mu_0
+
+        P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.cos(self.theta0) * self.period
+
+        u_tot = self.u + self.ustack_coeff
+
+        Qchi = {}
+        Qxi = {}
+        if subdomain_absorption:
+            for d in doms_no_pml:
+
+                # u_tot = self.u + self.annex_field["stack"][d]
+                nrj_chi_dens = (
+                    dolfin.Constant(-0.5 * chi_0 * omega)
+                    * self.chi[d]
+                    * abs(u_tot) ** 2
+                ).imag
+
+                nrj_xi_dens = (
+                    dolfin.Constant(-0.5 * 1 / (omega * xi_0))
+                    * dot(grad(u_tot), (self.xi[d] * grad(u_tot)).conj).imag
+                )
+
+                Qchi[d] = assemble(nrj_chi_dens * self.dx(d)) / P0
+                Qxi[d] = assemble(nrj_xi_dens * self.dx(d)) / P0
+            Q = sum(Qxi.values()) + sum(Qchi.values())
+        else:
+
+            nrj_chi_dens = (
+                dolfin.Constant(-0.5 * chi_0 * omega) * self.chi_coeff * abs(u_tot) ** 2
+            ).imag
+
+            nrj_xi_dens = (
+                dolfin.Constant(-0.5 * 1 / (omega * xi_0))
+                * dot(grad(u_tot), (self.xi_coeff * grad(u_tot)).conj).imag
+            )
+            Qchi = assemble(nrj_chi_dens * self.dx(doms_no_pml)) / P0
+            Qxi = assemble(nrj_xi_dens * self.dx(doms_no_pml)) / P0
+            Q = Qxi + Qchi
+
+        if self.polarization == "TE":
+            Qdomains = {"electric": Qchi, "magnetic": Qxi}
+        else:
+            Qdomains = {"electric": Qxi, "magnetic": Qchi}
+
+        self.Qtot = Q
+        self.Qdomains = Qdomains
+        return Q, Qdomains
+
+
+
+
+
+    def diffraction_efficiencies_old(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
     ):
         """Postprocess diffraction efficiencies.

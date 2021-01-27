@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parmesh_pml = parmesh * 2 / 3
     period = 0.7
     island_width = period * 3 / 4
-    island_thickness = 2 * period
+    island_thickness = 0.4 * period
 
     tr = pi / 5
     rot = lambda t: np.array(
@@ -43,11 +43,12 @@ if __name__ == "__main__":
     mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
     mu_island = R.T @ mu_island @ R
 
-    eps_island=8
-    mu_island=1
-    eps_substrate = 4
-    mu_substrate = 1
-    eps_sublayer = 1
+
+    eps_island = 8
+    mu_island = 1
+    eps_substrate = 2
+    mu_substrate = 1.35
+    eps_sublayer = 4
 
     epsilon = dict(
         {
@@ -79,10 +80,10 @@ if __name__ == "__main__":
     thicknesses = OrderedDict(
         {
             "pml_bottom": lambda0,
-            "substrate": lambda0,
-            "sublayer": lambda0 / 2,
-            "groove": island_thickness * 1.5,
-            "superstrate": lambda0,
+            "substrate": 1*lambda0,
+            "sublayer": 0.5*lambda0,
+            "groove": island_thickness *1.3,
+            "superstrate": 1*lambda0,
             "pml_top": lambda0,
         }
     )
@@ -95,7 +96,7 @@ if __name__ == "__main__":
     island = model.addRectangle(
         -island_width / 2, y0, 0, island_width, island_thickness
     )
-    island, groove, sublayer = model.fragmentize(island, [groove, sublayer])
+    island, sublayer, groove  = model.fragmentize(island, [groove, sublayer])
     # island, sublayer = model.fragmentize(island, sublayer)
     # groove, sublayer = model.fragmentize(groove, sublayer)
     model.add_physical(groove, "groove")
@@ -123,11 +124,12 @@ if __name__ == "__main__":
     model.add_physical(face_top, "face_top", dim=1)
     model.add_physical(face_bottom, "face_bottom", dim=1)
 
+
     # mesh_object = model.build(
     #     interactive=True, generate_mesh=True, read_info=False, write_mesh=False
     # )
     mesh_object = model.build()
-    # sys.exit(0)
+    
 
     mesh = model.mesh_object["mesh"]
 
@@ -155,24 +157,39 @@ if __name__ == "__main__":
     g.build_system()
     g.solve()
 
-    # field = g.u
-    # J = assemble(inner(field, field.conj) * g.dx("substrate")).real
-    # 
-    # if gyptis.ADJOINT:
-    #     dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
-    # 
-    # t += time.time()
+    field = g.u
+    J = assemble(inner(field, field.conj) * g.dx("substrate")).real
+
+    if gyptis.ADJOINT:
+        dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
+
+        
+        
+
+    t += time.time()
     # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-    # print("-" * 60)
-    # print(f"solution time {t:.4f}s")
-    # print("-" * 60)
+    print("-" * 60)
+    print(f"solution time {t:.4f}s")
+    print("-" * 60)
 
     t = -time.time()
     # g.solve(direct=False)
-    g.N_d_order = 0
+    g.N_d_order = 2
     effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effsTE)  # ,sort_dicts=False)
-    print("Qtot", g.Qtot)
+
+    if gyptis.ADJOINT:
+        dRdx = dolfin.compute_gradient(effsTE["R"][g.N_d_order], dolfin.Control(ctrl))
+        plot(dRdx,markers=g.markers)
+        
+        xa
+            
+    effsTEold = g.diffraction_efficiencies_old(orders=True, subdomain_absorption=True)
+    pprint(effsTEold)  # ,sort_dicts=False)
+    
+    
+    # print("Qtot", g.Qtot)
+    
     t += time.time()
     # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
     print("-" * 60)
