@@ -17,9 +17,9 @@ from functools import wraps
 
 import gmsh
 import numpy as np
+
 from gyptis.helpers import Measure
 from gyptis.mesh import read_mesh
-
 
 geo = gmsh.model.geo
 occ = gmsh.model.occ
@@ -33,16 +33,18 @@ def _set_opt_gmsh(name, value):
         return gmsh_options.setString(name, value)
     elif isinstance(value, numbers.Number) or isinstance(value, bool):
         if isinstance(value, bool):
-            value=int(value)
+            value = int(value)
         return gmsh_options.setNumber(name, value)
     else:
         raise ValueError("value must be string or number")
+
 
 def _get_opt_gmsh(name):
     try:
         return gmsh_options.getNumber(name)
     except:
         return gmsh_options.getString(name)
+
 
 setattr(gmsh_options, "set", _set_opt_gmsh)
 setattr(gmsh_options, "get", _get_opt_gmsh)
@@ -116,7 +118,7 @@ class Geometry(object):
         self.subdomains = dict(volumes={}, surfaces={}, curves={}, points={})
         self.data_dir = data_dir if data_dir else tempfile.mkdtemp()
         self.occ = occ
-        
+
         for object_name in dir(occ):
             if (
                 not object_name.startswith("__")

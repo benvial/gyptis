@@ -10,8 +10,8 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 
 import gyptis
-from gyptis.helpers import list_time
 from gyptis.grating_2d import *
+from gyptis.helpers import list_time
 from gyptis.plotting import *
 
 plt.ion()
@@ -168,20 +168,19 @@ def test_grating_2d():
     print("-" * 60)
 
     t = -time.time()
-    
+
     g.N_d_order = 2
     effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effsTE)
-    
+
     print("Qtot", g.Qtot)
 
     if gyptis.ADJOINT:
         dRdx = dolfin.compute_gradient(effsTE["R"][g.N_d_order], dolfin.Control(ctrl))
         plot(dRdx, markers=g.markers)
 
-
     t += time.time()
-    # 
+    #
     print("-" * 60)
     print(f"postpro time {t:.4f}s")
     print("-" * 60)
@@ -189,8 +188,7 @@ def test_grating_2d():
     fig, ax = plt.subplots(1, 2)
     W0 = dolfin.FunctionSpace(g.mesh, "CG", 2)
     plotcplx(g.solution["diffracted"], ax=ax, W0=W0)
-    
-    
+
     ### TM polarization ####
 
     g.polarization = "TM"
@@ -214,7 +212,6 @@ def test_grating_2d():
     print("-" * 60)
     print(f"postpro time {t:.4f}s")
     print("-" * 60)
-    
-    
+
     assert abs(effsTE["B"] - 1) < 1e-3
     assert abs(effsTM["B"] - 1) < 1e-3

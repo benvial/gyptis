@@ -13,9 +13,9 @@ _DirichletBC = dolfin.DirichletBC
 _Measure = dolfin.Measure
 
 
-
 def list_time():
     return dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+
 
 def _get_form(u):
     form = 0
