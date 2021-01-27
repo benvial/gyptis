@@ -423,6 +423,13 @@ class Grating2D(ElectroMagneticSimulation2D):
 
         r_annex = self.phi[0][-1]
         t_annex = self.phi[-1][0]
+        print("===================")
+        R = np.abs(r_annex)**2
+        print(R)
+        T = np.abs(t_annex)**2*self.epsilon["substrate"]**0.5
+        print(T)
+        print(T+R)
+        print("===================")
         eff_annex = dict(substrate=t_annex, superstrate=r_annex)
         ypos = self.geom.y_position
         thickness = self.geom.thicknesses
@@ -436,17 +443,20 @@ class Grating2D(ElectroMagneticSimulation2D):
             for d in ["substrate", "superstrate"]:
                 beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n ** 2)
                 phax = self._phasor(
-                    degree=self.degree, domain=self.mesh, alpha=-alpha_n
+                    degree=self.degree, domain=self.mesh, alpha=-qn
                 )
                 s = 1 if d == "superstrate" else -1
+                s= 1
                 phay = self._phasor(
                     degree=self.degree, domain=self.mesh, alpha=-s * beta_n[d].real, i=1
                 )
                 Jn[d] = assemble(self.uper * phax * phay * self.dx(d)) / self.period
 
-                ph = np.exp(-s * 1j * beta_n[d] * ypos[d])
+                ph = np.exp(s * 1j * beta_n[d] * ypos[d])
                 eff[d] = delta * eff_annex[d] + Jn[d] * ph / thickness[d]
-
+            print("**********************************")
+            print(Jn)
+            print("**********************************")
             r_, t_ = eff["superstrate"], eff["substrate"]
             R_n_ = (abs(r_)) ** 2 * beta_n["superstrate"] / beta["superstrate"]
             T_n_ = (abs(t_)) ** 2 * beta_n["substrate"] / beta["superstrate"] * nu

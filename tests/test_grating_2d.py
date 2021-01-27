@@ -79,10 +79,10 @@ if __name__ == "__main__":
     thicknesses = OrderedDict(
         {
             "pml_bottom": lambda0,
-            "substrate": 1.3*lambda0,
+            "substrate": 1.4*lambda0,
             "sublayer": lambda0,
             "groove": island_thickness + lambda0,
-            "superstrate": 1.3*lambda0,
+            "superstrate": 1.4*lambda0,
             "pml_top": lambda0,
         }
     )
