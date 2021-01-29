@@ -4,9 +4,9 @@
 # License: MIT
 
 
-from . import dolfin as df
 import numpy as np
 
+from . import dolfin as df
 from .materials import tensor_const
 
 

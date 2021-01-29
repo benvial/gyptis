@@ -2,6 +2,8 @@
 # from df_adjoint import *
 
 
+import time
+
 import gyptis
 from gyptis import dolfin as df
 from gyptis.complex import *
@@ -12,8 +14,6 @@ from gyptis.materials import *
 from gyptis.optimize import *
 from gyptis.physics import *
 from gyptis.plotting import *
-import time
-
 
 plt.ion()
 
@@ -127,7 +127,7 @@ def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True, reset=Tru
     J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
 
     # target_phi = 0
-    # 
+    #
     # J += assemble(abs(field.phase - target_phi) * 10 * s.dx("target")) / Starget
     #
     #
@@ -176,11 +176,12 @@ def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True, reset=Tru
 
     return J, dJdx
 
+
 def test_simu():
     for s.polarization in ["TE", "TM"]:
         J, grad = simulation(x, plot_optim=False, reset=True)
-        
-        
+
+
 def test_taylor():
     if gyptis.ADJOINT:
         for s.polarization in ["TE", "TM"]:

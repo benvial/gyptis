@@ -191,7 +191,7 @@ class Subdomain(object):
         return ClassReturn(markers, subdomains, mapping, cpp=cpp, **kwargs)
 
 
-def _tensor_const(T,real=False):
+def _tensor_const(T, real=False):
     def _treal(T):
         m = []
         for i in range(3):
@@ -208,11 +208,11 @@ def _tensor_const(T,real=False):
         return _treal(T)
 
 
-def tensor_const(T, dim=3,real=False):
+def tensor_const(T, dim=3, real=False):
     if dim == 3:
-        return _tensor_const(T,real=real)
+        return _tensor_const(T, real=real)
     elif dim == 2:
-        return tensor_const_2d(T,real=real)
+        return tensor_const_2d(T, real=real)
     else:
         raise NotImplementedError("only supports dim = 2 or 3")
 
@@ -229,7 +229,7 @@ def make_constant_property(prop, inv=False):
     return new_prop
 
 
-def tensor_const_2d(T,real=False):
+def tensor_const_2d(T, real=False):
     def _treal(T):
         m = []
         for i in range(2):

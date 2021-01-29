@@ -8,9 +8,9 @@ import pytest
 from test_geometry import geom2D
 
 from gyptis import dolfin as df
+from gyptis.helpers import array2function, rot_matrix_2d
 from gyptis.optimize import *
 from gyptis.plotting import *
-from gyptis.helpers import array2function, rot_matrix_2d
 
 np.random.seed(123456)
 
@@ -32,8 +32,9 @@ a0 = project(f, W)
 
 a = array2function(np.random.rand(W.dim()), W)
 
+
 def test_filter():
-# if __name__ == "__main__":
+    # if __name__ == "__main__":
     values = dict(cyl=f, box=1)
     af = filtering(a, 0)
     rfilt = r * 0.1
@@ -51,7 +52,7 @@ def test_filter():
     plt.title("anisotropic")
 
     trot = np.pi / 3
-    rot = rot_matrix_2d(trot)[:-1,:-1]
+    rot = rot_matrix_2d(trot)[:-1, :-1]
     rfilt_aniso_rot = rot.T @ rfilt_aniso @ rot
     af_aniso_rot = filtering(a, rfilt_aniso_rot, solver="iterative")
     plt.figure()
@@ -60,15 +61,14 @@ def test_filter():
     with pytest.raises(ValueError) as valerr:
         filtering(a, np.random.rand(5))
     assert "Wrong shape for rfilt" in str(valerr.value)
-    
 
 
 def test_simp(tol=1e-14):
     s_min, s_max, p = 4, 8, 1
     b = simp(a, s_min=s_min, s_max=s_max, p=p)
     diff = project(b, W) - (s_min + (s_max - s_min) * a ** p)
-    err = assemble(abs(diff)*df.dx)
-    assert err < tol 
+    err = assemble(abs(diff) * df.dx)
+    assert err < tol
 
 
 def test_projection():

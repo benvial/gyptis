@@ -121,7 +121,10 @@ class Scatt2D(ElectroMagneticSimulation2D):
         self.bh.update(bh)
 
     def assemble(
-        self, domains=None, source_domains=None, pec_bnds=None,
+        self,
+        domains=None,
+        source_domains=None,
+        pec_bnds=None,
     ):
         domains = self.domains if domains is None else domains
         source_domains = (
@@ -153,24 +156,22 @@ class Scatt2D(ElectroMagneticSimulation2D):
 
         for bc in self._boundary_conditions:
             bc.apply(self.matrix, self.vector)
-            
+
         VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
         u = dolfin.Function(VVect)
-        
-        
+
         if not again:
             if direct:
-                self.solver = dolfin.LUSolver(self.matrix,"mumps")
+                self.solver = dolfin.LUSolver(self.matrix, "mumps")
             else:
-                self.solver = dolfin.PETScKrylovSolver("cg","petsc_amg")  ## iterative
-                self.solver.parameters['absolute_tolerance'] = 1e-7
-                self.solver.parameters['relative_tolerance'] = 1e-12
-                self.solver.parameters['maximum_iterations'] = 1000
-                self.solver.parameters['monitor_convergence'] = True
-                self.solver.parameters['nonzero_initial_guess'] = False
-                self.solver.parameters['report'] = True
-                
-        
+                self.solver = dolfin.PETScKrylovSolver("cg", "petsc_amg")  ## iterative
+                self.solver.parameters["absolute_tolerance"] = 1e-7
+                self.solver.parameters["relative_tolerance"] = 1e-12
+                self.solver.parameters["maximum_iterations"] = 1000
+                self.solver.parameters["monitor_convergence"] = True
+                self.solver.parameters["nonzero_initial_guess"] = False
+                self.solver.parameters["report"] = True
+
         self.solver.solve(u.vector(), self.vector)
 
         self.u = Complex(*u.split())

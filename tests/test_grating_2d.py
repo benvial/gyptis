@@ -34,7 +34,6 @@ def test_grating_2d():
 
     tr = pi / 5
 
-
     R = rot_matrix_2d(tr)
     eps_island = np.diag([6 - 0.02j, 4 - 0.021j, 3 - 0.021j])
     eps_island = R.T @ eps_island @ R
