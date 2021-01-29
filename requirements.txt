@@ -1,6 +1,6 @@
 numpy
-fenics
 dolfin-adjoint
 meshio
 gmsh
 h5py
+nlopt

@@ -105,7 +105,7 @@ grating.build_system()
 grating.solve()
 effs_TE = grating.diffraction_efficiencies(orders=True)
 
-E = grating.u + grating.ustack_coeff
+E = grating.solution["total"]
 
 ### reference
 T_ref = dict(TE=[0.0639, 1.0000], TM=[0.1119, 1.0000])
@@ -129,7 +129,7 @@ grating.build_system()
 grating.solve()
 effs_TM = grating.diffraction_efficiencies(orders=True)
 
-H = grating.u + grating.ustack_coeff
+H = grating.solution["total"]
 
 import matplotlib.pyplot as plt
 

@@ -1,8 +1,9 @@
 # from df import *
 # from df_adjoint import *
-import dolfin as df
+
 
 import gyptis
+from gyptis import dolfin as df
 from gyptis.complex import *
 from gyptis.geometry import *
 from gyptis.helpers import *
@@ -11,13 +12,17 @@ from gyptis.materials import *
 from gyptis.optimize import *
 from gyptis.physics import *
 from gyptis.plotting import *
+import time
+
 
 plt.ion()
 
 
+np.random.seed(123456)
+
 pi = np.pi
 
-parmesh = 5
+parmesh = 4
 parmesh_lens = parmesh * 2.0
 lambda0 = 1
 
@@ -33,6 +38,7 @@ geom = BoxPML(dim=2, box_size=(lx + lambda0 * 4, ly + lambda0 * 1), pml_width=(1
 
 lens = geom.add_rectangle(-lx / 2, -ly / 2, 0, lx, ly)
 lens, geom.box = geom.fragment(lens, geom.box)
+# target = geom.add_rectangle(xtarget, -ly/2, 0, lx/5, ly)
 target = geom.add_disk(xtarget, ytarget, 0, rtarget, rtarget)
 target, geom.box = geom.fragment(target, geom.box)
 geom.add_physical(geom.box, "box")
@@ -49,9 +55,9 @@ geom.build(interactive=False)
 mesh = geom.mesh_object["mesh"]
 markers = geom.mesh_object["markers"]["triangle"]
 domains = geom.subdomains["surfaces"]
-submesh = dolfin.SubMesh(mesh, markers, domains["lens"])
+submesh = df.SubMesh(mesh, markers, domains["lens"])
 Actrl = df.FunctionSpace(mesh, "DG", 0)
-ASub = dolfin.FunctionSpace(submesh, "DG", 0)
+Asub = df.FunctionSpace(submesh, "DG", 0)
 ctrl0 = df.Expression("0.5", degree=2)
 ctrl = project(ctrl0, Actrl)
 eps_lens_func = ctrl * (eps_max - eps_min) + eps_min
@@ -64,26 +70,32 @@ mu = dict(lens=1, box=1, target=1)
 # if __name__ == "__main__":
 s = Scatt2D(geom, epsilon, mu, degree=2, lambda0=lambda0, theta0=pi)
 
-xsub = project(ctrl, ASub)
-x = function2array(xsub)
-nvar = len(x)
+nvar = Asub.dim()
+# nvar =  Actrl.dim()
 
-# x = np.random.rand(nvar)
+x = np.random.rand(nvar)
 
-
+plt.close("all")
 rfilt = 0.1
 
+ja = 0
 
-def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True):
-    x = array2function(x, ASub)
+
+def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True, reset=True):
+    global ja
+
+    if gyptis.ADJOINT and reset:
+        df.set_working_tape(df.Tape())
+
+    x = array2function(x, Asub)
     if filt:
         x = filtering(x, rfilt, solver="iterative")
     if proj:
         x = projection(x, beta=2 ** proj_level)
-    x = project(x, ASub)
+    x = project(x, Asub)
     x = function2array(x)
 
-    a = dolfin.Function(Actrl)
+    a = df.Function(Actrl)
     m = markers.where_equal(domains["lens"])
     a = function2array(a)
     a[m] = x
@@ -94,18 +106,45 @@ def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True):
 
     s.epsilon["lens"] = eps_lens_func
 
+    ttot = -time.time()
     s.prepare()
     s.weak_form()
-    s.assemble()
+    if ja == 0:
+        s.assemble()
+    else:
+        s.assemble(["lens"], ["lens"], [])
     s.build_system()
+    t = -time.time()
+    # again = False if ja==0 else True
     s.solve()
+    t += time.time()
+    ttot += time.time()
+    print("direct: ", t)
+    print("direct (total): ", ttot)
+    ja += 1
 
     field = s.u + s.u0
     J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
-    if gyptis.ADJOINT:
-        dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
 
-        dJdx = project(dJdx, ASub)
+    # target_phi = 0
+    # 
+    # J += assemble(abs(field.phase - target_phi) * 10 * s.dx("target")) / Starget
+    #
+    #
+    # phase_tar=df.project(field.phase,s.real_space)
+    # print(phase_tar(xtarget,ytarget), target_phi)
+    #
+    # mod_tar=df.project(field.module,s.real_space)
+    # print(mod_tar(xtarget,ytarget))
+    #
+    print("   >>> objective = ", J)
+    if gyptis.ADJOINT:
+        t = -time.time()
+        dJdx = df.compute_gradient(J, df.Control(ctrl))
+        t += time.time()
+        print("adjoint: ", t)
+
+        dJdx = project(dJdx, Asub)
         dJdx = function2array(dJdx)
     else:
         dJdx = None
@@ -117,8 +156,8 @@ def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True):
         _, CB = plot(field, ax=ax)
         plt.plot(xtarget, ytarget, "og")
         CB.remove()
-        ctrl_plt = project(ctrl, ASub)
-        dolfin.plot(
+        ctrl_plt = project(ctrl, Asub)
+        df.plot(
             ctrl_plt,
             cmap="binary",
             alpha=0.4,
@@ -137,10 +176,30 @@ def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True):
 
     return J, dJdx
 
-
 def test_simu():
     for s.polarization in ["TE", "TM"]:
-        J, grad = simulation(x, plot_optim=False)
+        J, grad = simulation(x, plot_optim=False, reset=True)
+        
+        
+def test_taylor():
+    if gyptis.ADJOINT:
+        for s.polarization in ["TE", "TM"]:
+            df.set_working_tape(df.Tape())
+            s.epsilon["lens"] = eps_lens_func
+            s.prepare()
+            s.weak_form()
+            s.assemble()
+            s.build_system()
+            s.solve()
+            h = df.Function(Actrl)
+            h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
+            field = s.u + s.u0
+            J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
+            Jhat = df.ReducedFunctional(
+                J, df.Control(ctrl)
+            )  # the functional as a pure function of nu
+            conv_rate = df.taylor_test(Jhat, ctrl, h)
+            assert abs(conv_rate - 2) < 1e-2
 
 
 # J, grad = simulation(x)
@@ -151,10 +210,12 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 1, figsize=(8, 8))
     from scipy.optimize import minimize
 
-    maxiter = 5
+    maxiter = 15
     bounds = [(0, 1) for i in range(nvar)]
     for proj_level in range(8):
+        print("\n#########################")
         print("projection level: ", proj_level)
+        print("#########################\n")
         opt = minimize(
             simulation,
             x,
@@ -166,14 +227,54 @@ if __name__ == "__main__":
         )
         x = opt.x
 
-    x = array2function(x, ASub)
+    x = array2function(x, Asub)
     x = filtering(x, rfilt, solver="iterative")
     x = projection(x, beta=2 ** proj_level)
-    x = project(x, ASub)
+    x = project(x, Asub)
     x = function2array(x)
     x[x < 0.5] = 0
     x[x >= 0.5] = 1
-    J, grad = simulation(x, proj_level=16, proj=False, filt=False)
+    J, grad = simulation(x, proj=False, filt=False)
+
+    ###### test perfs
+    s.prepare()
+    s.weak_form()
+    s.assemble()
+    s.build_system()
+
+    VVect = df.VectorFunctionSpace(s.mesh, s.element, s.degree)
+    u = df.Function(VVect)
+
+    t = -time.time()
+    solver = df.LUSolver("mumps")
+    solver.solve(s.matrix, u.vector(), s.vector)
+    t += time.time()
+    print("direct: ", t)
+
+    t = -time.time()
+    solver = df.LUSolver(s.matrix, "mumps")
+    solver.solve(u.vector(), s.vector)
+    t += time.time()
+    print("direct: ", t)
+
+    t = -time.time()
+    solver.solve(u.vector(), s.vector)
+    t += time.time()
+    print("direct: ", t)
+
+    s.u = Complex(*u.split())
+
+    field = s.u + s.u0
+    J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
+
+    if gyptis.ADJOINT:
+        t = -time.time()
+        dJdx = df.compute_gradient(J, df.Control(ctrl))
+        t += time.time()
+        print("adjoint: ", t)
+
+    #
+
 
 # s.solve()
 #

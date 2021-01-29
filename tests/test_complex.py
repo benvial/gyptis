@@ -14,7 +14,7 @@ from gyptis.complex import *
 np.random.seed(1234)
 
 
-def test_simple(tol=1e-14):
+def test_simple(tol=1e-12):
     x, y, x1, y1 = np.random.rand(4) - 0.5
     z = Complex(x, y)
     z1 = Complex(x1, y1)

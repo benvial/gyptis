@@ -23,6 +23,8 @@ class Scatt2D(ElectroMagneticSimulation2D):
         ]
         self.pec_bnds = []
         self._boundary_conditions = self.boundary_conditions
+        self.Ah = {}
+        self.bh = {}
 
         self.utrial = TrialFunction(self.complex_space)
         self.utest = TestFunction(self.complex_space)
@@ -93,26 +95,41 @@ class Scatt2D(ElectroMagneticSimulation2D):
             rhs_bnds = self.build_rhs_boundaries()
             self.rhs.update(rhs_bnds)
 
-    def assemble_lhs(self):
-        self.Ah = {}
-        for d in self.domains:
-            self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
+    def assemble_lhs(self, domains=None, pec_bnds=None):
+        domains = self.domains if domains is None else domains
+        pec_bnds = self.pec_bnds if pec_bnds is None else pec_bnds
+        Ah = {}
+        for d in domains:
+            Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
 
         if self.polarization == "TM":
-            for d in self.pec_bnds:
-                self.Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
+            for d in pec_bnds:
+                Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
+        self.Ah.update(Ah)
 
-    def assemble_rhs(self):
-        self.bh = {}
-        for d in self.source_domains:
-            self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
+    def assemble_rhs(self, source_domains=None, pec_bnds=None):
+        source_domains = (
+            self.source_domains if source_domains is None else source_domains
+        )
+        pec_bnds = self.pec_bnds if pec_bnds is None else pec_bnds
+        bh = {}
+        for d in source_domains:
+            bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
         if self.polarization == "TM":
-            for d in self.pec_bnds:
-                self.bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
+            for d in pec_bnds:
+                bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
+        self.bh.update(bh)
 
-    def assemble(self):
-        self.assemble_lhs()
-        self.assemble_rhs()
+    def assemble(
+        self, domains=None, source_domains=None, pec_bnds=None,
+    ):
+        domains = self.domains if domains is None else domains
+        source_domains = (
+            self.source_domains if source_domains is None else source_domains
+        )
+        pec_bnds = self.pec_bnds if pec_bnds is None else pec_bnds
+        self.assemble_lhs(domains=domains, pec_bnds=pec_bnds)
+        self.assemble_rhs(source_domains=source_domains, pec_bnds=pec_bnds)
 
     def build_system(self):
         self.matrix = make_system_matrix(
@@ -132,27 +149,29 @@ class Scatt2D(ElectroMagneticSimulation2D):
         # Ah.form = _get_form(self.Ah)
         # bh.form = _get_form(self.bh)
 
-    def solve(self, direct=True):
+    def solve(self, direct=True, again=False):
 
         for bc in self._boundary_conditions:
             bc.apply(self.matrix, self.vector)
-
-        # ufunc = self.u.real
+            
         VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
         u = dolfin.Function(VVect)
-        # self.u = Function(self.complex_space)
-        # ufunc = self.u.real
-
-        if direct:
-            # solver = dolfin.LUSolver(Ah) ### direct
-            # solver = dolfin.PETScLUSolver("mumps")  ## doesnt work for adjoint
-            solver = dolfin.LUSolver("mumps")
-            # solver.parameters.update(lu_params)
-            solver.solve(self.matrix, u.vector(), self.vector)
-        else:
-            solver = dolfin.PETScKrylovSolver()  ## iterative
-            # solver.parameters.update(krylov_params)
-            solver.solve(self.matrix, u.vector(), self.vector)
+        
+        
+        if not again:
+            if direct:
+                self.solver = dolfin.LUSolver(self.matrix,"mumps")
+            else:
+                self.solver = dolfin.PETScKrylovSolver("cg","petsc_amg")  ## iterative
+                self.solver.parameters['absolute_tolerance'] = 1e-7
+                self.solver.parameters['relative_tolerance'] = 1e-12
+                self.solver.parameters['maximum_iterations'] = 1000
+                self.solver.parameters['monitor_convergence'] = True
+                self.solver.parameters['nonzero_initial_guess'] = False
+                self.solver.parameters['report'] = True
+                
+        
+        self.solver.solve(u.vector(), self.vector)
 
         self.u = Complex(*u.split())
 

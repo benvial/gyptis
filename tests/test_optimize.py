@@ -12,7 +12,9 @@ from gyptis.optimize import *
 from gyptis.plotting import *
 from gyptis.helpers import array2function, rot_matrix_2d
 
-geom = geom2D(mesh_size=0.01)
+np.random.seed(123456)
+
+geom = geom2D(mesh_size=0.05)
 mesh = geom.mesh_object["mesh"]
 dx = geom.measure["dx"]
 markers = geom.mesh_object["markers"]["triangle"]
@@ -26,7 +28,7 @@ submesh = df.SubMesh(mesh, markers, domains["cyl"])
 W = df.FunctionSpace(submesh, "DG", 0)
 Wfilt = df.FunctionSpace(submesh, "CG", 2)
 f = df.Expression(" sin(3*2*pi*(x[0]*x[1])/(r*r))", degree=0, r=r)
-a = project(f, W)
+a0 = project(f, W)
 
 a = array2function(np.random.rand(W.dim()), W)
 
@@ -55,14 +57,18 @@ def test_filter():
     plt.figure()
     df.plot(af_aniso_rot)
     plt.title("anisotropic rotated")
-
+    with pytest.raises(ValueError) as valerr:
+        filtering(a, np.random.rand(5))
+    assert "Wrong shape for rfilt" in str(valerr.value)
     
 
 
-def test_simp():
+def test_simp(tol=1e-14):
     s_min, s_max, p = 4, 8, 1
     b = simp(a, s_min=s_min, s_max=s_max, p=p)
-    assert project(b, W)(0, 0) == s_min + (s_max - s_min) * a(0, 0) ** p
+    diff = project(b, W) - (s_min + (s_max - s_min) * a ** p)
+    err = assemble(abs(diff)*df.dx)
+    assert err < tol 
 
 
 def test_projection():
