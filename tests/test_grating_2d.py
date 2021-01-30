@@ -17,7 +17,7 @@ from gyptis.plotting import *
 plt.ion()
 
 
-def test_grating_2d():
+def test_grating_2d(parmesh=10):
 
     # if __name__ == "__main__":
 
@@ -26,7 +26,7 @@ def test_grating_2d():
     theta0 = 30 * np.pi / 180
 
     order = 2
-    parmesh = 10
+    # parmesh = 10
     parmesh_pml = parmesh * 2 / 3
     period = 0.8
     island_width = period * 3 / 4
@@ -41,8 +41,8 @@ def test_grating_2d():
     mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
     mu_island = R.T @ mu_island @ R
 
-    eps_island = 8
-    mu_island = 1
+    # eps_island = 8
+    # mu_island = 1
     eps_substrate = 2
     mu_substrate = 1.35
     eps_sublayer = 4
@@ -212,3 +212,9 @@ def test_grating_2d():
 
     assert abs(effsTE["B"] - 1) < 1e-3
     assert abs(effsTM["B"] - 1) < 1e-3
+    
+    return g
+
+
+if __name__ == "__main__":
+    g = test_grating_2d(int(sys.argv[1]))

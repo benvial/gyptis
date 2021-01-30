@@ -369,15 +369,11 @@ class Grating2D(ElectroMagneticSimulation2D):
         u = dolfin.Function(VVect)
 
         if direct:
-            # solver = dolfin.LUSolver(Ah) ### direct
-            # solver = dolfin.PETScLUSolver("mumps")  ## doesnt work for adjoint
             solver = dolfin.LUSolver("mumps")
-            # solver.parameters.update(lu_params)
-            solver.solve(self.matrix, u.vector(), self.vector)
         else:
-            solver = dolfin.PETScKrylovSolver()  ## iterative
-            # solver.parameters.update(krylov_params)
-            solver.solve(self.matrix, u.vector(), self.vector)
+            solver = dolfin.PETScKrylovSolver() 
+            
+        solver.solve(self.matrix, u.vector(), self.vector)
 
         uper = Complex(*u.split())
         u = uper * self.phasor

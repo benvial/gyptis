@@ -11,8 +11,8 @@ PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROJECT_NAME = gyptis
 PYTHON_INTERPRETER = python3
 HOSTING = gitlab
-
-VERSION=$(shell python3 -c "import pygetdp; print(pygetdp.__version__)")
+VERSION=$(shell python3 -c "import gyptis; print(gyptis.__version__)")
+LESSC=$(PROJECT_DIR)/docs/node_modules/less/bin/lessc
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -49,13 +49,10 @@ else
 endif
 
 
-
-
 ## Test python environment is setup correctly
 testenv:
 	source activate $(PROJECT_NAME); \
 	$(PYTHON_INTERPRETER) .ci/testenv.py
-
 
 
 ## Install Python dependencies
@@ -67,7 +64,6 @@ req: testenv
 
 ## Install Python dependencies for dev and test
 dev:
-	source activate $(PROJECT_NAME)
 	$(PYTHON_INTERPRETER) -m pip install -r requirements-dev.txt
 	cd docs && npm install lessc
 
@@ -104,8 +100,6 @@ style:
 	isort -rc .
 	black .
 
-
-
 ## Push to gitlab
 gl:
 	@echo "Pushing to gitlab..."
@@ -118,8 +112,6 @@ gl:
 save: clean style gl
 
 
-	
-LESSC=../../../../node_modules/less/bin/lessc
 
 ## Make doc css
 less:
@@ -145,22 +137,26 @@ doc: less
 
 ## Build html doc (without examples)
 doc-noplot:
-	source activate $(PROJECT_NAME)
 	cd docs && make clean && make html-noplot && make postpro-html
 
 
 ## Show locally built html doc in a browser
 showhtmldoc:
-	source activate $(PROJECT_NAME)
 	cd docs && make show
-	# xdg-open ./doc/_build/html/index.html
 
 
 ## Run the test suite
 test:
-	# source activate $(PROJECT_NAME)
-	unset GYPTIS_ADJOINT && pytest ./tests -s -vv --cov=./$(PROJECT_NAME) --cov-report html
-	GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
+	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests -s -vv --cov=./$(PROJECT_NAME) --cov-report html
+	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
+	
+	
+	
+
+## Run performance test
+perf:
+	unset GYPTIS_ADJOINT && mpirun -n 1 pytest ./tests/test_grating_2d.py -s -vv
+	# GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
 	
 
 ## Tag and push tags
