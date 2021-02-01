@@ -419,10 +419,6 @@ class Grating2D(ElectroMagneticSimulation2D):
             k[d] = self.k0 * np.sqrt(complex(self.epsilon[d] * self.mu[d]))
             beta[d] = np.conj(np.sqrt(k[d] ** 2 - self.alpha ** 2))
 
-        def K(beta, y0, h):
-            return (
-                np.exp(1j * beta * y0) * (np.exp(1j * beta * h) - 1) / (1j * beta * h)
-            )
 
         r_annex = self.phi[0][-1]
         t_annex = self.phi[-1][0]

@@ -20,13 +20,14 @@ if __name__ == "__main__":
     psi0 = 0 * pi / 180
 
     ##  ---------- geometry ----------
-    island_params = dict(width=500 / 2, thickness=50)
+    grooove_thickness=50
+    hole_radius=500 / 2
     period = (1000, 1000)
     thicknesses = OrderedDict(
         {
             "pml_bottom": lambda0,
             "substrate": lambda0 / 1,
-            "groove": island_params["thickness"] * 1,
+            "groove": grooove_thickness,
             "superstrate": lambda0 / 1,
             "pml_top": lambda0,
         }
@@ -48,7 +49,7 @@ if __name__ == "__main__":
             "pml_bottom": parmesh_pml,
             "substrate": parmesh,
             "groove": parmesh,
-            "island": parmesh_hole,
+            "hole": parmesh_hole,
             "superstrate": parmesh,
             "pml_top": parmesh_pml,
         }
@@ -62,11 +63,11 @@ if __name__ == "__main__":
         {
             "substrate": eps_substrate,
             "groove": eps_groove,
-            "island": 1,
+            "hole": 1,
             "superstrate": 1,
         }
     )
-    mu = dict({"substrate": 1, "groove": 1, "island": 1, "superstrate": 1})
+    mu = dict({"substrate": 1, "groove": 1, "hole": 1, "superstrate": 1})
 
     index = dict()
     for e, m in zip(epsilon.items(), mu.items()):
@@ -85,22 +86,22 @@ if __name__ == "__main__":
     superstrate = model.layers["superstrate"]
     z0 = model.z_position["groove"]
 
-    island = model.addCylinder(
+    hole = model.addCylinder(
         0,
         0,
         z0,
         0,
         0,
-        z0 + island_params["thickness"],
-        island_params["width"],
+        z0 + grooove_thickness,
+        hole_radius,
     )
 
-    superstrate, substrate, island, groove = model.fragment(
-        [superstrate, substrate, groove], island
+    superstrate, substrate, hole, groove = model.fragment(
+        [superstrate, substrate, groove], hole
     )
-    # island, groove = model.fragment(island, groove)
+    # hole, groove = model.fragment(hole, groove)
     model.add_physical(groove, "groove")
-    model.add_physical(island, "island")
+    model.add_physical(hole, "hole")
     model.add_physical(substrate, "substrate")
     model.add_physical(superstrate, "superstrate")
 
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     )
     model.set_size("pml_top", lambda0 / (index["superstrate"] * mesh_params["pml_top"]))
     model.set_size("groove", lambda0 / (index["groove"] * mesh_params["groove"]))
-    model.set_size("island", lambda0 / (index["island"] * mesh_params["island"]))
+    model.set_size("hole", lambda0 / (index["hole"] * mesh_params["hole"]))
 
     # mesh_object = model.build(
     #     interactive=True,

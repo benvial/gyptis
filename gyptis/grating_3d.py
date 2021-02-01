@@ -170,6 +170,7 @@ class Grating3D(object):
         self.epsilon = epsilon
         self.mu = mu
         self.pml_stretch = pml_stretch
+        self.period = self.geom.period
 
         self.mesh = geom.mesh_object["mesh"]
         self.markers = geom.mesh_object["markers"]["tetra"]
@@ -179,9 +180,6 @@ class Grating3D(object):
         self.boundary_conditions = boundary_conditions
 
         self.N_d_order = 0
-        self.ninterv_integ = 101
-        self.scan_dist_ratio = 5
-        self.nb_slice = 10
         self.periodic_map_tol = 1e-10
 
         # self.E0 = plane_wave_3D(
@@ -203,9 +201,18 @@ class Grating3D(object):
     def k0(self):
         return 2 * np.pi / self.lambda0
 
+    @property
+    def omega(self):
+        return self.k0 * c
+
     def _phasor(self, *args, **kwargs):
         phasor_re = dolfin.Expression("cos(alpha*x[0] + beta*x[1])", *args, **kwargs)
         phasor_im = dolfin.Expression("sin(alpha*x[0] + beta*x[1])", *args, **kwargs)
+        return Complex(phasor_re, phasor_im)
+
+    def _phasor_z(self, *args, **kwargs):
+        phasor_re = dolfin.Expression("cos(gamma*x[2])", *args, **kwargs)
+        phasor_im = dolfin.Expression("sin(gamma*x[2])", *args, **kwargs)
         return Complex(phasor_re, phasor_im)
 
     def _make_subdomains(self, epsilon, mu):
@@ -230,11 +237,7 @@ class Grating3D(object):
             }
         )
         self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            self.theta0,
-            self.phi0,
-            self.psi0,
+            config, self.lambda0, self.theta0, self.phi0, self.psi0,
         )
         self.Phi = [p[:6] for p in self.Phi]
 
@@ -431,310 +434,164 @@ class Grating3D(object):
             solver.parameters.update(krylov_params)
             solver.solve(Ah, Efunc.vector(), bh)
 
-        self.Eper = self.E
-        self.E *= self.phasor
+        Eper = self.E
+        E = Eper * self.phasor
+        Etot = E + self.Estack_coeff
+        self.solution = {}
+        self.solution["periodic"] = Eper
+        self.solution["diffracted"] = E
+        self.solution["total"] = Etot
 
-    def _get_slice(self, u, x_slice, y_slice, z):
-        re, im = [], []
-        for x_ in x_slice:
-            re_y, im_y = [], []
-            for y_ in y_slice:
-                f = u((x_, y_, z))
-                re_y.append(f.real)
-                im_y.append(f.imag)
-            re.append(re_y)
-            im.append(im_y)
-        return np.array(re) + 1j * np.array(im)
-
-    def _interp_cplx_vect(self, u, method="linear"):
-        if method == "nearest":
-            Interp = NearestNDInterpolator
-        else:
-            Interp = LinearNDInterpolator
-        # x, y, z = self.complex_space.tabulate_dof_coordinates().T
-        # if type(u.real) == ufl.tensors.ListTensor:
-        V_cg = dolfin.VectorFunctionSpace(self.mesh, "CG", self.degree)
-        x, y, z = V_cg.tabulate_dof_coordinates().T
-        points = x[::3], y[::3], z[::3]
-        u = interpolate(u, V_cg)
-        Enp_re = u.real.vector().get_local()
-        Ex_re, Ey_re, Ez_re = Enp_re[::3], Enp_re[1::3], Enp_re[2::3]
-        Enp_im = u.imag.vector().get_local()
-        Ex_im, Ey_im, Ez_im = Enp_im[::3], Enp_im[1::3], Enp_im[2::3]
-
-        interpolator = []
-        for ere, eim in zip((Ex_re, Ey_re, Ez_re), (Ex_im, Ey_im, Ez_im)):
-            interpolator.append(Interp(np.array(points).T, ere + 1j * eim))
-
-        return interpolator
-
-    def diffraction_efficiencies(self):
-        npt_integ = self.ninterv_integ
-        period_x, period_y = self.geom.period
-        N_d_order = self.N_d_order
-        nb_slice = self.nb_slice
-        x_t = x_r = np.linspace(-period_x / 2, period_x / 2, npt_integ)
-        y_t = y_r = np.linspace(-period_y / 2, period_y / 2, npt_integ)
-        order_shift = 0
-        No_ordre = np.linspace(
-            -self.N_d_order + order_shift,
-            self.N_d_order + order_shift,
-            2 * self.N_d_order + 1,
-        )
-        Nb_order = No_ordre.shape[0]
-        alphat = self.alpha0 + 2 * np.pi / period_x * No_ordre
-        betat = self.beta0 + 2 * np.pi / period_y * No_ordre
-        gammatt = np.zeros((Nb_order, Nb_order), dtype=complex)
-        gammatr = np.zeros((Nb_order, Nb_order), dtype=complex)
-        AXsir = np.zeros((Nb_order, Nb_order, nb_slice), dtype=complex)
-        AXsit = np.zeros((Nb_order, Nb_order, nb_slice), dtype=complex)
-
-        self.scan_dist = (
-            min(
-                self.geom.thicknesses["substrate"], self.geom.thicknesses["superstrate"]
-            )
-            / self.scan_dist_ratio
+    def diffraction_efficiencies(
+        self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
+    ):
+        orders_num = np.linspace(
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
-        self.zcut = dict()
-        for k in ["substrate", "superstrate"]:
-            self.zcut[k] = (
-                self.geom.z_position[k] + self.scan_dist,
-                (self.geom.z_position[k] + self.geom.thicknesses[k] - self.scan_dist),
-            )
+        k, gamma = {}, {}
+        for d in ["substrate", "superstrate"]:
+            k[d] = self.k0 * np.sqrt(complex(self.epsilon[d] * self.mu[d]))
+            gamma[d] = np.conj(np.sqrt(k[d] ** 2 - self.alpha0 ** 2 - self.beta0 ** 2))
 
-        z_slice_t = np.linspace(*self.zcut["substrate"], self.nb_slice)
-        z_slice_r = np.linspace(*self.zcut["superstrate"], self.nb_slice)
-
-        nb_layer_diopter = 2
-        layer_diopter = []
-        for k1 in range(0, nb_layer_diopter):
-            layer_diopter.append({})
-        layer_diopter[0]["epsilon"] = self.epsilon["superstrate"]
-        layer_diopter[1]["epsilon"] = self.epsilon["substrate"]
-        layer_diopter[0]["kp"] = self.k0 * np.sqrt(complex(layer_diopter[0]["epsilon"]))
-        layer_diopter[1]["kp"] = self.k0 * np.sqrt(complex(layer_diopter[1]["epsilon"]))
-        layer_diopter[0]["gamma"] = np.sqrt(
-            layer_diopter[0]["kp"] ** 2 - self.alpha0 ** 2 - self.beta0 ** 2
-        )
-        layer_diopter[1]["gamma"] = np.sqrt(
-            complex(layer_diopter[1]["kp"] ** 2 - self.alpha0 ** 2 - self.beta0 ** 2)
-        )
-
-        for nt in range(0, Nb_order):
-            for mt in range(0, Nb_order):
-                gammatt[nt, mt] = np.sqrt(
-                    complex(
-                        layer_diopter[-1]["kp"] ** 2 - alphat[nt] ** 2 - betat[mt] ** 2
+        r_annex = self.Phi[0][1::2]
+        t_annex = self.Phi[-1][::2]
+        zpos = self.geom.z_position
+        thickness = self.geom.thicknesses
+        period_x, period_y = self.period
+        eff_annex = dict(substrate=t_annex, superstrate=r_annex)
+        Eper = self.solution["periodic"]
+        effn = []
+        effn_cplx = []
+        for n in orders_num:
+            effm = []
+            effm_cplx = []
+            for m in orders_num:
+                delta = 1 if n == m == 0 else 0
+                qn = n * 2 * np.pi / period_x
+                pm = m * 2 * np.pi / period_y
+                alpha_n = self.alpha0 + qn
+                beta_m = self.beta0 + pm
+                efficiencies = {}
+                efficiencies_complex = {}
+                for d in ["substrate", "superstrate"]:
+                    s = 1 if d == "superstrate" else -1
+                    # s = 1 if d == "substrate" else -1
+                    gamma_nm = np.sqrt(k[d] ** 2 - alpha_n ** 2 - beta_m ** 2)
+                    ph_xy = self._phasor(
+                        degree=self.degree, domain=self.mesh, alpha=-qn, beta=-pm
                     )
-                )
-        for nr in range(0, Nb_order):
-            for mr in range(0, Nb_order):
-                gammatr[nr, mr] = np.sqrt(
-                    complex(
-                        layer_diopter[0]["kp"] ** 2 - alphat[nr] ** 2 - betat[mr] ** 2
+                    ph_z = self._phasor_z(
+                        degree=self.degree, domain=self.mesh, gamma=s * gamma_nm.real
                     )
-                )
-
-        # Eper_interp = self._interp_cplx_vect(self.Eper)
-
-        X_t, Y_t = np.meshgrid(x_t, y_t)
-        phasor_slice = np.exp(1j * (self.alpha0 * X_t + self.beta0 * Y_t))
-
-        # reflection
-        Er = []
-        Eper_interp = np.zeros(
-            (self.ninterv_integ, self.ninterv_integ, self.nb_slice, 3), dtype=complex
-        )
-        for iz, z in enumerate(z_slice_r):
-            for ix, x in enumerate(x_r):
-                for iy, y in enumerate(y_r):
-                    tmp = self.Eper(x, y, z)
-                    Eper_interp[ix, iy, iz, :] = tmp.real + 1j * tmp.imag
-
-        phiplus = self.Phi[0][::2]
-        phiminus = self.Phi[0][1::2]
-        for comp in range(3):
-            eslice = []
-            for iz, z in enumerate(z_slice_r):
-                prm = np.exp(-1j * layer_diopter[0]["gamma"] * z)
-                eper = Eper_interp[:, :, iz, comp]
-                p = phiminus[comp] * prm
-                ecomp = (eper + p) * phasor_slice
-                eslice.append(ecomp.T)
-            Er.append(eslice)
-
-        # transmission
-
-        Et = []
-        Eper_interp = np.zeros(
-            (self.ninterv_integ, self.ninterv_integ, self.nb_slice, 3), dtype=complex
-        )
-        for iz, z in enumerate(z_slice_t):
-            for ix, x in enumerate(x_t):
-                for iy, y in enumerate(y_t):
-                    tmp = self.Eper(x, y, z)
-                    Eper_interp[ix, iy, iz, :] = tmp.real + 1j * tmp.imag
-
-        phiplus = self.Phi[-1][::2]
-        phiminus = self.Phi[-1][1::2]
-        for comp in range(3):
-            eslice = []
-            for iz, z in enumerate(z_slice_t):
-                prp = np.exp(1j * layer_diopter[1]["gamma"] * z)
-                eper = Eper_interp[:, :, iz, comp]
-                p = phiplus[comp] * prp
-                ecomp = (eper + p) * phasor_slice
-                eslice.append(ecomp.T)
-            Et.append(eslice)
-
-        Er = np.array(Er)
-        Et = np.array(Et)
-        # Ex_r2, Ey_r2, Ez_r2 = np.array(Er).reshape(3, npt_integ, npt_integ, nb_slice)
-        # Ex_t2, Ey_t2, Ez_t2 = np.array(Et).reshape(3, npt_integ, npt_integ, nb_slice)
-
-        for k11 in range(0, nb_slice):
-            Ex_t3 = Et[0, k11, :, :].conj().T
-            Ey_t3 = Et[1, k11, :, :].conj().T
-            Ez_t3 = Et[2, k11, :, :].conj().T
-            Ex_r3 = Er[0, k11, :, :].conj().T
-            Ey_r3 = Er[1, k11, :, :].conj().T
-            Ez_r3 = Er[2, k11, :, :].conj().T
-
-            ex_nm_r_inter = np.zeros((1, npt_integ), dtype=complex)[0, :]
-            ex_nm_t_inter = np.zeros((1, npt_integ), dtype=complex)[0, :]
-            ey_nm_r_inter = np.zeros((1, npt_integ), dtype=complex)[0, :]
-            ey_nm_t_inter = np.zeros((1, npt_integ), dtype=complex)[0, :]
-            ez_nm_r_inter = np.zeros((1, npt_integ), dtype=complex)[0, :]
-            ez_nm_t_inter = np.zeros((1, npt_integ), dtype=complex)[0, :]
-            ex_nm_r = np.zeros((Nb_order, Nb_order), dtype=complex)
-            ex_nm_t = np.zeros((Nb_order, Nb_order), dtype=complex)
-            ey_nm_r = np.zeros((Nb_order, Nb_order), dtype=complex)
-            ey_nm_t = np.zeros((Nb_order, Nb_order), dtype=complex)
-            ez_nm_r = np.zeros((Nb_order, Nb_order), dtype=complex)
-            ez_nm_t = np.zeros((Nb_order, Nb_order), dtype=complex)
-
-            for n1 in range(0, Nb_order):
-                for m1 in range(0, Nb_order):
-                    for j1 in range(0, npt_integ):
-                        expbeta = np.exp(1j * betat[m1] * y_r)
-                        # ex_nm_r_inter[j1] = 1/period_y * np.trapz((Ex_r2[:,j1,k11])*expbeta,x=y_r)
-                        ex_nm_r_inter[j1] = (
-                            1 / period_y * np.trapz((Ex_r3[:, j1]) * expbeta, x=y_r)
+                    Jnm = []
+                    for comp in range(3):
+                        Jnm.append(
+                            assemble(Eper[comp] * ph_xy * ph_z * self.dx(d))
+                            / (period_x * period_y)
                         )
-                        # plt.plot np.trapz(y_t,(Ex_t[::-1,j1].transpose()*expbeta).conjugate()[::-1])
-                    expalpha = np.exp(1j * alphat[n1] * x_t)
-                    ex_nm_r[n1, m1] = (
-                        1 / period_x * np.trapz(ex_nm_r_inter * expalpha, x=x_r)
+                    ph_pos = np.exp(-s * 1j * gamma_nm * zpos[d])
+                    Jnm_ = [u.real + 1j * u.imag for u in Jnm]
+                    eff = (
+                        delta * np.array(eff_annex[d]) + np.array(Jnm_) / thickness[d]
+                    ) * ph_pos
+                    eff_nrj = (
+                        np.linalg.norm(eff) ** 2 * gamma_nm / (gamma["superstrate"])
                     )
-            for n2 in range(0, Nb_order):
-                for m2 in range(0, Nb_order):
-                    for j1 in range(0, npt_integ):
-                        expbeta = np.exp(1j * betat[m2] * y_t)
-                        # ex_nm_t_inter[j1] = 1/period_y * np.trapz((Ex_t2[:,j1,k11])*expbeta,x=y_t)
-                        ex_nm_t_inter[j1] = (
-                            1 / period_y * np.trapz((Ex_t3[:, j1]) * expbeta, x=y_t)
-                        )
-                    expalpha = np.exp(1j * alphat[n2] * x_t)
-                    ex_nm_t[n2, m2] = (
-                        1 / period_x * np.trapz(ex_nm_t_inter * expalpha, x=x_t)
-                    )
-            for n3 in range(0, Nb_order):
-                for m3 in range(0, Nb_order):
-                    for j1 in range(0, npt_integ):
-                        expbeta = np.exp(1j * betat[m3] * y_r)
-                        # ey_nm_r_inter[j1] = 1/period_y * np.trapz((Ey_r2[:,j1,k11])*expbeta,x=y_r)
-                        ey_nm_r_inter[j1] = (
-                            1 / period_y * np.trapz((Ey_r3[:, j1]) * expbeta, x=y_r)
-                        )
-                    expalpha = np.exp(1j * alphat[n3] * x_t)
-                    ey_nm_r[n3, m3] = (
-                        1 / period_x * np.trapz(ey_nm_r_inter * expalpha, x=x_r)
-                    )
-            for n4 in range(0, Nb_order):
-                for m4 in range(0, Nb_order):
-                    for j1 in range(0, npt_integ):
-                        expbeta = np.exp(1j * betat[m4] * y_t)
-                        # ey_nm_t_inter[j1] = 1/period_y * np.trapz((Ey_t2[:,j1,k11])*expbeta,x=y_t)
-                        ey_nm_t_inter[j1] = (
-                            1 / period_y * np.trapz((Ey_t3[:, j1]) * expbeta, x=y_t)
-                        )
-                    expalpha = np.exp(1j * alphat[n4] * x_t)
-                    ey_nm_t[n4, m4] = (
-                        1 / period_x * np.trapz(ey_nm_t_inter * expalpha, x=x_t)
-                    )
-            for n6 in range(0, Nb_order):
-                for m6 in range(0, Nb_order):
-                    for j1 in range(0, npt_integ):
-                        expbeta = np.exp(1j * betat[m6] * y_r)
-                        # ez_nm_r_inter[j1] = 1/period_y * np.trapz((Ez_r2[:,j1,k11])*expbeta,x=y_r)
-                        ez_nm_r_inter[j1] = (
-                            1 / period_y * np.trapz((Ez_r3[:, j1]) * expbeta, x=y_r)
-                        )
-                    expalpha = np.exp(1j * alphat[n6] * x_t)
-                    ez_nm_r[n6, m6] = (
-                        1 / period_x * np.trapz(ez_nm_r_inter * expalpha, x=x_r)
-                    )
-            for n7 in range(0, Nb_order):
-                for m7 in range(0, Nb_order):
-                    for j1 in range(0, npt_integ):
-                        expbeta = np.exp(1j * betat[m7] * y_t)
-                        # ez_nm_t_inter[j1] = 1/period_y * np.trapz((Ez_t2[:,j1,k11])*expbeta,x=y_t)
-                        ez_nm_t_inter[j1] = (
-                            1 / period_y * np.trapz((Ez_t3[:, j1]) * expbeta, x=y_t)
-                        )
-                    expalpha = np.exp(1j * alphat[n7] * x_t)
-                    ez_nm_t[n7, m7] = (
-                        1 / period_x * np.trapz(ez_nm_t_inter * expalpha, x=x_t)
-                    )
-            ####################
-            for n8 in range(0, Nb_order):
-                for m8 in range(0, Nb_order):
-                    AXsit[n8, m8, k11] = (
-                        1
-                        / (layer_diopter[0]["gamma"] * gammatt[n8, m8])
-                        * (
-                            +gammatt[n8, m8] ** 2 * np.abs(ex_nm_t[n8, m8]) ** 2
-                            + gammatt[n8, m8] ** 2 * np.abs(ey_nm_t[n8, m8]) ** 2
-                            + gammatt[n8, m8] ** 2 * np.abs(ez_nm_t[n8, m8]) ** 2
-                        )
-                    )
-            for n9 in range(0, Nb_order):
-                for m9 in range(0, Nb_order):
-                    AXsir[n9, m9, k11] = (
-                        1
-                        / (layer_diopter[0]["gamma"] * gammatr[n9, m9])
-                        * (
-                            +gammatr[n9, m9] ** 2 * np.abs(ex_nm_r[n9, m9]) ** 2
-                            + gammatr[n9, m9] ** 2 * np.abs(ey_nm_r[n9, m9]) ** 2
-                            + gammatr[n9, m9] ** 2 * np.abs(ez_nm_r[n9, m9]) ** 2
-                        )
-                    )
+                    efficiencies_complex[d] = eff
+                    efficiencies[d] = eff_nrj
 
-        import matplotlib.pyplot as plt
+                effm.append(efficiencies)
+                effm_cplx.append(efficiencies_complex)
+            effn.append(effm)
+            effn_cplx.append(effm_cplx)
 
-        plt.figure()
-        plt.plot(AXsir[1, 1].real)
-        plt.plot(AXsit[1, 1].real, "--")
-        print("STD")
-        print("---")
-        print("R", np.std(AXsir[1, 1]))
-        print("T", np.std(AXsit[1, 1]))
-        AXsir[1, 1]
-        plt.show()
+        Q, Qdomains = self.compute_absorption(subdomain_absorption=subdomain_absorption)
+        T_nm = np.array([[e["substrate"].real for e in b] for b in effn])
+        R_nm = np.array([[e["superstrate"].real for e in b] for b in effn])
 
-        Q = self.postpro_absorption()
-        Tnm = np.mean(AXsit, axis=2).real
-        Rnm = np.mean(AXsir, axis=2).real
+        t_nm = np.array([[e["substrate"].real for e in b] for b in effn_cplx])
+        r_nm = np.array([[e["superstrate"].real for e in b] for b in effn_cplx])
 
-        # energy = dict([('trans', Tnm), ('refl', Rnm), ('abs1', Q),
-        #                ('refl_slices', AXsir), ('trans_slices', AXsit)])
-        balance = np.sum(np.sum(Tnm)) + np.sum(np.sum(Rnm)) + Q
-        effs = dict([("T", Tnm), ("R", Rnm), ("Q", Q), ("B", balance)])
+        T = np.sum(np.sum(T_nm))
+        R = np.sum(np.sum(R_nm))
+
+        balance = R + T + Q
+        
+        effs = dict()
+        effs["R"] = r_nm if cplx_effs else (R_nm if orders else R)
+        effs["T"] = t_nm if cplx_effs else (T_nm if orders else T)
+        effs["Q"] = Qdomains if subdomain_absorption else Q
+        effs["B"] = balance
+
+        if verbose:
+            print(f"  Energy balance")
+            print(f"  R = {R:0.6f}")
+            print(f"  T = {T:0.6f}")
+            print(f"  Q = {Q:0.6f}")
+            print(f"  ------------------------")
+            print(f"  B = {B:0.6f}")
+
         return effs
 
-    def postpro_absorption(self):
-        return 0
+    def compute_absorption(self, subdomain_absorption=False):
+        P0 = (
+            self.period[0]
+            * self.period[1]
+            * (epsilon_0 / mu_0) ** 0.5
+            / (2 * np.cos(self.theta0))
+        )
+        doms_no_pml = [
+            z for z in self.epsilon.keys() if z not in ["pml_bottom", "pml_top"]
+        ]
+        Etot = self.solution["total"]
+        # curl E = i ω μ_0 μ H
+
+        Htot = self.inv_mu_coeff / (1j * self.omega * mu_0) * curl(Etot)
+        Qelec, Qmag = {}, {}
+        if subdomain_absorption:
+            for d in doms_no_pml:
+                if np.all(self.epsilon[d].imag) == 0:
+                    Qelec[d] = 0
+                else:
+                    elec_nrj_dens = dot(self.epsilon[d] * Etot, Etot.conj)
+                    Qelec[d] = (
+                        -0.5
+                        * epsilon_0
+                        * self.omega
+                        * assemble(elec_nrj_dens * self.dx(d))
+                        / P0
+                    ).imag
+                if np.all(self.mu[d].imag) == 0:
+                    Qmag[d] = 0
+                else:
+                    mag_nrj_dens = dot(self.mu[d] * Htot, Htot.conj)
+                    Qmag[d] = (
+                        -0.5 * mu_0 * self.omega * assemble(mag_nrj_dens * self.dx(d)) / P0
+                    ).imag
+            Q = sum(Qelec.values()) + sum(Qmag.values())
+        else:
+            elec_nrj_dens = dot(self.epsilon_coeff * Etot, Etot.conj)
+            Qelec = (
+                -0.5
+                * epsilon_0
+                * self.omega
+                * assemble(elec_nrj_dens * self.dx(doms_no_pml))
+                / P0
+            ).imag
+            mag_nrj_dens = dot(self.mu_coeff * Htot, Htot.conj)
+            Qmag = (
+                -0.5
+                * mu_0
+                * self.omega
+                * assemble(mag_nrj_dens * self.dx(doms_no_pml))
+                / P0
+            ).imag
+            Q = Qelec + Qmag
+        Qdomains = {"electric": Qelec, "magnetic": Qmag}
+        self.Qtot = Q
+        self.Qdomains = Qdomains
+        return Q, Qdomains
 
 
 if __name__ == "__main__":
@@ -850,8 +707,8 @@ if __name__ == "__main__":
     print(g.Rstack, g.Tstack)
     W0 = dolfin.FunctionSpace(g.mesh, "CG", 1)
     # W0 = dolfin.FunctionSpace(g.mesh, "DG", 0)
-    fplot = g.E  # + g.Estack_coeff
-    fplot = abs(g.Eper)
+    fplot = g.E[0].real + g.Estack_coeff[0].real
+    # fplot = abs(g.Eper)
     dolfin.File("test.pvd") << project(fplot, W0)
     dolfin.File("markers.pvd") << g.markers
 

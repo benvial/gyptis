@@ -27,5 +27,5 @@ https://benvial.gitlab.io/gyptis/index.html
 
 
 
-.. image:: _assets/Estream.png
+.. image:: _assets/landing.png
    :align: center

@@ -118,6 +118,8 @@ class Geometry(object):
         self.subdomains = dict(volumes={}, surfaces={}, curves={}, points={})
         self.data_dir = data_dir if data_dir else tempfile.mkdtemp()
         self.occ = occ
+        self.mesh_object = {}
+        self.measure = {}
 
         for object_name in dir(occ):
             if (
@@ -280,72 +282,88 @@ class Geometry(object):
         else:
             self.set_mesh_size({id: s}, dim=dim)
 
+
+    def read_mesh_info(self):
+        if self.dim == 2:
+            marker_dim = "triangle"
+            sub_dim = "surfaces"
+            marker_dim_minus_1 = "line"
+            sub_dim_dim_minus_1 = "curves"
+        else:
+            marker_dim = "tetra"
+            sub_dim = "volumes"
+            marker_dim_minus_1 = "triangle"
+            sub_dim_dim_minus_1 = "surfaces"
+
+        self.measure["dx"] = Measure(
+            "dx",
+            domain=self.mesh_object["mesh"],
+            subdomain_data=self.mesh_object["markers"][marker_dim],
+            subdomain_dict=self.subdomains[sub_dim],
+        )
+
+        ## exterior_facets
+        if (marker_dim_minus_1 in self.mesh_object["markers"].keys()) and (
+            sub_dim_dim_minus_1 in self.subdomains.keys()
+        ):
+            self.measure["ds"] = Measure(
+                "ds",
+                domain=self.mesh_object["mesh"],
+                subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
+                subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
+            )
+
+            ## interior_facets
+
+            self.measure["dS"] = Measure(
+                "dS",
+                domain=self.mesh_object["mesh"],
+                subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
+                subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
+            )
+
+    @property
+    def msh_file(self):
+        return f"{self.data_dir}/{self.mesh_name}"
+
+    def pute(self):
+        return 12
+        
     def build(
         self,
         interactive=False,
         generate_mesh=True,
         write_mesh=True,
         read_info=True,
+        read_mesh=True,
         finalize=True,
+        check_subdomains=True,
     ):
-        self._check_subdomains()
-        self.mesh_object = {}
+        if check_subdomains:
+            self._check_subdomains()
+        
         if generate_mesh:
-            self.mesh_object = self._mesh(generate=generate_mesh, write=write_mesh)
+            self.mesh_object = self.generate_mesh(generate=generate_mesh, write=write_mesh,read=read_mesh)
 
-            self.measure = {}
-            if read_info:
-                if self.dim == 2:
-                    marker_dim = "triangle"
-                    sub_dim = "surfaces"
-                    marker_dim_minus_1 = "line"
-                    sub_dim_dim_minus_1 = "curves"
-                else:
-                    marker_dim = "tetra"
-                    sub_dim = "volumes"
-                    marker_dim_minus_1 = "triangle"
-                    sub_dim_dim_minus_1 = "surfaces"
-
-                self.measure["dx"] = Measure(
-                    "dx",
-                    domain=self.mesh_object["mesh"],
-                    subdomain_data=self.mesh_object["markers"][marker_dim],
-                    subdomain_dict=self.subdomains[sub_dim],
-                )
-
-                ## exterior_facets
-                if (marker_dim_minus_1 in self.mesh_object["markers"].keys()) and (
-                    sub_dim_dim_minus_1 in self.subdomains.keys()
-                ):
-                    self.measure["ds"] = Measure(
-                        "ds",
-                        domain=self.mesh_object["mesh"],
-                        subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
-                        subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
-                    )
-
-                    ## interior_facets
-
-                    self.measure["dS"] = Measure(
-                        "dS",
-                        domain=self.mesh_object["mesh"],
-                        subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
-                        subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
-                    )
+        if read_info:
+            self.read_mesh_info()
 
         if interactive:
             gmsh.fltk.run()
         if finalize:
             gmsh.finalize()
         return self.mesh_object
+    
+    def read_mesh_file(self):
+        return read_mesh(self.msh_file, data_dir=self.data_dir, dim=self.dim)
 
-    def _mesh(self, generate=True, write=True):
+    def generate_mesh(self, generate=True, write=True,read=True):
         if generate:
             gmsh.model.mesh.generate(self.dim)
         if write:
-            msh = f"{self.data_dir}/{self.mesh_name}"
-            gmsh.write(msh)
-            return read_mesh(msh, data_dir=self.data_dir, dim=self.dim)
+            gmsh.write(self.msh_file)
+        if read:
+            return self.read_mesh_file()
 
 
 class BoxPML2D(Geometry):

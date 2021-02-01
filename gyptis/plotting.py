@@ -5,23 +5,23 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
+from . import dolfin
 from dolfin.common.plotting import mesh2triang
 from matplotlib.tri import Triangulation
-
 from gyptis.complex import *
-
-from . import dolfin
 
 # plt.ion()
 
 
-def get_bnds(markers):
-
+def get_bnds(markers, domain=None, shift=(0, 0)):
+    
     data = markers.array()
     triang = mesh2triang(markers.mesh())
-    ids = np.unique(data)
-
-    import copy
+    if domain == None:
+        ids = np.unique(data)
+    else:
+        ids = [domain]
 
     triangulations = []
     for id in ids:
@@ -54,15 +54,18 @@ def get_bnds(markers):
                     )
         boundaries = np.asarray(boundaries)
 
-        bndpnts = sub_triang.x[boundaries].T, sub_triang.y[boundaries].T
+        bndpnts = (
+            shift[0] + sub_triang.x[boundaries].T,
+            shift[1] + sub_triang.y[boundaries].T,
+        )
 
         sub_bnds.append(bndpnts)
 
     return sub_bnds
 
 
-def plot_lines(markers, ax=None, **kwargs):
-    sub_bnds = get_bnds(markers)
+def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
+    sub_bnds = get_bnds(markers, domain=domain, shift=shift)
     if ax is None:
         ax = plt.gca()
     l = []
@@ -72,14 +75,14 @@ def plot_lines(markers, ax=None, **kwargs):
     return l
 
 
-def plot_subdomains(markers, alpha=0.3):
-    a = dolfin.plot(markers, cmap="binary", alpha=alpha, lw=0.00, edgecolor="face")
-    return a
-    # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
+# def plot_subdomains(markers, alpha=0.3):
+#     a = dolfin.plot(markers, cmap="binary", alpha=alpha, lw=0.00, edgecolor="face")
+#     return a
+#     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
 def plot_subdomains(markers, alpha=1, **kwargs):
-    return plot_lines(markers, ax=None, color="k", **kwargs)
+    return plot_boundaries(markers, ax=None, color="k", **kwargs)
     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
@@ -97,7 +100,7 @@ def plotcplx(test, ax=None, markers=None, W0=None, ref_cbar=False, **kwargs):
         p = dolfin.plot(t, cmap="RdBu_r", **kwargs)
         cbar = plt.colorbar(p)
         if markers:
-            plot_subdomains(markers)
+            plot_subdomains(markers,**kwargs)
         if ref_cbar:
             v = test.real.vector().get_local()
             mn, mx = min(v), max(v)
