@@ -6,12 +6,11 @@
 An example of a bi-periodic diffraction grating.
 """
 
-from gyptis.grating_3d import *
-from gyptis.helpers import list_time, mpi_print
+import sys
 from pprint import pprint
 
-import sys
-
+from gyptis.grating_3d import *
+from gyptis.helpers import list_time, mpi_print
 
 ##############################################################################
 # The diffracted field :math:`{\mathbf E}^d` can be decomposed in a Rayley series:
@@ -89,7 +88,12 @@ eps_groove = (1.75 - 1.5j) ** 2
 eps_substrate = 1.5 ** 2
 
 epsilon = dict(
-    {"substrate": eps_substrate, "groove": eps_groove, "hole": 1, "superstrate": 1,}
+    {
+        "substrate": eps_substrate,
+        "groove": eps_groove,
+        "hole": 1,
+        "superstrate": 1,
+    }
 )
 mu = {d: 1 for d in epsilon.keys()}
 
@@ -115,7 +119,15 @@ substrate = model.layers["substrate"]
 superstrate = model.layers["superstrate"]
 z0 = model.z_position["groove"]
 
-hole = model.add_cylinder(0, 0, z0, 0, 0, grooove_thickness, hole_radius,)
+hole = model.add_cylinder(
+    0,
+    0,
+    z0,
+    0,
+    0,
+    grooove_thickness,
+    hole_radius,
+)
 
 superstrate, substrate, hole, groove = model.fragment(
     [superstrate, substrate, groove], hole

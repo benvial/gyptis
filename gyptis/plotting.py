@@ -3,19 +3,22 @@
 # Author: Benjamin Vial
 # License: MIT
 
+import copy
+
 import matplotlib.pyplot as plt
 import numpy as np
-import copy
-from . import dolfin
 from dolfin.common.plotting import mesh2triang
 from matplotlib.tri import Triangulation
+
 from gyptis.complex import *
+
+from . import dolfin
 
 # plt.ion()
 
 
 def get_bnds(markers, domain=None, shift=(0, 0)):
-    
+
     data = markers.array()
     triang = mesh2triang(markers.mesh())
     if domain == None:
@@ -100,7 +103,7 @@ def plotcplx(test, ax=None, markers=None, W0=None, ref_cbar=False, **kwargs):
         p = dolfin.plot(t, cmap="RdBu_r", **kwargs)
         cbar = plt.colorbar(p)
         if markers:
-            plot_subdomains(markers,**kwargs)
+            plot_subdomains(markers, **kwargs)
         if ref_cbar:
             v = test.real.vector().get_local()
             mn, mx = min(v), max(v)

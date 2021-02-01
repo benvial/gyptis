@@ -20,8 +20,8 @@ if __name__ == "__main__":
     psi0 = 0 * pi / 180
 
     ##  ---------- geometry ----------
-    grooove_thickness=50
-    hole_radius=500 / 2
+    grooove_thickness = 50
+    hole_radius = 500 / 2
     period = (1000, 1000)
     thicknesses = OrderedDict(
         {

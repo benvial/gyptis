@@ -282,7 +282,6 @@ class Geometry(object):
         else:
             self.set_mesh_size({id: s}, dim=dim)
 
-
     def read_mesh_info(self):
         if self.dim == 2:
             marker_dim = "triangle"
@@ -328,7 +327,7 @@ class Geometry(object):
 
     def pute(self):
         return 12
-        
+
     def build(
         self,
         interactive=False,
@@ -341,9 +340,11 @@ class Geometry(object):
     ):
         if check_subdomains:
             self._check_subdomains()
-        
+
         if generate_mesh:
-            self.mesh_object = self.generate_mesh(generate=generate_mesh, write=write_mesh,read=read_mesh)
+            self.mesh_object = self.generate_mesh(
+                generate=generate_mesh, write=write_mesh, read=read_mesh
+            )
 
         if read_info:
             self.read_mesh_info()
@@ -353,11 +354,11 @@ class Geometry(object):
         if finalize:
             gmsh.finalize()
         return self.mesh_object
-    
+
     def read_mesh_file(self):
         return read_mesh(self.msh_file, data_dir=self.data_dir, dim=self.dim)
 
-    def generate_mesh(self, generate=True, write=True,read=True):
+    def generate_mesh(self, generate=True, write=True, read=True):
         if generate:
             gmsh.model.mesh.generate(self.dim)
         if write:

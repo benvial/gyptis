@@ -25,14 +25,14 @@ if os.environ.get("GYPTIS_ADJOINT") is not None:
 else:
     ADJOINT = False
 
-# dolfin.PETScOptions.set('petsc_prealloc', '200') 
-# dolfin.PETScOptions.set('pc_type', 'ilu') 
-# dolfin.PETScOptions.set('ksp_type', 'gmres') 
+# dolfin.PETScOptions.set('petsc_prealloc', '200')
+# dolfin.PETScOptions.set('pc_type', 'ilu')
+# dolfin.PETScOptions.set('ksp_type', 'gmres')
 # # dolfin.PETScOptions.set('pc_factor_mat_solver_type', 'mumps')
 # dolfin.PETScOptions.set('sub_pc_type', 'ilu')
 # dolfin.PETScOptions.set('pc_asm_overlap', '10')
 
-# dolfin.PETScOptions.set('petsc_prealloc', '100') 
+# dolfin.PETScOptions.set('petsc_prealloc', '100')
 # dolfin.PETScOptions.set('ksp_rtol', '1.e-12')
 # dolfin.PETScOptions.set('ksp_type', 'gmres')
 # dolfin.PETScOptions.set('ksp_gmres_restart', '100')

@@ -237,7 +237,11 @@ class Grating3D(object):
             }
         )
         self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config, self.lambda0, self.theta0, self.phi0, self.psi0,
+            config,
+            self.lambda0,
+            self.theta0,
+            self.phi0,
+            self.psi0,
         )
         self.Phi = [p[:6] for p in self.Phi]
 
@@ -446,7 +450,9 @@ class Grating3D(object):
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
     ):
         orders_num = np.linspace(
-            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
+            -self.N_d_order,
+            self.N_d_order,
+            2 * self.N_d_order + 1,
         )
 
         k, gamma = {}, {}
@@ -517,7 +523,7 @@ class Grating3D(object):
         R = np.sum(np.sum(R_nm))
 
         balance = R + T + Q
-        
+
         effs = dict()
         effs["R"] = r_nm if cplx_effs else (R_nm if orders else R)
         effs["T"] = t_nm if cplx_effs else (T_nm if orders else T)
@@ -567,7 +573,11 @@ class Grating3D(object):
                 else:
                     mag_nrj_dens = dot(self.mu[d] * Htot, Htot.conj)
                     Qmag[d] = (
-                        -0.5 * mu_0 * self.omega * assemble(mag_nrj_dens * self.dx(d)) / P0
+                        -0.5
+                        * mu_0
+                        * self.omega
+                        * assemble(mag_nrj_dens * self.dx(d))
+                        / P0
                     ).imag
             Q = sum(Qelec.values()) + sum(Qmag.values())
         else:

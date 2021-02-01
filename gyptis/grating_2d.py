@@ -371,8 +371,8 @@ class Grating2D(ElectroMagneticSimulation2D):
         if direct:
             solver = dolfin.LUSolver("mumps")
         else:
-            solver = dolfin.PETScKrylovSolver() 
-            
+            solver = dolfin.PETScKrylovSolver()
+
         solver.solve(self.matrix, u.vector(), self.vector)
 
         uper = Complex(*u.split())
@@ -418,7 +418,6 @@ class Grating2D(ElectroMagneticSimulation2D):
         for d in ["substrate", "superstrate"]:
             k[d] = self.k0 * np.sqrt(complex(self.epsilon[d] * self.mu[d]))
             beta[d] = np.conj(np.sqrt(k[d] ** 2 - self.alpha ** 2))
-
 
         r_annex = self.phi[0][-1]
         t_annex = self.phi[-1][0]

@@ -212,7 +212,7 @@ def test_grating_2d(parmesh=10):
 
     assert abs(effsTE["B"] - 1) < 1e-3
     assert abs(effsTM["B"] - 1) < 1e-3
-    
+
     return g
 
 
