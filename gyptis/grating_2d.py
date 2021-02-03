@@ -363,19 +363,16 @@ class Grating2D(ElectroMagneticSimulation2D):
         for bc in self._boundary_conditions:
             bc.apply(self.matrix, self.vector)
 
-        VVect = dolfin.VectorFunctionSpace(
-            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
-        )
-        u = dolfin.Function(VVect)
+        self.u = dolfin.Function(self.complex_space)
 
         if direct:
             solver = dolfin.LUSolver("mumps")
         else:
             solver = dolfin.PETScKrylovSolver()
 
-        solver.solve(self.matrix, u.vector(), self.vector)
+        solver.solve(self.matrix, self.u.vector(), self.vector)
 
-        uper = Complex(*u.split())
+        uper = Complex(*self.u.split())
         u = uper * self.phasor
         utot = u + self.ustack_coeff
 

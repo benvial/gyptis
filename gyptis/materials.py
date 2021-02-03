@@ -220,12 +220,20 @@ def tensor_const(T, dim=3, real=False):
 def make_constant_property(prop, inv=False):
     new_prop = {}
     for d, p in prop.items():
-        if hasattr(p, "__len__") and len(p) > 1:
+        if hasattr(p, "__len__"):
+            try:
+                lenp = len(p)
+            except NotImplementedError:
+                lenp = 1
+        if hasattr(p, "__len__") and lenp > 1:
             k = np.linalg.inv(np.array(p)) if inv else np.array(p)
             new_prop[d] = tensor_const(k)
         else:
             k = 1 / p + 0j if inv else p + 0j
-            new_prop[d] = Constant(k)
+            if callable(k):
+                new_prop[d] = k
+            else:
+                new_prop[d] = Constant(k)
     return new_prop
 
 

@@ -9,33 +9,11 @@ An example of a bi-periodic diffraction grating.
 import sys
 from pprint import pprint
 
+from gyptis import dolfin
 from gyptis.grating_3d import *
 from gyptis.helpers import list_time, mpi_print
 
-##############################################################################
-# The diffracted field :math:`{\mathbf E}^d` can be decomposed in a Rayley series:
-#
-# .. math::
-#
-#    {\mathbf E}^d(x,y,z) = \sum_{(n,m) \in \mathbb Z^2}
-#    {\mathbf U}_{nm}(z) e^{-i(\alpha_n x + \beta_m y)}
-# with :math:`\alpha_n=\alpha_0 + p_n`, :math:`\beta_m=\beta_0 + q_m`,
-# :math:`p_n=2\pi n/d_x` and :math:`q_m=2\pi m/d_y`.
-#
-# The coefficients of the decomposition can be expressed as:
-#
-# .. math::
-#
-#    {\mathbf U}_{nm}(z) = \frac{1}{d_x d_y}\int_{-d_x/2}^{d_x/2}\int_{-d_y/2}^{d_y/2}
-#    {\mathbf E}^d(x,y,z) e^{-i(\alpha_n x + \beta_m y)}\mathrm d x  \mathrm d y
-#
-# Note that we solve for the periodic part of the total field
-# :math:`{\mathbf E}_\#^d = {\mathbf E}^d e^{-i(\alpha_n x + \beta_m y)}`.
-#
-# In the substrate (-), we have :math:`{\mathbf U}_{nm}(z) = {\mathbf V}^{-}_{nm} e^{-i\gamma^{-}_{nm}}`
-# and in the superstrate (+), :math:`{\mathbf U}_{nm}(z) = {\mathbf V}^{+}_{nm} e^{i\gamma^{+}_{nm}}`
-#
-# The total diffracted field is
+# dolfin.set_log_level(1)
 
 
 ##  ---------- incident wave ----------
@@ -59,12 +37,12 @@ thicknesses = OrderedDict(
 )
 
 ##  ---------- mesh ----------
-# parmesh = 7
+
 
 try:
     parmesh = int(sys.argv[1])
 except:
-    parmesh = 4
+    parmesh = 3
 
 N_d_order = 2
 degree = 2
@@ -119,15 +97,7 @@ substrate = model.layers["substrate"]
 superstrate = model.layers["superstrate"]
 z0 = model.z_position["groove"]
 
-hole = model.add_cylinder(
-    0,
-    0,
-    z0,
-    0,
-    0,
-    grooove_thickness,
-    hole_radius,
-)
+hole = model.add_cylinder(0, 0, z0, 0, 0, grooove_thickness, hole_radius)
 
 superstrate, substrate, hole, groove = model.fragment(
     [superstrate, substrate, groove], hole
@@ -178,21 +148,20 @@ mpi_print("-------------------------------------")
 mpi_print(">> Computing diffraction efficiencies")
 mpi_print("-------------------------------------")
 
-effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
+effs = g.diffraction_efficiencies(orders=True, subdomain_absorption=True, verbose=True)
 
 list_time()
 print("diffraction efficiencies")
 print("------------------------")
 pprint(effs)
-print("R00", effs["R"][N_d_order, N_d_order])
+print("R00", effs["R"][N_d_order][N_d_order])
 print("Σ R = ", np.sum(effs["R"]))
 print("Σ T = ", np.sum(effs["T"]))
 Q = sum(effs["Q"]["electric"].values()) + sum(effs["Q"]["magnetic"].values())
 print("Q   = ", Q)
 print("B   = ", effs["B"])
 W0 = dolfin.FunctionSpace(g.mesh, "CG", 1)
-# W0 = dolfin.FunctionSpace(g.mesh, "DG", 0)
-fplot = g.E[0].real + g.Estack_coeff[0].real
-# fplot = abs(g.Eper)
-dolfin.File("test.pvd") << project(fplot, W0)
+fplot = g.solution["total"][0].real
+
+dolfin.File("test.pvd") << dolfin.project(fplot, W0)
 dolfin.File("markers.pvd") << g.markers

@@ -22,8 +22,16 @@ if os.environ.get("GYPTIS_ADJOINT") is not None:
     dolfin.__dict__.update(dolfin_adjoint.__dict__)
     dolfin.__spec__.name = "dolfin"
     del dolfin_adjoint
+
+    ## prevents AttributeError: module 'fenics_adjoint.types.function'
+    ## has no attribute 'function' when writing solution to files with <<
+    dolfin.function.function = dolfin.function
 else:
     ADJOINT = False
+
+
+dolfin.parameters["reorder_dofs_serial"] = False
+
 
 # dolfin.PETScOptions.set('petsc_prealloc', '200')
 # dolfin.PETScOptions.set('pc_type', 'ilu')

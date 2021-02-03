@@ -3,7 +3,6 @@
 # Author: Benjamin Vial
 # License: MIT
 
-
 from collections import OrderedDict
 
 import numpy as np
@@ -18,6 +17,8 @@ from gyptis.helpers import BiPeriodicBoundary3D, DirichletBC
 from gyptis.materials import *
 from gyptis.sources import *
 from gyptis.stack import *
+
+from . import ADJOINT, dolfin
 
 pi = np.pi
 
@@ -35,6 +36,7 @@ krylov_params = {
     "relative_tolerance": 1.0e-1,
     "report": True,
 }
+
 
 # dolfin.set_log_level(10)
 # dolfin.parameters["form_compiler"]["quadrature_degree"] = 5  #
@@ -155,14 +157,14 @@ class Grating3D(object):
         phi0=0,
         psi0=0,
         degree=1,
-        mat_degree=1,
+        mat_degree=None,
         pml_stretch=1 - 1j,
         boundary_conditions=[],
     ):
 
         self.geom = geom  # geometry model
         self.degree = degree
-        self.mat_degree = mat_degree
+        self.mat_degree = mat_degree or self.degree
         self.lambda0 = lambda0
         self.theta0 = theta0
         self.phi0 = phi0
@@ -190,11 +192,13 @@ class Grating3D(object):
             self.geom.period, map_tol=self.periodic_map_tol
         )
 
+        self.element = "N1curl"
+
         self.complex_space = ComplexFunctionSpace(
-            self.mesh, "N1curl", self.degree, constrained_domain=self.periodic_bcs
+            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
         )
         self.real_space = dolfin.FunctionSpace(
-            self.mesh, "N1curl", self.degree, constrained_domain=self.periodic_bcs
+            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
         )
 
     @property
@@ -355,7 +359,6 @@ class Grating3D(object):
         self.rhs = {}
 
         for d in self.domains:
-
             L = (
                 -dot(self.inv_mu[d] * curl(Etrial), curl(Etest)),
                 -1j
@@ -407,38 +410,57 @@ class Grating3D(object):
         self.assemble_rhs()
 
     def solve(self, direct=True):
-        Efunc = self.E.real
 
         for i, d in enumerate(self.domains):
             Ah_ = self.Ah[d][0] + self.k0 ** 2 * self.Ah[d][3]
+            if ADJOINT:
+                form_ = self.Ah[d][0].form + self.k0 ** 2 * self.Ah[d][3].form
             if i == 0:
                 Ah = Ah_
+                if ADJOINT:
+                    form = form_
             else:
                 Ah += Ah_
+                if ADJOINT:
+                    form += form_
             if self.alpha0 ** 2 + self.beta0 ** 2 != 0:
                 Ah += self.Ah[d][1] + self.Ah[d][2]
+                if ADJOINT:
+                    form += self.Ah[d][1].form + self.Ah[d][2].form
+        if ADJOINT:
+            Ah.form = form
 
         for i, d in enumerate(self.source_dom):
             bh_ = self.bh[d][0] + self.k0 ** 2 * self.bh[d][1]
+            if ADJOINT:
+                form_ = self.bh[d][0].form + self.k0 ** 2 * self.bh[d][1].form
             if i == 0:
                 bh = bh_
+                if ADJOINT:
+                    form = form_
             else:
                 bh += bh_
+                if ADJOINT:
+                    form += form_
+        if ADJOINT:
+            bh.form = form
+
+        self.E = dolfin.Function(self.complex_space)
 
         for bc in self.boundary_conditions:
             bc.apply(Ah, bh)
 
         if direct:
             # solver = dolfin.LUSolver(Ah) ### direct
-            solver = dolfin.PETScLUSolver("mumps")
-            solver.parameters.update(lu_params)
-            solver.solve(Ah, Efunc.vector(), bh)
+            solver = dolfin.LUSolver("mumps")
+            # solver.parameters.update(lu_params)
+            solver.solve(Ah, self.E.vector(), bh)
         else:
             solver = dolfin.PETScKrylovSolver()  ## iterative
-            solver.parameters.update(krylov_params)
-            solver.solve(Ah, Efunc.vector(), bh)
+            # solver.parameters.update(krylov_params)
+            solver.solve(Ah, self.E.vector(), bh)
 
-        Eper = self.E
+        Eper = Complex(*self.E.split())
         E = Eper * self.phasor
         Etot = E + self.Estack_coeff
         self.solution = {}
@@ -473,6 +495,10 @@ class Grating3D(object):
             effm = []
             effm_cplx = []
             for m in orders_num:
+                if verbose:
+                    print("*" * 55)
+                    print(f"order ({n},{m})")
+                    print("*" * 55)
                 delta = 1 if n == m == 0 else 0
                 qn = n * 2 * np.pi / period_x
                 pm = m * 2 * np.pi / period_y
@@ -497,13 +523,14 @@ class Grating3D(object):
                             / (period_x * period_y)
                         )
                     ph_pos = np.exp(-s * 1j * gamma_nm * zpos[d])
-                    Jnm_ = [u.real + 1j * u.imag for u in Jnm]
-                    eff = (
-                        delta * np.array(eff_annex[d]) + np.array(Jnm_) / thickness[d]
-                    ) * ph_pos
-                    eff_nrj = (
-                        np.linalg.norm(eff) ** 2 * gamma_nm / (gamma["superstrate"])
-                    )
+                    eff, sqnorm_eff = [], 0
+                    for comp in range(3):
+                        eff_ = (
+                            delta * eff_annex[d][comp] + Jnm[comp] / thickness[d]
+                        ) * ph_pos
+                        sqnorm_eff += eff_ * eff_.conj
+                        eff.append(eff_)
+                    eff_nrj = sqnorm_eff * gamma_nm / (gamma["superstrate"])
                     efficiencies_complex[d] = eff
                     efficiencies[d] = eff_nrj
 
@@ -513,22 +540,23 @@ class Grating3D(object):
             effn_cplx.append(effm_cplx)
 
         Q, Qdomains = self.compute_absorption(subdomain_absorption=subdomain_absorption)
-        T_nm = np.array([[e["substrate"].real for e in b] for b in effn])
-        R_nm = np.array([[e["superstrate"].real for e in b] for b in effn])
 
-        t_nm = np.array([[e["substrate"].real for e in b] for b in effn_cplx])
-        r_nm = np.array([[e["superstrate"].real for e in b] for b in effn_cplx])
+        T_nm = [[e["substrate"].real for e in b] for b in effn]
+        R_nm = [[e["superstrate"].real for e in b] for b in effn]
 
-        T = np.sum(np.sum(T_nm))
-        R = np.sum(np.sum(R_nm))
+        t_nm = [[e["substrate"] for e in b] for b in effn]
+        r_nm = [[e["superstrate"] for e in b] for b in effn]
 
-        balance = R + T + Q
+        T = sum([sum(_) for _ in T_nm])
+        R = sum([sum(_) for _ in R_nm])
+
+        B = R + T + Q
 
         effs = dict()
         effs["R"] = r_nm if cplx_effs else (R_nm if orders else R)
         effs["T"] = t_nm if cplx_effs else (T_nm if orders else T)
         effs["Q"] = Qdomains if subdomain_absorption else Q
-        effs["B"] = balance
+        effs["B"] = B
 
         if verbose:
             print(f"  Energy balance")

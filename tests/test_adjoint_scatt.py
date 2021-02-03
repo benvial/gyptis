@@ -9,7 +9,6 @@ from gyptis import dolfin as df
 from gyptis.complex import *
 from gyptis.geometry import *
 from gyptis.helpers import *
-from gyptis.helpers import _get_form
 from gyptis.materials import *
 from gyptis.optimize import *
 from gyptis.physics import *
