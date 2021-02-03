@@ -84,6 +84,7 @@ gen_modules/
 auto_examples/
 .pytest_cache/
 .hypothesis/
+.coverage
 htmlcov/
 
 
