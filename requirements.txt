@@ -2,5 +2,5 @@ numpy
 dolfin-adjoint
 meshio
 gmsh
-h5py
+h5py --no-binary=h5py
 nlopt
