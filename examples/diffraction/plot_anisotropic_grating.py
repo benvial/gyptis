@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-2D Dielectric Grating
-=====================
+2D Anisotropic Grating
+=======================
 
-Example of a dielectric diffraction grating.
+Example of diffraction grating with trapezoidal ridges made from an anisotropic material.
 """
 
 import matplotlib as mpl
@@ -14,11 +14,10 @@ from gyptis import dolfin
 from gyptis.grating_2d import *
 from gyptis.plotting import *
 
-plt.ion()
 
 ##############################################################################
-# We will study a classical benchmark of a dielectric grating
-# and compare with results given in [PopovGratingBook]_.
+# We will study this benchmark and compare with results 
+# given in [PopovGratingBook]_.
 
 fig, ax = plt.subplots(3, 2, figsize=(7, 9))
 
@@ -29,7 +28,7 @@ period = 600
 width_bottom, width_top = 500, 300
 height = 600
 
-pmesh = 10
+pmesh = 6
 
 thicknesses = OrderedDict(
     {
@@ -118,6 +117,22 @@ for jangle, angle in enumerate([0, -20, -40]):
     print("R: ", effs_TE["R"])
     print("T: ", effs_TE["T"])
 
+
+
+    ylim = model.y_position["substrate"], model.y_position["pml_top"]
+    d = grating.period
+    nper = 8
+
+    vminTE, vmaxTE = -1.5, 1.7
+    plt.sca(ax[jangle][0])
+    per_plots, cb = grating.plot_field(nper=nper)
+    cb.remove()
+    scatt_lines,layers_lines = grating.plot_geometry(nper=nper, c="k")
+    [layers_lines[i].remove() for i in [0,1,3,4]]
+    plt.ylim(ylim)
+    plt.xlim(-d / 2, nper * d - d / 2)
+    plt.axis("off")
+    
     grating.polarization = "TM"
     grating.prepare()
     grating.weak_form()
@@ -132,68 +147,25 @@ for jangle, angle in enumerate([0, -20, -40]):
     print("R: ", effs_TM["R"])
     print("T: ", effs_TM["T"])
 
-    ylim = model.y_position["substrate"], model.y_position["pml_top"]
-
-    nper = 8
-    id = model.subdomains["surfaces"]["rod"]
-    d = model.period
-    alpha = grating.alpha
-
-    def phase_shift(i, alpha=alpha, d=d, degree=2):
-        phasor_re = dolfin.Expression(
-            f"cos(i*alpha*d)", i=i, alpha=alpha, d=d, degree=degree
-        )
-        phasor_im = dolfin.Expression(
-            f"sin(i*alpha*d)", i=i, alpha=alpha, d=d, degree=degree
-        )
-        return Complex(phasor_re, phasor_im)
-
-    vminTE, vmaxTE = -1.5, 1.7
-    plt.sca(ax[jangle][0])
-    for i in range(nper):
-        t = mpl.transforms.Affine2D().translate(i * d, 0)
-        f = E * phase_shift(i)
-        cbTE = dolfin.plot(
-            f.real,
-            cmap="RdBu_r",
-            transform=t + ax[jangle][0].transData,
-            vmin=vminTE,
-            vmax=vmaxTE,
-        )
-        plot_subdomains(grating.markers, domain=id, shift=(i * d, 0))
-        cbTE.set_clim(vminTE, vmaxTE)
-
-    plt.ylim(ylim)
-    plt.xlim(-d / 2, nper * d - d / 2)
-    plt.axis("off")
-    ax[jangle][0].axhline(0, 0, 1, color="k")
 
     vminTM, vmaxTM = -2.5, 2.5
     plt.sca(ax[jangle][1])
-    for i in range(nper):
-        t = mpl.transforms.Affine2D().translate(i * d, 0)
-        f = H * phase_shift(i)
-        cbTM = dolfin.plot(
-            f.real,
-            cmap="RdBu_r",
-            transform=t + ax[jangle][1].transData,
-            vmin=vminTM,
-            vmax=vmaxTM,
-        )
-        plot_subdomains(grating.markers, domain=id, shift=(i * d, 0))
-        cbTM.set_clim(vminTM, vmaxTM)
+    per_plots, cb = grating.plot_field(nper=nper)
+    cb.remove()
+    scatt_lines,layers_lines = grating.plot_geometry(nper=nper, c="k")
+    [layers_lines[i].remove() for i in [0,1,3,4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
-    ax[jangle][1].axhline(0, 0, 1, color="k")
+    
     ax[jangle][0].set_title(fr"$\theta = {angle}\degree$")
     ax[jangle][1].set_title(fr"$\theta = {angle}\degree$")
 
-    plt.tight_layout()
+    # plt.tight_layout()
 
 
 divider = make_axes_locatable(ax[0, 0])
-cax = divider.new_vertical(size="5%", pad=0.6)
+cax = divider.new_vertical(size="5%", pad=0.5)
 fig.add_axes(cax)
 mTE = plt.cm.ScalarMappable(cmap="RdBu")
 mTE.set_clim(vminTE, vmaxTE)
@@ -201,7 +173,7 @@ cbarTE = fig.colorbar(mTE, cax=cax, orientation="horizontal")
 cax.set_title(r"${\rm Re}\, E_z$ (TE)", fontsize=20)
 
 divider = make_axes_locatable(ax[0, 1])
-cax = divider.new_vertical(size="5%", pad=0.6)
+cax = divider.new_vertical(size="5%", pad=0.5)
 mTM = plt.cm.ScalarMappable(cmap="RdBu")
 mTM.set_clim(vminTM, vmaxTM)
 fig.add_axes(cax)
@@ -209,7 +181,7 @@ cbarTM = fig.colorbar(mTM, cax=cax, orientation="horizontal")
 cax.set_title(r"${\rm Re}\, H_z$ (TM)", fontsize=20)
 
 plt.tight_layout()
-plt.subplots_adjust(wspace=0.22)
+plt.subplots_adjust(wspace=-0.1)
 
 
 #

@@ -75,7 +75,3 @@ def process_tex(lines):
 
 if __name__ == "__main__":
     main()
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Author: Benjamin Vial
-# License: MIT

@@ -300,8 +300,11 @@ class BiPeriodicBoundary3D(dolfin.SubDomain):
         )
 
     def map(self, x, y):
-
-        if dolfin.near(x[0], self.period[0] / 2):
+        if dolfin.near(x[0], self.period[0] / 2) and dolfin.near(x[1], self.period[1] / 2):
+            y[0] = x[0] - self.period[0]
+            y[1] = x[1] - self.period[1]
+            y[2] = x[2]
+        elif dolfin.near(x[0], self.period[0] / 2):
             y[0] = x[0] - self.period[0]
             y[1] = x[1]
             y[2] = x[2]
@@ -310,40 +313,6 @@ class BiPeriodicBoundary3D(dolfin.SubDomain):
             y[1] = x[1] - self.period[1]
             y[2] = x[2]
         else:
-            y[0] = -1000
-            y[1] = -1000
-            y[2] = -1000
-
-
-# class DomainBoundary(InnerBoundary):
-#     def __init__(self, geom, *args, tol=1e-6, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.geom = geom
-#         self.p1 = geom.first_corner().array()
-#         self.p2 = geom.second_corne().array()
-#         self.tol = tol
-#
-#     #
-#     # def inside(self, x, on_boundary):
-#     #     return (
-#     #         on_boundary
-#     #         and x[0] > self.p1[0] - self.tol
-#     #         and x[0] < self.p2[0] + self.tol
-#     #         and x[1] > self.p1[1] - self.tol
-#     #         and x[1] < self.p2[1] + self.tol
-#     #     )
-#
-#     def inside(self, x, on_boundary):
-#         inside_rect = (
-#             x[0] > self.p1[0] - self.tol
-#             and x[0] < self.p2[0] + self.tol
-#             and x[1] > self.p1[1] - self.tol
-#             and x[1] < self.p2[1] + self.tol
-#         )
-#         outside_rect = (
-#             x[0] < self.p1[0] + self.tol
-#             or x[0] > self.p2[0] - self.tol
-#             or x[1] < self.p1[1] + self.tol
-#             or x[1] > self.p2[1] - self.tol
-#         )
-#         return inside_rect and outside_rect
+            y[0] = -1000#-self.period[0]*2.
+            y[1] = -1000#-self.period[1]*2.
+            y[2] = -1000#0.

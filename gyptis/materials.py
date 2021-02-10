@@ -9,6 +9,56 @@ import numpy as np
 from gyptis.complex import *
 
 
+class PML(object):
+    def __init__(
+        self,
+        direction="x",
+        stretch=1 - 1j,
+    ):
+        self.direction = direction
+        self.stretch = stretch
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @direction.setter
+    def direction(self, value):
+        valid = ["x", "y", "z", "xy", "xz", "yz", "xyz"]
+        if value not in valid:
+            raise ValueError(f"Unkown direction {value}, must be one of {valid}")
+
+        self._direction = value
+
+    def jacobian_matrix(self):
+        if self.direction == "x":
+            s = self.stretch, 1, 1
+        elif self.direction == "y":
+            s = 1, self.stretch, 1
+        elif self.direction == "z":
+            s = 1, 1, self.stretch
+        elif self.direction == "xy":
+            s = self.stretch, self.stretch, 1
+        elif self.direction == "xz":
+            s = self.stretch, 1, self.stretch
+        elif self.direction == "yz":
+            s = 1, self.stretch, self.stretch
+        else:
+            s = self.stretch, self.stretch, self.stretch
+        return np.diag(s)
+
+    def transformation_matrix(self):
+        J = self.jacobian_matrix()
+        invJ = np.linalg.inv(J)
+        return invJ @ invJ.T * np.linalg.det(J)
+
+
+############### ideas ####################
+## plot(markers) to visualize subdomains
+## markers subdomaid maps id to name
+## label in UserExpression t = XsiReal(markers,label="whatevs") then t.label()
+
+
 class _SubdomainPy(dolfin.UserExpression):
     def __init__(self, markers, subdomains, mapping, *args, **kwargs):
         super().__init__(*args, **kwargs)

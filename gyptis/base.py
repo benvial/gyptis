@@ -8,7 +8,6 @@ from scipy.constants import c, epsilon_0, mu_0
 
 from . import ADJOINT, dolfin
 from .complex import *
-from .core import PML
 from .geometry import *
 from .materials import *
 from .sources import *
@@ -57,7 +56,7 @@ class Simulation2D(object):
         element="CG",
         boundary_conditions={},
     ):
-        self.geom = geom
+        self.geometry = geom
         self.dim = geom.dim
         self.degree = degree
         self.element = element

@@ -147,20 +147,21 @@ showhtmldoc:
 
 ## Run the test suite
 test:
-	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests -s -vv --cov=./$(PROJECT_NAME) --cov-report html
-	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
+	rm -rf .coverage htmlcov
+	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests --cov=./$(PROJECT_NAME) --cov-report term 
+	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests --cov=./$(PROJECT_NAME) --cov-append --cov-report term --cov-report html  
 	
 	
 	
-
-## Run performance test
-perf:
-	unset GYPTIS_ADJOINT && mpirun -n 1 pytest ./tests/test_grating_2d.py -s -vv
-	# GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
-	
+# 
+# ## Run performance test
+# perf:
+# 	unset GYPTIS_ADJOINT && mpirun -n 1 pytest ./tests/test_grating_2d.py -s -vv
+# 	# GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
+# 
 
 ## Tag and push tags
-tag:
+tag: banner
 	# Make sure we're on the master branch
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@echo "Tagging v$(VERSION)..."
@@ -184,7 +185,10 @@ pipy: package
 ## Tag and upload to pipy
 publish: tag pipy
 
-
+## Make the terminal banner
+banner:
+	sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans >> ./docs/_assets/gyptis.ans
+	cat ./docs/_assets/gyptis.ans
 
 ###############
 

@@ -118,6 +118,9 @@ def test_subdomain_complex():
             assert assemble((eps[i][j] - eps_cyl[i][j]) * dx("cyl")) == 0
 
 
+def test_pml():
+    pml = PML()
+
 # TODO: be careful here
 # Warning
 # /ufl/exproperators.py:336: FutureWarning: elementwise comparison failed;

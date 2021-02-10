@@ -256,6 +256,7 @@ class Geometry(object):
                 if id not in names:
                     subitems.pop(id)
 
+
     def set_mesh_size(self, params, dim=None):
         dim = dim if dim else self.dim
         if dim == 3:
@@ -264,11 +265,21 @@ class Geometry(object):
             type_entity = "surfaces"
         else:
             type_entity = "curves"
-        for sub, num in self.subdomains[type_entity].items():
-            if sub in params:
+
+        # revert sort so that smaller sizes are set last
+        params = dict(
+            sorted(params.items(), key=lambda item: float(item[1]), reverse=True)
+        )
+
+        for id, p in params.items():
+            if isinstance(id, str):
+                num = self.subdomains[type_entity][id]
                 n = gmsh.model.getEntitiesForPhysicalGroup(dim, num)
                 for n_ in n:
-                    self._set_size(n_, params[sub], dim=dim)
+                    self._set_size(n_, p, dim=dim)
+            else:
+                self._set_size(id, p, dim=dim)
+
 
     def set_size(self, id, s, dim=None):
         if hasattr(id, "__len__") and not isinstance(id, str):
@@ -325,8 +336,6 @@ class Geometry(object):
     def msh_file(self):
         return f"{self.data_dir}/{self.mesh_name}"
 
-    def pute(self):
-        return 12
 
     def build(
         self,

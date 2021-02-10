@@ -9,14 +9,13 @@ import numpy as np
 import pytest
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
-from gyptis.complex import *
-from gyptis.complex import _invert_3by3_complex_matrix
-from gyptis.core import PML
-from gyptis.geometry import *
-from gyptis.helpers import BiPeriodicBoundary3D, DirichletBC
-from gyptis.materials import *
-from gyptis.sources import *
-from gyptis.stack import *
+from .complex import *
+from .complex import _invert_3by3_complex_matrix
+from .geometry import *
+from .helpers import BiPeriodicBoundary3D, DirichletBC
+from .materials import *
+from .sources import *
+from .stack import *
 
 from . import ADJOINT, dolfin
 
@@ -43,15 +42,15 @@ krylov_params = {
 
 
 def translation_matrix(t):
-    M = np.eye(4)
-    M[:3, -1] = t
+    M = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    M[3], M[7], M[11] = t
     return M
 
 
 class Layered3D(Geometry):
     def __init__(
         self,
-        period=(1, 1),
+        period=(1.0, 1.0),
         thicknesses=None,
         model_name="3D grating",
         mesh_name="mesh.msh",
@@ -76,8 +75,10 @@ class Layered3D(Geometry):
             }
         )
 
-        self.translation_x = translation_matrix([self.period[0], 0, 0]).ravel().tolist()
-        self.translation_y = translation_matrix([0, self.period[1], 0]).ravel().tolist()
+        self.periodic_tol = 1e-6
+
+        self.translation_x = translation_matrix([self.period[0], 0, 0])
+        self.translation_y = translation_matrix([0, self.period[1], 0])
 
         self.total_thickness = sum(self.thicknesses.values())
         dx, dy = self.period
@@ -99,12 +100,17 @@ class Layered3D(Geometry):
             self.add_physical(num, sub)
 
     def make_layer(self, z_position, thickness):
-        dx, dy = self.period
-        box = self.add_box(-dx / 2, -dy / 2, z_position, dx, dy, thickness)
-        return box
+        return self.add_box(
+            -self.period[0] / 2,
+            -self.period[1] / 2,
+            z_position,
+            self.period[0],
+            self.period[1],
+            thickness,
+        )
 
-    def set_periodic_mesh(self):
-        s = self.get_periodic_bnds(self.z0, self.total_thickness)
+    def set_periodic_mesh(self, eps=None):
+        s = self.get_periodic_bnds(self.z0, self.total_thickness, eps=eps)
 
         periodic_id = {}
         for k, v in s.items():
@@ -115,13 +121,17 @@ class Layered3D(Geometry):
         gmsh.model.mesh.setPeriodic(
             2, periodic_id["+y"], periodic_id["-y"], self.translation_y
         )
+        return periodic_id
 
     def build(self, set_periodic=True, **kwargs):
         if set_periodic:
             self.set_periodic_mesh()
         super().build(**kwargs)
 
-    def get_periodic_bnds(self, z_position, thickness, eps=1e-3):
+    def get_periodic_bnds(self, z_position, thickness, eps=None):
+
+        eps = eps or self.periodic_tol
+
         s = {}
         dx, dy = self.period
 
@@ -160,9 +170,10 @@ class Grating3D(object):
         mat_degree=None,
         pml_stretch=1 - 1j,
         boundary_conditions=[],
+        periodic_map_tol=1e-8,
     ):
 
-        self.geom = geom  # geometry model
+        self.geometry = geom  # geometry model
         self.degree = degree
         self.mat_degree = mat_degree or self.degree
         self.lambda0 = lambda0
@@ -172,7 +183,7 @@ class Grating3D(object):
         self.epsilon = epsilon
         self.mu = mu
         self.pml_stretch = pml_stretch
-        self.period = self.geom.period
+        self.period = self.geometry.period
 
         self.mesh = geom.mesh_object["mesh"]
         self.markers = geom.mesh_object["markers"]["tetra"]
@@ -182,14 +193,14 @@ class Grating3D(object):
         self.boundary_conditions = boundary_conditions
 
         self.N_d_order = 0
-        self.periodic_map_tol = 1e-10
+        self.periodic_map_tol = periodic_map_tol
 
         # self.E0 = plane_wave_3D(
         #     self.lambda0, self.theta0, self.phi0, self.psi0, domain=self.mesh
         # )
 
         self.periodic_bcs = BiPeriodicBoundary3D(
-            self.geom.period, map_tol=self.periodic_map_tol
+            self.geometry.period, map_tol=self.periodic_map_tol,
         )
 
         self.element = "N1curl"
@@ -241,11 +252,7 @@ class Grating3D(object):
             }
         )
         self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            self.theta0,
-            self.phi0,
-            self.psi0,
+            config, self.lambda0, self.theta0, self.phi0, self.psi0,
         )
         self.Phi = [p[:6] for p in self.Phi]
 
@@ -360,17 +367,17 @@ class Grating3D(object):
 
         for d in self.domains:
             L = (
-                -dot(self.inv_mu[d] * curl(Etrial), curl(Etest)),
+                -inner(self.inv_mu[d] * curl(Etrial), curl(Etest)),
                 -1j
                 * (
                     dot(self.inv_mu[d] * cross(self.k_para, Etrial), curl(Etest))
                     - dot(self.inv_mu[d] * cross(self.k_para, Etest), curl(Etrial))
                 ),
-                -dot(
+                -inner(
                     cross(self.inv_mu[d] * cross(self.k_para, Etrial), self.k_para),
                     Etest,
                 ),
-                dot(self.eps[d] * Etrial, Etest),
+                inner(self.eps[d] * Etrial, Etest),
             )
             self.lhs[d] = [t.real + t.imag for t in L]
         for d in self.source_dom:
@@ -387,9 +394,9 @@ class Grating3D(object):
             delta_epsilon = self.eps[d] - eps_annex
             delta_inv_mu = self.inv_mu[d] - inv_mu_annex
             b = (
-                dot(delta_inv_mu * curl(self.annex_field["stack"][d]), curl(Etest))
+                inner(delta_inv_mu * curl(self.annex_field["stack"][d]), curl(Etest))
                 * self.phasor.conj,
-                -dot(delta_epsilon * self.annex_field["stack"][d], Etest)
+                -inner(delta_epsilon * self.annex_field["stack"][d], Etest)
                 * self.phasor.conj,
             )
 
@@ -472,9 +479,7 @@ class Grating3D(object):
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
     ):
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
         k, gamma = {}, {}
@@ -484,8 +489,8 @@ class Grating3D(object):
 
         r_annex = self.Phi[0][1::2]
         t_annex = self.Phi[-1][::2]
-        zpos = self.geom.z_position
-        thickness = self.geom.thicknesses
+        zpos = self.geometry.z_position
+        thickness = self.geometry.thicknesses
         period_x, period_y = self.period
         eff_annex = dict(substrate=t_annex, superstrate=r_annex)
         Eper = self.solution["periodic"]
@@ -573,7 +578,8 @@ class Grating3D(object):
             self.period[0]
             * self.period[1]
             * (epsilon_0 / mu_0) ** 0.5
-            / (2 * np.cos(self.theta0))
+            * (np.cos(self.theta0))
+            / 2
         )
         doms_no_pml = [
             z for z in self.epsilon.keys() if z not in ["pml_bottom", "pml_top"]
@@ -630,144 +636,3 @@ class Grating3D(object):
         self.Qtot = Q
         self.Qdomains = Qdomains
         return Q, Qdomains
-
-
-if __name__ == "__main__":
-
-    lambda0 = 22
-    parmesh = 11
-    parmesh_pml = parmesh * 2 / 3
-    period = (20, 20)
-    eps_island = 6
-    eps_sub = 1
-    degree = 1
-
-    theta0 = 0 * pi / 180
-    phi0 = 0 * pi / 180
-    psi0 = 0 * pi / 180
-
-    thicknesses = OrderedDict(
-        {
-            "pml_bottom": lambda0,
-            "substrate": lambda0,
-            "groove": 10,
-            "superstrate": lambda0,
-            "pml_top": lambda0,
-        }
-    )
-
-    epsilon = dict(
-        {"substrate": eps_sub, "groove": 1, "island": eps_island, "superstrate": 1}
-    )
-    mu = dict({"substrate": 1, "groove": 1, "island": 1, "superstrate": 1})
-
-    index = dict()
-    for e, m in zip(epsilon.items(), mu.items()):
-        index[e[0]] = np.mean(
-            (np.array(e[1]).real.max() * np.array(m[1]).real.max()) ** 0.5
-        ).real
-
-    model = Layered3D(period, thicknesses, kill=True)
-
-    groove = model.layers["groove"]
-    z0 = model.z_position["groove"]
-    island_width_top = 10
-    island_width_bottom = 14
-    island_thickness = 8
-    island_bottom = model.add_rectangle(
-        -island_width_bottom / 2,
-        -island_width_bottom / 2,
-        z0,
-        island_width_bottom,
-        island_width_bottom,
-    )
-    island_top = model.add_rectangle(
-        -island_width_top / 2,
-        -island_width_top / 2,
-        z0 + island_thickness,
-        island_width_top,
-        island_width_top,
-    )
-
-    island = model.addThruSections([island_bottom, island_top])
-    island, groove = model.fragment(island[-1][-1], groove)
-    model.remove_all_duplicates()
-    model.synchronize()
-    model.add_physical(groove, "groove")
-    model.add_physical(island, "island")
-    #
-    sub = model.subdomains["volumes"]["substrate"]
-    sup = model.subdomains["volumes"]["superstrate"]
-    pmltop = model.subdomains["volumes"]["pml_top"]
-    pmlbot = model.subdomains["volumes"]["pml_bottom"]
-
-    model.set_size(sub, lambda0 / (index["substrate"] * parmesh))
-    model.set_size(sup, lambda0 / (index["superstrate"] * parmesh))
-    model.set_size(pmlbot, lambda0 / (index["substrate"] * parmesh_pml))
-    model.set_size(pmltop, lambda0 / (index["superstrate"] * parmesh_pml))
-    model.set_size(groove, lambda0 / (index["groove"] * parmesh))
-    model.set_size(island, lambda0 / (index["island"] * 2 * parmesh))
-    # face_top = model.get_boundaries(pmltop)[-1]
-    # face_bottom = model.get_boundaries(pmlbot)[-2]
-
-    # model.add_physical(face_top, "face_top", dim=2)
-    # model.add_physical(face_bottom, "face_bottom", dim=2)
-
-    # mesh_object = model.build(interactive=True, generate_mesh=True, write_mesh=True)
-
-    mesh_object = model.build()
-
-    # model.mesh_object = mesh_object
-
-    g = Grating3D(
-        model,
-        epsilon,
-        mu,
-        lambda0=lambda0,
-        theta0=theta0,
-        phi0=phi0,
-        psi0=psi0,
-        degree=degree,
-    )
-
-    g.weak_form()
-    g.assemble()
-    g.solve(direct=True)
-    # dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-
-    # rank = dolfin.MPI.rank(dolfin.MPI.comm_world)
-    # if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
-
-    g.N_d_order = 0
-
-    effs = g.diffraction_efficiencies()
-    print(effs)
-    print(g.Rstack, g.Tstack)
-    W0 = dolfin.FunctionSpace(g.mesh, "CG", 1)
-    # W0 = dolfin.FunctionSpace(g.mesh, "DG", 0)
-    fplot = g.E[0].real + g.Estack_coeff[0].real
-    # fplot = abs(g.Eper)
-    dolfin.File("test.pvd") << project(fplot, W0)
-    dolfin.File("markers.pvd") << g.markers
-
-    # u_sol_gath = None
-    # if rank == 0:
-    #     u_sol_gath =  np.empty(numDataPerRank*size, dtype='f')
-    #
-    #
-    # Eper_re = dolfin.MPI.comm_world.gather(g.Eper.real.vector().get_local(), root=0)
-    # Eper_im = dolfin.MPI.comm_world.gather(g.Eper.imag.vector().get_local(), root=0)
-    # # g.Eper = Complex(Eper_re,Eper_im)
-    # size = dolfin.MPI.comm_world.Get_size()
-    # if rank == 0:
-    #     print("computing diffraction efficiencies")
-    #     for i in range(size):
-    #         g.Eper.real.vector()[:] = Eper_re[i]
-    #         g.Eper.imag.vector()[:] = Eper_im[i]
-    #
-    #     effs = g.diffraction_efficiencies()
-    #
-    # print(effs)
-    # print(g.Rstack, g.Tstack)
-    # import sys
-    #

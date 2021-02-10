@@ -5,11 +5,13 @@
 
 
 from collections import OrderedDict
-
+from . import ADJOINT
 from .base import *
 from .base import _coefs, _make_cst_mat
 from .helpers import DirichletBC, PeriodicBoundary2DX
 from .stack import *
+import matplotlib as mpl
+from .plotting import *
 
 # dolfin.set_log_level(20)
 
@@ -40,6 +42,8 @@ class Layered2D(Geometry):
         self.period = period
         # assert isinstance(self.thicknesses == OrderedDict)
         self.thicknesses = thicknesses
+
+        self.layers = list(thicknesses.keys())
 
         self.total_thickness = sum(self.thicknesses.values())
 
@@ -103,7 +107,7 @@ class Grating2D(ElectroMagneticSimulation2D):
 
         super().__init__(geom, epsilon, mu, **kwargs)
 
-        self.period = self.geom.period
+        self.period = self.geometry.period
         self.pml_stretch = pml_stretch
         self.N_d_order = 0
         self.nb_slice = 20
@@ -204,11 +208,7 @@ class Grating2D(ElectroMagneticSimulation2D):
             _psi = 0
             _phi_ind = 8
         phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            -self.theta0,
-            0,
-            _psi,
+            config, self.lambda0, -self.theta0, 0, _psi,
         )
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
@@ -406,9 +406,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
             nu = 1 / self.epsilon["substrate"]
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
         k, beta = {}, {}
@@ -419,8 +417,8 @@ class Grating2D(ElectroMagneticSimulation2D):
         r_annex = self.phi[0][-1]
         t_annex = self.phi[-1][0]
         eff_annex = dict(substrate=t_annex, superstrate=r_annex)
-        ypos = self.geom.y_position
-        thickness = self.geom.thicknesses
+        ypos = self.geometry.y_position
+        thickness = self.geometry.thicknesses
         r_n, t_n = [], []
         R_n, T_n = [], []
         for n in orders_num:
@@ -473,6 +471,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         eff["T"] = t_n if cplx_effs else (T_n if orders else T)
         eff["Q"] = Qdomains if subdomain_absorption else Q
         eff["B"] = B
+        self.efficiencies = eff
         return eff
 
     def compute_absorption(self, subdomain_absorption=False):
@@ -532,3 +531,72 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.Qtot = Q
         self.Qdomains = Qdomains
         return Q, Qdomains
+
+    def _phase_shift_period(self, i):
+        phasor_re = dolfin.Expression(
+            f"cos(i*alpha*d)", i=i, alpha=self.alpha, d=self.period, degree=self.degree
+        )
+        phasor_im = dolfin.Expression(
+            f"sin(i*alpha*d)", i=i, alpha=self.alpha, d=self.period, degree=self.degree
+        )
+        return Complex(phasor_re, phasor_im)
+
+    def plot_geometry(self, nper=1, ax=None, **kwargs):
+        if ax == None:
+            ax = plt.gca()
+
+        domains = self.geometry.subdomains["surfaces"]
+
+        scatt = []
+        for d in domains:
+            if d not in self.geometry.layers:
+                scatt.append(d)
+        scatt_ids = [domains[d] for d in scatt]
+        scatt_lines = []
+        if len(scatt_ids)>0:
+            for i in range(nper):
+                s = plot_subdomains(
+                    self.markers, domain=scatt_ids, shift=(i * self.period, 0), **kwargs
+                )
+                scatt_lines.append(s)
+        yend = list(self.geometry.thicknesses.values())[-1]
+
+        layers_lines = []
+        for y0 in self.geometry.y_position.values():
+            a = ax.axhline(y0, **kwargs)
+            layers_lines.append(a)
+
+        ax.set_aspect(1)
+
+        return scatt_lines, layers_lines
+
+    def plot_field(self, nper=1, ax=None, fig=None, **kwargs):
+        u = self.solution["total"]
+        if ax == None:
+            ax = plt.gca()
+        if "cmap" not in kwargs:
+            kwargs["cmap"] = "RdBu_r"
+        per_plots = []
+        ppmin, ppmax = [], []
+        for i in range(nper):
+            t = mpl.transforms.Affine2D().translate(i * self.period, 0)
+            f = u * self._phase_shift_period(i)
+            fplot = f.real
+            if ADJOINT:
+                fplot = project(fplot,self.real_space)
+            pp = dolfin.plot(fplot, transform=t + ax.transData, **kwargs)
+            per_plots.append(pp)
+
+            ppmax.append(pp.cvalues[-1])
+            ppmin.append(pp.cvalues[0])
+        ax.set_xlim(-self.period / 2, (nper - 1 / 2) * self.period)
+        ax.set_aspect(1)
+        for pp in per_plots:
+            pp.set_clim(min(ppmin), max(ppmax))
+
+        cm = plt.cm.ScalarMappable(cmap=kwargs["cmap"])
+        cm.set_clim(min(ppmin), max(ppmax))
+        fig = fig or plt.gcf()
+        cb = fig.colorbar(cm, ax=ax)
+
+        return per_plots, cb

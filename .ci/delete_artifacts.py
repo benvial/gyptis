@@ -3,7 +3,7 @@
 import gitlab
 
 gl = gitlab.Gitlab.from_config("gitlab")
-projects = gl.projects.list(search="pygetdp", owned=True)
+projects = gl.projects.list(search="gyptis", owned=True)
 project = projects[0]
 jobs = project.jobs.list(all=True)
 jj = 0
