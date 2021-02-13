@@ -47,7 +47,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     # 'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
-    "sphinx.ext.mathjax",
+    # "sphinx.ext.mathjax",
     "sphinx_gallery.gen_gallery",
     "sphinx_copybutton",
     # 'sphinx_issues',
@@ -56,7 +56,8 @@ extensions = [
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
-# numpydoc_class_members_toctree = False
+numpydoc_class_members_toctree = False
+numpydoc_show_class_members = False
 
 autodoc_default_options = {"inherited-members": None}
 

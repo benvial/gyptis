@@ -3,7 +3,7 @@ from datetime import date
 __version__ = "0.0.2"
 __author__ = u"Benjamin Vial"
 __author_email__ = "benjamin.vial84@gmail.com"
-__copyright__ = u"Copyright (c) 2017-{}, {} <{}>".format(
+__copyright__ = u"Copyright (c) 2020-{}, {} <{}>".format(
     date.today().year, __author__, __author_email__
 )
 __website__ = "https://benvial.github.io/gyptis"

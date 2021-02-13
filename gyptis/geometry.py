@@ -18,8 +18,9 @@ from functools import wraps
 import gmsh
 import numpy as np
 
-from gyptis.helpers import Measure
-from gyptis.mesh import read_mesh
+from .helpers import Measure
+from .mesh import read_mesh
+from .plotting import *
 
 geo = gmsh.model.geo
 occ = gmsh.model.occ
@@ -111,6 +112,7 @@ class Geometry(object):
         dim=3,
         gmsh_args=None,
         kill=False,
+        verbose=0,
     ):
         self.model_name = model_name
         self.mesh_name = mesh_name
@@ -120,6 +122,8 @@ class Geometry(object):
         self.occ = occ
         self.mesh_object = {}
         self.measure = {}
+        self.mesh = {}
+        self.markers = {}
 
         for object_name in dir(occ):
             if (
@@ -128,9 +132,12 @@ class Geometry(object):
                 and object_name not in dir(self)
             ):
                 bound_method = getattr(occ, object_name)
-                # name = bound_method.__name__
                 name = _convert_name(bound_method.__name__)
                 _add_method(self, bound_method, name)
+        self._old_add_ellipse = self.add_ellipse
+        del self.add_ellipse
+        self._old_add_circle = self.add_circle
+        del self.add_circle
 
         if kill:
             try:
@@ -143,6 +150,8 @@ class Geometry(object):
             gmsh.initialize(self.gmsh_args)
         else:
             gmsh.initialize()
+
+        gmsh_options.set("General.Verbosity", verbose)
 
     def add_physical(self, id, name, dim=None):
         """Add a physical domain.
@@ -182,6 +191,27 @@ class Geometry(object):
         """
         dim = dim or self.dim
         return _dimtag(id, dim=dim)
+
+    # def add_circle(self,x, y, z, ax, ay,**kwargs):
+    #     ell = self._old_add_ellipse(x, y, z, ax, ay,**kwargs)
+    #     ell = self.add_curve_loop([ell])
+    #     return self.add_plane_surface([ell])
+
+    def add_circle(self, x, y, z, r, surface=True, **kwargs):
+        if surface:
+            circ = self._old_add_circle(x, y, z, r, **kwargs)
+            circ = self.add_curve_loop([circ])
+            return self.add_plane_surface([circ])
+        else:
+            return self._old_add_circle(x, y, z, r, **kwargs)
+
+    def add_ellipse(self, x, y, z, ax, ay, surface=True, **kwargs):
+        if surface:
+            ell = self._old_add_ellipse(x, y, z, ax, ay, **kwargs)
+            ell = self.add_curve_loop([ell])
+            return self.add_plane_surface([ell])
+        else:
+            return self._old_add_ellipse(x, y, z, ax, ay, **kwargs)
 
     def fragment(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = dim1 if dim1 else self.dim
@@ -256,15 +286,16 @@ class Geometry(object):
                 if id not in names:
                     subitems.pop(id)
 
-
     def set_mesh_size(self, params, dim=None):
         dim = dim if dim else self.dim
         if dim == 3:
             type_entity = "volumes"
         elif dim == 2:
             type_entity = "surfaces"
-        else:
+        elif dim == 1:
             type_entity = "curves"
+        elif dim == 0:
+            type_entity = "points"
 
         # revert sort so that smaller sizes are set last
         params = dict(
@@ -279,7 +310,6 @@ class Geometry(object):
                     self._set_size(n_, p, dim=dim)
             else:
                 self._set_size(id, p, dim=dim)
-
 
     def set_size(self, id, s, dim=None):
         if hasattr(id, "__len__") and not isinstance(id, str):
@@ -331,11 +361,13 @@ class Geometry(object):
                 subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
                 subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
             )
+        
+        self.mesh = self.mesh_object["mesh"]
+        self.markers = self.mesh_object["markers"]
 
     @property
     def msh_file(self):
         return f"{self.data_dir}/{self.mesh_name}"
-
 
     def build(
         self,
@@ -375,6 +407,11 @@ class Geometry(object):
         if read:
             return self.read_mesh_file()
 
+    def plot_mesh(self, **kwargs):
+        return dolfin.plot(self.mesh,**kwargs)
+
+    def plot_subdomains(self,**kwargs):
+        return plot_subdomains(self.markers["triangle"],**kwargs)
 
 class BoxPML2D(Geometry):
     def __init__(

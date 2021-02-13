@@ -69,6 +69,8 @@ def get_bnds(markers, domain=None, shift=(0, 0)):
 
 def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
     sub_bnds = get_bnds(markers, domain=domain, shift=shift)
+    if "c" not in kwargs and "color" not in kwargs:
+        kwargs["color"] = "k"
     if ax is None:
         ax = plt.gca()
     l = []
@@ -84,8 +86,8 @@ def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
 #     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
-def plot_subdomains(markers, alpha=1, **kwargs):
-    return plot_boundaries(markers, ax=None, **kwargs)
+def plot_subdomains(markers, **kwargs):
+    return plot_boundaries(markers,**kwargs)
     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
@@ -133,13 +135,13 @@ def plotcplx(test, ax=None, markers=None, W0=None, ref_cbar=False, **kwargs):
 
 def plot(test, ax=None, markers=None, W0=None, **kwargs):
     proj = W0 is not None
-
     if "cmap" not in kwargs:
         kwargs["cmap"] = "inferno"
     if ax is None:
         fig, ax = plt.subplots(1, 1)
     if proj:
         test = project(test, W0)
+    plt.sca(ax)
     p = dolfin.plot(test, **kwargs)
     cbar = plt.colorbar(p)
     if markers:

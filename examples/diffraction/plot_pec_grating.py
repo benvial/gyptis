@@ -55,8 +55,6 @@ model = Layered2D(period, thicknesses, kill=False)
 groove = model.layers["groove"]
 y0 = model.y_position["groove"] + thicknesses["groove"] / 2
 rod = model.add_ellipse(0, y0, 0, w / 2, h / 2)
-model.add_curve_loop([rod], rod)
-rod = model.add_plane_surface([rod])
 groove = model.cut(groove, rod, removeTool=True)
 model.add_physical(groove, "groove")
 

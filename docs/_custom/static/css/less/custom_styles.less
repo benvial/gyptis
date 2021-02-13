@@ -59,32 +59,7 @@ body {
   padding-top: 70px;
 } */
 /* sidebar */
-.bs-sidenav {
-  margin-top: 25px;
-  margin-bottom: 30px;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  text-shadow: none;
-  background-color: @body-bg-dark;
-  border-radius: 0;
-}
 
-.bs-sidenav .nav > li > a {
-  display: block;
-  /* color: @body-bg; */
-  padding: 5px 20px;
-  border-left: 4px solid transparent;
-}
-
-.bs-sidenav .nav > li > a:focus,
-.bs-sidenav .nav > li > a:hover {
-  text-decoration: none;
-  background-color: @body-bg-darker;
-  box-sizing: border-box;
-  border-left: 4px solid @brand-danger;
-  border-right: none;
-  padding-left: -4px;
-}
 /* .navbar-brand,
  .navbar-nav li a {
    height: 76px;
@@ -579,4 +554,64 @@ div.body {
 .navbar-toggle{
   background-color: @body-bg !important;
   
+}
+
+// search
+
+ul.search li {
+    padding: 5px 0 5px 0px;
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: 0 7px;
+}
+
+// sidebar
+
+.bs-sidenav {
+  margin-top: 25px;
+  margin-bottom: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  text-shadow: none;
+  background-color: @body-bg-dark;
+  border-radius: 0;
+  min-width:50px
+}
+
+.bs-sidenav .nav > li > a {
+  display: block;
+  /* color: @body-bg; */
+  padding: 5px 20px;
+  border-left: 4px solid transparent;
+}
+
+.bs-sidenav .nav > li > a:focus,
+.bs-sidenav .nav > li > a:hover {
+  text-decoration: none;
+  background-color: @body-bg-darker;
+  box-sizing: border-box;
+  border-left: 4px solid @brand-danger;
+  border-right: none;
+  padding-left: -4px;
+}
+
+#sidebar{
+  padding: 12px;
+  
+}
+
+#sidebar ul{
+  margin-left:10px;
+  list-style: none;
+  padding: unset;
+}
+
+/* Second Level */
+#sidebar ul ul{
+  margin-left:15px;
+}
+
+/* Third Level */
+#sidebar ul ul ul{
+  margin-left:20px;
 }

@@ -85,8 +85,8 @@ class Layered2D(Geometry):
         gmsh.model.mesh.setPeriodic(
             1, periodic_id["+x"], periodic_id["-x"], self.translation_x
         )
-
         super().build(**kwargs)
+        
 
     def get_periodic_bnds(self, y_position, thickness, eps=1e-3):
         s = {}
@@ -100,6 +100,7 @@ class Layered2D(Geometry):
         s["+x"] = gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 1)
 
         return s
+
 
 
 class Grating2D(ElectroMagneticSimulation2D):
@@ -358,7 +359,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         # Ah.form = _get_form(self.Ah)
         # bh.form = _get_form(self.bh)
 
-    def solve(self, direct=True):
+    def solve_system(self, direct=True):
 
         for bc in self._boundary_conditions:
             bc.apply(self.matrix, self.vector)
@@ -380,6 +381,15 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.solution["periodic"] = uper
         self.solution["diffracted"] = u
         self.solution["total"] = utot
+        
+    def solve(self,direct=True):
+        self.prepare()
+        self.weak_form()
+        self.assemble()
+        self.build_system()
+        self.solve_system(direct=direct)
+        
+        
 
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False

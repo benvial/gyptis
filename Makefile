@@ -136,7 +136,7 @@ doc: less
 
 
 ## Build html doc (without examples)
-doc-noplot:
+doc-noplot: less
 	cd docs && make clean && make html-noplot && make postpro-html
 
 
@@ -187,7 +187,7 @@ publish: tag pipy
 
 ## Make the terminal banner
 banner:
-	sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans >> ./docs/_assets/gyptis.ans
+	sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans
 	cat ./docs/_assets/gyptis.ans
 
 ###############

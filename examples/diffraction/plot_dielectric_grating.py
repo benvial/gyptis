@@ -5,6 +5,7 @@
 
 Example of a dielectric diffraction grating.
 """
+# sphinx_gallery_thumbnail_number = 2
 
 from gyptis import dolfin
 from gyptis.grating_2d import *
@@ -13,85 +14,98 @@ from gyptis.plotting import *
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating
 # and compare with results given in [PopovGratingBook]_.
+#
+# The units of lengths are in nanometers here, and we first define some
+# geometrical and optical parameters:
 
+period = 800  # period of the grating
+ax, ay = 300, 200  # semi axes of the elliptical rods along x and y
+n_rod = 1.4  # refractive index of the rods
+
+##############################################################################
+# The grating is illuminated from the top by a plane wave of wavelength
+# ``lambda0`` and angle ``theta0`` with respect to the normal to the
+# interface (the :math:`y` axis)
 
 lambda0 = 600
 theta0 = -20 * pi / 180
 
-period = 800
-h = 400
-w = 600
-
-pmesh = 18
+##############################################################################
+# The thicknesses of the different layers are specified with an
+# ``OrderedDict`` object **from bottom to top**:
 
 thicknesses = OrderedDict(
     {
-        "pml_bottom": 1 * lambda0,
-        "substrate": 1 * lambda0,
-        "groove": 2 * h * 1.5,
-        "superstrate": 1 * lambda0,
-        "pml_top": 1 * lambda0,
+        "pml_bottom": lambda0,
+        "substrate": lambda0,
+        "groove": 2 * ay * 1.5,
+        "superstrate": lambda0,
+        "pml_top": lambda0,
     }
 )
 
+##############################################################################
+# Here we set the mesh refinement parameters, in order to be able to have
+# ``parmesh`` cells per wavelength of the field inide each media
+
+pmesh = 10
 mesh_param = dict(
     {
         "pml_bottom": 0.7 * pmesh,
         "substrate": pmesh,
         "groove": pmesh,
-        "rod": pmesh * 1.4,
+        "rod": pmesh * n_rod,
         "superstrate": pmesh,
         "pml_top": 0.7 * pmesh,
     }
 )
 
-######################################################################
-# Let's create the geometry
-
-model = Layered2D(period, thicknesses, kill=False)
-groove = model.layers["groove"]
-y0 = model.y_position["groove"] + thicknesses["groove"] / 2
-rod = model.add_ellipse(0, y0, 0, w / 2, h / 2)
-model.add_curve_loop([rod], rod)
-rod = model.add_plane_surface([rod])
-rod, groove = model.fragment(groove, rod, removeTool=True)
-model.add_physical(rod, "rod")
-model.add_physical(groove, "groove")
-
+##############################################################################
+# Let's create the geometry using the :class:`~gyptis.grating_2d.Layered2D`
+# class:
+geom = Layered2D(period, thicknesses)
+groove = geom.layers["groove"]
+y0 = geom.y_position["groove"] + thicknesses["groove"] / 2
+rod = geom.add_ellipse(0, y0, 0, ax, ay)
+rod, groove = geom.fragment(groove, rod)
+geom.add_physical(rod, "rod")
+geom.add_physical(groove, "groove")
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
-model.set_mesh_size(mesh_size)
+geom.set_mesh_size(mesh_size)
+geom.build()
 
-model.build(
-    interactive=False,
-    generate_mesh=True,
-    write_mesh=True,
-    read_info=True,
-)
 
-domains = [k for k in thicknesses.keys() if k not in ["pml_bottom", "pml_top"]]
+######################################################################
+# The mesh can be visualized with ``dolfin`` plotting function :
 
+geom.plot_mesh(lw=1)
+geom.plot_subdomains( lw=2, c="#d76c4a")
+plt.axis("off")
+plt.tight_layout()
+plt.show()
+
+
+######################################################################
+# Set the permittivity and permeabilities for the various domains
+# using a dictionary:
+
+domains = geom.subdomains["surfaces"]
 epsilon = {d: 1 for d in domains}
+epsilon["rod"] = n_rod ** 2
 mu = {d: 1 for d in domains}
 
-epsilon["rod"] = 1.4 ** 2
-mu["rod"] = 1
-polarization = "TE"
+######################################################################
+# Now we can create an instance of the simulation class
+# :class:`~gyptis.grating_2d.Grating2D`, where we specify the
+# Transverse Electric polarization case (electric field out of plane
+# :math:`\boldsymbol{E} = E_z \boldsymbol{e_z}`) and the ``degree`` of
+# Lagrange finite elements.
 
 grating = Grating2D(
-    model,
-    epsilon,
-    mu,
-    polarization=polarization,
-    lambda0=lambda0,
-    theta0=theta0,
-    degree=2,
+    geom, epsilon, mu, polarization="TE", lambda0=lambda0, theta0=theta0, degree=2,
 )
 
 grating.N_d_order = 1
-grating.prepare()
-grating.weak_form()
-grating.assemble()
-grating.build_system()
 grating.solve()
 effs_TE = grating.diffraction_efficiencies(orders=True)
 
@@ -112,39 +126,28 @@ print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 # We switch to TM polarization
 
 grating.polarization = "TM"
-grating.prepare()
-grating.weak_form()
-grating.assemble()
-grating.build_system()
 grating.solve()
 effs_TM = grating.diffraction_efficiencies(orders=True)
 
 H = grating.solution["total"]
 
-import matplotlib.pyplot as plt
 
-plt.ion()
-
-ylim = model.y_position["substrate"], model.y_position["pml_top"]
+ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
 
 fig, ax = plt.subplots(1, 2)
-plt.sca(ax[0])
-cb = dolfin.plot(E.real, cmap="RdBu_r")
-plot_subdomains(grating.markers)
-plt.ylim(ylim)
-plt.colorbar(cb)
-plt.axis("off")
+plot(E.real, ax=ax[0], cmap="RdBu_r")
+plot_subdomains(grating.markers, ax=ax[0])
+ax[0].set_ylim(ylim)
+ax[0].set_axis_off()
 ax[0].set_title("$E_z$ (TE)")
-plt.tight_layout()
 
-plt.sca(ax[1])
-cb = dolfin.plot(H.real, cmap="RdBu_r")
-plot_subdomains(grating.markers)
-plt.ylim(ylim)
-plt.colorbar(cb)
-plt.axis("off")
+plot(H.real, ax=ax[1], cmap="RdBu_r")
+plot_subdomains(grating.markers, ax=ax[1])
+ax[1].set_ylim(ylim)
+ax[1].set_axis_off()
 ax[1].set_title("$H_z$ (TM)")
-plt.tight_layout()
+fig.tight_layout()
+fig.show()
 
 print("Transmission coefficient")
 print(" order      ref       calc")

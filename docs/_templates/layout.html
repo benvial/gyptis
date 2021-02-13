@@ -1,6 +1,26 @@
 
+
 {% extends "!layout.html" %}
 
+{% block extrahead %}
+  
+<script  type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+  TeX: { 
+      equationNumbers: { 
+        autoNumber: "all" 
+      } 
+  },
+  "HTML-CSS": {
+  availableFonts: ["TeX", "STIX-Web", "Asana-Math", "Neo-Euler", "Gyre-Pagella", "Gyre-Termes", "Latin-Modern"],
+  preferredFont: "Asana-Math",
+  webFont: "Asana-Math",
+  matchFontHeight: true,
+  },
+  });
+</script>
+
+{% endblock %}
 {% block content %}
 
   {% if pagename == 'index' %}

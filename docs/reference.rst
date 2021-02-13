@@ -1,9 +1,5 @@
 
-Gyptis
-======
-
-:Release: |release|
-:Date: |today|
+Welcome! This is the documentation for Gyptis |release|, last updated on |today|.
 
 Gyptis is an open-source Python package to solve problems 
 in Photonics and Electromagnetism using the Finite Element method. 
@@ -23,7 +19,7 @@ and Fenics_ for solving Maxwell's equations.
 ..    release
 
 Examples
---------
+========
 
 Tutorials with worked examples and background information for
 submodules.
@@ -37,7 +33,8 @@ submodules.
 
 
 API Reference
--------------
+=============
+
 
 :mod:`gyptis.geometry`: Defining geometry and generating meshes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -121,7 +118,7 @@ Base classes
 
 
 Indices and search
-------------------
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`
