@@ -12,6 +12,8 @@ from .helpers import DirichletBC, PeriodicBoundary2DX
 from .stack import *
 import matplotlib as mpl
 from .plotting import *
+from PIL import Image
+import glob, tempfile, os
 
 # dolfin.set_log_level(20)
 
@@ -86,7 +88,6 @@ class Layered2D(Geometry):
             1, periodic_id["+x"], periodic_id["-x"], self.translation_x
         )
         super().build(**kwargs)
-        
 
     def get_periodic_bnds(self, y_position, thickness, eps=1e-3):
         s = {}
@@ -100,7 +101,6 @@ class Layered2D(Geometry):
         s["+x"] = gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 1)
 
         return s
-
 
 
 class Grating2D(ElectroMagneticSimulation2D):
@@ -381,15 +381,13 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.solution["periodic"] = uper
         self.solution["diffracted"] = u
         self.solution["total"] = utot
-        
-    def solve(self,direct=True):
+
+    def solve(self, direct=True):
         self.prepare()
         self.weak_form()
         self.assemble()
         self.build_system()
         self.solve_system(direct=direct)
-        
-        
 
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
@@ -542,13 +540,9 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.Qdomains = Qdomains
         return Q, Qdomains
 
-    def _phase_shift_period(self, i):
-        phasor_re = dolfin.Expression(
-            f"cos(i*alpha*d)", i=i, alpha=self.alpha, d=self.period, degree=self.degree
-        )
-        phasor_im = dolfin.Expression(
-            f"sin(i*alpha*d)", i=i, alpha=self.alpha, d=self.period, degree=self.degree
-        )
+    def _phase_shift(self, phase):
+        phasor_re = dolfin.Expression(f"cos(phase)", phase=phase, degree=self.degree)
+        phasor_im = dolfin.Expression(f"sin(phase)", phase=phase, degree=self.degree)
         return Complex(phasor_re, phasor_im)
 
     def plot_geometry(self, nper=1, ax=None, **kwargs):
@@ -563,7 +557,7 @@ class Grating2D(ElectroMagneticSimulation2D):
                 scatt.append(d)
         scatt_ids = [domains[d] for d in scatt]
         scatt_lines = []
-        if len(scatt_ids)>0:
+        if len(scatt_ids) > 0:
             for i in range(nper):
                 s = plot_subdomains(
                     self.markers, domain=scatt_ids, shift=(i * self.period, 0), **kwargs
@@ -575,12 +569,25 @@ class Grating2D(ElectroMagneticSimulation2D):
         for y0 in self.geometry.y_position.values():
             a = ax.axhline(y0, **kwargs)
             layers_lines.append(a)
+        y0 += list(self.geometry.thicknesses.values())[-1]
+        a = ax.axhline(y0, **kwargs)
+        layers_lines.append(a)
 
         ax.set_aspect(1)
 
         return scatt_lines, layers_lines
 
-    def plot_field(self, nper=1, ax=None, fig=None, **kwargs):
+    def plot_field(
+        self,
+        nper=1,
+        ax=None,
+        mincmap=None,
+        maxcmap=None,
+        fig=None,
+        anim_phase=0,
+        callback=None,
+        **kwargs,
+    ):
         u = self.solution["total"]
         if ax == None:
             ax = plt.gca()
@@ -590,10 +597,10 @@ class Grating2D(ElectroMagneticSimulation2D):
         ppmin, ppmax = [], []
         for i in range(nper):
             t = mpl.transforms.Affine2D().translate(i * self.period, 0)
-            f = u * self._phase_shift_period(i)
+            f = u * self._phase_shift(i * self.alpha * self.period + anim_phase)
             fplot = f.real
             if ADJOINT:
-                fplot = project(fplot,self.real_space)
+                fplot = project(fplot, self.real_space)
             pp = dolfin.plot(fplot, transform=t + ax.transData, **kwargs)
             per_plots.append(pp)
 
@@ -601,12 +608,47 @@ class Grating2D(ElectroMagneticSimulation2D):
             ppmin.append(pp.cvalues[0])
         ax.set_xlim(-self.period / 2, (nper - 1 / 2) * self.period)
         ax.set_aspect(1)
+        mincmap = mincmap or min(ppmin)
+        maxcmap = maxcmap or max(ppmax)
         for pp in per_plots:
-            pp.set_clim(min(ppmin), max(ppmax))
+            pp.set_clim(mincmap, maxcmap)
 
         cm = plt.cm.ScalarMappable(cmap=kwargs["cmap"])
-        cm.set_clim(min(ppmin), max(ppmax))
-        fig = fig or plt.gcf()
-        cb = fig.colorbar(cm, ax=ax)
+        cm.set_clim(mincmap, maxcmap)
+        
 
+        fig = plt.gcf() if fig is None else fig
+        cb = fig.colorbar(cm, ax=ax)
+        
+        if callback is not None:
+            callback(**kwargs)
+            
         return per_plots, cb
+
+    def animate_field(self, n=11, filename="animation.gif", **kwargs):
+        anim = []
+        tmpdir = tempfile.mkdtemp()
+        fp_in = f"{tmpdir}/animation_tmp_*.png"
+        phase = np.linspace(0, 2 * pi, n + 1)[:n]
+        for iplot in range(n):
+            number_str = str(iplot).zfill(4)
+            pngname = f"{tmpdir}/animation_tmp_{number_str}.png"
+            p = self.plot_field(anim_phase=phase[iplot], **kwargs)
+            fig = plt.gcf()
+            fig.savefig(pngname)
+            fig.clear()
+            anim.append(p)
+
+        plt.close(fig)
+
+        img, *imgs = [Image.open(f) for f in sorted(glob.glob(fp_in))]
+        img.save(
+            fp=filename,
+            format="GIF",
+            append_images=imgs,
+            save_all=True,
+            duration=200,
+            loop=0,
+        )
+        os.system(f"rm -f {tmpdir}/animation_tmp_*.png")
+        return anim

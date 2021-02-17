@@ -49,6 +49,8 @@ def process_html(fn, lines):
     for line in lines:
         line = line.replace("\*args", "*args")
         line = line.replace("\*\*kwargs", "**kwargs")
+        line = line.replace("col-md-3", "col-md-2")
+        # line = line.replace("gyptis.", "")
         new_lines.append(line)
     return new_lines
 
@@ -61,11 +63,11 @@ def process_tex(lines):
     new_lines = []
     for line in lines:
         if (
-            line.startswith(r"\section{numpy.")
-            or line.startswith(r"\subsection{numpy.")
-            or line.startswith(r"\subsubsection{numpy.")
-            or line.startswith(r"\paragraph{numpy.")
-            or line.startswith(r"\subparagraph{numpy.")
+            line.startswith(r"\section{gyptis.")
+            or line.startswith(r"\subsection{gyptis.")
+            or line.startswith(r"\subsubsection{gyptis.")
+            or line.startswith(r"\paragraph{gyptis.")
+            or line.startswith(r"\subparagraph{gyptis.")
         ):
             pass  # skip!
         else:

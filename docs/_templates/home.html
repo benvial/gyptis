@@ -1,16 +1,22 @@
 
+{%- extends "layout.html" %}
 
-{{ navBar() }}
+{%- block content %}
+{% block docs_navbar %}
+<nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
+  {%- include "docs-navbar.html" %}
+</nav>
+{% endblock %}
 <section class="color-header">
   <div class="container">
 
     <div class="row">
 
       <div class="col-md-6">
-        <h1>{{project}}</h1>
+        <h1 class="homepage-title">{{project}}</h1>
         <h2>{{description}}</h2>
         
-        {{ body}}
+        
 
       
       </div>
@@ -43,3 +49,7 @@
     </div>
   </div>
 </section>
+
+{{ _webpack.body_post() }}
+
+{% endblock %}

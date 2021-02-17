@@ -7,7 +7,11 @@
 import numpy as np
 
 from . import dolfin as df
+
+from .complex import *
 from .materials import tensor_const
+from .helpers import *
+from scipy.optimize import minimize, OptimizeResult
 
 
 def simp(a, s_min=1, s_max=2, p=1):
@@ -63,3 +67,81 @@ def filtering(a, rfilt=0, solver="iterative", function_space=None, order=1, dim=
             solver.solve(A, af.vector(), b)
 
         return af
+
+
+def derivative(f, x, ctrl_space=None, array=True):
+    dfdx = df.compute_gradient(f, df.Control(x))
+    if ctrl_space is not None:
+        dfdx = project(dfdx, ctrl_space)
+    if array:
+        return function2array(dfdx)
+    else:
+        return dfdx
+
+
+class OptimFunction:
+    def __init__(self, fun, stop_val=None, normalization=1):
+        self.fun_in = fun
+        self.fun_value = None
+        self.stop_val = stop_val
+        self.normalization = normalization
+
+    def fun(self, x, *args, **kwargs):
+        if self.fun_value is not None:
+            if self.stop_val is not None:
+                if self.fun_value < self.stop_val:
+                    raise ValueError(
+                        f"Minimum value {self.stop_val} reached, current objective function = {self.fun_value}"
+                    )
+        obj, grad = self.fun_in(x, *args, **kwargs)
+        obj /= self.normalization
+        grad /= self.normalization
+        self.fun_value = obj
+        self.x = x
+        return obj, grad
+
+
+def scipy_minimize(
+    f,
+    x,
+    bounds,
+    maxiter=50,
+    maxfun=100,
+    tol=1e-6,
+    args=(),
+    stop_val=None,
+    normalization=1,
+):
+
+    optfun = OptimFunction(fun=f, stop_val=stop_val, normalization=normalization)
+    opt = OptimizeResult()
+    opt.x = x
+    opt.f = None
+    try:
+        opt = minimize(
+            optfun.fun,
+            x,
+            tol=tol,
+            args=args,
+            method="L-BFGS-B",
+            jac=True,
+            bounds=bounds,
+            options={"maxiter": maxiter, "maxfun": maxfun},
+        )
+    except Exception as e:
+        print(e)
+        opt.x = optfun.x
+        opt.f = optfun.fun_value
+
+    return opt
+
+
+def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
+    markers = geometry.markers["triangle"]
+    domains = geometry.subdomains["surfaces"]
+    a = df.Function(source_space)
+    mdes = markers.where_equal(domains[subdomain])
+    a = function2array(a)
+    a[mdes] = function2array(project(x, target_space))
+    ctrl = array2function(a, source_space)
+    return ctrl

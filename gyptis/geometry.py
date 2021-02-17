@@ -169,9 +169,11 @@ class Geometry(object):
         dicname = list(self.subdomains)[3 - dim]
         if not isinstance(id, list):
             id = list([id])
-        self.subdomains[dicname][name] = gmsh.model.addPhysicalGroup(dim, id)
+        num = gmsh.model.addPhysicalGroup(dim, id)
+        self.subdomains[dicname][name] = num
         gmsh.model.removePhysicalName(name)
         gmsh.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
+        return num
 
     def dimtag(self, id, dim=None):
         """Convert a .
@@ -361,7 +363,7 @@ class Geometry(object):
                 subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
                 subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
             )
-        
+
         self.mesh = self.mesh_object["mesh"]
         self.markers = self.mesh_object["markers"]
 
@@ -408,10 +410,11 @@ class Geometry(object):
             return self.read_mesh_file()
 
     def plot_mesh(self, **kwargs):
-        return dolfin.plot(self.mesh,**kwargs)
+        return dolfin.plot(self.mesh, **kwargs)
 
-    def plot_subdomains(self,**kwargs):
-        return plot_subdomains(self.markers["triangle"],**kwargs)
+    def plot_subdomains(self, **kwargs):
+        return plot_subdomains(self.markers["triangle"], **kwargs)
+
 
 class BoxPML2D(Geometry):
     def __init__(

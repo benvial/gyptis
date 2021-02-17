@@ -62,11 +62,15 @@ clean:
 
 ## Postprocess html doc
 postpro-html:
+	# @echo $(wildcard $(BUILDDIR)/html/**/*.html)
 	python postprocess.py html _build/html/*.html
 	python postprocess.py html _build/html/generated/*.html
+	python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
+	python postprocess.py html $(wildcard $(BUILDDIR)/html/auto_examples/**/*.html)
+	python postprocess.py html $(BUILDDIR)/html/auto_examples/*.html
 	cp -r _assets $(BUILDDIR)/html
 	cp -r _assets $(BUILDDIR)/html/_static
-	cat $(BUILDDIR)/html/_static/css/custom_gallery.css >> $(BUILDDIR)/html/_static/gallery.css
+	# cat $(BUILDDIR)/html/_static/css/custom_gallery.css >> $(BUILDDIR)/html/_static/gallery.css
 
 
 html-noplot: export SPHX_GLR_THEME = $(theme)

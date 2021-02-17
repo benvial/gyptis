@@ -21,15 +21,6 @@
 </script>
 
 {% endblock %}
-{% block content %}
-
-  {% if pagename == 'index' %}
-    {% include 'home.html' %}
-  {% else %}
-    {{ super() }}
-  {% endif %}
-
-{% endblock %}
 
 {%- block footer %}
 {% include 'footer.html' %}
