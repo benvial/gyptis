@@ -5,13 +5,12 @@
 
 
 import numpy as np
+from scipy.optimize import OptimizeResult, minimize
 
 from . import dolfin as df
-
 from .complex import *
-from .materials import tensor_const
 from .helpers import *
-from scipy.optimize import minimize, OptimizeResult
+from .materials import tensor_const
 
 
 def simp(a, s_min=1, s_max=2, p=1):
@@ -116,7 +115,7 @@ def scipy_minimize(
     optfun = OptimFunction(fun=f, stop_val=stop_val, normalization=normalization)
     opt = OptimizeResult()
     opt.x = x
-    opt.f = None
+    opt.fun = None
     try:
         opt = minimize(
             optfun.fun,
@@ -131,7 +130,7 @@ def scipy_minimize(
     except Exception as e:
         print(e)
         opt.x = optfun.x
-        opt.f = optfun.fun_value
+        opt.fun = optfun.fun_value
 
     return opt
 

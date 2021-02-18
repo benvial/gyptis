@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
+from . import ADJOINT, dolfin
 from .complex import *
 from .complex import _invert_3by3_complex_matrix
 from .geometry import *
@@ -16,8 +17,6 @@ from .helpers import BiPeriodicBoundary3D, DirichletBC
 from .materials import *
 from .sources import *
 from .stack import *
-
-from . import ADJOINT, dolfin
 
 pi = np.pi
 
@@ -200,7 +199,8 @@ class Grating3D(object):
         # )
 
         self.periodic_bcs = BiPeriodicBoundary3D(
-            self.geometry.period, map_tol=self.periodic_map_tol,
+            self.geometry.period,
+            map_tol=self.periodic_map_tol,
         )
 
         self.element = "N1curl"
@@ -252,7 +252,11 @@ class Grating3D(object):
             }
         )
         self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config, self.lambda0, self.theta0, self.phi0, self.psi0,
+            config,
+            self.lambda0,
+            self.theta0,
+            self.phi0,
+            self.psi0,
         )
         self.Phi = [p[:6] for p in self.Phi]
 
@@ -479,7 +483,9 @@ class Grating3D(object):
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
     ):
         orders_num = np.linspace(
-            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
+            -self.N_d_order,
+            self.N_d_order,
+            2 * self.N_d_order + 1,
         )
 
         k, gamma = {}, {}

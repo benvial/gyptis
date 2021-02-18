@@ -91,7 +91,7 @@ class _SubdomainCpp(dolfin.CompiledExpression):
             markers=markers,
             subdomains=subdomains,
             mapping=mapping,
-            **kwargs
+            **kwargs,
         )
         self.markers = markers
         self.subdomains = subdomains

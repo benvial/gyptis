@@ -12,12 +12,19 @@ def adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
     zmin = min(z0)
     zmax = max(z0)
 
-    t = [f(z) for z in z0]
+    tall = [f(z) for z in z0]
     z = z0.tolist()
     # t = t0.tolist()
     cmax = np.cos(max_bend * np.pi / 180)
     samp = True
     isamp = 0
+    if hasattr(tall[0], "__len__") and len(tall[0]) > 0:
+        t = [T[0] for T in tall]
+        multi_output = True
+    else:
+        multi_output = False
+        t = tall.copy()
+
     while samp:
         tmin = np.min(t)
         tmax = np.max(t)
@@ -90,16 +97,25 @@ def adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
                     znew = 0.5 * sum(ztmp[isegment : isegment + 2])
                     if znew not in z:
                         z.append(znew)
-                        t.append(f(znew))
+                        tnew = f(znew)
+                        if multi_output:
+                            t.append(tnew[0])
+                            tall.append(tnew)
+                        else:
+                            t.append(tnew)
+
         z1 = np.array(z)
         t1 = np.array(t)
         ind = np.argsort(z1)
         z = z1[ind].tolist()
         t = t1[ind].tolist()
+        if multi_output:
+            tall = np.array(tall)[ind].tolist()
         samp = np.any(b)
 
         isamp += 1
         if isamp > 100:
             break
 
-    return z, t
+    tout = tall if multi_output else t
+    return np.array(z), np.array(tout)

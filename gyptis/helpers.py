@@ -300,7 +300,9 @@ class BiPeriodicBoundary3D(dolfin.SubDomain):
         )
 
     def map(self, x, y):
-        if dolfin.near(x[0], self.period[0] / 2) and dolfin.near(x[1], self.period[1] / 2):
+        if dolfin.near(x[0], self.period[0] / 2) and dolfin.near(
+            x[1], self.period[1] / 2
+        ):
             y[0] = x[0] - self.period[0]
             y[1] = x[1] - self.period[1]
             y[2] = x[2]
@@ -313,6 +315,6 @@ class BiPeriodicBoundary3D(dolfin.SubDomain):
             y[1] = x[1] - self.period[1]
             y[2] = x[2]
         else:
-            y[0] = -1000#-self.period[0]*2.
-            y[1] = -1000#-self.period[1]*2.
-            y[2] = -1000#0.
+            y[0] = -1000  # -self.period[0]*2.
+            y[1] = -1000  # -self.period[1]*2.
+            y[2] = -1000  # 0.

@@ -33,9 +33,9 @@ else:
 dolfin.parameters["reorder_dofs_serial"] = False
 
 
-dolfin.PETScOptions.set('petsc_prealloc', '200')
-dolfin.PETScOptions.set('ksp_type', 'preonly')
-dolfin.PETScOptions.set('pc_type', 'lu')
+dolfin.PETScOptions.set("petsc_prealloc", "200")
+dolfin.PETScOptions.set("ksp_type", "preonly")
+dolfin.PETScOptions.set("pc_type", "lu")
 # dolfin.PETScOptions.set('pc_factor_mat_solver_type', 'mumps')
 # dolfin.PETScOptions.set('sub_pc_type', 'lu')
 # dolfin.PETScOptions.set('pc_asm_overlap', '10')

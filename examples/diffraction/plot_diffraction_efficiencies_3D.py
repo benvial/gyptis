@@ -12,7 +12,6 @@ from pprint import pprint
 from gyptis import dolfin
 from gyptis.grating_3d import *
 from gyptis.helpers import list_time, mpi_print
-
 from gyptis.stack import *
 
 # dolfin.set_log_level(1)
@@ -20,7 +19,7 @@ from gyptis.stack import *
 N_d_order = 0
 degree = 1
 rd = 10
-rs = 0.1 #/rd
+rs = 0.1  # /rd
 
 ##  ---------- incident wave ----------
 lambda0 = 500

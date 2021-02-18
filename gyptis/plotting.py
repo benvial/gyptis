@@ -87,7 +87,7 @@ def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
 
 
 def plot_subdomains(markers, **kwargs):
-    return plot_boundaries(markers,**kwargs)
+    return plot_boundaries(markers, **kwargs)
     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 

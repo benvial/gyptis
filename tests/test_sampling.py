@@ -3,11 +3,18 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import pytest
-from gyptis.sampling import adaptive_sampler
+import matplotlib.pyplot as plt
 import numpy as np
+import pytest
+
+from gyptis.sampling import adaptive_sampler
+
+plt.close("all")
+# plt.ion()
+
 
 def test_sampler():
+    # if __name__ == "__main__":
     # np.random.seed(123456)
 
     Npoles = 100
@@ -19,12 +26,11 @@ def test_sampler():
         for p, r in zip(poles, res):
             t += r / (z - p)
         Q = np.abs(t) ** 2
-
         return Q / Npoles ** 2
 
     npts = 2000
-    z_ = np.linspace(0, 1, npts)
-    Q = f(z_)
+    zref = np.linspace(0, 1, npts)
+    tref = f(zref)
 
     # adapt
 
@@ -37,3 +43,29 @@ def test_sampler():
     t0 = f(z0)
 
     print(f"number of points: {len(z)}")
+    plt.figure()
+    plt.plot(z0, t0, "o")
+    plt.plot(z, t)
+    plt.plot(zref, tref, "--")
+    plt.show()
+    #
+    # xsa
+    print("------------")
+
+    def f(z):
+        t = 0
+        for p, r in zip(poles, res):
+            t += r / (z - p)
+        Q = np.abs(t) ** 2
+        return Q / Npoles ** 2, z ** 2
+
+    z, t = adaptive_sampler(f, z0)
+    t0 = f(z0)
+
+    print(f"number of points: {len(z)}")
+    plt.figure()
+    plt.plot(z0, t0[0], "o")
+    plt.plot(z0, t0[1], "s")
+    plt.plot(z, t[:, 0])
+    plt.plot(z, t[:, 1])
+    plt.show()

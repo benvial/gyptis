@@ -123,11 +123,8 @@ def test_grating_2d(parmesh=10):
     #     interactive=True, generate_mesh=True, read_info=False, write_mesh=False
     # )
     mesh_object = model.build()
-    
-    mesh = model.mesh_object["mesh"]
-    
 
-    
+    mesh = model.mesh_object["mesh"]
 
     g = Grating2D(
         model,
@@ -138,7 +135,6 @@ def test_grating_2d(parmesh=10):
         theta0=theta0,
         degree=order,
     )
-    
 
     ctrl0 = dolfin.Expression("1", degree=2)
     Actrl = dolfin.FunctionSpace(mesh, "DG", 0)
@@ -153,18 +149,15 @@ def test_grating_2d(parmesh=10):
     g.assemble()
     g.build_system()
     g.solve()
-    
-    
+
     plt.figure()
-    
-    nper=2
+
+    nper = 2
     per_plots, cb = g.plot_field(nper=nper)
-    scatt_lines,layers_lines = g.plot_geometry(nper=nper, c="k")
-    [layers_lines[i].remove() for i in [0,1,4,5]]
+    scatt_lines, layers_lines = g.plot_geometry(nper=nper, c="k")
+    [layers_lines[i].remove() for i in [0, 1, 4, 5]]
     plt.axis("off")
     # plt.axis("off")
-    
-    
 
     field = g.solution["total"]
     J = assemble(inner(field, field.conj) * g.dx("substrate")).real

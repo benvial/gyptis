@@ -14,9 +14,8 @@ from gyptis import dolfin
 from gyptis.grating_2d import *
 from gyptis.plotting import *
 
-
 ##############################################################################
-# We will study this benchmark and compare with results 
+# We will study this benchmark and compare with results
 # given in [PopovGratingBook]_.
 
 fig, ax = plt.subplots(3, 2, figsize=(7, 9))
@@ -117,8 +116,6 @@ for jangle, angle in enumerate([0, -20, -40]):
     print("R: ", effs_TE["R"])
     print("T: ", effs_TE["T"])
 
-
-
     ylim = model.y_position["substrate"], model.y_position["pml_top"]
     d = grating.period
     nper = 8
@@ -127,12 +124,12 @@ for jangle, angle in enumerate([0, -20, -40]):
     plt.sca(ax[jangle][0])
     per_plots, cb = grating.plot_field(nper=nper)
     cb.remove()
-    scatt_lines,layers_lines = grating.plot_geometry(nper=nper, c="k")
-    [layers_lines[i].remove() for i in [0,1,3,4]]
+    scatt_lines, layers_lines = grating.plot_geometry(nper=nper, c="k")
+    [layers_lines[i].remove() for i in [0, 1, 3, 4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
-    
+
     grating.polarization = "TM"
     grating.prepare()
     grating.weak_form()
@@ -147,17 +144,16 @@ for jangle, angle in enumerate([0, -20, -40]):
     print("R: ", effs_TM["R"])
     print("T: ", effs_TM["T"])
 
-
     vminTM, vmaxTM = -2.5, 2.5
     plt.sca(ax[jangle][1])
     per_plots, cb = grating.plot_field(nper=nper)
     cb.remove()
-    scatt_lines,layers_lines = grating.plot_geometry(nper=nper, c="k")
-    [layers_lines[i].remove() for i in [0,1,3,4]]
+    scatt_lines, layers_lines = grating.plot_geometry(nper=nper, c="k")
+    [layers_lines[i].remove() for i in [0, 1, 3, 4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
-    
+
     ax[jangle][0].set_title(fr"$\theta = {angle}\degree$")
     ax[jangle][1].set_title(fr"$\theta = {angle}\degree$")
 

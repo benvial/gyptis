@@ -4,16 +4,20 @@
 # License: MIT
 
 
+import glob
+import os
+import tempfile
 from collections import OrderedDict
+
+import matplotlib as mpl
+from PIL import Image
+
 from . import ADJOINT
 from .base import *
 from .base import _coefs, _make_cst_mat
 from .helpers import DirichletBC, PeriodicBoundary2DX
-from .stack import *
-import matplotlib as mpl
 from .plotting import *
-from PIL import Image
-import glob, tempfile, os
+from .stack import *
 
 # dolfin.set_log_level(20)
 
@@ -209,7 +213,11 @@ class Grating2D(ElectroMagneticSimulation2D):
             _psi = 0
             _phi_ind = 8
         phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
-            config, self.lambda0, -self.theta0, 0, _psi,
+            config,
+            self.lambda0,
+            -self.theta0,
+            0,
+            _psi,
         )
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
@@ -414,7 +422,9 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
             nu = 1 / self.epsilon["substrate"]
         orders_num = np.linspace(
-            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
+            -self.N_d_order,
+            self.N_d_order,
+            2 * self.N_d_order + 1,
         )
 
         k, beta = {}, {}
@@ -615,14 +625,13 @@ class Grating2D(ElectroMagneticSimulation2D):
 
         cm = plt.cm.ScalarMappable(cmap=kwargs["cmap"])
         cm.set_clim(mincmap, maxcmap)
-        
 
         fig = plt.gcf() if fig is None else fig
         cb = fig.colorbar(cm, ax=ax)
-        
+
         if callback is not None:
             callback(**kwargs)
-            
+
         return per_plots, cb
 
     def animate_field(self, n=11, filename="animation.gif", **kwargs):

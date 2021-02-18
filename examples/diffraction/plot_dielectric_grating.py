@@ -79,7 +79,7 @@ geom.build()
 # The mesh can be visualized with ``dolfin`` plotting function :
 
 geom.plot_mesh(lw=1)
-geom.plot_subdomains( lw=2, c="#d76c4a")
+geom.plot_subdomains(lw=2, c="#d76c4a")
 plt.axis("off")
 plt.tight_layout()
 plt.show()
@@ -102,7 +102,13 @@ mu = {d: 1 for d in domains}
 # Lagrange finite elements.
 
 grating = Grating2D(
-    geom, epsilon, mu, polarization="TE", lambda0=lambda0, theta0=theta0, degree=2,
+    geom,
+    epsilon,
+    mu,
+    polarization="TE",
+    lambda0=lambda0,
+    theta0=theta0,
+    degree=2,
 )
 
 grating.N_d_order = 1
