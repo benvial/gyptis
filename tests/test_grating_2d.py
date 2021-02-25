@@ -30,7 +30,7 @@ def test_grating_2d(parmesh=10):
     island_width = period * 3 / 4
     island_thickness = 0.4 * period
 
-    tr = pi / 5
+    tr = np.pi / 5
 
     R = rot_matrix_2d(tr)
     eps_island = np.diag([6 - 0.02j, 4 - 0.021j, 3 - 0.021j])

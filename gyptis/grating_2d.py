@@ -3,20 +3,19 @@
 # Author: Benjamin Vial
 # License: MIT
 
+__all__ = ["Layered2D", "Grating2D", "OrderedDict"]
 
 import glob
 import os
 import tempfile
 from collections import OrderedDict
 
-import matplotlib as mpl
 from PIL import Image
 
 from . import ADJOINT
 from .base import *
 from .base import _coefs, _make_cst_mat
 from .helpers import DirichletBC, PeriodicBoundary2DX
-from .plotting import *
 from .stack import *
 
 # dolfin.set_log_level(20)
@@ -115,9 +114,6 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.period = self.geometry.period
         self.pml_stretch = pml_stretch
         self.N_d_order = 0
-        self.nb_slice = 20
-        self.scan_dist_ratio = 5
-        self.npt_integ = 401
 
         self.ex = as_vector([1.0, 0.0])
 
@@ -215,7 +211,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
             config,
             self.lambda0,
-            -self.theta0,
+            self.theta0,
             0,
             _psi,
         )
@@ -240,9 +236,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         e0 = {"superstrate": self.u_0}
         for dom in self.source_domains:
             e0[dom] = e0["superstrate"]
-        e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(
-            0, 0
-        )  # Constant(0)
+        e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(0, 0)
         self.ustack_coeff = Subdomain(
             self.markers, self.domains, estack, degree=self.degree, domain=self.mesh
         )
@@ -264,7 +258,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         return Complex(phasor_re, phasor_im)
 
     def prepare(self):
-        self.alpha = -self.k0 * np.sin(self.theta0)
+        self.alpha = self.k0 * np.sin(self.theta0)
         self.phasor = self._phasor(
             degree=self.degree, domain=self.mesh, alpha=self.alpha
         )
@@ -287,6 +281,11 @@ class Grating2D(ElectroMagneticSimulation2D):
             phasor=self.phasor,
         )
 
+    def build_lhs(self):
+        return build_lhs(
+            self.utrial, self.utest, self.xi, self.chi, self.domains, unit_vect=self.ex
+        )
+
     def build_rhs_boundaries(self):
         return build_rhs_boundaries(
             self.ustack_coeff,
@@ -307,21 +306,12 @@ class Grating2D(ElectroMagneticSimulation2D):
             unit_vect=self.ex,
         )
 
-    def build_lhs(self):
-        return build_lhs(
-            self.utrial, self.utest, self.xi, self.chi, self.domains, unit_vect=self.ex
-        )
-
     def weak_form(self):
-
         self.lhs = self.build_lhs()
-
         if self.polarization == "TM":
             lhs_bnds = self.build_lhs_boundaries()
             self.lhs.update(lhs_bnds)
-
         self.rhs = self.build_rhs()
-
         if self.polarization == "TM":
             rhs_bnds = self.build_rhs_boundaries()
             self.rhs.update(rhs_bnds)
@@ -364,8 +354,6 @@ class Grating2D(ElectroMagneticSimulation2D):
             alpha=self.alpha,
             boundary=(self.polarization == "TM"),
         )
-        # Ah.form = _get_form(self.Ah)
-        # bh.form = _get_form(self.bh)
 
     def solve_system(self, direct=True):
 
@@ -493,7 +481,6 @@ class Grating2D(ElectroMagneticSimulation2D):
         return eff
 
     def compute_absorption(self, subdomain_absorption=False):
-        ##### absorption
 
         doms_no_pml = [
             z for z in self.epsilon.keys() if z not in ["pml_bottom", "pml_top"]
@@ -556,6 +543,8 @@ class Grating2D(ElectroMagneticSimulation2D):
         return Complex(phasor_re, phasor_im)
 
     def plot_geometry(self, nper=1, ax=None, **kwargs):
+        from .plotting import plot_subdomains, plt
+
         if ax == None:
             ax = plt.gca()
 
@@ -598,6 +587,11 @@ class Grating2D(ElectroMagneticSimulation2D):
         callback=None,
         **kwargs,
     ):
+
+        import matplotlib as mpl
+
+        from .plotting import plt
+
         u = self.solution["total"]
         if ax == None:
             ax = plt.gca()
@@ -635,10 +629,12 @@ class Grating2D(ElectroMagneticSimulation2D):
         return per_plots, cb
 
     def animate_field(self, n=11, filename="animation.gif", **kwargs):
+        from .plotting import plt
+
         anim = []
         tmpdir = tempfile.mkdtemp()
         fp_in = f"{tmpdir}/animation_tmp_*.png"
-        phase = np.linspace(0, 2 * pi, n + 1)[:n]
+        phase = np.linspace(0, 2 * np.pi, n + 1)[:n]
         for iplot in range(n):
             number_str = str(iplot).zfill(4)
             pngname = f"{tmpdir}/animation_tmp_{number_str}.png"

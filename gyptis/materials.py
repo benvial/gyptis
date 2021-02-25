@@ -53,12 +53,6 @@ class PML(object):
         return invJ @ invJ.T * np.linalg.det(J)
 
 
-############### ideas ####################
-## plot(markers) to visualize subdomains
-## markers subdomaid maps id to name
-## label in UserExpression t = XsiReal(markers,label="whatevs") then t.label()
-
-
 class _SubdomainPy(dolfin.UserExpression):
     def __init__(self, markers, subdomains, mapping, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -47,7 +47,6 @@ def test_sampler():
     plt.plot(z0, t0, "o")
     plt.plot(z, t)
     plt.plot(zref, tref, "--")
-    plt.show()
     #
     # xsa
     print("------------")
@@ -68,4 +67,3 @@ def test_sampler():
     plt.plot(z0, t0[1], "s")
     plt.plot(z, t[:, 0])
     plt.plot(z, t[:, 1])
-    plt.show()

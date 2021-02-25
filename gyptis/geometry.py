@@ -18,9 +18,9 @@ from functools import wraps
 import gmsh
 import numpy as np
 
+from . import dolfin
 from .helpers import Measure
 from .mesh import read_mesh
-from .plotting import *
 
 geo = gmsh.model.geo
 occ = gmsh.model.occ
@@ -384,10 +384,9 @@ class Geometry(object):
         if check_subdomains:
             self._check_subdomains()
 
-        if generate_mesh:
-            self.mesh_object = self.generate_mesh(
-                generate=generate_mesh, write=write_mesh, read=read_mesh
-            )
+        self.mesh_object = self.generate_mesh(
+            generate=generate_mesh, write=write_mesh, read=read_mesh
+        )
 
         if read_info:
             self.read_mesh_info()
@@ -413,6 +412,8 @@ class Geometry(object):
         return dolfin.plot(self.mesh, **kwargs)
 
     def plot_subdomains(self, **kwargs):
+        from .plotting import plot_subdomains
+
         return plot_subdomains(self.markers["triangle"], **kwargs)
 
 

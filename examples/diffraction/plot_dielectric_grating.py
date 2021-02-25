@@ -28,7 +28,7 @@ n_rod = 1.4  # refractive index of the rods
 # interface (the :math:`y` axis)
 
 lambda0 = 600
-theta0 = -20 * pi / 180
+theta0 = 20 * np.pi / 180
 
 ##############################################################################
 # The thicknesses of the different layers are specified with an

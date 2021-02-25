@@ -168,7 +168,7 @@ class Grating3D(object):
         degree=1,
         mat_degree=None,
         pml_stretch=1 - 1j,
-        boundary_conditions=[],
+        boundary_conditions={},
         periodic_map_tol=1e-8,
     ):
 
@@ -190,6 +190,10 @@ class Grating3D(object):
         self.boundaries = geom.subdomains["surfaces"]
         self.dx = geom.measure["dx"]
         self.boundary_conditions = boundary_conditions
+
+        self.boundary_markers = (
+            geom.mesh_object["markers"]["triangle"] if self.boundaries else []
+        )
 
         self.N_d_order = 0
         self.periodic_map_tol = periodic_map_tol
@@ -236,6 +240,27 @@ class Grating3D(object):
         )
         mu_coeff = Subdomain(self.markers, self.domains, mu, degree=self.mat_degree)
         return epsilon_coeff, mu_coeff
+
+    def _prepare_bcs(self):
+        self._boundary_conditions = []
+        self.pec_bnds = []
+        for bnd, cond in self.boundary_conditions.items():
+            if cond != "PEC":
+                raise ValueError(f"unknown boundary condition {cond}")
+            else:
+                self.pec_bnds.append(bnd)
+        for bnd in self.pec_bnds:
+            Ebnd = -self.Estack_coeff * self.phasor.conj
+            # ubnd = dolfin.as_vector((ubnd_vec.real, ubnd_vec.imag))
+            Ebnd_proj = project(Ebnd, self.real_space)
+            bc = DirichletBC(
+                self.complex_space,
+                Ebnd_proj,
+                self.boundary_markers,
+                bnd,
+                self.boundaries,
+            )
+            [self._boundary_conditions.append(b) for b in bc]
 
     def make_stack(self):
 
@@ -366,6 +391,8 @@ class Grating3D(object):
             self.alpha0 * self.unit_vectors[0] + self.beta0 * self.unit_vectors[1]
         )
 
+        self._prepare_bcs()
+
         self.lhs = {}
         self.rhs = {}
 
@@ -458,7 +485,7 @@ class Grating3D(object):
 
         self.E = dolfin.Function(self.complex_space)
 
-        for bc in self.boundary_conditions:
+        for bc in self._boundary_conditions:
             bc.apply(Ah, bh)
 
         if direct:

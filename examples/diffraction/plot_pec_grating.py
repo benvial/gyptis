@@ -19,7 +19,7 @@ from gyptis.grating_2d import Grating2D, Layered2D
 #
 
 lambda0 = 600
-theta0 = -20 * np.pi / 180
+theta0 = 20 * np.pi / 180
 
 period = 800
 h = 8

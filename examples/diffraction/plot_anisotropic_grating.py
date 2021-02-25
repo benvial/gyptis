@@ -99,8 +99,8 @@ grating = Grating2D(
     degree=2,
 )
 
-for jangle, angle in enumerate([0, -20, -40]):
-    grating.theta0 = angle * pi / 180
+for jangle, angle in enumerate([0, 20, 40]):
+    grating.theta0 = angle * np.pi / 180
     grating.polarization = "TE"
     grating.N_d_order = 2
     grating.prepare()

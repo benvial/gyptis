@@ -239,7 +239,7 @@ def make_system_matrix(domains, pec_bnds, Ahform, k0, alpha=0, boundary=False):
             Ah += alpha * Ahform[d][2] + alpha ** 2 * Ahform[d][3]
             if ADJOINT:
                 form += alpha * Ahform[d][2].form + alpha ** 2 * Ahform[d][3].form
-    if boundary:
+    if boundary and alpha != 0:
         for d in pec_bnds:
             Ah += alpha * Ahform[d][0]
             if ADJOINT:
