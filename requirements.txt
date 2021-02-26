@@ -1,4 +1,5 @@
 numpy
+scipy
 dolfin-adjoint
 meshio
 gmsh

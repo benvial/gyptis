@@ -14,8 +14,16 @@ about = {}
 with open(os.path.join(base_dir, "gyptis", "__about__.py"), "rb") as f:
     exec(f.read(), about)
 
-with open("requirements.txt") as f:
-    required = f.read().splitlines()
+
+required = [
+    "numpy",
+    "scipy",
+    "dolfin-adjoint",
+    "meshio",
+    "gmsh",
+    "h5py",
+    "nlopt",
+]
 
 _classifiers = [
     about["__status__"],

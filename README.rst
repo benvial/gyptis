@@ -18,14 +18,60 @@
 GYPTIS
 ======
 
-Easy to use electromagnetic simulations in Python.
---------------------------------------------------
+Computational photonics in Python
+---------------------------------
 
 https://benvial.gitlab.io/gyptis/index.html
 
-.. inclusion-marker-do-not-remove
-
-
-
-.. image:: _assets/landing.png
+.. image:: docs/_assets/landing.png
    :align: center
+
+
+Gyptis is a package to solve Maxwell's equations with the finite element method. 
+It is in early stage and currently being actively developed, so features might 
+come and go.
+
+
+
+Installation
+------------
+
+`pip <https://pip.pypa.io/en/stable/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  pip install gyptis
+
+
+`conda <https://docs.anaconda.com/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+  conda install -c conda-forge gyptis
+
+
+
+docker
+~~~~~~
+
+.. code-block:: bash
+
+  docker pull benvial/gyptis:latest
+
+
+Contributing
+------------
+
+Pull requests are welcome. For major changes, please open an issue first 
+to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+
+
+License
+-------
+
+[MIT](https://choosealicense.com/licenses/mit/)

@@ -5,6 +5,7 @@
 
 from . import dolfin as df
 from .base import *
+from .grating_3d import *
 from .helpers import DirichletBC as DirichletBCReal
 from .helpers import PeriodicBoundary2DX
 
@@ -37,11 +38,11 @@ class Grating2DElstat(Simulation2D):
         self.epsilon["pml_bottom"] = self.epsilon["substrate"]
         self.epsilon_coeff = self._make_subdomains()
 
-    def _prepare_bcs(self):
+    def _prepare_bcs(self, doms="curves", marks="line"):
         self._boundary_conditions = []
         self.voltage_bnds = []
-        curves = self.geometry.subdomains["curves"]
-        markers_curves = self.geometry.mesh_object["markers"]["line"]
+        curves = self.geometry.subdomains[doms]
+        markers_curves = self.geometry.mesh_object["markers"][marks]
         for bnd, cond in self.boundary_conditions.items():
             if cond[0] != "voltage":
                 raise ValueError(f"unknown boundary condition {cond}")
@@ -79,7 +80,7 @@ class Grating2DElstat(Simulation2D):
         self.assemble_lhs()
         self.assemble_rhs()
 
-    def solve_system(self, direct=True):
+    def solve_system(self, direct=False):
         Ah = self.Ah[0]
         bh = self.bh[0]
         for bc in self._boundary_conditions:
@@ -93,8 +94,55 @@ class Grating2DElstat(Simulation2D):
             solver = df.PETScKrylovSolver()  ## iterative
             # solver.parameters.update(krylov_params)
             solver.solve(Ah, self.potential.vector(), bh)
+        self.electric_field = -grad(self.potential)
 
-    def solve(self, direct=True):
+    def solve(self, direct=False):
         self.weak_form()
         self.assemble()
         self.solve_system(direct=direct)
+
+
+class Grating3DElstat(Grating2DElstat, Grating3D):
+    def __init__(
+        self,
+        geometry,
+        epsilon,
+        degree=1,
+        boundary_conditions={},
+    ):
+        Grating3D.__init__(
+            self,
+            geometry,
+            epsilon,
+            mu=None,
+            lambda0=None,
+            theta0=None,
+            phi0=None,
+            psi0=None,
+            degree=degree,
+            mat_degree=None,
+            pml_stretch=1,
+            boundary_conditions={},
+            periodic_map_tol=1e-8,
+        )
+        del self.mu
+        del self.lambda0
+        del self.theta0
+        del self.phi0
+        del self.psi0
+        del self.complex_space
+        del self.real_space
+
+        self.element = "CG"
+        self.function_space = dolfin.FunctionSpace(
+            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
+        )
+
+        self.dx = geometry.measure["dx"]
+        self.ds = geometry.measure["ds"] if self.boundaries else None
+        self.dS = geometry.measure["dS"] if self.boundaries else None
+
+        self.unit_normal_vector = dolfin.FacetNormal(self.mesh)
+
+    def _prepare_bcs(self, doms="surfaces", marks="triangle"):
+        Grating2DElstat._prepare_bcs(self, doms=doms, marks=marks)

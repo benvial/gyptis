@@ -158,7 +158,7 @@ class Layered3D(Geometry):
 class Grating3D(object):
     def __init__(
         self,
-        geom,
+        geometry,
         epsilon,
         mu,
         lambda0=1,
@@ -172,7 +172,7 @@ class Grating3D(object):
         periodic_map_tol=1e-8,
     ):
 
-        self.geometry = geom  # geometry model
+        self.geometry = geometry  # geometry model
         self.degree = degree
         self.mat_degree = mat_degree or self.degree
         self.lambda0 = lambda0
@@ -184,15 +184,15 @@ class Grating3D(object):
         self.pml_stretch = pml_stretch
         self.period = self.geometry.period
 
-        self.mesh = geom.mesh_object["mesh"]
-        self.markers = geom.mesh_object["markers"]["tetra"]
-        self.domains = geom.subdomains["volumes"]
-        self.boundaries = geom.subdomains["surfaces"]
-        self.dx = geom.measure["dx"]
+        self.mesh = geometry.mesh_object["mesh"]
+        self.markers = geometry.mesh_object["markers"]["tetra"]
+        self.domains = geometry.subdomains["volumes"]
+        self.boundaries = geometry.subdomains["surfaces"]
+        self.dx = geometry.measure["dx"]
         self.boundary_conditions = boundary_conditions
 
         self.boundary_markers = (
-            geom.mesh_object["markers"]["triangle"] if self.boundaries else []
+            geometry.mesh_object["markers"]["triangle"] if self.boundaries else []
         )
 
         self.N_d_order = 0
