@@ -65,7 +65,7 @@ req: testenv
 ## Install Python dependencies for dev and test
 dev:
 	$(PYTHON_INTERPRETER) -m pip install -r requirements-dev.txt
-	cd docs && npm install lessc
+	
 
 
 ## Delete generated files
@@ -127,6 +127,10 @@ less:
 docfast: less
 	cd docs && make html && make postpro-html
 
+
+## Install requirements for building docs
+doc-req:
+	cd docs && pip install -r requirements.txt && npm install lessc
 
 
 ## Build html doc

@@ -58,7 +58,7 @@ docker
 
 .. code-block:: bash
 
-  docker pull benvial/gyptis:latest
+  docker pull gyptis/gyptis:latest
 
 
 Contributing
