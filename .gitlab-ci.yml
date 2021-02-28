@@ -6,7 +6,7 @@ stages:
   # - deploy
 
 before_script:
-  - conda activate base
+  - source ~/.bashrc
   - pip install pytest pytest-cov
 
 test:
