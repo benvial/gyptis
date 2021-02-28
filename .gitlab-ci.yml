@@ -1,0 +1,28 @@
+
+image: gyptis/gyptis:latest
+
+stages:
+  - test
+  # - deploy
+
+# before_script:
+#   - make env
+#   - source activate pygetdp
+#   - make req
+
+test:
+  stage: test
+  script:
+    - make test
+
+# pages:
+#   stage: deploy
+#   script:
+#     - make less
+#     - make doc
+#     - mv doc/_build/html/ public/
+#   artifacts:
+#     paths:
+#       - public
+#   only:
+#     - master
