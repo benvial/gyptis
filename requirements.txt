@@ -1,5 +1,6 @@
 numpy
 scipy
+matplotlib
 dolfin-adjoint
 meshio
 gmsh

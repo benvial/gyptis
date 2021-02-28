@@ -73,6 +73,7 @@ clean:
 	@find . | grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
 	@rm -rf .pytest_cache $(PROJECT_NAME).egg-info/ build/ dist/ tmp/ htmlcov/
 	cd docs && make clean
+	rm -rf .coverage htmlcov coverage.xml
 
 
 ## Lint using flake8
@@ -153,7 +154,8 @@ showhtmldoc:
 test:
 	rm -rf .coverage htmlcov
 	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests --cov=./$(PROJECT_NAME) --cov-report term 
-	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests --cov=./$(PROJECT_NAME) --cov-append --cov-report term --cov-report html  
+	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests --cov=./$(PROJECT_NAME) \
+	--cov-append --cov-report term --cov-report html --cov-report xml  
 	
 	
 	
