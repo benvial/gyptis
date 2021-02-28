@@ -53,8 +53,8 @@ Installation
 
 
 
-docker
-~~~~~~
+`docker <https://hub.docker.com/r/gyptis/gyptis>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
