@@ -1,11 +1,11 @@
 
 
-.. image:: https://gitlab.com/benvial/gyptis/badges/master/pipeline.svg
-   :target: https://gitlab.com/benvial/gyptis/commits/master
+.. image:: https://gitlab.com/gyptis/gyptis/badges/master/pipeline.svg
+   :target: https://gitlab.com/gyptis/gyptis/commits/master
    :alt: pipeline status
 
-.. image:: https://gitlab.com/benvial/gyptis/badges/master/coverage.svg
-  :target: https://gitlab.com/benvial/gyptis/commits/master
+.. image:: https://gitlab.com/gyptis/gyptis/badges/master/coverage.svg
+  :target: https://gitlab.com/gyptis/gyptis/commits/master
   :alt: coverage report
 
 .. image:: https://img.shields.io/github/license/mashape/apistatus.svg
@@ -21,7 +21,7 @@ GYPTIS
 Computational photonics in Python
 ---------------------------------
 
-https://benvial.gitlab.io/gyptis/index.html
+https://gyptis.gitlab.io/gyptis/index.html
 
 .. image:: docs/_assets/landing.png
    :align: center

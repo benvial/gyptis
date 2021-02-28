@@ -6,7 +6,7 @@ __author_email__ = "benjamin.vial84@gmail.com"
 __copyright__ = u"Copyright (c) 2020-{}, {} <{}>".format(
     date.today().year, __author__, __author_email__
 )
-__website__ = "https://benvial.github.io/gyptis"
+__website__ = "https://gyptis.github.io/gyptis"
 __license__ = "License :: OSI Approved :: MIT License"
 __status__ = "Development Status :: 1 - Planning"
 __audience__ = "Intended Audience :: Science/Research"

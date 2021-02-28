@@ -96,7 +96,7 @@ html_context = {
     "description": package.__description__,
     "show_fork": True,
     "github": github,
-    "repo": f"benvial/{package.__name__}",
+    "repo": f"gyptis/{package.__name__}",
     "show_pip_install": True,
     "pipname": package.__name__,
 }
