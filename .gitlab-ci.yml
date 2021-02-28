@@ -5,10 +5,8 @@ stages:
   - test
   # - deploy
 
-# before_script:
-#   - make env
-#   - source activate pygetdp
-#   - make req
+before_script:
+  - pip install pytest pytest-cov
 
 test:
   stage: test

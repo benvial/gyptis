@@ -1,12 +1,6 @@
 pip 
 setuptools 
 wheel
-sphinx
-sphinx_bootstrap_theme
-sphinx_gallery
-sphinx-copybutton
-memory_profiler
-numpydoc
 coverage
 flake8
 ipython
