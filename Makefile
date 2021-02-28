@@ -98,7 +98,7 @@ lint-all: lint dup dcstr rad
 ## Reformat code
 style:
 	@echo "Styling..."
-	isort -rc .
+	isort .
 	black .
 
 ## Push to gitlab

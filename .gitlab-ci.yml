@@ -7,14 +7,17 @@ stages:
 
 before_script:
   - source ~/.bashrc
-  - pip install pytest pytest-cov
+  - pip install pytest pytest-cov coverage
   - pip install -e .
 
 test:
   stage: test
   script:
     - make test
-
+    - coverage xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
 # pages:
 #   stage: deploy
 #   script:
