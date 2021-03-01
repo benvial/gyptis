@@ -2,30 +2,31 @@
 image: gyptis/gyptis:latest
 
 stages:
-  - test
-  # - deploy
+  # - test
+  - deploy
 
 before_script:
   - source ~/.bashrc
-  - pip install pytest pytest-cov coverage
   - pip install -e .
-
-test:
-  stage: test
-  script:
-    - make test
-    - coverage xml
-  artifacts:
-    reports:
-      cobertura: coverage.xml
-# pages:
-#   stage: deploy
+# 
+# test:
+#   stage: test
 #   script:
-#     - make less
-#     - make doc
-#     - mv doc/_build/html/ public/
+#     - pip install pytest pytest-cov coverage
+#     - make test
+#     - coverage xml
 #   artifacts:
-#     paths:
-#       - public
-#   only:
-#     - master
+#     reports:
+#       cobertura: coverage.xml
+
+pages:
+  stage: deploy
+  script:
+    - pip install -r docs/requirements.txt
+    - make doc-noplot
+    - mv doc/_build/html/ public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
