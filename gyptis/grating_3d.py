@@ -6,8 +6,6 @@
 from collections import OrderedDict
 
 import numpy as np
-import pytest
-from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
 from . import ADJOINT, dolfin
 from .complex import *
