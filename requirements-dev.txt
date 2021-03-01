@@ -1,13 +1,10 @@
 pip 
 setuptools 
 wheel
-coverage
 flake8
-ipython
-Image
-matplotlib
 pytest
 pytest-cov
+coverage
 black
 twine
 isort
@@ -15,4 +12,3 @@ radon
 pydocstyle
 pylint
 python-gitlab
-nodejs

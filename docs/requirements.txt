@@ -1,7 +1,6 @@
 sphinx
-sphinx_bootstrap_theme
+pydata-sphinx-theme
 sphinx_gallery
 sphinx-copybutton
 memory_profiler
 numpydoc
-nodejs

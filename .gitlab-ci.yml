@@ -22,6 +22,7 @@ before_script:
 pages:
   stage: deploy
   script:
+    - conda install nodejs
     - make doc-req
     - make doc
     - mv doc/_build/html/ public/

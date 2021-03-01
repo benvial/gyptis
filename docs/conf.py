@@ -23,8 +23,6 @@ import os
 import sys
 from datetime import date
 
-# import sphinx_rtd_theme
-import sphinx_bootstrap_theme
 import sphinx_gallery
 
 import gyptis as package
@@ -134,13 +132,9 @@ todo_include_todos = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 
-# html_theme = "bootstrap"
 html_theme = "pydata_sphinx_theme"
 
-
-# html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_static_path = ["_custom/static"]
 
 
