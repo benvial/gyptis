@@ -22,8 +22,8 @@ before_script:
 pages:
   stage: deploy
   script:
-    - pip install -r docs/requirements.txt
-    - make doc-noplot
+    - make doc-req
+    - make doc
     - mv doc/_build/html/ public/
   artifacts:
     paths:
