@@ -22,7 +22,7 @@ stages:
 pages:
   stage: deploy
   script:
-    -echo $CI_JOB_TOKEN
+    - echo $CI_JOB_TOKEN
     - echo master
     - touch index.html
     # - conda install nodejs
