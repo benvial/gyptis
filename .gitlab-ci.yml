@@ -1,13 +1,13 @@
 
-image: gyptis/gyptis:latest
+# image: gyptis/gyptis:latest
 
 stages:
   # - test
   - deploy
 
-before_script:
-  - source ~/.bashrc
-  - pip install -e .
+# before_script:
+#   - source ~/.bashrc
+#   - pip install -e .
 # 
 # test:
 #   stage: test
@@ -22,12 +22,22 @@ before_script:
 pages:
   stage: deploy
   script:
-    - conda install nodejs
-    - make doc-req
-    - make doc
-    - mv doc/_build/html/ public/
+    - echo master
+    - touch index.html
+    # - conda install nodejs
+    # - make doc-req
+    # - make doc
+    - mkdir public
+    - mv index.html public/
+    # - mv docs/_build/html/ public/
   artifacts:
     paths:
       - public
   only:
     - master
+
+staging:
+  variables:
+    ENVIRONMENT: staging
+  stage: deploy
+  trigger: gyptis/gyptis.gitlab.io
