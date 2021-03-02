@@ -1,44 +1,24 @@
 
-# image: gyptis/gyptis:latest
+image: gyptis/gyptis:latest
 
 stages:
-  # - test
-  - deploy
-
-# before_script:
-#   - source ~/.bashrc
-#   - pip install -e .
-# 
-# test:
-#   stage: test
-#   script:
-#     - pip install pytest pytest-cov coverage
-#     - make test
-#     - coverage xml
-#   artifacts:
-#     reports:
-#       cobertura: coverage.xml
-
-pages:
-  stage: deploy
-  script:
-    - echo $CI_JOB_TOKEN
-    - echo master
-    - touch index.html
-    # - conda install nodejs
-    # - make doc-req
-    # - make doc
-    - mkdir public
-    - mv index.html public/
-    # - mv docs/_build/html/ public/
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
+  - trigdoc
+  - test
 
 staging:
-  variables:
-    ENVIRONMENT: staging
-  stage: deploy
+  stage: trigdoc
   trigger: gyptis/gyptis.gitlab.io
+
+before_script:
+  - source ~/.bashrc
+  - pip install -e .
+
+test:
+  stage: test
+  script:
+    - pip install pytest pytest-cov coverage
+    - make test
+    - coverage xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
