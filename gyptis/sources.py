@@ -6,8 +6,9 @@
 
 import numpy as np
 import sympy as sp
-from sympy.vector import CoordSys3D
 from scipy.special import jv as scipy_besselj
+from sympy.vector import CoordSys3D
+
 from gyptis.complex import *
 
 N = CoordSys3D("N")
@@ -66,7 +67,11 @@ def plane_wave_3D(lambda0, theta, phi, psi, A=1, degree=1, domain=None):
 
     k0 = 2 * np.pi / lambda0
     Kdir = np.array(
-        (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta),)
+        (
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta),
+        )
     )
     K = Kdir * k0
     K_ = vector(sp.symbols("kx, ky, kz", real=True))
@@ -86,7 +91,7 @@ def plane_wave_3D(lambda0, theta, phi, psi, A=1, degree=1, domain=None):
     return A * Complex(prop[0] * C, prop[1] * C)
 
 
-def green_function_2D(lambda0, xs, ys, degree=1, domain=None, grad=False,auto=True):
+def green_function_2D(lambda0, xs, ys, degree=1, domain=None, grad=False, auto=True):
 
     Xs = vector(sp.symbols("xs, ys, 0", real=True))
     k0 = sp.symbols("k0", real=True)
@@ -110,24 +115,20 @@ def green_function_2D(lambda0, xs, ys, degree=1, domain=None, grad=False,auto=Tr
             coeff_x = Xshift.dot(N.i) * (-k0 / (8 * rho))
             coeff_y = Xshift.dot(N.j) * (-k0 / (8 * rho))
             coeff = coeff_x, coeff_y
-            Coeff = [dolfin.Expression(
-                sp.printing.ccode(co), k0=k0_, xs=xs, ys=ys, degree=degree, domain=domain
-            ) for co in coeff]
+            Coeff = [
+                dolfin.Expression(
+                    sp.printing.ccode(co),
+                    k0=k0_,
+                    xs=xs,
+                    ys=ys,
+                    degree=degree,
+                    domain=domain,
+                )
+                for co in coeff
+            ]
             C = dolfin.as_tensor(Coeff)
-            gradGF = Complex( gradre* C,  gradim* C  ) 
+            gradGF = Complex(gradre * C, gradim * C)
 
         return GF, gradGF
     else:
         return GF
-
-
-mesh = dolfin.UnitSquareMesh(40, 40)
-V = dolfin.FunctionSpace(mesh, "CG", 2)
-GF, dGF = green_function_2D(0.3,  -0.4, -0.2, degree=2, domain=mesh, grad=True,auto=False)
-proj_expr = project(GF, V)
-
-dGF_check = grad(GF)
-delta_grad = dot(dGF_check-dGF,dGF_check-dGF)
-error = assemble(delta_grad*dolfin.dx)
-assert abs(error) < 1e-10
-print(error)

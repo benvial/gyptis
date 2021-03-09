@@ -10,6 +10,7 @@ from gyptis import dolfin
 from gyptis.helpers import function2array, get_coords
 from gyptis.sources import *
 
+
 def test_pw_2D():
     lambda0 = 0.1
     theta = np.pi / 6
@@ -25,7 +26,6 @@ def test_pw_2D():
     err = abs(test - uarray) ** 2
     assert np.all(err < 1e-16)
     assert np.mean(err) < 1e-16
-
 
     pw, gradpw = plane_wave_2D(lambda0, theta, domain=mesh, grad=True)
 
@@ -70,15 +70,16 @@ def test_pw_3D():
         assert np.mean(err) < 1e-16
 
 
-
 def test_gf_2D():
     mesh = dolfin.UnitSquareMesh(50, 50)
     V = dolfin.FunctionSpace(mesh, "CG", 2)
-    GF, dGF = green_function_2D(0.3,  -0.4, -0.2, degree=2, domain=mesh, grad=True,auto=False)
+    GF, dGF = green_function_2D(
+        0.3, -0.4, -0.2, degree=2, domain=mesh, grad=True, auto=False
+    )
     proj_expr = project(GF, V)
 
     dGF_check = grad(GF)
-    delta_grad = dot(dGF_check-dGF,dGF_check-dGF)
-    error = assemble(delta_grad*dolfin.dx)
+    delta_grad = dot(dGF_check - dGF, dGF_check - dGF)
+    error = assemble(delta_grad * dolfin.dx)
     assert abs(error) < 1e-10
     print(error)
