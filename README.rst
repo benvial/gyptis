@@ -1,17 +1,17 @@
 
 
-.. image:: https://gitlab.com/gyptis/gyptis/badges/master/pipeline.svg
+.. image:: https://gitlab.com/gyptis/gyptis/badges/master/pipeline.svg?style=flat-square
    :target: https://gitlab.com/gyptis/gyptis/commits/master
    :alt: pipeline status
 
-.. image:: https://gitlab.com/gyptis/gyptis/badges/master/coverage.svg
+.. image:: https://gitlab.com/gyptis/gyptis/badges/master/coverage.svg?style=flat-square
   :target: https://gitlab.com/gyptis/gyptis/commits/master
   :alt: coverage report
 
-.. image:: https://img.shields.io/github/license/mashape/apistatus.svg
+.. image:: https://img.shields.io/github/license/mashape/apistatus.svg?style=flat-square
    :alt: Licence: MIT
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square
    :alt: Code style: black
 
 
@@ -36,25 +36,38 @@ come and go.
 Installation
 ------------
 
-`pip <https://pip.pypa.io/en/stable/>`_
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. `pip <https://pip.pypa.io/en/stable/>`_
+.. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. 
+.. .. code-block:: bash
+.. 
+..   pip install gyptis
+.. 
+.. 
+.. `conda <https://docs.anaconda.com/>`_
+.. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. 
+.. .. code-block:: bash
+.. 
+..   conda install -c conda-forge gyptis
+
+
+
+Docker
+~~~~~~
+
+
+
+Prebuilt container images are available at `DockerHub <https://hub.docker.com/r/gyptis/gyptis>`_
+
+On quick way of testing is getting the installation script
 
 .. code-block:: bash
 
-  pip install gyptis
+  curl -s https://gyptis.gitlab.io/get | bash
 
 
-`conda <https://docs.anaconda.com/>`_
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: bash
-
-  conda install -c conda-forge gyptis
-
-
-
-`docker <https://hub.docker.com/r/gyptis/gyptis>`_
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Or you can pull the docker image
 
 .. code-block:: bash
 

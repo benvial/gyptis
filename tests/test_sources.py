@@ -72,14 +72,23 @@ def test_pw_3D():
 
 def test_gf_2D():
     mesh = dolfin.UnitSquareMesh(50, 50)
-    V = dolfin.FunctionSpace(mesh, "CG", 2)
+    degree=2
+    V = dolfin.FunctionSpace(mesh, "CG", degree)
+    lambda0, xs, ys = 0.3, -0.4, -0.2
     GF, dGF = green_function_2D(
-        0.3, -0.4, -0.2, degree=2, domain=mesh, grad=True, auto=False
+        lambda0, xs, ys, degree=degree, domain=mesh, grad=True, auto=False
     )
-    proj_expr = project(GF, V)
-
     dGF_check = grad(GF)
     delta_grad = dot(dGF_check - dGF, dGF_check - dGF)
     error = assemble(delta_grad * dolfin.dx)
     assert abs(error) < 1e-10
-    print(error)
+
+    lambda0, xs, ys = 0.3, -0.4, -0.2
+    GF, dGF = green_function_2D(
+        lambda0, xs, ys, degree=degree, domain=mesh, grad=True, auto=False
+    )
+    k0 = 2 * np.pi / lambda0
+    Helm = div(dGF) + k0**2 *GF
+    test = abs(assemble(Helm * dolfin.dx))
+    assert test < 5e-8
+    print(test)

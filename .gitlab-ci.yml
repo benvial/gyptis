@@ -4,6 +4,12 @@ image: gyptis/gyptis:latest
 stages:
   - trigdoc
   - test
+  - trigdocker
+
+container:
+  stage: trigdocker
+  trigger: gyptis/docker
+  
 
 staging:
   stage: trigdoc

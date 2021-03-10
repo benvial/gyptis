@@ -55,10 +55,17 @@ def test_scatt2D():
         return points
 
     s = Scatt2D(geom, epsilon, mu, polarization="TE", degree=2)
-
+    
     for s.polarization in ["TE", "TM"]:
         s.prepare()
         s.weak_form()
         s.assemble()
         s.build_system()
         s.solve()
+
+    s = Scatt2D(geom, epsilon, mu, polarization="TE", degree=2,source="LS",xs= (-2,-2))
+
+    for s.polarization in ["TE", "TM"]:
+        s.solve()
+        s.plot_field()
+        s.plot_geometry()

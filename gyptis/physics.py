@@ -15,7 +15,16 @@ from .helpers import _get_form
 
 
 class Scatt2D(ElectroMagneticSimulation2D):
-    def __init__(self, geometry, epsilon, mu, pml_stretch=1 - 1j, **kwargs):
+    def __init__(
+        self,
+        geometry,
+        epsilon,
+        mu,
+        pml_stretch=1 - 1j,
+        source="PW",
+        xs=(0, 0),
+        **kwargs,
+    ):
 
         super().__init__(geometry, epsilon, mu, **kwargs)
         self.pml_stretch = pml_stretch
@@ -33,6 +42,10 @@ class Scatt2D(ElectroMagneticSimulation2D):
 
         self.utrial = TrialFunction(self.complex_space)
         self.utest = TestFunction(self.complex_space)
+        self.source = source
+        assert self.source in ["PW", "LS"]
+
+        self.xs = xs
 
     def _make_pmls(self):
         pmlx = PML("x", stretch=self.pml_stretch)
@@ -49,9 +62,20 @@ class Scatt2D(ElectroMagneticSimulation2D):
     def prepare(self):
         self._prepare_materials(ref_material="box", pmls=True)
         self._make_coefs()
-        self.u0, self.gradu0 = plane_wave_2D(
-            self.lambda0, self.theta0, domain=self.mesh, grad=True
-        )
+        if self.source == "PW":
+            self.u0, self.gradu0 = plane_wave_2D(
+                self.lambda0, self.theta0, degree=self.degree, domain=self.mesh, grad=True
+            )
+        else:
+            self.u0, self.gradu0 = green_function_2D(
+                self.lambda0,
+                self.xs[0],
+                self.xs[1],
+                degree=self.degree,
+                domain=self.mesh,
+                grad=True,
+                auto=True,
+            )
 
     def build_rhs(self):
         return build_rhs(
@@ -126,10 +150,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         self.bh.update(bh)
 
     def assemble(
-        self,
-        domains=None,
-        source_domains=None,
-        pec_bnds=None,
+        self, domains=None, source_domains=None, pec_bnds=None,
     ):
         domains = self.domains if domains is None else domains
         source_domains = (

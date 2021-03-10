@@ -183,23 +183,32 @@ def test_simu():
 
 def test_taylor():
     if gyptis.ADJOINT:
-        for s.polarization in ["TE", "TM"]:
-            df.set_working_tape(df.Tape())
-            s.epsilon["lens"] = eps_lens_func
-            s.prepare()
-            s.weak_form()
-            s.assemble()
-            s.build_system()
-            s.solve()
-            h = df.Function(Actrl)
-            h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
-            field = s.u + s.u0
-            J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
-            Jhat = df.ReducedFunctional(
-                J, df.Control(ctrl)
-            )  # the functional as a pure function of nu
-            conv_rate = df.taylor_test(Jhat, ctrl, h)
-            assert abs(conv_rate - 2) < 1e-2
+
+        def check_taylor_test(s):
+            for s.polarization in ["TE", "TM"]:
+                df.set_working_tape(df.Tape())
+                s.epsilon["lens"] = eps_lens_func
+                s.prepare()
+                s.weak_form()
+                s.assemble()
+                s.build_system()
+                s.solve()
+                h = df.Function(Actrl)
+                h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
+                field = s.u + s.u0
+                J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
+                Jhat = df.ReducedFunctional(
+                    J, df.Control(ctrl)
+                )  # the functional as a pure function of nu
+                conv_rate = df.taylor_test(Jhat, ctrl, h)
+                print("convergence rate = ", conv_rate)
+                assert abs(conv_rate - 2) < 1e-2
+
+        check_taylor_test(s)
+
+        s.source = "LS"
+        s.xs = -xtarget, -ytarget
+        check_taylor_test(s)
 
 
 # J, grad = simulation(x)

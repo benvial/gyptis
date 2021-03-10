@@ -11,6 +11,8 @@ from sympy.vector import CoordSys3D
 
 from gyptis.complex import *
 
+from gyptis.complex import grad as gradc
+
 N = CoordSys3D("N")
 # v1 = 2 * N.i + 3 * N.j - N.k
 # v2 = N.i - 4 * N.j + N.k
@@ -108,7 +110,7 @@ def green_function_2D(lambda0, xs, ys, degree=1, domain=None, grad=False, auto=T
 
     if grad:
         if auto:
-            gradGF = grad(GF)
+            gradGF = gradc(GF)
         else:
             gradre = dolfin.bessel_Y(-1, KR) - dolfin.bessel_Y(1, KR)
             gradim = dolfin.bessel_J(-1, KR) - dolfin.bessel_J(1, KR)
