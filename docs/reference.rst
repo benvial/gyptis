@@ -12,27 +12,20 @@ in Photonics and Electromagnetism using the Finite Element method.
 It relies on Gmsh_ for geometry definition and meshing 
 and FEniCS_ for solving Maxwell's equations.
 
-Tutorials with worked examples and background information for
-submodules: :ref:`auto_examples/index.rst`
+For a more practical introduction, check the 
+:ref:`tutorials with worked examples <sphx_glr_auto_examples>`.
 
 
 .. toctree::
    :maxdepth: 2
    :hidden:
    
-   api.rst
+   api
+   indexsearch
    
 
 
--------------------------------------
 
-
-Indices and search
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 
 

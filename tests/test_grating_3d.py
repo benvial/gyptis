@@ -34,10 +34,10 @@ def test_grating_3d():
     )
 
     ##  ---------- mesh ----------
-    parmesh = 2
+    parmesh = 5
 
     N_d_order = 1
-    degree = 1
+    degree = 2
 
     parmesh_hole = parmesh * 1
     parmesh_pml = parmesh * 2 / 3
@@ -129,10 +129,10 @@ def test_grating_3d():
     )
 
     g.mat_degree = degree
-
+    g.prepare()
     g.weak_form()
     g.assemble()
-    g.solve(direct=True)
+    g.solve_system(direct=True)
     g.N_d_order = N_d_order
 
     print("  >> computing diffraction efficiencies")

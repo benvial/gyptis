@@ -12,6 +12,7 @@ PROJECT_NAME = gyptis
 PYTHON_INTERPRETER = python3
 HOSTING = gitlab
 VERSION=$(shell python3 -c "import gyptis; print(gyptis.__version__)")
+URL=$(shell python3 -c "import gyptis; print(gyptis.__website__)")
 LESSC=$(PROJECT_DIR)/docs/node_modules/less/bin/lessc
 
 ifeq (,$(shell which conda))
@@ -193,7 +194,8 @@ publish: tag pipy
 
 ## Make the terminal banner
 banner:
-	sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans
+	echo $(URL)
+	sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans 
 	cat ./docs/_assets/gyptis.ans
 
 ###############

@@ -9,12 +9,12 @@ import numpy as np
 
 from . import ADJOINT, dolfin
 from .complex import *
-from .complex import _invert_3by3_complex_matrix
 from .geometry import *
 from .helpers import BiPeriodicBoundary3D, DirichletBC
 from .materials import *
 from .sources import *
 from .stack import *
+from .base import ElectroMagneticSimulation3D
 
 pi = np.pi
 
@@ -153,45 +153,24 @@ class Layered3D(Geometry):
 # Physics
 
 
-class Grating3D(object):
+class Grating3D(ElectroMagneticSimulation3D):
     def __init__(
         self,
         geometry,
         epsilon,
         mu,
-        lambda0=1,
-        theta0=0,
-        phi0=0,
-        psi0=0,
-        degree=1,
-        mat_degree=None,
         pml_stretch=1 - 1j,
-        boundary_conditions={},
+        mat_degree=None,
         periodic_map_tol=1e-8,
+        **kwargs,
     ):
+        super().__init__(geometry, epsilon, mu, **kwargs)
 
-        self.geometry = geometry  # geometry model
-        self.degree = degree
         self.mat_degree = mat_degree or self.degree
-        self.lambda0 = lambda0
-        self.theta0 = theta0
-        self.phi0 = phi0
-        self.psi0 = psi0
         self.epsilon = epsilon
         self.mu = mu
         self.pml_stretch = pml_stretch
         self.period = self.geometry.period
-
-        self.mesh = geometry.mesh_object["mesh"]
-        self.markers = geometry.mesh_object["markers"]["tetra"]
-        self.domains = geometry.subdomains["volumes"]
-        self.boundaries = geometry.subdomains["surfaces"]
-        self.dx = geometry.measure["dx"]
-        self.boundary_conditions = boundary_conditions
-
-        self.boundary_markers = (
-            geometry.mesh_object["markers"]["triangle"] if self.boundaries else []
-        )
 
         self.N_d_order = 0
         self.periodic_map_tol = periodic_map_tol
@@ -201,11 +180,8 @@ class Grating3D(object):
         # )
 
         self.periodic_bcs = BiPeriodicBoundary3D(
-            self.geometry.period,
-            map_tol=self.periodic_map_tol,
+            self.geometry.period, map_tol=self.periodic_map_tol,
         )
-
-        self.element = "N1curl"
 
         self.complex_space = ComplexFunctionSpace(
             self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
@@ -213,14 +189,6 @@ class Grating3D(object):
         self.real_space = dolfin.FunctionSpace(
             self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
         )
-
-    @property
-    def k0(self):
-        return 2 * np.pi / self.lambda0
-
-    @property
-    def omega(self):
-        return self.k0 * c
 
     def _phasor(self, *args, **kwargs):
         phasor_re = dolfin.Expression("cos(alpha*x[0] + beta*x[1])", *args, **kwargs)
@@ -232,33 +200,7 @@ class Grating3D(object):
         phasor_im = dolfin.Expression("sin(gamma*x[2])", *args, **kwargs)
         return Complex(phasor_re, phasor_im)
 
-    def _make_subdomains(self, epsilon, mu):
-        epsilon_coeff = Subdomain(
-            self.markers, self.domains, epsilon, degree=self.mat_degree
-        )
-        mu_coeff = Subdomain(self.markers, self.domains, mu, degree=self.mat_degree)
-        return epsilon_coeff, mu_coeff
 
-    def _prepare_bcs(self):
-        self._boundary_conditions = []
-        self.pec_bnds = []
-        for bnd, cond in self.boundary_conditions.items():
-            if cond != "PEC":
-                raise ValueError(f"unknown boundary condition {cond}")
-            else:
-                self.pec_bnds.append(bnd)
-        for bnd in self.pec_bnds:
-            Ebnd = -self.Estack_coeff * self.phasor.conj
-            # ubnd = dolfin.as_vector((ubnd_vec.real, ubnd_vec.imag))
-            Ebnd_proj = project(Ebnd, self.real_space)
-            bc = DirichletBC(
-                self.complex_space,
-                Ebnd_proj,
-                self.boundary_markers,
-                bnd,
-                self.boundaries,
-            )
-            [self._boundary_conditions.append(b) for b in bc]
 
     def make_stack(self):
 
@@ -275,11 +217,7 @@ class Grating3D(object):
             }
         )
         self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            self.theta0,
-            self.phi0,
-            self.psi0,
+            config, self.lambda0, self.theta0, self.phi0, self.psi0,
         )
         self.Phi = [p[:6] for p in self.Phi]
 
@@ -316,59 +254,10 @@ class Grating3D(object):
             stack_field[dom] = complex_vector(estack[dom])
         self.annex_field = {"incident": inc_field, "stack": stack_field}
 
-    def _prepare_materials(self):
-        epsilon = dict(superstrate=1, substrate=1)
-        mu = dict(superstrate=1, substrate=1)
-        epsilon.update(self.epsilon)
-        mu.update(self.mu)
-        self.epsilon_pml, self.mu_pml = self._make_pmls()
-        self.epsilon.update(self.epsilon_pml)
-        self.mu.update(self.mu_pml)
-        self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
 
-        self.no_source_dom = ["substrate", "pml_top", "pml_bottom", "superstrate"]
-        self.source_dom = [
-            z for z in self.epsilon.keys() if z not in self.no_source_dom
-        ]
-        mu_annex = self.mu.copy()
-        eps_annex = self.epsilon.copy()
-        for a in self.source_dom:
-            mu_annex[a] = self.mu["superstrate"]
-            eps_annex[a] = self.epsilon["superstrate"]
-        self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            eps_annex, mu_annex
-        )
-        self._epsilon_annex = eps_annex
-        self._mu_annex = eps_annex
-        self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)
-        self.inv_mu_coeff_annex = _invert_3by3_complex_matrix(self.mu_coeff_annex)
-
-        self.inv_mu = make_constant_property(self.mu, inv=True)
-        self.eps = make_constant_property(self.epsilon)
-
-        self.inv_mu_annex = make_constant_property(mu_annex, inv=True)
-        self.eps_annex = make_constant_property(eps_annex)
-
-    def _make_pmls(self):
-        pml = PML("z", stretch=self.pml_stretch)
-        t = pml.transformation_matrix()
-        eps_pml_ = [
-            (self.epsilon[d] * t).tolist() for d in ["substrate", "superstrate"]
-        ]
-        mu_pml_ = [(self.mu[d] * t).tolist() for d in ["substrate", "superstrate"]]
-        epsilon_pml = dict(pml_bottom=eps_pml_[0], pml_top=eps_pml_[1])
-        mu_pml = dict(pml_bottom=mu_pml_[0], pml_top=mu_pml_[1])
-        return epsilon_pml, mu_pml
-
-    def weak_form(self):
+    def prepare(self):
         self._prepare_materials()
         self.make_stack()
-        W = self.complex_space
-        dx = self.dx
-        self.E = Function(W)
-        Etrial = TrialFunction(W)
-        Etest = TestFunction(W)
-
         self.alpha0 = self.k0 * np.sin(self.theta0) * np.cos(self.phi0)
         self.beta0 = self.k0 * np.sin(self.theta0) * np.sin(self.phi0)
         self.gamma0 = self.k0 * np.cos(self.theta0)
@@ -380,16 +269,18 @@ class Grating3D(object):
             beta=self.beta0,
         )
 
-        self.unit_vectors = (
-            as_vector([1.0, 0.0, 0.0]),
-            as_vector([0.0, 1.0, 0.0]),
-            as_vector([0.0, 0.0, 1.0]),
-        )
         self.k_para = (
             self.alpha0 * self.unit_vectors[0] + self.beta0 * self.unit_vectors[1]
         )
 
         self._prepare_bcs()
+
+    def weak_form(self):
+        W = self.complex_space
+        dx = self.dx
+        self.E = Function(W)
+        Etrial = TrialFunction(W)
+        Etest = TestFunction(W)
 
         self.lhs = {}
         self.rhs = {}
@@ -444,8 +335,9 @@ class Grating3D(object):
     def assemble(self):
         self.assemble_lhs()
         self.assemble_rhs()
+        
 
-    def solve(self, direct=True):
+    def solve_system(self, direct=True):
 
         for i, d in enumerate(self.domains):
             Ah_ = self.Ah[d][0] + self.k0 ** 2 * self.Ah[d][3]
@@ -504,13 +396,25 @@ class Grating3D(object):
         self.solution["diffracted"] = E
         self.solution["total"] = Etot
 
+
+
+
+    def solve(self, direct=True):
+        self.prepare()
+        self.weak_form()
+        self.assemble()
+        # self.build_system()
+        self.solve_system(direct=direct)
+        
+
+
+
+
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
     ):
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
         k, gamma = {}, {}
