@@ -1,9 +1,7 @@
 # from df import *
 # from df_adjoint import *
 
-
 import time
-
 import gyptis
 from gyptis import dolfin as df
 from gyptis.complex import *
@@ -69,6 +67,7 @@ mu = dict(lens=1, box=1, target=1)
 # if __name__ == "__main__":
 s = Scatt2D(geom, epsilon, mu, degree=2, lambda0=lambda0, theta0=pi)
 
+s.xs = -xtarget, -ytarget
 nvar = Asub.dim()
 # nvar =  Actrl.dim()
 
@@ -176,175 +175,53 @@ def simulation(x, proj_level=0, filt=True, proj=True, plot_optim=True, reset=Tru
     return J, dJdx
 
 
-def test_simu():
-    for s.polarization in ["TE", "TM"]:
-        J, grad = simulation(x, plot_optim=False, reset=True)
+def _test_simu(polarization):
+    s.polarization = polarization
+    J, grad = simulation(x, plot_optim=False, reset=True)
 
 
-def test_taylor():
-    if gyptis.ADJOINT:
-
-        def check_taylor_test(s):
-            for s.polarization in ["TE", "TM"]:
-                df.set_working_tape(df.Tape())
-                s.epsilon["lens"] = eps_lens_func
-                s.prepare()
-                s.weak_form()
-                s.assemble()
-                s.build_system()
-                s.solve()
-                h = df.Function(Actrl)
-                h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
-                field = s.u + s.u0
-                J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
-                Jhat = df.ReducedFunctional(
-                    J, df.Control(ctrl)
-                )  # the functional as a pure function of nu
-                conv_rate = df.taylor_test(Jhat, ctrl, h)
-                print("convergence rate = ", conv_rate)
-                assert abs(conv_rate - 2) < 1e-2
-
-        check_taylor_test(s)
-
-        s.source = "LS"
-        s.xs = -xtarget, -ytarget
-        check_taylor_test(s)
+def test_simu_TM():
+    _test_simu("TM")
 
 
-# J, grad = simulation(x)
+def test_simu_TE():
+    _test_simu("TE")
 
-if __name__ == "__main__":
 
-    # fig, ax = plt.subplots(1, 2, figsize=(13, 5))
-    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-    from scipy.optimize import minimize
 
-    maxiter = 15
-    bounds = [(0, 1) for i in range(nvar)]
-    for proj_level in range(8):
-        print("\n#########################")
-        print("projection level: ", proj_level)
-        print("#########################\n")
-        opt = minimize(
-            simulation,
-            x,
-            args=(proj_level),
-            method="L-BFGS-B",
-            jac=True,
-            bounds=bounds,
-            options={"maxiter": maxiter},
-        )
-        x = opt.x
 
-    x = array2function(x, Asub)
-    x = filtering(x, rfilt, solver="iterative")
-    x = projection(x, beta=2 ** proj_level)
-    x = project(x, Asub)
-    x = function2array(x)
-    x[x < 0.5] = 0
-    x[x >= 0.5] = 1
-    J, grad = simulation(x, proj=False, filt=False)
-
-    ###### test perfs
-    s.prepare()
-    s.weak_form()
-    s.assemble()
-    s.build_system()
-
-    VVect = df.VectorFunctionSpace(s.mesh, s.element, s.degree)
-    u = df.Function(VVect)
-
-    t = -time.time()
-    solver = df.LUSolver("mumps")
-    solver.solve(s.matrix, u.vector(), s.vector)
-    t += time.time()
-    print("direct: ", t)
-
-    t = -time.time()
-    solver = df.LUSolver(s.matrix, "mumps")
-    solver.solve(u.vector(), s.vector)
-    t += time.time()
-    print("direct: ", t)
-
-    t = -time.time()
-    solver.solve(u.vector(), s.vector)
-    t += time.time()
-    print("direct: ", t)
-
-    s.u = Complex(*u.split())
-
-    field = s.u + s.u0
+def check_taylor_test(s, polarization):
+    s.polarization = polarization
+    df.set_working_tape(df.Tape())
+    h = df.Function(Actrl)
+    h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
+    s.epsilon["lens"] = eps_lens_func
+    s.solve()
+    field = s.solution["total"]
     J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
+    Jhat = df.ReducedFunctional(J, df.Control(ctrl))
+    conv_rate = df.taylor_test(Jhat, ctrl, h)
+    print("convergence rate = ", conv_rate)
+    assert abs(conv_rate - 2) < 1e-2
 
+
+def _taylor(polarization, source):
     if gyptis.ADJOINT:
-        t = -time.time()
-        dJdx = df.compute_gradient(J, df.Control(ctrl))
-        t += time.time()
-        print("adjoint: ", t)
-
-    #
+        s.source = source
+        check_taylor_test(s, polarization)
 
 
-# s.solve()
-#
-# # u = self.u
-# u = Complex(*s.u.split())
-# J = assemble(inner(u, u.conj) * s.dx).real
-#
-# u = project(u,s.real_space)
-#
-# try:
-#     dJdu = df.compute_gradient(J, df.Control(ctrl))
-# except:
-#
-#     dJdu = df.compute_gradient(J, df.Control(ctrl))
-#
-#
-# # plt.close("all")
-# # plt.ion()
-# # plotcplx(u)
-# # plt.show()
-#
-#
-# ttot = []
-# vals =[]
-# from time import time as tm
-# for d, f in s.lhs.items():
-#     print(d)
-#     for i in f:
-#         t = -tm()
-#         a = assemble(i*s.dx(d))
-#         t += tm()
-#         print(t)
-#         ttot.append(t)
-#         vals.append(a)
-#
-# print(sum(ttot))
-#
-#
-# forms = list(s.lhs.values())
-#
-# ff = sum(forms[1:], start=forms[0])
-# F = sum(ff[1:], start=ff[0])
-#
-#
-#
-# t = -tm()
-# assemble(F*s.dx)
-# t += tm()
-# print(t)
-#
-#
-# forms = []
-#
-# for d, f in s.Ah.items():
-#     print(d)
-#     for g in f:
-#         # print(g.form)
-#         forms.append(g.form)
-#
-#
-# ff = sum(forms[1:], start=forms[0])
-#
-#
-# a.form.integrals()[0] * k0**2
+def test_taylor_TE_PW():
+    _taylor("TE", "PW")
+
+
+def test_taylor_TM_PW():
+    _taylor("TM", "PW")
+
+
+def test_taylor_TE_LS():
+    _taylor("TE", "LS")
+
+
+def test_taylor_TM_LS():
+    _taylor("TM", "LS")

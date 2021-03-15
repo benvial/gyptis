@@ -4,6 +4,9 @@ wheel
 flake8
 pytest
 pytest-cov
+pytest-datadir
+pytest-sugar
+pytest-xdist[psutil]
 coverage
 black
 twine

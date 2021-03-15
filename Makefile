@@ -154,9 +154,9 @@ showhtmldoc:
 ## Run the test suite
 test:
 	rm -rf .coverage htmlcov
-	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests --cov=./$(PROJECT_NAME) --cov-report term 
+	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests --cov=./$(PROJECT_NAME) --cov-report term -n auto --dist loadscope
 	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests --cov=./$(PROJECT_NAME) \
-	--cov-append --cov-report term --cov-report html --cov-report xml  
+	--cov-append --cov-report term --cov-report html --cov-report xml  -n auto
 	
 	
 	

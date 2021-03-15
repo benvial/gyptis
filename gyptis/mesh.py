@@ -5,69 +5,65 @@
 
 import meshio
 import numpy as np
-
+import tempfile
 from . import dolfin
 
 
-def read_mesh(mesh_file, data_dir="./data", dim=3):
-    msh = meshio.read(mesh_file)
+def read_mesh(mesh_file, data_dir=None, dim=3):
+    meshio_mesh = meshio.read(mesh_file)
 
-    # celltypes = set([c.type for c in msh.cells])
+    points = meshio_mesh.points[:, :2] if dim == 2 else meshio_mesh.points
+    physicals = meshio_mesh.cell_data_dict["gmsh:physical"]
 
-    celltypes = msh.cell_data_dict["gmsh:physical"].keys()
+    cell_types, data_gmsh = zip(*physicals.items())
+    cells = {ct: [] for ct in cell_types}
 
-    data_gmsh = msh.cell_data_dict["gmsh:physical"]
+    for cell_type in cell_types:
+        for cell in meshio_mesh.cells:
+            if cell.type == cell_type:
+                cells[cell_type].append(cell.data)
+        cells[cell_type] = np.vstack(cells[cell_type])
 
-    ## 2d
-    cells = {}
-    data = {}
-    for c in celltypes:
-        cells[c] = []
-    for c in celltypes:
-        for cell in msh.cells:
-            if cell.type == c:
-                cells[c].append(cell.data)
-        cells[c] = np.vstack(cells[c])
-
-    points = msh.points[:, :2] if dim == 2 else msh.points
-
-    _mesh_data = {}
-    for c in celltypes:
-        # meshio.Mesh(points=points, cells=cells, cell_data=data_gmsh)
-        _mesh_data[c] = meshio.Mesh(
+    mesh_data = {}
+    for cell_type, data in zip(cell_types, data_gmsh):
+        meshio_data = meshio.Mesh(
             points=points,
-            cells={c: cells[c]},
-            cell_data={c: [data_gmsh[c]]},
+            cells={cell_type: cells[cell_type]},
+            cell_data={cell_type: [data]},
         )
+        meshio.xdmf.write(f"{data_dir}/{cell_type}.xdmf", meshio_data)
+        mesh_data[cell_type] = meshio_data
 
-        # meshio.write(f"{data_dir}/mesh.xdmf", _mesh_data["line"])
-        filename = f"{data_dir}/{c}.xdmf"
-        meshio.xdmf.write(filename, _mesh_data[c])
 
-    ### markers
-    mesh_object = {}
-    mesh_model = dolfin.Mesh()
+    dolfin_mesh = dolfin.Mesh()
 
-    c = "tetra" if dim == 3 else "triangle"
-    filename = f"{data_dir}/{c}.xdmf"
-    with dolfin.XDMFFile(filename) as infile:
-        infile.read(mesh_model)
+    cell_type = "tetra" if dim == 3 else "triangle"
+    with dolfin.XDMFFile(f"{data_dir}/{cell_type}.xdmf") as infile:
+        infile.read(dolfin_mesh)
 
-    mesh_object["mesh"] = mesh_model
 
     markers = {}
 
     dim_map = dict(line=1, triangle=2, tetra=3)
-    for c in celltypes:
-        filename = f"{data_dir}/{c}.xdmf"
-        i = dim_map[c]
-        mvc = dolfin.MeshValueCollection("size_t", mesh_model, i)
-        with dolfin.XDMFFile(filename) as infile:
-            infile.read(mvc, c)
-        markers[c] = dolfin.cpp.mesh.MeshFunctionSizet(mesh_model, mvc)
+    for cell_type in cell_types:
+        mvc = dolfin.MeshValueCollection("size_t", dolfin_mesh, dim_map[cell_type])
+        with dolfin.XDMFFile(f"{data_dir}/{cell_type}.xdmf") as infile:
+            infile.read(mvc, cell_type)
+        markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
 
-    mesh_object["markers"] = markers
-    # mesh_object["markers"]= dolfin.cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
-    # mesh_object["markers"]= dolfin.cpp.mesh.MeshFunctionSizet(mesh_model, mvc_surf)
 
-    return mesh_object
+    return  dict(mesh=dolfin_mesh, markers=markers)
+
+
+
+class MarkedMesh(object):
+    def __init__(self, filename, geometric_dimension=3, data_dir=None):
+        self.data_dir = data_dir
+        self.geometric_dimension = geometric_dimension
+        self.filename = filename
+        
+        data_dir = data_dir or tempfile.mkdtemp()
+        dic = read_mesh(filename, dim=geometric_dimension, data_dir=data_dir)
+        self.mesh = dic["mesh"]
+        self.markers = dic["markers"]
+        self.dimension = self.mesh.geometric_dimension()

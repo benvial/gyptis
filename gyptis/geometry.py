@@ -22,11 +22,21 @@ from . import dolfin
 from .helpers import Measure
 from .mesh import read_mesh
 
+import sys
+
+_geometry_module = sys.modules[__name__]
+
 geo = gmsh.model.geo
 occ = gmsh.model.occ
 setnum = gmsh.option.setNumber
 
 gmsh_options = gmsh.option
+
+# def copy_docstring_from(source):
+#     def wrapper(func):
+#         func.__doc__ = source.__doc__
+#         return func
+#     return wrapper
 
 
 def _set_opt_gmsh(name, value):
@@ -78,6 +88,230 @@ def _convert_name(name):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
+def _make_func(cls, name):
+    class_name = getattr(_geometry_module, "_" + name)
+
+    @wraps(class_name.__init__)
+    def wrapper(self, *args, **kwargs):
+        return class_name(cls, self, *args, **kwargs)
+
+    setattr(cls, name, wrapper)
+    # getattr(cls, name).__doc__ = class_name.__init__.__doc__
+    return wrapper
+
+
+class GeometryPrimitive(object):
+    def __init__(
+        self, geometry, add_function=None, id=-1, dim=2, name=None, physical_name=None
+    ):
+        self.geometry = geometry
+        self.add_function = add_function
+        self.id = id
+        self.name = name
+        self.dim = dim
+        self._physical_name = physical_name
+        # self.physical_name = physical_name
+
+    def _get_geometry_method(self, m):
+        return getattr(self.geometry, m)
+
+    def _basic_operation(self, method, other):
+        op = self._get_geometry_method(method)
+        id = op(self.id, other.id)
+        new = GeometryPrimitive(self.geometry)
+        new.id = id
+        return new
+
+    def get_boundaries(self, physical=False):
+        bnds = self._get_geometry_method("get_boundaries")(
+            self.id, self.dim, physical=physical
+        )
+        new = [GeometryPrimitive(self.geometry, dim=self.dim - 1, id=id) for id in bnds]
+        return new
+
+    def add(self, *args, **kwargs):
+        if self.add_function is not None:
+            return self._get_geometry_method(self.add_function)(*args, **kwargs)
+
+    def __len__(self):
+        return len(self.id)
+
+    def __add__(self, other):
+        return self._basic_operation("fuse", other)
+
+    def __sub__(self, other):
+        return self._basic_operation("cut", other)
+
+    @property
+    def physical_name(self):
+        return self._physical_name
+
+    @physical_name.setter
+    def physical_name(self, name):
+        self.geometry.add_physical(self.id, name)
+        self._physical_name = name
+
+    def add_physical(self, name):
+        self.physical_name = name
+
+    def __lshift__(self, name):
+        self.add_physical(name)
+
+    def __truediv__(self, other):
+        op = self._get_geometry_method("fragment")
+        ids, map = op(self.id, other.id, map=True)
+        out = [_[-1] for _ in map.pop()]
+        new = []
+        # ids = out
+        for id in ids:
+            p = GeometryPrimitive(self.geometry)
+            p.id = id
+            new.append(p)
+        return new
+
+    def rotate(self, point, axis, angle):
+        new = GeometryPrimitive(self.geometry)
+        self._get_geometry_method("rotate")(self.id, point, axis, angle)
+        new.id = self.id
+        return new
+
+    def extrude(self, vector, num_el=[], heights=[], recombine=False):
+        new = GeometryPrimitive(self.geometry)
+        dimtags = self.geometry.dimtag(self.id)
+
+        self._get_geometry_method("extrude")(
+            dimtags, *vector, num_el, heights, recombine
+        )
+        new.id = self.id
+        new.dim = self.dim + 1
+        return new
+
+    def set_size(self, size, **kwargs):
+        self.geometry.set_size(self.id, size, **kwargs)
+
+    def __or__(self, size):
+        return self.set_size(size)
+
+    def __repr__(self):
+        return f"GeometryPrimitive(id={self.id}, dim={self.dim})"
+
+    # def __rshift__(self, other):
+    #
+    #     return _basic_operation("fragment", self, other)
+
+
+class _Circle(GeometryPrimitive):
+    def __init__(self, geometry, center, radius, surface=True, name=None, **kwargs):
+        """
+        Circle(center, radius, surface=True, name=None, **kwargs)
+        
+        Create and add a circle.
+
+        Parameters
+        ----------
+        center : tuple
+            Center (x,y,z).
+        radius : float
+            Radius.
+        surface : bool
+            Wether to create a plane surface (the default is True).
+        name : str
+            Name of the object (the default is None).
+
+        Returns
+        -------
+        Circle
+            A circle object.
+
+        """
+        super().__init__(geometry, "add_circle")
+        self.radius = radius
+        self.center = center
+        self.surface = surface
+        self.name = name
+        self.add(**kwargs)
+
+    def __repr__(self):
+        return f"Circle(r={self.radius}, c={self.center})"
+
+    def add(self, **kwargs):
+        self.id = super().add(*self.center, self.radius, surface=self.surface, **kwargs)
+
+
+class _Rectangle(GeometryPrimitive):
+    def __init__(self, geometry, corner, size, corner_radius=0.0, name=None, **kwargs):
+        """
+        Rectangle(corner, size, corner_radius=0.0, name=None)
+        
+        Create and add a rectangle.
+
+        Parameters
+        ----------
+        corner : tuple
+            Corner (x,y,z).
+        size : tuple
+            Size (Lx, Ly).
+        corner_radius : float
+            Radius of corners (the default is 0.0).
+        name : str
+            Name of the object (the default is None).
+
+        Returns
+        -------
+        Rectangle
+            A rectangle object.
+
+        """
+        super().__init__(geometry, "add_rectangle")
+        self.size = size
+        self.corner = corner
+        self.corner_radius = corner_radius
+        self.name = name
+        self.add(**kwargs)
+
+    def add(self, **kwargs):
+        self.id = super().add(
+            *self.corner, *self.size, roundedRadius=self.corner_radius, **kwargs
+        )
+
+class _Ellipse(GeometryPrimitive):
+    def __init__(self, geometry, center, radii, surface=True, name=None, **kwargs):
+        """
+        Ellipse(center, radii, surface=True, name=None, **kwargs)
+        
+        Create and add an ellipse.
+
+        Parameters
+        ----------
+        center : tuple
+            Center (x,y,z).
+        radii : tuple
+            Axes of the ellipse (Lx,Ly).
+        surface : bool
+            Wether to create a plane surface (the default is True).
+        name : str
+            Name of the object (the default is None).
+
+        Returns
+        -------
+        Circle
+            A circle object.
+
+        """
+        super().__init__(geometry, "add_ellipse")
+        self.radii = radii
+        self.center = center
+        self.surface = surface
+        self.name = name
+        self.add(**kwargs)
+
+    def __repr__(self):
+        return f"Circle(r={self.radius}, c={self.center})"
+
+    def add(self, **kwargs):
+        self.id = super().add(*self.center, *self.radii, surface=self.surface, **kwargs)
+
+
 class Geometry(object):
     """Base class for geometry models.
 
@@ -111,7 +345,7 @@ class Geometry(object):
         data_dir=None,
         dim=3,
         gmsh_args=None,
-        kill=False,
+        kill=True,
         verbose=0,
     ):
         self.model_name = model_name
@@ -134,15 +368,19 @@ class Geometry(object):
                 bound_method = getattr(occ, object_name)
                 name = _convert_name(bound_method.__name__)
                 _add_method(self, bound_method, name)
-        self._old_add_ellipse = self.add_ellipse
+
+        self._gmsh_add_ellipse = self.add_ellipse
         del self.add_ellipse
-        self._old_add_circle = self.add_circle
+        self._gmsh_add_circle = self.add_circle
         del self.add_circle
+        self._gmsh_add_spline = self.add_spline
+        del self.add_spline
+
 
         if kill:
             try:
                 gmsh.finalize()
-            except ValueError:
+            except:
                 pass
 
         self.gmsh_args = gmsh_args
@@ -153,13 +391,32 @@ class Geometry(object):
 
         gmsh_options.set("General.Verbosity", verbose)
 
+    @wraps(_Circle.__init__)
+    def Circle(self, *args, **kwargs):
+        return _Circle(self, *args, **kwargs)
+
+    @wraps(_Rectangle.__init__)
+    def Rectangle(self, *args, **kwargs):
+        return _Rectangle(self, *args, **kwargs)
+
+    @wraps(_Ellipse.__init__)
+    def Ellipse(self, *args, **kwargs):
+        return _Ellipse(self, *args, **kwargs)
+
+    # def add_rectangle(self, *args, **kwargs):
+    #     return self.add_rectangle(*args, **kwargs)
+
+    def rotate(self, tag, point, axis, angle, dim=None):
+        dt = self.dimtag(tag, dim=dim)
+        return occ.rotate(dt, *point, *axis, angle)
+
     def add_physical(self, id, name, dim=None):
         """Add a physical domain.
 
         Parameters
         ----------
         id : int or list of int
-            The identifiant(s) of elementary entities makling the physical domain.
+            The identifiant(s) of elementary entities making the physical domain.
         name : str
             Name of the domain.
         dim : int
@@ -176,7 +433,7 @@ class Geometry(object):
         return num
 
     def dimtag(self, id, dim=None):
-        """Convert a .
+        """Convert an integer or list of integer to gmsh DimTag notation.
 
         Parameters
         ----------
@@ -195,35 +452,78 @@ class Geometry(object):
         return _dimtag(id, dim=dim)
 
     # def add_circle(self,x, y, z, ax, ay,**kwargs):
-    #     ell = self._old_add_ellipse(x, y, z, ax, ay,**kwargs)
+    #     ell = self._gmsh_add_ellipse(x, y, z, ax, ay,**kwargs)
     #     ell = self.add_curve_loop([ell])
     #     return self.add_plane_surface([ell])
 
     def add_circle(self, x, y, z, r, surface=True, **kwargs):
         if surface:
-            circ = self._old_add_circle(x, y, z, r, **kwargs)
+            circ = self._gmsh_add_circle(x, y, z, r, **kwargs)
             circ = self.add_curve_loop([circ])
             return self.add_plane_surface([circ])
         else:
-            return self._old_add_circle(x, y, z, r, **kwargs)
+            return self._gmsh_add_circle(x, y, z, r, **kwargs)
 
     def add_ellipse(self, x, y, z, ax, ay, surface=True, **kwargs):
-        if surface:
-            ell = self._old_add_ellipse(x, y, z, ax, ay, **kwargs)
-            ell = self.add_curve_loop([ell])
-            return self.add_plane_surface([ell])
+        if ax == ay:
+            return self.add_circle(x, y, z, ax, surface=surface, **kwargs)
+        elif ax < ay:
+            ell = self.add_ellipse(x, y, z, ay, ax, surface=surface, **kwargs)
+            self.rotate(ell, (x, y, z), (0, 0, 1), np.pi / 2, dim=2)
+            return ell
         else:
-            return self._old_add_ellipse(x, y, z, ax, ay, **kwargs)
+            if surface:
+                ell = self._gmsh_add_ellipse(x, y, z, ax, ay, **kwargs)
+                ell = self.add_curve_loop([ell])
+                return self.add_plane_surface([ell])
+            else:
+                return self._gmsh_add_ellipse(x, y, z, ax, ay, **kwargs)
 
-    def fragment(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
+    def add_spline(self, points, mesh_size=0.0, surface=True, **kwargs):
+        """Adds a spline.
+
+        Parameters
+        ----------
+        points : array of shape (Npoints,3)
+            Corrdinates of the points.
+        mesh_size : float
+            Mesh sizes at points (the default is 0.0).
+        surface : type
+            If True, creates a plane surface (the default is True).
+
+        Returns
+        -------
+        int
+            The tag of the spline.
+
+        """
+        dt = []
+        for p in points:
+            dt.append(self.add_point(*p, meshSize=mesh_size))
+
+        if np.allclose(points[0], points[-1]):
+            dt[-1] = dt[0]
+
+        if surface:
+            spl = self._gmsh_add_spline(dt, **kwargs)
+            spl = self.add_curve_loop([spl])
+            return self.add_plane_surface([spl])
+        else:
+            return self._gmsh_add_spline(dt, **kwargs)
+
+    def fragment(self, id1, id2, dim1=None, dim2=None, sync=True, map=False, **kwargs):
         dim1 = dim1 if dim1 else self.dim
         dim2 = dim2 if dim2 else self.dim
         a1 = self.dimtag(id1, dim1)
         a2 = self.dimtag(id2, dim2)
-        ov, ovv = occ.fragment(a1, a2, **kwargs)
+        dimtags, mapping = occ.fragment(a1, a2, **kwargs)
         if sync:
             occ.synchronize()
-        return [o[1] for o in ov]
+        tags = [_[1] for _ in dimtags]
+        if map:
+            return tags, mapping
+        else:
+            return tags
 
     def cut(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = dim1 if dim1 else self.dim
@@ -415,6 +715,16 @@ class Geometry(object):
         from .plotting import plot_subdomains
 
         return plot_subdomains(self.markers["triangle"], **kwargs)
+
+    def add(self, primittive):
+        primittive.add(self)
+        ids = []
+        for p in primittive.parents:
+            self.add(p)
+            ids.append(p.id)
+        for op in primittive.operations:
+            IDs = op(self, *ids)
+            primittive.id = IDs
 
 
 class BoxPML2D(Geometry):

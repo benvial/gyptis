@@ -337,7 +337,7 @@ class Grating3D(ElectroMagneticSimulation3D):
         self.assemble_rhs()
         
 
-    def solve_system(self, direct=True):
+    def build_system(self):
 
         for i, d in enumerate(self.domains):
             Ah_ = self.Ah[d][0] + self.k0 ** 2 * self.Ah[d][3]
@@ -372,21 +372,25 @@ class Grating3D(ElectroMagneticSimulation3D):
                     form += form_
         if ADJOINT:
             bh.form = form
+        
+        self.matrix =Ah
+        self.vector =bh
 
+    def solve_system(self, direct=True):
         self.E = dolfin.Function(self.complex_space)
 
         for bc in self._boundary_conditions:
-            bc.apply(Ah, bh)
+            bc.apply(self.matrix, self.vector)
 
         if direct:
             # solver = dolfin.LUSolver(Ah) ### direct
             solver = dolfin.LUSolver("mumps")
             # solver.parameters.update(lu_params)
-            solver.solve(Ah, self.E.vector(), bh)
+            solver.solve(self.matrix, self.E.vector(), self.vector)
         else:
             solver = dolfin.PETScKrylovSolver()  ## iterative
             # solver.parameters.update(krylov_params)
-            solver.solve(Ah, self.E.vector(), bh)
+            solver.solve(self.matrix, self.E.vector(), self.vector)
 
         Eper = Complex(*self.E.split())
         E = Eper * self.phasor
@@ -396,16 +400,16 @@ class Grating3D(ElectroMagneticSimulation3D):
         self.solution["diffracted"] = E
         self.solution["total"] = Etot
 
-
-
-
-    def solve(self, direct=True):
-        self.prepare()
-        self.weak_form()
-        self.assemble()
-        # self.build_system()
-        self.solve_system(direct=direct)
-        
+    # 
+    # 
+    # 
+    # def solve(self, direct=True):
+    #     self.prepare()
+    #     self.weak_form()
+    #     self.assemble()
+    #     self.build_system()
+    #     self.solve_system(direct=direct)
+    # 
 
 
 

@@ -378,12 +378,12 @@ class Grating2D(ElectroMagneticSimulation2D):
         self.solution["diffracted"] = u
         self.solution["total"] = utot
 
-    def solve(self, direct=True):
-        self.prepare()
-        self.weak_form()
-        self.assemble()
-        self.build_system()
-        self.solve_system(direct=direct)
+    # def solve(self, direct=True):
+    #     self.prepare()
+    #     self.weak_form()
+    #     self.assemble()
+    #     self.build_system()
+    #     self.solve_system(direct=direct)
 
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False

@@ -7,7 +7,7 @@ from pprint import pprint
 
 from gyptis.grating_3d import *
 
-dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
+# dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 
 
 def test_grating_3d():
@@ -129,10 +129,7 @@ def test_grating_3d():
     )
 
     g.mat_degree = degree
-    g.prepare()
-    g.weak_form()
-    g.assemble()
-    g.solve_system(direct=True)
+    g.solve(direct=True)
     g.N_d_order = N_d_order
 
     print("  >> computing diffraction efficiencies")

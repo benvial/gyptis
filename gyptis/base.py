@@ -13,6 +13,33 @@ from .geometry import *
 from .materials import *
 from .sources import *
 
+
+from abc import ABC,abstractmethod 
+
+class Simulation(ABC): 
+    @abstractmethod
+    def prepare(self): 
+        pass
+    @abstractmethod
+    def weak_form(self): 
+        pass
+    @abstractmethod
+    def assemble(self): 
+        pass
+    @abstractmethod
+    def build_system(self): 
+        pass
+    @abstractmethod
+    def solve_system(self): 
+        pass
+        
+    def solve(self, direct=True):
+        self.prepare()
+        self.weak_form()
+        self.assemble()
+        self.build_system()
+        self.solve_system(direct=direct)
+
 #
 # lu_params = {"report": True, "symmetric": False, "verbose": True}
 #
@@ -47,7 +74,7 @@ def _coefs(a, b):
     return xi, chi
 
 
-class Simulation2D(object):
+class Simulation2D(Simulation):
     """Base class for 2D simulations"""
 
     def __init__(
@@ -296,7 +323,7 @@ def make_annex_materials(epsilon, mu, source_domains, reference_domain):
 # solver.solve(Efunc.vector(), bh)
 
 
-class Simulation3D(object):
+class Simulation3D(Simulation):
     """Base class for 3D simulations"""
 
     def __init__(
