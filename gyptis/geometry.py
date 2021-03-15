@@ -900,7 +900,7 @@ class BoxPML3D(Geometry):
 
         self.fragment(self.box, self.pmls)
         #
-        
+
         self.add_physical(box, "box")
         self.add_physical(pmlx, "pmlx")
         self.add_physical(pmly, "pmly")

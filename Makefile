@@ -79,8 +79,9 @@ dev:
 
 ## Delete generated files
 clean: cleantest
-	@find . | grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" \
-	-not -path "./tests/data/*" | xargs rm -rf
+	@find . -not -path "./tests/data/*" \
+	| grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" \
+	| xargs rm -rf
 	@rm -rf .pytest_cache $(PROJECT_NAME).egg-info/ build/ dist/ tmp/ htmlcov/
 	cd docs && make clean
 
@@ -116,7 +117,7 @@ gl:
 	git add -A
 	@read -p "Enter commit message: " MSG; \
 	git commit -a -m "$$MSG"
-	git push origin master
+	git push origin $(git branch --show-current)
 
 ## Clean, reformat and push to gitlab
 save: clean style gl

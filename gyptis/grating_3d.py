@@ -185,7 +185,8 @@ class Grating3D(ElectroMagneticSimulation3D):
         # )
 
         self.periodic_bcs = BiPeriodicBoundary3D(
-            self.geometry.period, map_tol=self.periodic_map_tol,
+            self.geometry.period,
+            map_tol=self.periodic_map_tol,
         )
 
         self.complex_space = ComplexFunctionSpace(
@@ -231,7 +232,11 @@ class Grating3D(ElectroMagneticSimulation3D):
             }
         )
         self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config, self.lambda0, self.theta0, self.phi0, self.psi0,
+            config,
+            self.lambda0,
+            self.theta0,
+            self.phi0,
+            self.psi0,
         )
         self.Phi = [p[:6] for p in self.Phi]
 
@@ -269,7 +274,7 @@ class Grating3D(ElectroMagneticSimulation3D):
         self.annex_field = {"incident": inc_field, "stack": stack_field}
 
     def prepare(self):
-        self._prepare_materials(ref_material="box", pmls=True)
+        self._prepare_materials(ref_material="superstrate", pmls=True)
         self.make_stack()
         self.alpha0 = self.k0 * np.sin(self.theta0) * np.cos(self.phi0)
         self.beta0 = self.k0 * np.sin(self.theta0) * np.sin(self.phi0)
@@ -427,7 +432,9 @@ class Grating3D(ElectroMagneticSimulation3D):
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
     ):
         orders_num = np.linspace(
-            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
+            -self.N_d_order,
+            self.N_d_order,
+            2 * self.N_d_order + 1,
         )
 
         k, gamma = {}, {}

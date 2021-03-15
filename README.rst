@@ -21,7 +21,7 @@ GYPTIS
 Computational photonics in Python
 ---------------------------------
 
-https://gyptis.gitlab.io/gyptis/index.html
+https://gyptis.gitlab.io
 
 .. image:: docs/_assets/landing.png
    :align: center

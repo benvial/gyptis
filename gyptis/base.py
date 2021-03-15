@@ -83,7 +83,11 @@ class Simulation2D(Simulation):
     """Base class for 2D simulations"""
 
     def __init__(
-        self, geometry, degree=1, element="CG", boundary_conditions={},
+        self,
+        geometry,
+        degree=1,
+        element="CG",
+        boundary_conditions={},
     ):
         self.geometry = geometry
         self.dim = geometry.dim
@@ -146,7 +150,8 @@ class ElectroMagneticSimulation2D(Simulation2D):
             self.epsilon, self.mu, self.source_domains, ref_material
         )
         self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            self.epsilon_annex, self.mu_annex,
+            self.epsilon_annex,
+            self.mu_annex,
         )
         if self.polarization == "TE":
             self.xi, self.chi = _make_cst_mat(self.mu, self.epsilon)
@@ -332,7 +337,11 @@ class Simulation3D(Simulation):
     """Base class for 3D simulations"""
 
     def __init__(
-        self, geometry, degree=1, element="N1curl", boundary_conditions={},
+        self,
+        geometry,
+        degree=1,
+        element="N1curl",
+        boundary_conditions={},
     ):
         self.geometry = geometry
         self.dim = geometry.dim
@@ -434,27 +443,27 @@ class ElectroMagneticSimulation3D(Simulation3D):
     #     self._mu_annex = eps_annex
     #     self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)
     #     self.inv_mu_coeff_annex = _invert_3by3_complex_matrix(self.mu_coeff_annex)
-    # 
+    #
     #     self.inv_mu = make_constant_property(self.mu, inv=True)
     #     self.eps = make_constant_property(self.epsilon)
-    # 
+    #
     #     self.inv_mu_annex = make_constant_property(mu_annex, inv=True)
     #     self.eps_annex = make_constant_property(eps_annex)
-    # 
+    #
     # def _prepare_materials(self, ref_material, pmls=False):
     #     if pmls:
     #         self.epsilon_pml, self.mu_pml = self._make_pmls()
     #         self.epsilon.update(self.epsilon_pml)
     #         self.mu.update(self.mu_pml)
     #     self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
-    # 
+    #
     #     self.epsilon_annex, self.mu_annex = make_annex_materials(
     #         self.epsilon, self.mu, self.source_domains, ref_material
     #     )
     #     self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
     #         self.epsilon_annex, self.mu_annex,
     #     )
-    # 
+    #
 
     def _prepare_materials(self, ref_material, pmls=False):
         if pmls:
@@ -467,9 +476,10 @@ class ElectroMagneticSimulation3D(Simulation3D):
             self.epsilon, self.mu, self.source_domains, ref_material
         )
         self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            self._epsilon_annex, self._mu_annex,
+            self._epsilon_annex,
+            self._mu_annex,
         )
-        
+
         self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)
         self.inv_mu_coeff_annex = _invert_3by3_complex_matrix(self.mu_coeff_annex)
 

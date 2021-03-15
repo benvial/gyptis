@@ -15,7 +15,13 @@ from .sources import *
 
 class Scatt3D(ElectroMagneticSimulation3D):
     def __init__(
-        self, geometry, epsilon, mu, pml_stretch=1 - 1j, mat_degree=None, **kwargs,
+        self,
+        geometry,
+        epsilon,
+        mu,
+        pml_stretch=1 - 1j,
+        mat_degree=None,
+        **kwargs,
     ):
         super().__init__(geometry, epsilon, mu, **kwargs)
 
@@ -27,24 +33,31 @@ class Scatt3D(ElectroMagneticSimulation3D):
         self.complex_space = ComplexFunctionSpace(self.mesh, self.element, self.degree)
         self.real_space = dolfin.FunctionSpace(self.mesh, self.element, self.degree)
 
-
-        self.no_source_domains = [ 'box', 'pmlx', 'pmly', 'pmlz', 'pmlxy', 'pmlxz', 'pmlyz', 'pmlxyz']
+        self.no_source_domains = [
+            "box",
+            "pmlx",
+            "pmly",
+            "pmlz",
+            "pmlxy",
+            "pmlxz",
+            "pmlyz",
+            "pmlxyz",
+        ]
         self.source_domains = [
             z for z in self.epsilon.keys() if z not in self.no_source_domains
         ]
-
 
     def prepare(self):
         self._prepare_materials(ref_material="box", pmls=True)
         self.incident_field = plane_wave_3D(
             self.lambda0, self.theta0, self.phi0, self.psi0, domain=self.mesh
         )
-        e0 = {k:np.zeros(3) for k in self.epsilon.keys()}
+        e0 = {k: np.zeros(3) for k in self.epsilon.keys()}
         e0 = {"box": list(self.incident_field)}
         for dom in self.source_domains:
             e0[dom] = e0["box"]
         self.E0_coeff = Subdomain(
-            self.markers, self.domains, e0 , degree=self.mat_degree, domain=self.mesh
+            self.markers, self.domains, e0, degree=self.mat_degree, domain=self.mesh
         )
         self.alpha0 = self.k0 * np.sin(self.theta0) * np.cos(self.phi0)
         self.beta0 = self.k0 * np.sin(self.theta0) * np.sin(self.phi0)
@@ -61,8 +74,6 @@ class Scatt3D(ElectroMagneticSimulation3D):
             epsilon_pml["pml" + coord] = (self.epsilon["box"] * t).tolist()
             mu_pml["pml" + coord] = (self.mu["box"] * t).tolist()
         return epsilon_pml, mu_pml
-
-
 
     def weak_form(self):
         W = self.complex_space
@@ -95,7 +106,7 @@ class Scatt3D(ElectroMagneticSimulation3D):
             delta_inv_mu = self.inv_mu[d] - inv_mu_annex
             b = (
                 inner(delta_inv_mu * curl(self.incident_field), curl(Etest)),
-                -inner(delta_epsilon * self.incident_field, Etest) ,
+                -inner(delta_epsilon * self.incident_field, Etest),
             )
 
             self.rhs[d] = [t.real + t.imag for t in b]
