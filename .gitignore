@@ -96,3 +96,4 @@ docs/generated
 # include test data directory
 !./tests/data/
 !./tests/data/*
+!./tests/data/*msh
