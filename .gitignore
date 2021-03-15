@@ -86,6 +86,7 @@ auto_examples/
 .hypothesis/
 .coverage
 htmlcov/
+coverage.xml
 
 
 # Docs css (we use less to generate those):
