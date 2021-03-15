@@ -12,7 +12,7 @@ PROJECT_NAME = gyptis
 PYTHON_INTERPRETER = python3
 HOSTING = gitlab
 VERSION=$(shell python3 -c "import gyptis; print(gyptis.__version__)")
-BRANCH=$(git branch --show-current)
+BRANCH=$(shell git branch --show-current)
 URL=$(shell python3 -c "import gyptis; print(gyptis.__website__)")
 LESSC=$(PROJECT_DIR)/docs/node_modules/less/bin/lessc
 
@@ -119,6 +119,8 @@ gl:
 	@read -p "Enter commit message: " MSG; \
 	git commit -a -m "$$MSG"
 	git push origin $(BRANCH)
+	
+
 
 ## Clean, reformat and push to gitlab
 save: clean style gl
