@@ -26,7 +26,7 @@ before_script:
 test:
   stage: test
   script:
-    - pip install requirements-dev.txt
+    - pip install -r requirements-dev.txt
     - make test
     - coverage xml
   artifacts:
