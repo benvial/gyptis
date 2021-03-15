@@ -8,12 +8,12 @@ import time
 from pprint import pprint
 
 import matplotlib.pyplot as plt
+import pytest
 
 import gyptis
 from gyptis.grating_2d import *
 from gyptis.helpers import list_time, rot_matrix_2d
 from gyptis.plotting import *
-import pytest
 
 plt.ion()
 
@@ -64,9 +64,7 @@ mu = dict(
 
 index = dict()
 for (d, e), (d, m) in zip(epsilon.items(), mu.items()):
-    index[d] = np.mean(
-        (np.array(e).real.max() * np.array(m).real.max()) ** 0.5
-    ).real
+    index[d] = np.mean((np.array(e).real.max() * np.array(m).real.max()) ** 0.5).real
 index["pml_bottom"] = index["substrate"]
 index["pml_top"] = index["superstrate"]
 
@@ -86,9 +84,7 @@ model = Layered2D(period, thicknesses, kill=False)
 groove = model.layers["groove"]
 sublayer = model.layers["sublayer"]
 y0 = model.y_position["groove"]
-island = model.add_rectangle(
-    -island_width / 2, y0, 0, island_width, island_thickness
-)
+island = model.add_rectangle(-island_width / 2, y0, 0, island_width, island_thickness)
 island, sublayer, groove = model.fragment(island, [groove, sublayer])
 # island, sublayer = model.fragment(island, sublayer)
 # groove, sublayer = model.fragment(groove, sublayer)
@@ -106,9 +102,7 @@ mesh_size = dict(
         "pml_top": parmesh_pml,
     }
 )
-m = {
-    d: lambda0 / (s * i) for (d, s), (d, i) in zip(mesh_size.items(), index.items())
-}
+m = {d: lambda0 / (s * i) for (d, s), (d, i) in zip(mesh_size.items(), index.items())}
 
 model.set_mesh_size(m)
 #
@@ -123,6 +117,7 @@ model.add_physical(face_bottom, "face_bottom", dim=1)
 mesh_object = model.build()
 
 mesh = model.mesh_object["mesh"]
+
 
 @pytest.fixture
 def init():
@@ -148,10 +143,10 @@ def init():
 
 
 def test_TE(init):
-    
+
     g = init
     ctrl = g.ctrl
-    
+
     t = -time.time()
     g.solve()
 
@@ -178,7 +173,6 @@ def test_TE(init):
 
     t = -time.time()
 
-    
     effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
     pprint(effsTE)
 
@@ -197,15 +191,14 @@ def test_TE(init):
     fig, ax = plt.subplots(1, 2)
     W0 = dolfin.FunctionSpace(g.mesh, "CG", 2)
     plotcplx(g.solution["diffracted"], ax=ax, W0=W0)
-    
-    
+
     assert abs(effsTE["B"] - 1) < 1e-3
 
 
 def test_TM(init):
-    
+
     g = init
-    
+
     ctrl = g.ctrl
     ### TM polarization ####
 

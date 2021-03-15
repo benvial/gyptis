@@ -8,30 +8,30 @@ from collections import OrderedDict
 import numpy as np
 
 from . import ADJOINT, dolfin
+from .base import ElectroMagneticSimulation3D
 from .complex import *
 from .geometry import *
 from .helpers import BiPeriodicBoundary3D, DirichletBC
 from .materials import *
 from .sources import *
 from .stack import *
-from .base import ElectroMagneticSimulation3D
 
 pi = np.pi
 
 
-lu_params = {"report": True, "symmetric": False, "verbose": True}
-
-
-krylov_params = {
-    "absolute_tolerance": 1.0e-1,
-    "divergence_limit": 1000.0,
-    "error_on_nonconvergence": True,
-    "maximum_iterations": 500,
-    "monitor_convergence": True,
-    "nonzero_initial_guess": False,
-    "relative_tolerance": 1.0e-1,
-    "report": True,
-}
+# lu_params = {"report": True, "symmetric": False, "verbose": True}
+#
+#
+# krylov_params = {
+#     "absolute_tolerance": 1.0e-1,
+#     "divergence_limit": 1000.0,
+#     "error_on_nonconvergence": True,
+#     "maximum_iterations": 500,
+#     "monitor_convergence": True,
+#     "nonzero_initial_guess": False,
+#     "relative_tolerance": 1.0e-1,
+#     "report": True,
+# }
 
 
 # dolfin.set_log_level(10)
@@ -175,6 +175,11 @@ class Grating3D(ElectroMagneticSimulation3D):
         self.N_d_order = 0
         self.periodic_map_tol = periodic_map_tol
 
+        self.no_source_domains = ["substrate", "pml_top", "pml_bottom", "superstrate"]
+        self.source_domains = [
+            z for z in self.epsilon.keys() if z not in self.no_source_domains
+        ]
+
         # self.E0 = plane_wave_3D(
         #     self.lambda0, self.theta0, self.phi0, self.psi0, domain=self.mesh
         # )
@@ -200,7 +205,16 @@ class Grating3D(ElectroMagneticSimulation3D):
         phasor_im = dolfin.Expression("sin(gamma*x[2])", *args, **kwargs)
         return Complex(phasor_re, phasor_im)
 
-
+    def _make_pmls(self):
+        pml = PML("z", stretch=self.pml_stretch)
+        t = pml.transformation_matrix()
+        eps_pml_ = [
+            (self.epsilon[d] * t).tolist() for d in ["substrate", "superstrate"]
+        ]
+        mu_pml_ = [(self.mu[d] * t).tolist() for d in ["substrate", "superstrate"]]
+        epsilon_pml = dict(pml_bottom=eps_pml_[0], pml_top=eps_pml_[1])
+        mu_pml = dict(pml_bottom=mu_pml_[0], pml_top=mu_pml_[1])
+        return epsilon_pml, mu_pml
 
     def make_stack(self):
 
@@ -231,12 +245,12 @@ class Grating3D(ElectroMagneticSimulation3D):
         self.E_0 = field_stack_3D(self.Phi0, alpha0, beta0, gamma[0], domain=self.mesh)
         estack = {k: list(v) for k, v in zip(config.keys(), self.E_stack)}
 
-        for dom in self.source_dom:
+        for dom in self.source_domains:
             estack[dom] = estack["superstrate"]
         estack["pml_bottom"] = estack["pml_top"] = np.zeros(3)
 
         e0 = {"superstrate": list(self.E_0)}
-        for dom in self.source_dom:
+        for dom in self.source_domains:
             e0[dom] = e0["superstrate"]
         e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = np.zeros(3)
 
@@ -249,14 +263,13 @@ class Grating3D(ElectroMagneticSimulation3D):
         )
         inc_field = {}
         stack_field = {}
-        for dom in self.source_dom:
+        for dom in self.source_domains:
             inc_field[dom] = complex_vector(e0[dom])
             stack_field[dom] = complex_vector(estack[dom])
         self.annex_field = {"incident": inc_field, "stack": stack_field}
 
-
     def prepare(self):
-        self._prepare_materials()
+        self._prepare_materials(ref_material="box", pmls=True)
         self.make_stack()
         self.alpha0 = self.k0 * np.sin(self.theta0) * np.cos(self.phi0)
         self.beta0 = self.k0 * np.sin(self.theta0) * np.sin(self.phi0)
@@ -300,7 +313,7 @@ class Grating3D(ElectroMagneticSimulation3D):
                 inner(self.eps[d] * Etrial, Etest),
             )
             self.lhs[d] = [t.real + t.imag for t in L]
-        for d in self.source_dom:
+        for d in self.source_domains:
             if self.eps[d].real.ufl_shape == (3, 3):
                 eps_annex = tensor_const(np.eye(3) * self._epsilon_annex[d])
             else:
@@ -329,13 +342,12 @@ class Grating3D(ElectroMagneticSimulation3D):
 
     def assemble_rhs(self):
         self.bh = {}
-        for d in self.source_dom:
+        for d in self.source_domains:
             self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
 
     def assemble(self):
         self.assemble_lhs()
         self.assemble_rhs()
-        
 
     def build_system(self):
 
@@ -358,7 +370,7 @@ class Grating3D(ElectroMagneticSimulation3D):
         if ADJOINT:
             Ah.form = form
 
-        for i, d in enumerate(self.source_dom):
+        for i, d in enumerate(self.source_domains):
             bh_ = self.bh[d][0] + self.k0 ** 2 * self.bh[d][1]
             if ADJOINT:
                 form_ = self.bh[d][0].form + self.k0 ** 2 * self.bh[d][1].form
@@ -372,9 +384,9 @@ class Grating3D(ElectroMagneticSimulation3D):
                     form += form_
         if ADJOINT:
             bh.form = form
-        
-        self.matrix =Ah
-        self.vector =bh
+
+        self.matrix = Ah
+        self.vector = bh
 
     def solve_system(self, direct=True):
         self.E = dolfin.Function(self.complex_space)
@@ -400,19 +412,16 @@ class Grating3D(ElectroMagneticSimulation3D):
         self.solution["diffracted"] = E
         self.solution["total"] = Etot
 
-    # 
-    # 
-    # 
+    #
+    #
+    #
     # def solve(self, direct=True):
     #     self.prepare()
     #     self.weak_form()
     #     self.assemble()
     #     self.build_system()
     #     self.solve_system(direct=direct)
-    # 
-
-
-
+    #
 
     def diffraction_efficiencies(
         self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False

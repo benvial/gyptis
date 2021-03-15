@@ -64,7 +64,11 @@ class Scatt2D(ElectroMagneticSimulation2D):
         self._make_coefs()
         if self.source == "PW":
             self.u0, self.gradu0 = plane_wave_2D(
-                self.lambda0, self.theta0, degree=self.degree, domain=self.mesh, grad=True
+                self.lambda0,
+                self.theta0,
+                degree=self.degree,
+                domain=self.mesh,
+                grad=True,
             )
         else:
             self.u0, self.gradu0 = green_function_2D(
@@ -150,7 +154,10 @@ class Scatt2D(ElectroMagneticSimulation2D):
         self.bh.update(bh)
 
     def assemble(
-        self, domains=None, source_domains=None, pec_bnds=None,
+        self,
+        domains=None,
+        source_domains=None,
+        pec_bnds=None,
     ):
         domains = self.domains if domains is None else domains
         source_domains = (

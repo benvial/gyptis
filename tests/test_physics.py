@@ -11,8 +11,6 @@ from gyptis import dolfin
 from gyptis.physics import *
 from gyptis.plotting import *
 
-import pytest
-
 # dolfin.set_log_level(20)
 
 
@@ -60,10 +58,11 @@ def init():
 
     return s
 
+
 def test_scatt2D_TE_PW(init):
     s = init
     s.polarization = "TE"
-    
+
     s.prepare()
     s.weak_form()
     s.assemble()
@@ -82,11 +81,12 @@ def test_scatt2D_TE_PW(init):
     s.polarization = "TE"
     s.solve()
 
+
 def test_scatt2D_TE_LS(init):
     s = init
     s.polarization = "TE"
-    s.source="LS"
-    s.xs= (-2,-2)
+    s.source = "LS"
+    s.xs = (-2, -2)
     s.solve()
     s.plot_field()
     s.plot_geometry()
@@ -95,8 +95,8 @@ def test_scatt2D_TE_LS(init):
 def test_scatt2D_TM_LS(init):
     s = init
     s.polarization = "TM"
-    s.source="LS"
-    s.xs= (-2,-2)
+    s.source = "LS"
+    s.xs = (-2, -2)
     s.solve()
     s.plot_field()
     s.plot_geometry()

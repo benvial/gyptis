@@ -131,24 +131,26 @@ def test_api():
     g.build()
     return g
 
-# 
+
+#
 # import importlib
 # from gyptis import geometry
-# 
+#
 # importlib.reload(geometry)
-# 
+#
 # from gyptis.geometry import *
+
 
 def test_ellipse():
     g = Geometry(dim=2)
 
-    c1 = g.add_ellipse(0,0,0,0.2,0.4)
+    c1 = g.add_ellipse(0, 0, 0, 0.2, 0.4)
     # g.add_physical(c1,"kk")
 
-    c2 = g.add_ellipse(0,0,0,0.6,0.4)
-    c3 = g.add_ellipse(0,0,0,0.4,0.4)
+    c2 = g.add_ellipse(0, 0, 0, 0.6, 0.4)
+    c3 = g.add_ellipse(0, 0, 0, 0.4, 0.4)
 
-    g.build(0,1,0,0,0)
+    g.build(0, 1, 0, 0, 0)
 
     g = Geometry(dim=2)
 
@@ -159,7 +161,7 @@ def test_ellipse():
 
     c3 = g.Ellipse((-0.4, 0, 0), (0.1, 0.1))
     c4 = g.Ellipse((0.4, 0, 0), (0.1, 0.1))
-    a, b,c = c2 / (c3+c4)
+    a, b, c = c2 / (c3 + c4)
 
     a << "a"
     b << "b"
@@ -169,29 +171,28 @@ def test_ellipse():
 
     g.build()
 
-
     g = Geometry(dim=2)
 
     c1 = g.Circle((0, 0, 0), 1)
     # g.add_physical(c1,"kk")
-    c2=[]
-    for t in np.linspace(0,2*np.pi,13)[:-1]:
+    c2 = []
+    for t in np.linspace(0, 2 * np.pi, 13)[:-1]:
         c1 -= g.Ellipse((np.cos(t), np.sin(t), 0), (0.2, 0.2))
-        c1 /= g.Ellipse((0.5*np.cos(t), 0.5*np.sin(t), 0), (0.07, 0.07))
+        c1 /= g.Ellipse((0.5 * np.cos(t), 0.5 * np.sin(t), 0), (0.07, 0.07))
 
-        c2.append( c1[0])
+        c2.append(c1[0])
         print(len(c1))
         c1 = c1[1]
 
-    c2 = sum(c2[1:],start=c2[0])
+    c2 = sum(c2[1:], start=c2[0])
 
     print(c2.get_boundaries())
 
     c2 << "c2"
     c1 << "c1"
 
-
     g.build()
+
 
 def test_spline():
     g = Geometry(dim=2)

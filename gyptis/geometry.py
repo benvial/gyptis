@@ -9,9 +9,9 @@ Geometry definition using Gmsh api.
 For more information see Gmsh's `documentation <https://gmsh.info/doc/texinfo/gmsh.html>`_
 """
 
-
 import numbers
 import re
+import sys
 import tempfile
 from functools import wraps
 
@@ -21,8 +21,6 @@ import numpy as np
 from . import dolfin
 from .helpers import Measure
 from .mesh import read_mesh
-
-import sys
 
 _geometry_module = sys.modules[__name__]
 
@@ -160,9 +158,7 @@ class GeometryPrimitive(object):
     def __truediv__(self, other):
         op = self._get_geometry_method("fragment")
         ids, map = op(self.id, other.id, map=True)
-        out = [_[-1] for _ in map.pop()]
         new = []
-        # ids = out
         for id in ids:
             p = GeometryPrimitive(self.geometry)
             p.id = id
@@ -204,7 +200,7 @@ class _Circle(GeometryPrimitive):
     def __init__(self, geometry, center, radius, surface=True, name=None, **kwargs):
         """
         Circle(center, radius, surface=True, name=None, **kwargs)
-        
+
         Create and add a circle.
 
         Parameters
@@ -242,7 +238,7 @@ class _Rectangle(GeometryPrimitive):
     def __init__(self, geometry, corner, size, corner_radius=0.0, name=None, **kwargs):
         """
         Rectangle(corner, size, corner_radius=0.0, name=None)
-        
+
         Create and add a rectangle.
 
         Parameters
@@ -274,11 +270,12 @@ class _Rectangle(GeometryPrimitive):
             *self.corner, *self.size, roundedRadius=self.corner_radius, **kwargs
         )
 
+
 class _Ellipse(GeometryPrimitive):
     def __init__(self, geometry, center, radii, surface=True, name=None, **kwargs):
         """
         Ellipse(center, radii, surface=True, name=None, **kwargs)
-        
+
         Create and add an ellipse.
 
         Parameters
@@ -358,6 +355,7 @@ class Geometry(object):
         self.measure = {}
         self.mesh = {}
         self.markers = {}
+        self.verbose = verbose
 
         for object_name in dir(occ):
             if (
@@ -376,7 +374,6 @@ class Geometry(object):
         self._gmsh_add_spline = self.add_spline
         del self.add_spline
 
-
         if kill:
             try:
                 gmsh.finalize()
@@ -389,7 +386,7 @@ class Geometry(object):
         else:
             gmsh.initialize()
 
-        gmsh_options.set("General.Verbosity", verbose)
+        gmsh_options.set("General.Verbosity", self.verbose)
 
     @wraps(_Circle.__init__)
     def Circle(self, *args, **kwargs):
@@ -567,12 +564,6 @@ class Geometry(object):
                 n = id
             return _get_bnd(n, dim=dim)
 
-    # def get_boundaries(self, id, dim=None):
-    #     dim = dim if dim else self.dim
-    #
-    #     n = gmsh.model.getEntitiesForPhysicalGroup(dim, id)[0]
-    #     return _get_bnd(n, dim=dim)
-
     def _set_size(self, id, s, dim=None):
         dim = dim if dim else self.dim
         p = gmsh.model.getBoundary(
@@ -644,7 +635,7 @@ class Geometry(object):
             subdomain_dict=self.subdomains[sub_dim],
         )
 
-        ## exterior_facets
+        # exterior_facets
         if (marker_dim_minus_1 in self.mesh_object["markers"].keys()) and (
             sub_dim_dim_minus_1 in self.subdomains.keys()
         ):
@@ -655,7 +646,7 @@ class Geometry(object):
                 subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
             )
 
-            ## interior_facets
+            # interior_facets
 
             self.measure["dS"] = Measure(
                 "dS",
@@ -798,7 +789,7 @@ class BoxPML2D(Geometry):
         self.pmls = all_dom[1:]
 
         self.fragment(self.box, self.pmls)
-
+        self.add_physical(box, "box")
         self.add_physical([pmlxp, pmlxm], "pmlx")
         self.add_physical([pmlyp, pmlym], "pmly")
         self.add_physical([pmlxypp, pmlxypm, pmlxymm, pmlxymp], "pmlxy")
@@ -909,7 +900,8 @@ class BoxPML3D(Geometry):
 
         self.fragment(self.box, self.pmls)
         #
-
+        
+        self.add_physical(box, "box")
         self.add_physical(pmlx, "pmlx")
         self.add_physical(pmly, "pmly")
         self.add_physical(pmlz, "pmlz")

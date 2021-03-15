@@ -10,7 +10,6 @@ from scipy.special import jv as scipy_besselj
 from sympy.vector import CoordSys3D
 
 from gyptis.complex import *
-
 from gyptis.complex import grad as gradc
 
 N = CoordSys3D("N")

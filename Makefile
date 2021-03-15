@@ -87,7 +87,7 @@ clean: cleantest
 
 ## Lint using flake8
 lint:
-	flake8 --exit-zero setup.py $(PROJECT_NAME)/ tests/*.py examples/
+	flake8 --exit-zero --ignore=E501 setup.py $(PROJECT_NAME)/ tests/*.py examples/
 
 ## Check for duplicated code
 dup:
@@ -155,7 +155,7 @@ doc-noplot: less
 
 
 ## Show locally built html doc in a browser
-showhtmldoc:
+showdoc:
 	cd docs && make show
 
 

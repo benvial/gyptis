@@ -3,42 +3,47 @@
 # Author: Benjamin Vial
 # License: MIT
 
+from abc import ABC, abstractmethod
+
 import numpy as np
 from scipy.constants import c, epsilon_0, mu_0
 
-from .complex import _invert_3by3_complex_matrix
 from . import ADJOINT, dolfin
 from .complex import *
+from .complex import _invert_3by3_complex_matrix
 from .geometry import *
 from .materials import *
 from .sources import *
 
 
-from abc import ABC,abstractmethod 
+class Simulation(ABC):
+    @abstractmethod
+    def prepare(self):
+        pass
 
-class Simulation(ABC): 
     @abstractmethod
-    def prepare(self): 
+    def weak_form(self):
         pass
+
     @abstractmethod
-    def weak_form(self): 
+    def assemble(self):
         pass
+
     @abstractmethod
-    def assemble(self): 
+    def build_system(self):
         pass
+
     @abstractmethod
-    def build_system(self): 
+    def solve_system(self):
         pass
-    @abstractmethod
-    def solve_system(self): 
-        pass
-        
+
     def solve(self, direct=True):
         self.prepare()
         self.weak_form()
         self.assemble()
         self.build_system()
         self.solve_system(direct=direct)
+
 
 #
 # lu_params = {"report": True, "symmetric": False, "verbose": True}
@@ -350,7 +355,7 @@ class Simulation3D(Simulation):
         self.boundary_conditions = boundary_conditions
         self.unit_normal_vector = dolfin.FacetNormal(self.mesh)
         self.source_domains = []
-        
+
         self.unit_vectors = (
             as_vector([1.0, 0.0, 0.0]),
             as_vector([0.0, 1.0, 0.0]),
@@ -362,15 +367,7 @@ class ElectroMagneticSimulation3D(Simulation3D):
     """Base class for 3D electromagnetic simulations"""
 
     def __init__(
-        self,
-        geometry,
-        epsilon,
-        mu,
-        lambda0=1,
-        theta0=0,
-        phi0=0,
-        psi0=0,
-        **kwargs
+        self, geometry, epsilon, mu, lambda0=1, theta0=0, phi0=0, psi0=0, **kwargs
     ):
         super().__init__(geometry, **kwargs)
         self.lambda0 = lambda0
@@ -387,7 +384,7 @@ class ElectroMagneticSimulation3D(Simulation3D):
     @property
     def omega(self):
         return self.k0 * c
-        
+
     def _make_subdomains(self, epsilon, mu):
         epsilon_coeff = Subdomain(
             self.markers, self.domains, epsilon, degree=self.mat_degree
@@ -416,47 +413,68 @@ class ElectroMagneticSimulation3D(Simulation3D):
             )
             [self._boundary_conditions.append(b) for b in bc]
 
+    # def _prepare_materials(self):
+    #     epsilon = dict(superstrate=1, substrate=1)
+    #     mu = dict(superstrate=1, substrate=1)
+    #     epsilon.update(self.epsilon)
+    #     mu.update(self.mu)
+    #     self.epsilon_pml, self.mu_pml = self._make_pmls()
+    #     self.epsilon.update(self.epsilon_pml)
+    #     self.mu.update(self.mu_pml)
+    #     self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
+    #     mu_annex = self.mu.copy()
+    #     eps_annex = self.epsilon.copy()
+    #     for a in self.source_dom:
+    #         mu_annex[a] = self.mu["superstrate"]
+    #         eps_annex[a] = self.epsilon["superstrate"]
+    #     self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
+    #         eps_annex, mu_annex
+    #     )
+    #     self._epsilon_annex = eps_annex
+    #     self._mu_annex = eps_annex
+    #     self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)
+    #     self.inv_mu_coeff_annex = _invert_3by3_complex_matrix(self.mu_coeff_annex)
+    # 
+    #     self.inv_mu = make_constant_property(self.mu, inv=True)
+    #     self.eps = make_constant_property(self.epsilon)
+    # 
+    #     self.inv_mu_annex = make_constant_property(mu_annex, inv=True)
+    #     self.eps_annex = make_constant_property(eps_annex)
+    # 
+    # def _prepare_materials(self, ref_material, pmls=False):
+    #     if pmls:
+    #         self.epsilon_pml, self.mu_pml = self._make_pmls()
+    #         self.epsilon.update(self.epsilon_pml)
+    #         self.mu.update(self.mu_pml)
+    #     self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
+    # 
+    #     self.epsilon_annex, self.mu_annex = make_annex_materials(
+    #         self.epsilon, self.mu, self.source_domains, ref_material
+    #     )
+    #     self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
+    #         self.epsilon_annex, self.mu_annex,
+    #     )
+    # 
 
-    def _prepare_materials(self):
-        epsilon = dict(superstrate=1, substrate=1)
-        mu = dict(superstrate=1, substrate=1)
-        epsilon.update(self.epsilon)
-        mu.update(self.mu)
-        self.epsilon_pml, self.mu_pml = self._make_pmls()
-        self.epsilon.update(self.epsilon_pml)
-        self.mu.update(self.mu_pml)
+    def _prepare_materials(self, ref_material, pmls=False):
+        if pmls:
+            self.epsilon_pml, self.mu_pml = self._make_pmls()
+            self.epsilon.update(self.epsilon_pml)
+            self.mu.update(self.mu_pml)
         self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
 
-        self.no_source_dom = ["substrate", "pml_top", "pml_bottom", "superstrate"]
-        self.source_dom = [
-            z for z in self.epsilon.keys() if z not in self.no_source_dom
-        ]
-        mu_annex = self.mu.copy()
-        eps_annex = self.epsilon.copy()
-        for a in self.source_dom:
-            mu_annex[a] = self.mu["superstrate"]
-            eps_annex[a] = self.epsilon["superstrate"]
-        self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            eps_annex, mu_annex
+        self._epsilon_annex, self._mu_annex = make_annex_materials(
+            self.epsilon, self.mu, self.source_domains, ref_material
         )
-        self._epsilon_annex = eps_annex
-        self._mu_annex = eps_annex
+        self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
+            self._epsilon_annex, self._mu_annex,
+        )
+        
         self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)
         self.inv_mu_coeff_annex = _invert_3by3_complex_matrix(self.mu_coeff_annex)
 
         self.inv_mu = make_constant_property(self.mu, inv=True)
         self.eps = make_constant_property(self.epsilon)
 
-        self.inv_mu_annex = make_constant_property(mu_annex, inv=True)
-        self.eps_annex = make_constant_property(eps_annex)
-
-    def _make_pmls(self):
-        pml = PML("z", stretch=self.pml_stretch)
-        t = pml.transformation_matrix()
-        eps_pml_ = [
-            (self.epsilon[d] * t).tolist() for d in ["substrate", "superstrate"]
-        ]
-        mu_pml_ = [(self.mu[d] * t).tolist() for d in ["substrate", "superstrate"]]
-        epsilon_pml = dict(pml_bottom=eps_pml_[0], pml_top=eps_pml_[1])
-        mu_pml = dict(pml_bottom=mu_pml_[0], pml_top=mu_pml_[1])
-        return epsilon_pml, mu_pml
+        self.inv_mu_annex = make_constant_property(self._mu_annex, inv=True)
+        self.eps_annex = make_constant_property(self._epsilon_annex)

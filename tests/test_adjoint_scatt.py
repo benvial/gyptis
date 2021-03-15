@@ -2,6 +2,7 @@
 # from df_adjoint import *
 
 import time
+
 import gyptis
 from gyptis import dolfin as df
 from gyptis.complex import *
@@ -186,8 +187,6 @@ def test_simu_TM():
 
 def test_simu_TE():
     _test_simu("TE")
-
-
 
 
 def check_taylor_test(s, polarization):

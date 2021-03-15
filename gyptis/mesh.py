@@ -3,9 +3,11 @@
 # Author: Benjamin Vial
 # License: MIT
 
+import tempfile
+
 import meshio
 import numpy as np
-import tempfile
+
 from . import dolfin
 
 
@@ -34,13 +36,11 @@ def read_mesh(mesh_file, data_dir=None, dim=3):
         meshio.xdmf.write(f"{data_dir}/{cell_type}.xdmf", meshio_data)
         mesh_data[cell_type] = meshio_data
 
-
     dolfin_mesh = dolfin.Mesh()
 
     cell_type = "tetra" if dim == 3 else "triangle"
     with dolfin.XDMFFile(f"{data_dir}/{cell_type}.xdmf") as infile:
         infile.read(dolfin_mesh)
-
 
     markers = {}
 
@@ -51,9 +51,7 @@ def read_mesh(mesh_file, data_dir=None, dim=3):
             infile.read(mvc, cell_type)
         markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
 
-
-    return  dict(mesh=dolfin_mesh, markers=markers)
-
+    return dict(mesh=dolfin_mesh, markers=markers)
 
 
 class MarkedMesh(object):
@@ -61,7 +59,7 @@ class MarkedMesh(object):
         self.data_dir = data_dir
         self.geometric_dimension = geometric_dimension
         self.filename = filename
-        
+
         data_dir = data_dir or tempfile.mkdtemp()
         dic = read_mesh(filename, dim=geometric_dimension, data_dir=data_dir)
         self.mesh = dic["mesh"]
