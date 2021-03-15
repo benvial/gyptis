@@ -78,7 +78,7 @@ dev:
 
 
 ## Delete generated files
-clean:
+clean: cleantest
 	@find . | grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
 	@rm -rf .pytest_cache $(PROJECT_NAME).egg-info/ build/ dist/ tmp/ htmlcov/
 	cd docs && make clean
@@ -161,7 +161,7 @@ showhtmldoc:
 
 ## clean test coverage reports
 cleantest:
-	rm -rf .coverage htmlcov
+	rm -rf .coverage* htmlcov coverage.xml
 
 ## Run the test suite
 test: cleantest
