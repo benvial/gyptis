@@ -9,11 +9,15 @@ stages:
 container:
   stage: trigdocker
   trigger: gyptis/docker
+  only:
+    - master
   
 
 staging:
   stage: trigdoc
   trigger: gyptis/gyptis.gitlab.io
+  only:
+    - master
 
 before_script:
   - source ~/.bashrc
