@@ -26,9 +26,12 @@ before_script:
 test:
   stage: test
   script:
-    - pip install pytest pytest-cov coverage
+    - pip install requirements-dev.txt
     - make test
     - coverage xml
   artifacts:
     reports:
       cobertura: coverage.xml
+
+  only:
+    - master
