@@ -19,13 +19,12 @@ staging:
   only:
     - master
 
-before_script:
-  - source ~/.bashrc
-  - pip install -e .
 
 test:
   stage: test
   script:
+    - source ~/.bashrc
+    - pip install -e .
     - pip install -r requirements-dev.txt
     - make test
     - coverage xml

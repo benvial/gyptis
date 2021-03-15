@@ -22,6 +22,14 @@ HAS_CONDA=True
 endif
 
 
+ifdef TEST_PARALLEL
+TEST_ARGS=-n auto --dist loadscope
+endif
+
+
+ # -n auto --dist loadscope
+
+
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -151,15 +159,23 @@ showhtmldoc:
 	cd docs && make show
 
 
-## Run the test suite
-test:
+## clean test coverage reports
+cleantest:
 	rm -rf .coverage htmlcov
-	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests --cov=./$(PROJECT_NAME) --cov-report term -n auto --dist loadscope
-	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests --cov=./$(PROJECT_NAME) \
-	--cov-append --cov-report term --cov-report html --cov-report xml  -n auto
-	
-	
-	
+
+## Run the test suite
+test: cleantest
+	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests \
+	--cov=./$(PROJECT_NAME) --cov-report term $(TEST_ARGS)
+	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests \
+	--cov=./$(PROJECT_NAME) --cov-append --cov-report term \
+	--cov-report html --cov-report xml  $(TEST_ARGS)
+
+## Run the test suite
+testpara:
+	make test TEST_PARALLEL=1
+
+
 # 
 # ## Run performance test
 # perf:
