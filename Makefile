@@ -79,10 +79,10 @@ dev:
 
 ## Delete generated files
 clean: cleantest
-	@find . | grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
+	@find . | grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" \
+	-not -path "./tests/data/*" | xargs rm -rf
 	@rm -rf .pytest_cache $(PROJECT_NAME).egg-info/ build/ dist/ tmp/ htmlcov/
 	cd docs && make clean
-	rm -rf .coverage htmlcov coverage.xml
 
 
 ## Lint using flake8

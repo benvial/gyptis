@@ -128,7 +128,6 @@ def test_api():
     # # occ.synchronize()
     #
     # g.dim = 3
-
     g.build()
     return g
 

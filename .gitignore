@@ -91,3 +91,7 @@ htmlcov/
 # Docs css (we use less to generate those):
 docs/_custom/static/css/*.css
 docs/generated
+
+
+# include test data directory
+!./tests/data/
