@@ -302,16 +302,6 @@ class ComplexFunctionSpace(dolfin.FunctionSpace):
         super().__init__(super().mesh(), element * element, **kwargs)
 
 
-class DirichletBC(__DirichletBC__):
-    def __new__(self, *args, **kwargs):
-        W = args[0]
-        value = args[1]
-        Wre, Wim = W.split()
-        bcre = __DirichletBC__(Wre, value.real, *args[2:], **kwargs)
-        bcim = __DirichletBC__(Wim, value.imag, *args[2:], **kwargs)
-        return bcre, bcim
-
-
 def _cplx_iter(f):
     def wrapper(v, *args, **kwargs):
         iterable = isinstance(v, Iterable)

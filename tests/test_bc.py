@@ -9,6 +9,8 @@ from test_geometry import geom2D
 
 from gyptis import dolfin
 from gyptis.bc import *
+from gyptis.bc import _DirichletBC
+from gyptis.complex import *
 
 model = geom2D(mesh_size=0.01)
 
@@ -23,8 +25,8 @@ def test_dirichlet(model=model, tol=1e-13):
 
     ubnd = dolfin.project(dolfin.Expression("x[0]", degree=2), W)
 
-    bc1 = DirichletBC(W, 1, markers_line, "outer_bnds", boundaries_dict)
-    bc2 = DirichletBC(W, ubnd, markers_line, "cyl_bnds", boundaries_dict)
+    bc1 = _DirichletBC(W, 1, markers_line, "outer_bnds", boundaries_dict)
+    bc2 = _DirichletBC(W, ubnd, markers_line, "cyl_bnds", boundaries_dict)
     u = dolfin.TrialFunction(W)
     v = dolfin.TestFunction(W)
     a = dolfin.inner(dolfin.grad(u), dolfin.grad(v)) * dx + u * v * dx

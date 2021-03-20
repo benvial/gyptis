@@ -232,12 +232,20 @@ test: cleantest
 	--cov=./$(PROJECT_NAME) --cov-report term $(TEST_ARGS)
 	@export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests \
 	--cov=./$(PROJECT_NAME) --cov-append --cov-report term \
-	--cov-report html --cov-report xml  $(TEST_ARGS)
+	--cov-report html --cov-report xml $(TEST_ARGS)
 
 ## Run the test suite (parallel)
 testpara: cleantest
 	$(call message,${@})
 	@make -s test TEST_PARALLEL=1
+	
+
+## Copy the coverage html into documentation
+covdoc:
+	$(call message,${@})
+	@ls docs/_build/html/ || make doc
+	@ls htmlcov/ || make -s test && mv htmlcov/ docs/_build/html/coverage/
+	
 
 ## Tag and push tags
 tag: banner

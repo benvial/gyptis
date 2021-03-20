@@ -9,6 +9,7 @@ import pytest
 
 import gyptis
 from gyptis import dolfin
+from gyptis.bc import DirichletBC
 from gyptis.complex import *
 
 np.random.seed(1234)

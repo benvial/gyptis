@@ -31,3 +31,5 @@ test:
   artifacts:
     reports:
       cobertura: coverage.xml
+  only:
+    - master

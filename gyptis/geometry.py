@@ -727,7 +727,7 @@ class Geometry(object):
     def plot_subdomains(self, **kwargs):
         from .plotting import plot_subdomains
 
-        return plot_subdomains(self.markers["triangle"], **kwargs)
+        return plot_subdomains(self.markers, **kwargs)
 
     def add(self, primittive):
         primittive.add(self)

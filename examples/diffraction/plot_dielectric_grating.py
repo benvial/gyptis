@@ -49,12 +49,13 @@ thicknesses = OrderedDict(
 # ``parmesh`` cells per wavelength of the field inide each media
 
 pmesh = 10
+pmesh_rod = pmesh * 2
 mesh_param = dict(
     {
         "pml_bottom": 0.7 * pmesh,
         "substrate": pmesh,
         "groove": pmesh,
-        "rod": pmesh * n_rod,
+        "rod": pmesh_rod * n_rod,
         "superstrate": pmesh,
         "pml_top": 0.7 * pmesh,
     }

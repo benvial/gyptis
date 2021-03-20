@@ -7,7 +7,7 @@
 from . import dolfin
 
 
-class DirichletBC(dolfin.DirichletBC):
+class _DirichletBC(dolfin.DirichletBC):
     def __init__(self, *args, **kwargs):
         self.subdomain_dict = args[-1]
         if not callable(args[2]):
@@ -15,6 +15,16 @@ class DirichletBC(dolfin.DirichletBC):
             args[-2] = self.subdomain_dict[args[-2]]
             args = tuple(args[:-1])
         super().__init__(*args)
+
+
+class DirichletBC:
+    def __new__(self, *args, **kwargs):
+        W = args[0]
+        value = args[1]
+        Wre, Wim = W.split()
+        bcre = _DirichletBC(Wre, value.real, *args[2:], **kwargs)
+        bcim = _DirichletBC(Wim, value.imag, *args[2:], **kwargs)
+        return bcre, bcim
 
 
 class PeriodicBoundary2DX(dolfin.SubDomain):

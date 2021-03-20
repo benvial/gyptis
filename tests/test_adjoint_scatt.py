@@ -10,8 +10,8 @@ from gyptis.geometry import *
 from gyptis.helpers import *
 from gyptis.materials import *
 from gyptis.optimize import *
-from gyptis.physics import *
 from gyptis.plotting import *
+from gyptis.scattering_2d import *
 
 plt.ion()
 
