@@ -1,3 +1,7 @@
+"""
+Information about the package.
+"""
+
 from datetime import date
 
 __version__ = "0.0.2"

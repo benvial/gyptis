@@ -14,17 +14,11 @@ from PIL import Image
 
 from . import ADJOINT
 from .base import *
-from .base import _coefs, _make_cst_mat
-from .helpers import DirichletBC, PeriodicBoundary2DX
+from .bc import DirichletBC, PeriodicBoundary2DX
+from .helpers import _translation_matrix
 from .stack import *
 
 # dolfin.set_log_level(20)
-
-
-def _translation_matrix(t):
-    M = np.eye(4)
-    M[:3, -1] = t
-    return M.ravel().tolist()
 
 
 class Layered2D(Geometry):
@@ -263,7 +257,6 @@ class Grating2D(ElectroMagneticSimulation2D):
             degree=self.degree, domain=self.mesh, alpha=self.alpha
         )
         self._prepare_materials(ref_material="superstrate", pmls=True)
-        self._make_coefs()
         self.make_stack()
         self._prepare_bcs()
 

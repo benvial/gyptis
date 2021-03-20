@@ -4,6 +4,8 @@
 # License: MIT
 
 
+import copy
+
 import numpy as np
 
 from gyptis.complex import *
@@ -14,9 +16,13 @@ class PML(object):
         self,
         direction="x",
         stretch=1 - 1j,
+        matched_domain=None,
+        applied_domain=None,
     ):
         self.direction = direction
         self.stretch = stretch
+        self.matched_domain = matched_domain
+        self.applied_domain = applied_domain
 
     @property
     def direction(self):
@@ -92,11 +98,11 @@ class _SubdomainCpp(dolfin.CompiledExpression):
         self.mapping = mapping
 
 
-def flatten_list(k):
+def _flatten_list(k):
     result = list()
     for i in k:
         if isinstance(i, list):
-            result.extend(flatten_list(i))  # Recursive call
+            result.extend(_flatten_list(i))  # Recursive call
         else:
             result.append(i)
     return result
@@ -168,7 +174,7 @@ def _dic2list(dic):
     dnew = {}
     L = []
     for k, v in dic.items():
-        vflat = flatten_list(v)
+        vflat = _flatten_list(v)
         L.append(_fldict(k, vflat))
     L = np.reshape(L, (nb_keys, np.product(N))).T
     o = []
@@ -226,7 +232,7 @@ class SubdomainTensorComplex(object):
 class Subdomain(object):
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         iterable = any([isiter(v) for v in mapping.values()])
-        flatvals = flatten_list(mapping.values())
+        flatvals = _flatten_list(mapping.values())
         cplx = any([iscomplex(v) and np.any(v.imag != 0) for v in flatvals])
         if iterable:
             ClassReturn = SubdomainTensorComplex if cplx else SubdomainTensorReal
@@ -235,7 +241,7 @@ class Subdomain(object):
         return ClassReturn(markers, subdomains, mapping, cpp=cpp, **kwargs)
 
 
-def _tensor_const(T, real=False):
+def _tensor_const_3d(T, real=False):
     def _treal(T):
         m = []
         for i in range(3):
@@ -254,24 +260,31 @@ def _tensor_const(T, real=False):
 
 def tensor_const(T, dim=3, real=False):
     if dim == 3:
-        return _tensor_const(T, real=real)
+        return _tensor_const_3d(T, real=real)
     elif dim == 2:
-        return tensor_const_2d(T, real=real)
+        return _tensor_const_2d(T, real=real)
     else:
         raise NotImplementedError("only supports dim = 2 or 3")
 
 
-def make_constant_property(prop, inv=False):
+def _check_len(p):
+    if hasattr(p, "__len__"):
+        try:
+            lenp = len(p)
+        except NotImplementedError:
+            lenp = 0
+        return lenp
+    else:
+        return 0
+
+
+def _make_constant_property_3d(prop, inv=False, real=False):
     new_prop = {}
     for d, p in prop.items():
-        if hasattr(p, "__len__"):
-            try:
-                lenp = len(p)
-            except NotImplementedError:
-                lenp = 1
-        if hasattr(p, "__len__") and lenp > 1:
+        lenp = _check_len(p)
+        if lenp > 0:
             k = np.linalg.inv(np.array(p)) if inv else np.array(p)
-            new_prop[d] = tensor_const(k)
+            new_prop[d] = tensor_const(k, dim=3, real=real)
         else:
             k = 1 / p + 0j if inv else p + 0j
             if callable(k):
@@ -281,7 +294,35 @@ def make_constant_property(prop, inv=False):
     return new_prop
 
 
-def tensor_const_2d(T, real=False):
+def _make_constant_property_2d(prop, inv=False, real=False):
+    new_prop = {}
+    for d, p in prop.items():
+        lenp = _check_len(p)
+        if lenp > 0:
+            p = np.array(p)
+            if p.shape != (2, 2):
+                p = p[:2, :2]
+            k = np.array(p)
+            new_prop[d] = tensor_const(k, dim=2, real=real)
+        else:
+            k = p + 0j
+            if callable(k):
+                new_prop[d] = k
+            else:
+                new_prop[d] = Constant(k)
+    return new_prop
+
+
+def make_constant_property(*args, dim=3, **kwargs):
+    if dim == 3:
+        return _make_constant_property_3d(*args, **kwargs)
+    elif dim == 2:
+        return _make_constant_property_2d(*args, **kwargs)
+    else:
+        raise NotImplementedError("only supports dim = 2 or 3")
+
+
+def _tensor_const_2d(T, real=False):
     def _treal(T):
         m = []
         for i in range(2):
@@ -298,29 +339,6 @@ def tensor_const_2d(T, real=False):
         return _treal(T)
 
 
-def make_constant_property_2d(prop):
-    new_prop = {}
-    for d, p in prop.items():
-        if hasattr(p, "__len__"):
-            try:
-                lenp = len(p)
-            except NotImplementedError:
-                lenp = 1
-        if hasattr(p, "__len__") and lenp > 1:
-            p = np.array(p)
-            if p.shape != (2, 2):
-                p = p[:2, :2]
-            k = np.array(p)
-            new_prop[d] = tensor_const_2d(k)
-        else:
-            k = p + 0j
-            if callable(k):
-                new_prop[d] = k
-            else:
-                new_prop[d] = Constant(k)
-    return new_prop
-
-
 def complex_vector(V):
     return Complex(
         dolfin.as_tensor([q.real for q in V]), dolfin.as_tensor([q.imag for q in V])
@@ -328,15 +346,11 @@ def complex_vector(V):
 
 
 ## xi
-def get_xi(prop):
+def _get_xi(prop):
     new_prop = {}
     for d, p in prop.items():
-        if hasattr(p, "__len__"):
-            try:
-                lenp = len(p)
-            except NotImplementedError:
-                lenp = 1
-        if hasattr(p, "__len__") and lenp > 1:
+        lenp = _check_len(p)
+        if lenp > 0:
             p = np.array(p)
             k = p[:2, :2].T
             k /= np.linalg.det(k)
@@ -347,15 +361,11 @@ def get_xi(prop):
 
 
 ## chi
-def get_chi(prop):
+def _get_chi(prop):
     new_prop = {}
     for d, p in prop.items():
-        if hasattr(p, "__len__"):
-            try:
-                lenp = len(p)
-            except NotImplementedError:
-                lenp = 1
-        if hasattr(p, "__len__") and lenp > 1:
+        lenp = _check_len(p)
+        if lenp > 0:
             p = np.array(p)
             k = p[2, 2]
         else:
@@ -364,11 +374,116 @@ def get_chi(prop):
     return new_prop
 
 
-#
-#
-# xi = get_xi(g.epsilon)
-# chi = get_chi(g.mu)
-#
-#
-# xi_ = make_constant_property_2d(xi)
-# chi_ = make_constant_property_2d(chi)
+def _invert_3by3_complex_matrix(m):
+    m1, m2, m3, m4, m5, m6, m7, m8, m9 = [m[i][j] for i in range(3) for j in range(3)]
+
+    determinant = (
+        m1 * m5 * m9
+        + m4 * m8 * m3
+        + m7 * m2 * m6
+        - m1 * m6 * m8
+        - m3 * m5 * m7
+        - m2 * m4 * m9
+    )
+    inv = [
+        [m5 * m9 - m6 * m8, m3 * m8 - m2 * m9, m2 * m6 - m3 * m5],
+        [m6 * m7 - m4 * m9, m1 * m9 - m3 * m7, m3 * m4 - m1 * m6],
+        [m4 * m8 - m5 * m7, m2 * m7 - m1 * m8, m1 * m5 - m2 * m4],
+    ]
+    # inv_df = dolfin.as_tensor(inv)
+    invre = np.zeros((3, 3), dtype=object)
+    invim = np.zeros((3, 3), dtype=object)
+    for i in range(3):
+        for j in range(3):
+            q = inv[i][j] / determinant
+            invre[i, j] = q.real
+            invim[i, j] = q.imag
+    invre = invre.tolist()
+    invim = invim.tolist()
+
+    return Complex(dolfin.as_tensor(invre), dolfin.as_tensor(invim))
+
+
+def _make_cst_mat(a, b):
+    xi = _get_xi(a)
+    chi = _get_chi(b)
+    xi_ = make_constant_property(xi, dim=2)
+    chi_ = make_constant_property(chi, dim=2)
+    return xi_, chi_
+
+
+def _coefs(a, b):
+    # xsi = det Q^T/det Q
+    extract = lambda q: dolfin.as_tensor([[q[0][0], q[1][0]], [q[0][1], q[1][1]]])
+    det = lambda M: M[0][0] * M[1][1] - M[1][0] * M[0][1]
+    a2 = Complex(extract(a.real), extract(a.imag))
+    xi = a2 / det(a2)
+    chi = b[2][2]
+    return xi, chi
+
+
+class Coefficient:
+    def __init__(self, dict, geometry=None, pmls=[]):
+        self.dict = dict
+        self.geometry = geometry
+        self.pmls = pmls
+        if geometry:
+            self.markers = geometry.mesh_object["markers"]["triangle"]
+            self.mapping = geometry.subdomains["surfaces"]
+
+        # if pmls:
+        #     for pml in pmls
+        # if pml:
+        #     assert
+
+    def build_pmls(self):
+        new_material_dict = self.dict.copy()
+        for pml in self.pmls:
+            t = np.array(pml.transformation_matrix())
+            eps_pml = (self.dict[pml.matched_domain] * t).tolist()
+            new_material_dict[pml.applied_domain] = eps_pml
+        return new_material_dict
+
+    def build_annex(self, domains, reference):
+        assert reference in self.dict.keys()
+        annex_material_dict = self.dict.copy()
+        for dom in domains:
+            assert dom in self.dict.keys()
+            annex_material_dict[dom] = self.dict[reference]
+        annex_material_dict
+        annex = copy.copy(self)
+        annex.dict = annex_material_dict
+        return annex
+
+    def appy_pmls(self):
+        self.dict.update(self.build_pmls())
+
+    def as_subdomain(self, degree=1):
+        return Subdomain(self.markers, self.mapping, self.dict, degree=degree)
+
+    def as_property(self, **kwargs):
+        return make_constant_property(self.dict, **kwargs)
+
+    def to_xi(self):
+        new = copy.copy(self)
+        new.dict = _get_xi(self.dict)
+        return new
+
+    def to_chi(self):
+        new = copy.copy(self)
+        new.dict = _get_chi(self.dict)
+        return new
+
+    def plot(self, component=None, **kwargs):
+
+        from gyptis.plotting import plot, plotcplx
+
+        proj_space = dolfin.FunctionSpace(self.geometry.mesh_object["mesh"], "DG", 0)
+        eps_subdomain = self.as_subdomain()
+        eps_plot = (
+            eps_subdomain
+            if component is None
+            else eps_subdomain[component[0]][component[1]]
+        )
+        pltfunction = plotcplx if iscomplex(eps_plot) else plot
+        return pltfunction(eps_plot, proj_space=proj_space, **kwargs)

@@ -19,7 +19,7 @@ import gmsh
 import numpy as np
 
 from . import dolfin
-from .helpers import Measure
+from .measure import Measure
 from .mesh import read_mesh
 
 _geometry_module = sys.modules[__name__]
@@ -657,6 +657,28 @@ class Geometry(object):
 
         self.mesh = self.mesh_object["mesh"]
         self.markers = self.mesh_object["markers"]
+
+        if self.dim == 2:
+            self.domains = self.subdomains["surfaces"]
+            self.boundaries = self.subdomains["curves"]
+            self.lines = {}
+            self.points = self.subdomains["points"]
+            self.markers = self.mesh_object["markers"]["triangle"]
+            self.boundary_markers = (
+                self.mesh_object["markers"]["line"] if self.boundaries else []
+            )
+
+        else:
+            self.domains = self.subdomains["volumes"]
+            self.boundaries = self.subdomains["surfaces"]
+            self.lines = self.subdomains["curves"]
+            self.points = self.subdomains["points"]
+            self.markers = self.mesh_object["markers"]["tetra"]
+            self.boundary_markers = (
+                self.mesh_object["markers"]["triangle"] if self.boundaries else []
+            )
+
+        self.unit_normal_vector = dolfin.FacetNormal(self.mesh)
 
     @property
     def msh_file(self):

@@ -10,7 +10,6 @@ import numpy as np
 from . import dolfin
 
 _DirichletBC = dolfin.DirichletBC
-_Measure = dolfin.Measure
 
 
 def list_time():
@@ -33,72 +32,6 @@ def get_coords(A):
     dof_coordinates = A.tabulate_dof_coordinates()
     dof_coordinates.resize((n, d))
     return dof_coordinates
-
-
-class Measure(_Measure):
-    def __init__(
-        self,
-        integral_type,
-        domain=None,
-        subdomain_id="everywhere",
-        metadata=None,
-        subdomain_data=None,
-        subdomain_dict=None,
-    ):
-
-        self.subdomain_dict = subdomain_dict
-        if (
-            self.subdomain_dict
-            and isinstance(subdomain_id, str)
-            and subdomain_id != "everywhere"
-        ):
-            subdomain_id = self.subdomain_dict[subdomain_id]
-        super().__init__(
-            integral_type,
-            domain=domain,
-            subdomain_id=subdomain_id,
-            metadata=metadata,
-            subdomain_data=subdomain_data,
-        )
-
-    def __call_single__(self, subdomain_id=None, **kwargs):
-        if (
-            self.subdomain_dict
-            and isinstance(subdomain_id, str)
-            and subdomain_id != "everywhere"
-        ):
-            subdomain_id = self.subdomain_dict[subdomain_id]
-        return super().__call__(subdomain_id=subdomain_id, **kwargs)
-
-    def __call__(self, subdomain_id=None, **kwargs):
-        if isinstance(subdomain_id, list):
-            for i, sid in enumerate(subdomain_id):
-                if i == 0:
-                    out = self.__call_single__(subdomain_id=sid, **kwargs)
-                else:
-                    out += self.__call_single__(subdomain_id=sid, **kwargs)
-            return out
-        else:
-            return self.__call_single__(subdomain_id=subdomain_id, **kwargs)
-
-
-class DirichletBC(_DirichletBC):
-    def __init__(self, *args, **kwargs):
-        self.subdomain_dict = args[-1]
-        if not callable(args[2]):
-            args = list(args)
-            args[-2] = self.subdomain_dict[args[-2]]
-            args = tuple(args[:-1])
-        super().__init__(*args)
-
-
-#
-# tol = DOLFIN_EPS
-# parameters["krylov_solver"]["error_on_nonconvergence"] = False
-# parameters["form_compiler"]["cpp_optimize"] = True
-# parameters["form_compiler"]["representation"] = "uflacs"
-# parameters["form_compiler"]["quadrature_degree"] = 2
-# parameters["allow_extrapolation"] = True
 
 
 def rot_matrix_2d(t):
@@ -215,106 +148,7 @@ def tanh(x):
     return (exp(2 * x) - 1) / (exp(2 * x) + 1)
 
 
-#
-# #### geometry
-#
-#
-# def boundary_L(x, on_boundary):
-#     return on_boundary and (dolfin.near(x[1], 0, tol))
-#
-#
-# def boundary_R(x, on_boundary):
-#     return on_boundary and (dolfin.near(x[1], 1, tol))
-#
-#
-# class InnerBoundary(SubDomain):
-#     """
-#     The inner boundaries of the mesh
-#     """
-#
-#     def inside(self, x, on_boundary):
-#         return (
-#             x[0] > DOLFIN_EPS
-#             and x[0] < 1 - DOLFIN_EPS
-#             and x[1] > DOLFIN_EPS
-#             and x[1] < 1 - DOLFIN_EPS
-#             and on_boundary
-#         )
-#
-#
-#
-class PeriodicBoundary2DX(dolfin.SubDomain):
-    def __init__(self, period, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.period = period
-
-    def inside(self, x, on_boundary):
-        return bool(dolfin.near(x[0], -self.period / 2) and on_boundary)
-
-    # # Left boundary is "target domain" G
-    # def inside(self, x, on_boundary):
-    #     return bool(
-    #         x[0] - self.period / 2 < dolfin.DOLFIN_EPS
-    #         and x[0] - self.period / 2 > -dolfin.DOLFIN_EPS
-    #         and on_boundary
-    #     )
-
-    def map(self, x, y):
-        y[0] = x[0] - self.period
-        y[1] = x[1]
-
-    #
-    # def map(self, x, y):
-    #     if dolfin.near(x[0], self.period / 2):
-    #         y[0] = x[0] - self.period
-    #         y[1] = x[1]
-    #     else:
-    #         y[0] = -1000
-    #         y[1] = -1000
-
-
-class BiPeriodicBoundary3D(dolfin.SubDomain):
-    def __init__(self, period, **kwargs):
-        self.period = period
-        super().__init__(**kwargs)
-
-    def inside(self, x, on_boundary):
-        return bool(
-            (
-                dolfin.near(x[0], -self.period[0] / 2)
-                or dolfin.near(x[1], -self.period[1] / 2)
-            )
-            and (
-                not (
-                    (
-                        dolfin.near(x[0], -self.period[0] / 2)
-                        and dolfin.near(x[1], self.period[1] / 2)
-                    )
-                    or (
-                        dolfin.near(x[0], self.period[0] / 2)
-                        and dolfin.near(x[1], -self.period[1] / 2)
-                    )
-                )
-            )
-            and on_boundary
-        )
-
-    def map(self, x, y):
-        if dolfin.near(x[0], self.period[0] / 2) and dolfin.near(
-            x[1], self.period[1] / 2
-        ):
-            y[0] = x[0] - self.period[0]
-            y[1] = x[1] - self.period[1]
-            y[2] = x[2]
-        elif dolfin.near(x[0], self.period[0] / 2):
-            y[0] = x[0] - self.period[0]
-            y[1] = x[1]
-            y[2] = x[2]
-        elif dolfin.near(x[1], self.period[1] / 2):
-            y[0] = x[0]
-            y[1] = x[1] - self.period[1]
-            y[2] = x[2]
-        else:
-            y[0] = -1000  # -self.period[0]*2.
-            y[1] = -1000  # -self.period[1]*2.
-            y[2] = -1000  # 0.
+def _translation_matrix(t):
+    M = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    M[3], M[7], M[11] = t
+    return M

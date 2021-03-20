@@ -9,9 +9,10 @@ import numpy as np
 
 from . import ADJOINT, dolfin
 from .base import ElectroMagneticSimulation3D
+from .bc import BiPeriodicBoundary3D, DirichletBC
 from .complex import *
 from .geometry import *
-from .helpers import BiPeriodicBoundary3D, DirichletBC
+from .helpers import _translation_matrix
 from .materials import *
 from .sources import *
 from .stack import *
@@ -36,12 +37,6 @@ pi = np.pi
 
 # dolfin.set_log_level(10)
 # dolfin.parameters["form_compiler"]["quadrature_degree"] = 5  #
-
-
-def translation_matrix(t):
-    M = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
-    M[3], M[7], M[11] = t
-    return M
 
 
 class Layered3D(Geometry):
@@ -74,8 +69,8 @@ class Layered3D(Geometry):
 
         self.periodic_tol = 1e-6
 
-        self.translation_x = translation_matrix([self.period[0], 0, 0])
-        self.translation_y = translation_matrix([0, self.period[1], 0])
+        self.translation_x = _translation_matrix([self.period[0], 0, 0])
+        self.translation_y = _translation_matrix([0, self.period[1], 0])
 
         self.total_thickness = sum(self.thicknesses.values())
         dx, dy = self.period
@@ -180,7 +175,7 @@ class Grating3D(ElectroMagneticSimulation3D):
             z for z in self.epsilon.keys() if z not in self.no_source_domains
         ]
 
-        # self.E0 = plane_wave_3D(
+        # self.E0 = plane_wave_3d(
         #     self.lambda0, self.theta0, self.phi0, self.psi0, domain=self.mesh
         # )
 
@@ -259,7 +254,7 @@ class Grating3D(ElectroMagneticSimulation3D):
             e0[dom] = e0["superstrate"]
         e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = np.zeros(3)
 
-        self.Estack_coeff = Subdomain(
+        self.E_stack_coeff = Subdomain(
             self.markers, self.domains, estack, degree=self.mat_degree, domain=self.mesh
         )
 
@@ -345,6 +340,10 @@ class Grating3D(ElectroMagneticSimulation3D):
         for d in self.domains:
             self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
 
+    # LHS = 0
+    # for A in g.lhs[d]:
+    #     LHS += A * g.dx(d)
+
     def assemble_rhs(self):
         self.bh = {}
         for d in self.source_domains:
@@ -411,7 +410,7 @@ class Grating3D(ElectroMagneticSimulation3D):
 
         Eper = Complex(*self.E.split())
         E = Eper * self.phasor
-        Etot = E + self.Estack_coeff
+        Etot = E + self.E_stack_coeff
         self.solution = {}
         self.solution["periodic"] = Eper
         self.solution["diffracted"] = E
@@ -549,6 +548,8 @@ class Grating3D(ElectroMagneticSimulation3D):
                 if np.all(self.epsilon[d].imag) == 0:
                     Qelec[d] = 0
                 else:
+
+                    Etot = self.annex_field["stack"][d] + self.solution["diffracted"]
                     elec_nrj_dens = dot(self.epsilon[d] * Etot, Etot.conj)
                     Qelec[d] = (
                         -0.5

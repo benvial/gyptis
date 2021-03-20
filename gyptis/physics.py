@@ -10,8 +10,8 @@ import os
 from PIL import Image
 
 from .base import *
-from .base import _coefs, _make_cst_mat
-from .helpers import _get_form
+
+# from .helpers import _get_form
 
 
 class Scatt2D(ElectroMagneticSimulation2D):
@@ -61,25 +61,23 @@ class Scatt2D(ElectroMagneticSimulation2D):
 
     def prepare(self):
         self._prepare_materials(ref_material="box", pmls=True)
-        self._make_coefs()
         if self.source == "PW":
-            self.u0, self.gradu0 = plane_wave_2D(
+            self.u0 = plane_wave_2d(
                 self.lambda0,
                 self.theta0,
                 degree=self.degree,
                 domain=self.mesh,
-                grad=True,
             )
+
         else:
-            self.u0, self.gradu0 = green_function_2D(
+            self.u0 = green_function_2d(
                 self.lambda0,
                 self.xs[0],
                 self.xs[1],
                 degree=self.degree,
                 domain=self.mesh,
-                grad=True,
-                auto=True,
             )
+        self.gradu0 = grad(self.u0)
 
     def build_rhs(self):
         return build_rhs(
@@ -211,7 +209,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         utot = self.u + self.u0
 
         self.solution = {}
-        self.solution["diffracted"] = u
+        self.solution["diffracted"] = self.u
         self.solution["total"] = utot
 
     def solve(self, direct=True, again=False):
@@ -227,9 +225,13 @@ class Scatt2D(ElectroMagneticSimulation2D):
         for i, w in enumerate(wavelengths):
             t = -time.time()
             self.lambda0 = w
-            self.u0, self.gradu0 = plane_wave_2D(
-                self.lambda0, self.theta0, domain=self.mesh, grad=True
+            self.u0 = plane_wave_2d(
+                self.lambda0,
+                self.theta0,
+                domain=self.mesh,
+                degree=self.degree,
             )
+            self.gradu0 = grad(self.u0)
             self.weak_form()
             if i == 0:
                 self.assemble()

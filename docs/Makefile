@@ -52,24 +52,26 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+
+## Cleanup documentation
 clean:
-	rm -rf $(BUILDDIR)/*
-	rm -rf auto_examples/
-	rm -rf auto_mayavi_examples/
-	rm -rf tutorials/
-	rm -rf gen_modules/
-	rm -rf generated/
+	@rm -rf $(BUILDDIR)/*
+	@rm -rf auto_examples/
+	@rm -rf auto_mayavi_examples/
+	@rm -rf tutorials/
+	@rm -rf gen_modules/
+	@rm -rf generated/
 
 ## Postprocess html doc
 postpro-html:
 	# @echo $(wildcard $(BUILDDIR)/html/**/*.html)
-	python postprocess.py html _build/html/*.html
-	python postprocess.py html _build/html/generated/*.html
-	python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
-	python postprocess.py html $(wildcard $(BUILDDIR)/html/auto_examples/**/*.html)
-	python postprocess.py html $(BUILDDIR)/html/auto_examples/*.html
-	cp -r _assets $(BUILDDIR)/html
-	cp -r _assets $(BUILDDIR)/html/_static
+	@python postprocess.py html _build/html/*.html
+	@python postprocess.py html _build/html/generated/*.html
+	@python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
+	@python postprocess.py html $(wildcard $(BUILDDIR)/html/auto_examples/**/*.html)
+	@python postprocess.py html $(BUILDDIR)/html/auto_examples/*.html
+	@cp -r _assets $(BUILDDIR)/html
+	@cp -r _assets $(BUILDDIR)/html/_static
 	# cat $(BUILDDIR)/html/_static/css/custom_gallery.css >> $(BUILDDIR)/html/_static/gallery.css
 
 

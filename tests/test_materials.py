@@ -26,10 +26,12 @@ domains = model.subdomains["surfaces"]
 W = dolfin.FunctionSpace(mesh, "CG", 1)
 
 
-def test_subdomain():
+@pytest.mark.parametrize("degree", [0, 1, 2])
+def test_subdomain(degree):
+    tol = 1e-6
     values = dict(cyl=12, box=1)
-    sub = Subdomain(markers, domains, values, degree=1)
-    sub_py = Subdomain(markers, domains, values, degree=1, cpp=False)
+    sub = Subdomain(markers, domains, values, degree=degree)
+    sub_py = Subdomain(markers, domains, values, degree=degree, cpp=False)
 
     a = dolfin.assemble(sub * dx)
     a_py = dolfin.assemble(sub_py * dx)
@@ -39,37 +41,32 @@ def test_subdomain():
     a_box = l ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
 
-    assert abs(a - a_test) ** 2 < 1e-6
-    #
-    # W0 = dolfin.FunctionSpace(mesh, "DG", 0)
-    # sub_plot = dolfin.project(sub, W0)
-    #
-    # import matplotlib.pyplot as plt
-    # # s = dolfin.plot(sub_plot)
-    # s = dolfin.plot(sub,mesh=mesh)
-    # plt.colorbar(s)
-    # plt.show()
+    assert abs(a - a_test) ** 2 < tol
 
-    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=r)
+    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=degree, r=r)
 
     values = dict(cyl=f, box=1)
-    sub_with_function = Subdomain(markers, domains, values, degree=1)
+    sub_with_function = Subdomain(markers, domains, values, degree=degree)
     I = dolfin.assemble(sub_with_function * dx("cyl"))
     Iexact = pi * r ** 2 * (1 - 1 / e)
-    assert abs(I - Iexact) ** 2 < 1e-7
-    sub_with_function_python = Subdomain(markers, domains, values, degree=1, cpp=False)
+    assert abs(I - Iexact) ** 2 < tol
+    sub_with_function_python = Subdomain(
+        markers, domains, values, degree=degree, cpp=False
+    )
     I_python = dolfin.assemble(sub_with_function_python * dx("cyl"))
-    assert abs(I_python - Iexact) ** 2 < 1e-7
+    assert abs(I_python - Iexact) ** 2 < tol
 
 
-def test_subdomain_complex():
+@pytest.mark.parametrize("degree", [0, 1, 2])
+def test_subdomain_complex(degree):
+    tol = 1e-15
     values = dict(cyl=12 + 2j, box=1)
-    sub = Subdomain(markers, domains, values, degree=1)
+    sub = Subdomain(markers, domains, values, degree=degree)
     sub_py = Subdomain(
         markers,
         domains,
         values,
-        degree=1,
+        degree=degree,
         cpp=False,
     )
 
@@ -80,46 +77,100 @@ def test_subdomain_complex():
     a_cyl = pi * r ** 2
     a_box = l ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
-    assert abs(a - a_test) ** 2 < 1e-6
-    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=0, r=r)
+    tol1 = 1e-6
+    assert abs(a - a_test) ** 2 < tol1
+    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=degree, r=r)
 
     eps_cyl = 2
     eps_box = f
     mapping = dict(cyl=eps_cyl, box=eps_box)
-    eps = Subdomain(markers, domains, mapping, degree=0)
-    assert assemble((eps - eps_box) * dx("box")) == 0
-    assert assemble((eps - eps_cyl) * dx("cyl")) == 0
+    eps = Subdomain(markers, domains, mapping, degree=degree)
+    assert assemble((eps - eps_box) * dx("box")) < tol
+    assert assemble((eps - eps_cyl) * dx("cyl")) < tol
 
     eps_cyl = 2 - 1.2 * 1j
     eps_box = Complex(f, f)
     mapping = dict(cyl=eps_cyl, box=eps_box)
-    eps = Subdomain(markers, domains, mapping, degree=0)
-    assert assemble((eps - eps_box) * dx("box")) == 0
-    assert assemble((eps - eps_cyl) * dx("cyl")) == 0
+    eps = Subdomain(markers, domains, mapping, degree=degree)
+    assert assemble(abs(eps - eps_box) * dx("box")) < tol
+    assert assemble(abs(eps - eps_cyl) * dx("cyl")) < tol
 
     eps_cyl = [[1, 2], [3, 4]]
     eps_box = 2
     mapping = dict(cyl=eps_cyl, box=eps_box)
-    eps = Subdomain(markers, domains, mapping, degree=0)
+    eps = Subdomain(markers, domains, mapping, degree=degree)
     eps_box_tens = eps_box * np.eye(2)
     for i in [0, 1]:
         for j in [0, 1]:
-            assert assemble((eps[i][j] - eps_box_tens[i, j]) * dx("box")) == 0
-            assert assemble((eps[i][j] - eps_cyl[i][j]) * dx("cyl")) == 0
+            assert assemble(abs(eps[i][j] - eps_box_tens[i, j]) * dx("box")) < tol
+            assert assemble(abs(eps[i][j] - eps_cyl[i][j]) * dx("cyl")) < tol
 
     eps_cyl = [[1, 2 - 1j], [3, Complex(f, f)]]
     eps_box = 1
     mapping = dict(cyl=eps_cyl, box=eps_box)
-    eps = Subdomain(markers, domains, mapping, degree=0)
+    eps = Subdomain(markers, domains, mapping, degree=degree)
     eps_box_tens = eps_box * np.eye(2)
     for i in [0, 1]:
         for j in [0, 1]:
-            assert assemble((eps[i][j] - eps_box_tens[i, j]) * dx("box")) == 0
-            assert assemble((eps[i][j] - eps_cyl[i][j]) * dx("cyl")) == 0
+            assert assemble(abs(eps[i][j] - eps_box_tens[i, j]) * dx("box")) < tol
+            assert assemble(abs(eps[i][j] - eps_cyl[i][j]) * dx("cyl")) < tol
 
 
 def test_pml():
     pml = PML()
+
+
+def test_coefficient():
+
+    geom = BoxPML(dim=2)
+    cyl = geom.add_circle(0, 0, 0, 0.2)
+    cyl, box = geom.fragment(cyl, geom.box)
+    geom.add_physical(box, "box")
+    geom.add_physical(cyl, "cyl")
+    geom.set_size("cyl", 0.04)
+    geom.build()
+    mesh = geom.mesh_object["mesh"]
+    markers = geom.mesh_object["markers"]["triangle"]
+    mapping = geom.subdomains["surfaces"]
+
+    epsilon = dict(box=1, cyl=3)
+    eps = Coefficient(epsilon)
+    print(eps)
+    print(eps.dict)
+    print(eps.build_pmls())
+    print(eps.dict)
+
+    pmlx = PML("x", stretch=1 - 1j, matched_domain="box", applied_domain="pmlx")
+    pmly = PML("y", stretch=1 - 1j, matched_domain="box", applied_domain="pmly")
+    pmlxy = PML("xy", stretch=1 - 1j, matched_domain="box", applied_domain="pmlxy")
+
+    eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
+    print(eps.build_pmls())
+    print(eps.dict)
+    eps.appy_pmls()
+    print(eps.dict)
+
+    eps_subdomain = eps.as_subdomain()
+    print(eps_subdomain)
+
+    # eps.plot()
+    eps.plot(component=(1, 1))
+    annex = eps.build_annex(domains=["cyl"], reference="box")
+
+    # eps.plot()
+    annex.plot(component=(1, 1))
+
+    eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
+
+    eps_prop = eps.as_property(dim=2)
+    print(eps_prop)
+    eps_prop = eps.as_property(dim=3)
+    print(eps_prop)
+
+    xi = eps.to_xi()
+    print(xi.dict)
+    chi = eps.to_chi()
+    print(chi.dict)
 
 
 # TODO: be careful here
@@ -128,58 +179,3 @@ def test_pml():
 # returning scalar instead, but in the future will perform elementwise comparison
 # if arg in ("+", "-"):
 # possible solution: check f.ufl_operands and project first
-#
-# class MySubdomain(dolfin.UserExpression):
-#     def __init__(self, markers, val, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.markers=markers
-#         self.val =val
-#         self.W =W
-#
-#         if callable(self.val) and self.val.ufl_operands:
-#             self.val = dolfin.project(self.val, self.W)
-#
-#     def eval_cell(self, values, x, cell):
-#         if self.markers[cell.index] == 1:
-#             if callable(self.val):
-#                 values[:] = self.val(x)
-#             else:
-#                 values[:] = self.val
-#         else:
-#             values[:] = 1
-#
-#     def value_shape(self):
-#         return ()
-#
-# import time
-#
-# f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=1, r=r)
-#
-#
-# values["box"] = 2
-# sub = Subdomain(markers, domains, values, degree=1)
-# t = -time.time()
-# project(sub, W)
-# t += time.time()
-# print(f"elapsed time: {t:.2f}s")
-# #
-# values["box"] = f
-# sub = Subdomain(markers, domains, values, degree=1)
-# t = -time.time()
-# project(sub, W)
-# t += time.time()
-# print(f"elapsed time: {t:.2f}s")
-# #
-# values["box"] = 2 * f
-# sub = Subdomain(markers, domains, values, degree=1)
-# t = -time.time()
-# project(sub, W)
-# t += time.time()
-# print(f"elapsed time: {t:.2f}s")
-#
-# values["box"] = dolfin.project(2 * f, W)
-# sub = Subdomain(markers, domains, values, degree=1)
-# t = -time.time()
-# project(sub, W)
-# t += time.time()
-# print(f"elapsed time: {t:.2f}s")

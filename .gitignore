@@ -41,6 +41,7 @@ wheels/
 *.egg
 MANIFEST
 .coverage
+.coverage*
 bin
 docs/package-lock.json
 
@@ -87,6 +88,8 @@ auto_examples/
 .coverage
 htmlcov/
 coverage.xml
+pylint.html
+pylint.json
 
 
 # Docs css (we use less to generate those):

@@ -10,9 +10,9 @@ from scipy.constants import c, epsilon_0, mu_0
 
 from . import ADJOINT, dolfin
 from .complex import *
-from .complex import _invert_3by3_complex_matrix
 from .geometry import *
 from .materials import *
+from .materials import _coefs, _invert_3by3_complex_matrix, _make_cst_mat
 from .sources import *
 
 
@@ -59,24 +59,6 @@ class Simulation(ABC):
 #     "relative_tolerance": 1.0e-1,
 #     "report": True,
 # }
-
-
-def _make_cst_mat(a, b):
-    xi = get_xi(a)
-    chi = get_chi(b)
-    xi_ = make_constant_property_2d(xi)
-    chi_ = make_constant_property_2d(chi)
-    return xi_, chi_
-
-
-def _coefs(a, b):
-    # xsi = det Q^T/det Q
-    extract = lambda q: dolfin.as_tensor([[q[0][0], q[1][0]], [q[0][1], q[1][1]]])
-    det = lambda M: M[0][0] * M[1][1] - M[1][0] * M[0][1]
-    a2 = Complex(extract(a.real), extract(a.imag))
-    xi = a2 / det(a2)
-    chi = b[2][2]
-    return xi, chi
 
 
 class Simulation2D(Simulation):
@@ -158,19 +140,15 @@ class ElectroMagneticSimulation2D(Simulation2D):
             self.xi_annex, self.chi_annex = _make_cst_mat(
                 self.mu_annex, self.epsilon_annex
             )
-        else:
-            self.xi, self.chi = _make_cst_mat(self.epsilon, self.mu)
-            self.xi_annex, self.chi_annex = _make_cst_mat(
-                self.epsilon_annex, self.mu_annex
-            )
-
-    def _make_coefs(self):
-        if self.polarization == "TE":
             self.xi_coeff, self.chi_coeff = _coefs(self.mu_coeff, self.epsilon_coeff)
             self.xi_coeff_annex, self.chi_coeff_annex = _coefs(
                 self.mu_coeff_annex, self.epsilon_coeff_annex
             )
         else:
+            self.xi, self.chi = _make_cst_mat(self.epsilon, self.mu)
+            self.xi_annex, self.chi_annex = _make_cst_mat(
+                self.epsilon_annex, self.mu_annex
+            )
             self.xi_coeff, self.chi_coeff = _coefs(self.epsilon_coeff, self.mu_coeff)
             self.xi_coeff_annex, self.chi_coeff_annex = _coefs(
                 self.epsilon_coeff_annex, self.mu_coeff_annex
@@ -225,7 +203,7 @@ def build_rhs(
         else:
             usource_dom = usource
         if xi[d].real.ufl_shape == (2, 2):
-            xi_a = tensor_const_2d(np.eye(2) * xi_annex[d])
+            xi_a = tensor_const(np.eye(2) * xi_annex[d], dim=2)
         else:
             xi_a = xi_annex[d]
         dxi = xi[d] - xi_a
@@ -421,49 +399,6 @@ class ElectroMagneticSimulation3D(Simulation3D):
                 self.boundaries,
             )
             [self._boundary_conditions.append(b) for b in bc]
-
-    # def _prepare_materials(self):
-    #     epsilon = dict(superstrate=1, substrate=1)
-    #     mu = dict(superstrate=1, substrate=1)
-    #     epsilon.update(self.epsilon)
-    #     mu.update(self.mu)
-    #     self.epsilon_pml, self.mu_pml = self._make_pmls()
-    #     self.epsilon.update(self.epsilon_pml)
-    #     self.mu.update(self.mu_pml)
-    #     self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
-    #     mu_annex = self.mu.copy()
-    #     eps_annex = self.epsilon.copy()
-    #     for a in self.source_dom:
-    #         mu_annex[a] = self.mu["superstrate"]
-    #         eps_annex[a] = self.epsilon["superstrate"]
-    #     self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-    #         eps_annex, mu_annex
-    #     )
-    #     self._epsilon_annex = eps_annex
-    #     self._mu_annex = eps_annex
-    #     self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)
-    #     self.inv_mu_coeff_annex = _invert_3by3_complex_matrix(self.mu_coeff_annex)
-    #
-    #     self.inv_mu = make_constant_property(self.mu, inv=True)
-    #     self.eps = make_constant_property(self.epsilon)
-    #
-    #     self.inv_mu_annex = make_constant_property(mu_annex, inv=True)
-    #     self.eps_annex = make_constant_property(eps_annex)
-    #
-    # def _prepare_materials(self, ref_material, pmls=False):
-    #     if pmls:
-    #         self.epsilon_pml, self.mu_pml = self._make_pmls()
-    #         self.epsilon.update(self.epsilon_pml)
-    #         self.mu.update(self.mu_pml)
-    #     self.epsilon_coeff, self.mu_coeff = self._make_subdomains(self.epsilon, self.mu)
-    #
-    #     self.epsilon_annex, self.mu_annex = make_annex_materials(
-    #         self.epsilon, self.mu, self.source_domains, ref_material
-    #     )
-    #     self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-    #         self.epsilon_annex, self.mu_annex,
-    #     )
-    #
 
     def _prepare_materials(self, ref_material, pmls=False):
         if pmls:

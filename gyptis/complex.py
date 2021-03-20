@@ -15,7 +15,7 @@ import numpy as np
 import ufl
 
 from . import dolfin
-from .helpers import DirichletBC as __DirichletBC__
+from .bc import DirichletBC as __DirichletBC__
 
 
 def _complexcheck(func):
@@ -287,7 +287,7 @@ def iscomplex(z):
         True if z is complex, else False.
 
     """
-    if hasattr(z, "real") and hasattr(z, "imag"):  # and not np.all(z.imag == 0):
+    if hasattr(z, "real") and hasattr(z, "imag") and z.imag is not None:
         return True
     else:
         return False
@@ -362,33 +362,3 @@ as_tensor = _cplx_iter(dolfin.as_tensor)
 as_vector = _cplx_iter(dolfin.as_vector)
 
 Constant = _cplx_iter(dolfin.Constant)
-
-
-def _invert_3by3_complex_matrix(m):
-    m1, m2, m3, m4, m5, m6, m7, m8, m9 = [m[i][j] for i in range(3) for j in range(3)]
-
-    determinant = (
-        m1 * m5 * m9
-        + m4 * m8 * m3
-        + m7 * m2 * m6
-        - m1 * m6 * m8
-        - m3 * m5 * m7
-        - m2 * m4 * m9
-    )
-    inv = [
-        [m5 * m9 - m6 * m8, m3 * m8 - m2 * m9, m2 * m6 - m3 * m5],
-        [m6 * m7 - m4 * m9, m1 * m9 - m3 * m7, m3 * m4 - m1 * m6],
-        [m4 * m8 - m5 * m7, m2 * m7 - m1 * m8, m1 * m5 - m2 * m4],
-    ]
-    # inv_df = dolfin.as_tensor(inv)
-    invre = np.zeros((3, 3), dtype=object)
-    invim = np.zeros((3, 3), dtype=object)
-    for i in range(3):
-        for j in range(3):
-            q = inv[i][j] / determinant
-            invre[i, j] = q.real
-            invim[i, j] = q.imag
-    invre = invre.tolist()
-    invim = invim.tolist()
-
-    return Complex(dolfin.as_tensor(invre), dolfin.as_tensor(invim))

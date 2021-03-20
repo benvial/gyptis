@@ -91,16 +91,16 @@ def plot_subdomains(markers, **kwargs):
     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
-def plotcplx(test, ax=None, markers=None, W0=None, ref_cbar=False, **kwargs):
+def plotcplx(test, ax=None, markers=None, proj_space=None, ref_cbar=False, **kwargs):
     if ax is None:
         fig, ax = plt.subplots(1, 2)
 
     if "cmap" not in kwargs:
         kwargs["cmap"] = "RdBu_r"
-    proj = W0 is not None
+    proj = proj_space is not None
 
     if proj:
-        test = project(test, W0)
+        test = project(test, proj_space)
     P, C = [], []
     for a, t in zip(ax, [test.real, test.imag]):
         plt.sca(a)
@@ -133,14 +133,14 @@ def plotcplx(test, ax=None, markers=None, W0=None, ref_cbar=False, **kwargs):
     return P, C
 
 
-def plot(test, ax=None, markers=None, W0=None, **kwargs):
-    proj = W0 is not None
+def plot(test, ax=None, markers=None, proj_space=None, **kwargs):
+    proj = proj_space is not None
     if "cmap" not in kwargs:
         kwargs["cmap"] = "inferno"
     if ax is None:
         fig, ax = plt.subplots(1, 1)
     if proj:
-        test = project(test, W0)
+        test = project(test, proj_space)
     plt.sca(ax)
     p = dolfin.plot(test, **kwargs)
     cbar = plt.colorbar(p)

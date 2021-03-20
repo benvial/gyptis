@@ -189,8 +189,8 @@ def test_TE(init):
     print("-" * 60)
 
     fig, ax = plt.subplots(1, 2)
-    W0 = dolfin.FunctionSpace(g.mesh, "CG", 2)
-    plotcplx(g.solution["diffracted"], ax=ax, W0=W0)
+    proj_space = dolfin.FunctionSpace(g.mesh, "CG", 2)
+    plotcplx(g.solution["diffracted"], ax=ax, proj_space=proj_space)
 
     assert abs(effsTE["B"] - 1) < 1e-3
 

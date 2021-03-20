@@ -17,9 +17,9 @@ from gyptis.stack import *
 # dolfin.set_log_level(1)
 
 N_d_order = 0
-degree = 1
-rd = 10
-rs = 0.1  # /rd
+degree = 2
+rd = 30
+rs = 1  # /rd
 
 ##  ---------- incident wave ----------
 lambda0 = 500
@@ -41,9 +41,9 @@ hole_radius = period[0] / 4
 thicknesses = OrderedDict(
     {
         "pml_bottom": lambda0,
-        "substrate": lambda0 * rs,
+        "substrate": lambda0 / rs,
         "groove": grooove_thickness,
-        "superstrate": lambda0 * rs,
+        "superstrate": lambda0 / rs,
         "pml_top": lambda0,
     }
 )
@@ -149,6 +149,8 @@ def main(parmesh):
     )
 
     g.mat_degree = 2
+
+    g.prepare()
 
     g.weak_form()
 

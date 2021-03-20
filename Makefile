@@ -1,7 +1,9 @@
 
 SHELL := /bin/bash
 
-.PHONY: clean lint req doc
+.DEFAULT_GOAL := help
+
+.PHONY: clean lint req doc help
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -28,16 +30,52 @@ TEST_ARGS=-n auto --dist loadscope
 endif
 
 
- # -n auto --dist loadscope
+	
 
+message = @make -s printmessage RULE=${1}
+
+
+
+printmessage: 
+	@sed -n -e "/^## / { \
+		h; \
+		s/.*//; \
+		:doc" \
+		-e "H; \
+		n; \
+		s/^## //; \
+		t doc" \
+		-e "s/^/---/" \
+		-e "s/:.*//; \
+		G; \
+		s/\\n## /---/; \
+		s/\\n/ /g; \
+		p; \
+	}" ${MAKEFILE_LIST} | grep "\---${RULE}---" \
+	| awk -F '---' \
+		-v ncol=$$(tput cols) \
+		-v indent=0 \
+		-v col_on="$$(tput setaf 4)" \
+		-v col_off="$$(tput sgr0)" \
+	'{ \
+		printf "%s%*s ", col_on, -indent, ">>>"; \
+		n = split($$3, words, " "); \
+		line_length = ncol - indent; \
+		for (i = 1; i <= n; i++) { \
+			line_length -= length(words[i]) + 1; \
+			if (line_length <= 0) { \
+				line_length = ncol - indent - length(words[i]) - 1; \
+				printf "\n%*s ", -indent, " "; \
+			} \
+			printf "%s ", words[i] ; \
+		} \
+		printf "%s ", col_off; \
+		printf "\n"; \
+	}' 
 
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
-
-
-default:
-	@echo "\"make save\"?"
 
 
 ## Set up python interpreter environment
@@ -58,169 +96,180 @@ else
 	@echo -e ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
 endif
 
-
-## Test python environment is setup correctly
+## Test if python environment is setup correctly
 testenv:
+	$(call message,${@})
 	source activate $(PROJECT_NAME); \
-	$(PYTHON_INTERPRETER) .ci/testenv.py
-
+	$(PYTHON_INTERPRETER) dev/testenv.py
 
 ## Install Python dependencies
 req: testenv
+	$(call message,${@})
 	source activate $(PROJECT_NAME)
-	# $(PYTHON_INTERPRETER) -m pip install -r requirements.txt
-	.ci/installreq requirements.txt
+ifeq (True,$(HAS_CONDA))
+		dev/installreq requirements.txt
+else
+		$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+endif
 	$(PYTHON_INTERPRETER) -m pip install -e.
 
 ## Install Python dependencies for dev and test
 dev:
-	$(PYTHON_INTERPRETER) -m pip install -r requirements-dev.txt
+	@$(PYTHON_INTERPRETER) -m pip install -r dev/requirements.txt
 	
-
-
-## Delete generated files
-clean: cleantest
-	@find . -not -path "./tests/data/*" \
-	| grep -E "(*.pvd*.xdmf|*.msh|*.pvtu|*.vtu|*.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" \
-	| xargs rm -rf
+## Clean generated files
+cleangen:
+	$(call message,${@})
+	@find . -not -path "./tests/data/*" | grep -E "(\.pvd|\.xdmf|\.msh|\.pvtu|\.vtu|\.pvd|jitfailure*|tmp|__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
 	@rm -rf .pytest_cache $(PROJECT_NAME).egg-info/ build/ dist/ tmp/ htmlcov/
-	cd docs && make clean
+	
+## Clean documentation
+cleandoc:
+	$(call message,${@})
+	@cd docs && make -s clean
 
+## Clean project
+clean: cleandoc cleantest cleangen cleanreport
+	$(call message,${@})
 
 ## Lint using flake8
 lint:
-	flake8 --exit-zero --ignore=E501 setup.py $(PROJECT_NAME)/ tests/*.py examples/
+	$(call message,${@})
+	@flake8 --exit-zero --ignore=E501 setup.py $(PROJECT_NAME)/ tests/*.py examples/
 
 ## Check for duplicated code
 dup:
-	pylint --exit-zero -f colorized --disable=all --enable=similarities $(PROJECT_NAME)
+	$(call message,${@})
+	@pylint --exit-zero -f colorized --disable=all --enable=similarities $(PROJECT_NAME)
+
+
+## Clean code stats
+cleanreport:
+	$(call message,${@})
+	@rm -f pylint.html
+
+## Report code stats
+report: cleanreport
+	$(call message,${@})
+	@pylint $(PROJECT_NAME) | pylint-json2html -f jsonextended -o pylint.html
+
 
 ## Check for missing docstring
 dcstr:
-	pydocstyle ./$(PROJECT_NAME)  || true
+	$(call message,${@})
+	@pydocstyle ./$(PROJECT_NAME)  || true
 
 ## Metric for complexity
 rad:
-	radon cc ./$(PROJECT_NAME) -a -nb
+	$(call message,${@})
+	@radon cc ./$(PROJECT_NAME) -a -nb
 
 ## Run all code checks
 lint-all: lint dup dcstr rad
+	$(call message,${@})
 
 ## Reformat code
 style:
-	@echo "Styling..."
-	isort .
-	black .
+	$(call message,${@})
+	@isort .
+	@black .
 
 ## Push to gitlab
 gl:
-	@echo "Pushing to gitlab..."
-	git add -A
+	$(call message,${@})
+	@git add -A
 	@read -p "Enter commit message: " MSG; \
 	git commit -a -m "$$MSG"
-	git push origin $(BRANCH)
-	
-
+	@git push origin $(BRANCH)
 
 ## Clean, reformat and push to gitlab
 save: clean style gl
+	$(call message,${@})
 
-
-
-## Make doc css
+## Make documentation css
 less:
-	cd docs/_custom/static/css/less && \
+	$(call message,${@})
+	@cd docs/_custom/static/css/less && \
 	$(LESSC) theme.less  ../theme.css && \
 	$(LESSC) custom_styles.less  ../custom_styles.css && \
 	$(LESSC) custom_gallery.less  ../custom_gallery.css && \
 	$(LESSC) custom_pygments.less  ../custom_pygments.css
 
-
-
-## Build html doc only rebuilding examples that changed
+## Build html documentation (only updated examples)
 docfast: less
-	cd docs && make html && make postpro-html
+	$(call message,${@})
+	@cd docs && make -s html && make -s postpro-html
 
-
-## Install requirements for building docs
+## Install requirements for building documentation
 doc-req:
-	cd docs && pip install -r requirements.txt && npm install lessc
+	$(call message,${@})
+	@cd docs && pip install -r requirements.txt && npm install lessc
 
-
-## Build html doc
+## Build html documentation
 doc: less
-	cd docs && make clean && make html && make postpro-html
+	$(call message,${@})
+	@cd docs && make -s clean && make -s html && make -s postpro-html
 
-
-
-## Build html doc (without examples)
+## Build html documentation (without examples)
 doc-noplot: less
-	cd docs && make clean && make html-noplot && make postpro-html
+	$(call message,${@})
+	@cd docs && make -s clean && make -s html-noplot && make -s postpro-html
 
-
-## Show locally built html doc in a browser
+## Show locally built html documentation in a browser
 showdoc:
-	cd docs && make show
+	$(call message,${@})
+	@cd docs && make -s show
 
-
-## clean test coverage reports
+## Clean test coverage reports
 cleantest:
-	rm -rf .coverage* htmlcov coverage.xml
+	$(call message,${@})
+	@rm -rf .coverage* htmlcov coverage.xml
 
 ## Run the test suite
 test: cleantest
-	export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests \
+	$(call message,${@})
+	@export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests \
 	--cov=./$(PROJECT_NAME) --cov-report term $(TEST_ARGS)
-	export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests \
+	@export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests \
 	--cov=./$(PROJECT_NAME) --cov-append --cov-report term \
 	--cov-report html --cov-report xml  $(TEST_ARGS)
 
-## Run the test suite
-testpara:
-	make test TEST_PARALLEL=1
-
-
-# 
-# ## Run performance test
-# perf:
-# 	unset GYPTIS_ADJOINT && mpirun -n 1 pytest ./tests/test_grating_2d.py -s -vv
-# 	# GYPTIS_ADJOINT=1 pytest ./tests -s -vv --cov=./$(PROJECT_NAME)
-# 
+## Run the test suite (parallel)
+testpara: cleantest
+	$(call message,${@})
+	@make -s test TEST_PARALLEL=1
 
 ## Tag and push tags
 tag: banner
+	$(call message,${@})
 	# Make sure we're on the master branch
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
-	@echo "Tagging v$(VERSION)..."
+	@echo "  version v$(VERSION)"
 	git tag v$(VERSION)
 	git push --tags
 
-
 ## Package 
 package: setup.py
+	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
-	rm -f dist/*
+	@rm -f dist/*
 	python3 setup.py sdist
 	python3 setup.py bdist_wheel --universal
 
 ## Upload to pipy
 pipy: package
+	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
-	twine upload dist/*
-
+	@twine upload dist/*
 
 ## Tag and upload to pipy
 publish: tag pipy
 
 ## Make the terminal banner
 banner:
-	echo $(URL)
-	sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans 
-	cat ./docs/_assets/gyptis.ans
-
-###############
-
-
+	$(call message,${@})
+	@sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans 
+	@cat ./docs/_assets/gyptis.ans
 
 
 
@@ -228,7 +277,6 @@ banner:
 # Self Documenting Commands                                                     #
 #################################################################################
 
-.DEFAULT_GOAL := help
 
 # Inspired by <http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
 # sed script explained:
@@ -245,7 +293,7 @@ banner:
 # 	* print line
 # Separate expressions are necessary because labels cannot be delimited by
 # semicolon; see <http://stackoverflow.com/a/11799865/1968>
-.PHONY: help
+
 help:
 	@echo -e "$$(tput bold)Available rules:$$(tput sgr0)"
 	@echo -e

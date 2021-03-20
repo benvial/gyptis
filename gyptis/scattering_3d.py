@@ -6,9 +6,9 @@
 
 from . import ADJOINT, dolfin
 from .base import ElectroMagneticSimulation3D
+from .bc import DirichletBC
 from .complex import *
 from .geometry import *
-from .helpers import DirichletBC
 from .materials import *
 from .sources import *
 
@@ -49,7 +49,7 @@ class Scatt3D(ElectroMagneticSimulation3D):
 
     def prepare(self):
         self._prepare_materials(ref_material="box", pmls=True)
-        self.incident_field = plane_wave_3D(
+        self.incident_field = plane_wave_3d(
             self.lambda0, self.theta0, self.phi0, self.psi0, domain=self.mesh
         )
         e0 = {k: np.zeros(3) for k in self.epsilon.keys()}

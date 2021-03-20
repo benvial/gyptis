@@ -1,3 +1,7 @@
+import os
+
+import dolfin
+
 from .__about__ import (
     __author__,
     __author_email__,
@@ -11,9 +15,6 @@ from .__about__ import (
 
 __doc__ = __description__
 
-import os
-
-import dolfin
 
 if os.environ.get("GYPTIS_ADJOINT") is not None:
     import dolfin_adjoint
