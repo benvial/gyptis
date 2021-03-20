@@ -14,8 +14,8 @@ import pytest
 from scipy.constants import c, epsilon_0, mu_0
 
 from gyptis import geometry
-from gyptis.plotting import *
-from gyptis.scattering_3d import *
+from gyptis.plot import *
+from gyptis.scattering3d import *
 
 
 def test_marked_mesh(shared_datadir):

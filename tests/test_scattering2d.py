@@ -8,8 +8,8 @@ import pytest
 
 import gyptis
 from gyptis import dolfin
-from gyptis.plotting import *
-from gyptis.scattering_2d import *
+from gyptis.plot import *
+from gyptis.scattering2d import *
 
 # dolfin.set_log_level(20)
 

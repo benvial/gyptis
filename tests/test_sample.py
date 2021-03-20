@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from gyptis.sampling import adaptive_sampler
+from gyptis.sample import adaptive_sampler
 
 plt.close("all")
 # plt.ion()

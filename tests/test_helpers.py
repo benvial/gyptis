@@ -3,10 +3,12 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import pytest
-from test_geometry import geom2D
+import numpy as np
 
-from gyptis import dolfin
 from gyptis.helpers import *
 
-# model = geom2D(mesh_size=0.01)
+
+def test_all():
+    mpi_print("Hello world!")
+    matfmt(np.random.rand(3, 3) - 1j * np.random.rand(3, 3), cplx=True)
+    assert tanh(1.2) == np.tanh(1.2)

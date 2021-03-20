@@ -9,52 +9,6 @@ import numpy as np
 
 from . import dolfin
 
-_DirichletBC = dolfin.DirichletBC
-
-
-def list_time():
-    return dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-
-
-def _get_form(u):
-    form = 0
-    for f in u:
-        try:
-            form += f.form
-        except:
-            return
-    return form
-
-
-def get_coords(A):
-    n = A.dim()
-    d = A.mesh().geometry().dim()
-    dof_coordinates = A.tabulate_dof_coordinates()
-    dof_coordinates.resize((n, d))
-    return dof_coordinates
-
-
-def rot_matrix_2d(t):
-    return np.array([[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]])
-
-
-def make_unit_vectors(dim):
-    if dim == 3:
-        ex = Constant((1, 0, 0))
-        ey = Constant((0, 1, 0))
-        ez = Constant((0, 0, 1))
-        return [ex, ey, ez]
-    else:
-        ex = Constant((1, 0))
-        ey = Constant((0, 1))
-        return [ex, ey]
-
-
-def mpi_print(s):
-    if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
-        print(s)
-        sys.stdout.flush()
-
 
 def array2function(a, A):
     """Convert a numpy array to a fenics Function.
@@ -96,7 +50,34 @@ def function2array(f):
     return f.vector().get_local()
 
 
+def list_time():
+    return dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+
+
+def get_coordinates(A):
+    n = A.dim()
+    d = A.mesh().geometry().dim()
+    dof_coordinates = A.tabulate_dof_coordinates()
+    dof_coordinates.resize((n, d))
+    return dof_coordinates
+
+
+def mpi_print(s):
+    if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
+        print(s)
+        sys.stdout.flush()
+
+
 def matfmt(m, ndigit=4, extra_space=0, cplx=False):
+    def printim(y):
+        return f"{sgn(float(y))}{abs(float(y))}j"
+
+    def sgn(u):
+        if np.sign(u) == -1:
+            return "-"
+        else:
+            return "+"
+
     dim = len(m[0])
 
     pad = " " * extra_space
@@ -133,19 +114,12 @@ def matprint(*args, **kwargs):
     mpi_print(matfmt(*args, **kwargs))
 
 
-def sgn(u):
-    if np.sign(u) == -1:
-        return "-"
-    else:
-        return "+"
-
-
-def printim(y):
-    return f"{sgn(float(y))}{abs(float(y))}j"
+def rot_matrix_2d(t):
+    return np.array([[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]])
 
 
 def tanh(x):
-    return (exp(2 * x) - 1) / (exp(2 * x) + 1)
+    return (dolfin.exp(2 * x) - 1) / (dolfin.exp(2 * x) + 1)
 
 
 def _translation_matrix(t):

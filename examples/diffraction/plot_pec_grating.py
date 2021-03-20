@@ -11,7 +11,7 @@ from collections import OrderedDict
 import numpy as np
 
 from gyptis import dolfin
-from gyptis.grating_2d import Grating2D, Layered2D
+from gyptis.grating2d import Grating2D, Layered2D
 
 ##############################################################################
 # We will study a classical benchmark of a perfectly conducting
@@ -131,7 +131,7 @@ H = grating.solution["total"]
 
 import matplotlib.pyplot as plt
 
-from gyptis.plotting import plot_subdomains
+from gyptis.plot import plot_subdomains
 
 plt.ion()
 

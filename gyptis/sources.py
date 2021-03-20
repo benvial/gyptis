@@ -215,7 +215,7 @@ class PlaneWave(Source):
 #
 # # pw = plane_wave_2d(0.1, 0, degree=2)
 #
-# from gyptis.plotting import *
+# from gyptis.plot import *
 #
 # plt.ion()
 #

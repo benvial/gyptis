@@ -8,8 +8,8 @@ Example of a dielectric diffraction grating.
 # sphinx_gallery_thumbnail_number = 2
 
 from gyptis import dolfin
-from gyptis.grating_2d import *
-from gyptis.plotting import *
+from gyptis.grating2d import *
+from gyptis.plot import *
 
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating
@@ -62,7 +62,7 @@ mesh_param = dict(
 )
 
 ##############################################################################
-# Let's create the geometry using the :class:`~gyptis.grating_2d.Layered2D`
+# Let's create the geometry using the :class:`~gyptis.grating2d.Layered2D`
 # class:
 geom = Layered2D(period, thicknesses)
 groove = geom.layers["groove"]
@@ -77,7 +77,7 @@ geom.build()
 
 
 ######################################################################
-# The mesh can be visualized with ``dolfin`` plotting function :
+# The mesh can be visualized with ``dolfin`` plot function :
 
 geom.plot_mesh(lw=1)
 geom.plot_subdomains(lw=2, c="#d76c4a")
@@ -97,7 +97,7 @@ mu = {d: 1 for d in domains}
 
 ######################################################################
 # Now we can create an instance of the simulation class
-# :class:`~gyptis.grating_2d.Grating2D`, where we specify the
+# :class:`~gyptis.grating2d.Grating2D`, where we specify the
 # Transverse Electric polarization case (electric field out of plane
 # :math:`\boldsymbol{E} = E_z \boldsymbol{e_z}`) and the ``degree`` of
 # Lagrange finite elements.

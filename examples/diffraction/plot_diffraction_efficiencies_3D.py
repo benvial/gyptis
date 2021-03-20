@@ -10,7 +10,7 @@ import sys
 from pprint import pprint
 
 from gyptis import dolfin
-from gyptis.grating_3d import *
+from gyptis.grating3d import *
 from gyptis.helpers import list_time, mpi_print
 from gyptis.stack import *
 

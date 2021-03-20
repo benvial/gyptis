@@ -248,7 +248,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         return wl_sweep
 
     def plot_geometry(self, ax=None, **kwargs):
-        from .plotting import plot_subdomains, plt
+        from .plot import plot_subdomains, plt
 
         if ax == None:
             ax = plt.gca()
@@ -285,7 +285,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
 
         import matplotlib as mpl
 
-        from .plotting import plt
+        from .plot import plt
 
         u = self.solution["total"]
         if ax == None:
@@ -318,7 +318,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         return per_plots, cb
 
     def animate_field(self, n=11, filename="animation.gif", **kwargs):
-        from .plotting import plt
+        from .plot import plt
 
         anim = []
         tmpdir = tempfile.mkdtemp()

@@ -725,7 +725,7 @@ class Geometry(object):
         return dolfin.plot(self.mesh, **kwargs)
 
     def plot_subdomains(self, **kwargs):
-        from .plotting import plot_subdomains
+        from .plot import plot_subdomains
 
         return plot_subdomains(self.markers, **kwargs)
 

@@ -8,7 +8,7 @@ import pytest
 
 from gyptis import dolfin
 from gyptis.complex import assemble, div, dot, grad, project
-from gyptis.helpers import function2array, get_coords
+from gyptis.helpers import function2array, get_coordinates
 from gyptis.sources import *
 
 
@@ -20,7 +20,7 @@ def test_pw_2d():
     pw = plane_wave_2d(lambda0, theta, domain=mesh)
     uproj = project(pw, W)
     uarray = function2array(uproj.real) + 1j * function2array(uproj.imag)
-    x, y = get_coords(W).T
+    x, y = get_coordinates(W).T
     k0 = 2 * np.pi / lambda0
     kdotx = k0 * (np.cos(theta) * x + np.sin(theta) * y)
     test = np.exp(1j * kdotx)
@@ -38,7 +38,7 @@ def test_pw_3d():
     mesh = dolfin.UnitCubeMesh(10, 10, 10)
     W = dolfin.FunctionSpace(mesh, "CG", 1)
 
-    x, y, z = get_coords(W).T
+    x, y, z = get_coordinates(W).T
     k0 = 2 * np.pi / lambda0
 
     kx = k0 * np.sin(theta) * np.cos(phi)

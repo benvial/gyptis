@@ -68,10 +68,10 @@ Functions
 
 -------------------------------------
 
-:mod:`gyptis.grating_2d`: Two dimensional diffraction gratings
+:mod:`gyptis.grating2d`: Two dimensional diffraction gratings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: gyptis.grating_2d
+.. automodule:: gyptis.grating2d
     :no-members:
     :no-inherited-members:
 
@@ -84,5 +84,5 @@ Base classes
    :toctree: generated/
    :template: class.rst
    
-   grating_2d.Layered2D
-   grating_2d.Grating2D
+   grating2d.Layered2D
+   grating2d.Grating2D

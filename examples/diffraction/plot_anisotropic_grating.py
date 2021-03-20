@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from gyptis import dolfin
-from gyptis.grating_2d import *
-from gyptis.plotting import *
+from gyptis.grating2d import *
+from gyptis.plot import *
 
 ##############################################################################
 # We will study this benchmark and compare with results

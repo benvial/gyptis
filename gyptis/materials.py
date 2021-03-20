@@ -476,7 +476,7 @@ class Coefficient:
 
     def plot(self, component=None, **kwargs):
 
-        from gyptis.plotting import plot, plotcplx
+        from gyptis.plot import plot, plotcplx
 
         proj_space = dolfin.FunctionSpace(self.geometry.mesh_object["mesh"], "DG", 0)
         eps_subdomain = self.as_subdomain()

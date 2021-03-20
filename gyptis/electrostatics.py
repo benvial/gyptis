@@ -5,7 +5,7 @@
 
 from . import dolfin as df
 from .base import *
-from .grating_3d import *
+from .grating3d import *
 from .helpers import DirichletBC as DirichletBCReal
 from .helpers import PeriodicBoundary2DX
 

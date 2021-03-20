@@ -5,12 +5,12 @@
 
 from pprint import pprint
 
-from gyptis.grating_3d import *
+from gyptis.grating3d import *
 
 # dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 
 
-def test_grating_3d():
+def test_grating3d():
     # if __name__ == "__main__":
 
     ##  ---------- incident wave ----------

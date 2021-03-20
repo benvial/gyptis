@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import pytest
 
 import gyptis
-from gyptis.grating_2d import *
+from gyptis.grating2d import *
 from gyptis.helpers import list_time, rot_matrix_2d
-from gyptis.plotting import *
+from gyptis.plot import *
 
 plt.ion()
 

@@ -57,3 +57,18 @@ def test_measure(model=model, tol=1e-13):
     assert abs(len_circ - 2 * pi * model.radius) < 1e-4
     len_box = dolfin.assemble(1 * ds("outer_bnds"))
     assert abs(len_box - model.square_size * 4) < 1e-4
+
+    area = dolfin.assemble(1 * dx("everywhere"))
+    assert abs(area - model.square_size ** 2) < tol
+    area = dolfin.assemble(1 * dx(["cyl", "box"]))
+    assert abs(area - model.square_size ** 2) < tol
+
+    dx = Measure(
+        "dx",
+        domain=model.mesh_object["mesh"],
+        subdomain_data=model.mesh_object["markers"]["triangle"],
+        subdomain_dict=model.subdomains["surfaces"],
+        subdomain_id="cyl",
+    )
+    area = dolfin.assemble(1 * dx)
+    assert abs(area - area_cyl) < tol
