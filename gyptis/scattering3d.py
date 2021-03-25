@@ -10,7 +10,7 @@ from .bc import DirichletBC
 from .complex import *
 from .geometry import *
 from .materials import *
-from .sources import *
+from .source import *
 
 
 class Scatt3D(ElectroMagneticSimulation3D):

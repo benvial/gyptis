@@ -3,6 +3,8 @@
 
 import time
 
+import pytest
+
 import gyptis
 from gyptis import dolfin as df
 from gyptis.complex import *
@@ -189,38 +191,22 @@ def test_simu_TE():
     _test_simu("TE")
 
 
-def check_taylor_test(s, polarization):
-    s.polarization = polarization
-    df.set_working_tape(df.Tape())
-    h = df.Function(Actrl)
-    h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
-    s.epsilon["lens"] = eps_lens_func
-    s.solve()
-    field = s.solution["total"]
-    J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
-    Jhat = df.ReducedFunctional(J, df.Control(ctrl))
-    conv_rate = df.taylor_test(Jhat, ctrl, h)
-    print("convergence rate = ", conv_rate)
-    assert abs(conv_rate - 2) < 1e-2
+@pytest.mark.parametrize(
+    "source,polarization", [("LS", "TE"), ("PW", "TE"), ("LS", "TM"), ("PW", "TM")]
+)
+def test_taylor_test(source, polarization):
 
-
-def _taylor(polarization, source):
     if gyptis.ADJOINT:
         s.source = source
-        check_taylor_test(s, polarization)
-
-
-def test_taylor_TE_PW():
-    _taylor("TE", "PW")
-
-
-def test_taylor_TM_PW():
-    _taylor("TM", "PW")
-
-
-def test_taylor_TE_LS():
-    _taylor("TE", "LS")
-
-
-def test_taylor_TM_LS():
-    _taylor("TM", "LS")
+        s.polarization = polarization
+        df.set_working_tape(df.Tape())
+        h = df.Function(Actrl)
+        h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
+        s.epsilon["lens"] = eps_lens_func
+        s.solve()
+        field = s.solution["total"]
+        J = -assemble(inner(field, field.conj) * s.dx("target")).real / Starget
+        Jhat = df.ReducedFunctional(J, df.Control(ctrl))
+        conv_rate = df.taylor_test(Jhat, ctrl, h)
+        print("convergence rate = ", conv_rate)
+        assert abs(conv_rate - 2) < 1e-2

@@ -162,7 +162,7 @@ def test_coefficient():
 
     eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
 
-    eps_prop = eps.as_property(dim=2)
+    eps_prop = eps.as_property()
     print(eps_prop)
     eps_prop = eps.as_property(dim=3)
     print(eps_prop)

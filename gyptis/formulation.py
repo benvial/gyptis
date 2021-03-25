@@ -7,66 +7,304 @@
 Finite element weak formulations.
 """
 
-from .complex import Constant, TestFunction, TrialFunction, dot, grad
+from abc import ABC, abstractmethod
+
+import numpy as np
+
+from . import dolfin
+from .bc import *
+from .complex import *
+from .source import PlaneWave
+from .stack import make_stack
 
 
-class Formulation:
-    def __init__(self, name, function_space, geometry):
-        self.name = name
-        self.function_space = function_space
+class Formulation(ABC):
+    def __init__(
+        self,
+        geometry,
+        coefficients,
+        function_space,
+        source=None,
+        boundary_conditions={},
+    ):
         self.geometry = geometry
+        self.coefficients = coefficients
+        self.function_space = function_space
+        self.source = source
         self.trial = TrialFunction(self.function_space)
         self.test = TestFunction(self.function_space)
-        self.lhs = dict(all={}, boundaries={})
-        self.rhs = dict(all={}, boundaries={})
+        self.boundary_conditions = boundary_conditions
+
+        self.measure = geometry.measure
+        self.dx = self.measure["dx"]
+        self.ds = self.measure["ds"]
+        self.dS = self.measure["dS"]
+
+        self.element = self.function_space.split()[0].ufl_element()
+        self.real_function_space = dolfin.FunctionSpace(
+            self.geometry.mesh, self.element.family(), self.element.degree()
+        )
+
+    def build_lhs(self):
+        self.lhs = dolfin.lhs(self.weak)
+        return self.lhs
+
+    def build_rhs(self):
+        self.rhs = dolfin.rhs(self.weak)
+        if self.rhs.empty():
+            if self.element.value_size() == 3:
+                dummy_vect = as_vector(
+                    [dolfin.DOLFIN_EPS, dolfin.DOLFIN_EPS, dolfin.DOLFIN_EPS]
+                )
+                dummy_form = dot(dummy_vect, self.trial) * self.dx
+            else:
+                dummy_form = dolfin.DOLFIN_EPS * self.trial * self.dx
+            self.rhs = dummy_form.real + dummy_form.imag
+        return self.rhs
+
+    @abstractmethod
+    def weak(self):
+        pass
+
+    # @abstractmethod
+    # def build_lhs(self):
+    #     pass
+    #
+    # @abstractmethod
+    # def build_rhs(self):
+    #     pass
+
+    @abstractmethod
+    def build_boundary_conditions(self):
+        pass
 
 
 class Maxwell2D(Formulation):
     def __init__(
         self,
+        geometry,
+        coefficients,
         function_space,
-        domains,
-        coefficients={},
-        parameters={},
+        source=None,
+        boundary_conditions={},
         polarization="TE",
+        souce_domains=[],
+        reference=None,
     ):
-        super().__init__("Maxwell 2D", function_space, domains)
+        super().__init__(
+            geometry,
+            coefficients,
+            function_space,
+            source=source,
+            boundary_conditions=boundary_conditions,
+        )
+
+        self.souce_domains = souce_domains
+        self.reference = reference
+
+        self.epsilon, self.mu = self.coefficients
         self.polarization = polarization
-        self.xi = coefficients["xi"]
-        self.chi = coefficients["chi"]
-        self.source = coefficients["source"]
-        self.wavenumber = parameters["wavenumber"]
-        # self.build_lhs()
-        # self.build_rhs()
 
-    def lhs_expression(self, domain):
-        return (
-            -dot(self.xi[domain] * grad(self.trial), grad(self.test))
-            + Constant(self.wavenumber ** 2) * self.chi[domain] * self.trial * self.test
+        if self.polarization == "TE":
+            self.xi = self.mu.to_xi()
+            self.chi = self.epsilon.to_chi()
+        else:
+            self.xi = self.epsilon.to_xi()
+            self.chi = self.mu.to_chi()
+
+        self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
+
+    def maxwell(self, u, v, xi, chi, domain="everywhere"):
+        k0 = Constant(self.source.wavenumber)
+        form = -inner(xi * grad(u), grad(v)) + k0 ** 2 * chi * u * v
+        return form * self.dx(domain)
+
+    def _weak(self, u, v, u1):
+        xi = self.xi.as_subdomain()
+        chi = self.chi.as_subdomain()
+        xi_a = self.xi.build_annex(
+            domains=self.souce_domains, reference=self.reference
+        ).as_subdomain()
+        chi_a = self.chi.build_annex(
+            domains=self.souce_domains, reference=self.reference
+        ).as_subdomain()
+        form = self.maxwell(u, v, xi, chi)
+        if self.souce_domains != []:
+            form += self.maxwell(
+                u1, v, xi - xi_a, chi - chi_a, domain=self.souce_domains
+            )
+        if self.polarization == "TM":
+            for bnd in self.pec_boundaries:
+                normal = self.geometry.unit_normal_vector
+                form -= dot(xi * (grad(u1) * v), normal) * self.ds(bnd)
+        weak = form.real + form.imag
+        return weak
+
+    @property
+    def weak(self):
+        u1 = self.source.expression
+        u = self.trial
+        v = self.test
+        return self._weak(u, v, u1)
+
+    def build_pec_boundary_conditions(self, applied_function):
+
+        if self.polarization == "TE":
+            ## FIXME: project is slow, avoid it.
+            applied_function = project(applied_function, self.real_function_space)
+            _boundary_conditions = build_pec_boundary_conditions(
+                self.pec_boundaries,
+                self.geometry,
+                self.function_space,
+                applied_function,
+            )
+        else:
+            _boundary_conditions = []
+
+        return _boundary_conditions
+
+    def build_boundary_conditions(self):
+        applied_function = -self.source.expression
+        self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
+        return self._boundary_conditions
+
+
+class Maxwell2DPeriodic(Maxwell2D):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.propagation_vector = self.source.wavenumber * np.array(
+            [np.cos(self.source.angle), np.sin(self.source.angle)]
+        )
+        self.phasor = phasor(
+            self.propagation_vector[0],
+            direction=0,
+            degree=self.source.degree,
+            domain=self.geometry.mesh,
+        )
+        self.annex_field = make_stack(
+            self.geometry,
+            self.coefficients,
+            self.source,
+            polarization=self.polarization,
+            source_domains=self.souce_domains,
+            degree=self.source.degree,
+            dim=2,
         )
 
-    def rhs_expression(self, domain):
-        return (
-            -dot(self.xi[domain] * grad(self.trial), grad(self.test))
-            + Constant(self.wavenumber ** 2) * self.chi[domain] * self.trial * self.test
+    @property
+    def weak(self):
+        u1 = self.annex_field["as_subdomain"]["stack"]
+        u = self.trial * self.phasor
+        v = self.test * self.phasor.conj
+        return super()._weak(u, v, u1)
+
+    def build_boundary_conditions(self):
+        applied_function = -self.annex_field["as_subdomain"]["stack"] * self.phasor.conj
+        self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
+        return self._boundary_conditions
+
+
+class Maxwell3D(Formulation):
+    def __init__(
+        self,
+        geometry,
+        coefficients,
+        function_space,
+        source=None,
+        boundary_conditions={},
+        souce_domains=[],
+        reference=None,
+    ):
+        super().__init__(
+            geometry,
+            coefficients,
+            function_space,
+            source=source,
+            boundary_conditions=boundary_conditions,
         )
 
-    def build_lhs(self):
-        for domain in self.domains["all"]:
-            self.lhs["all"][domain] = self.lhs_expression(domain)
+        self.souce_domains = souce_domains
+        self.reference = reference
+        self.epsilon, self.mu = self.coefficients
+        self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
-    def build_rhs(self):
-        for domain in self.domains["sources"]:
-            self.rhs["sources"][domain] = self.rhs_expression(domain)
+    def maxwell(self, u, v, epsilon, inv_mu, domain="everywhere"):
+        k0 = Constant(self.source.wavenumber)
+        form = -inner(inv_mu * curl(u), curl(v)) + k0 ** 2 * inner(epsilon * u, v)
+        return form * self.dx(domain)
+
+    def _weak(self, u, v, u1):
+        epsilon = self.epsilon.as_subdomain()
+        inv_mu = self.mu.invert().as_subdomain()
+
+        epsilon_a = self.epsilon.build_annex(
+            domains=self.souce_domains, reference=self.reference
+        ).as_subdomain()
+        inv_mu_a = (
+            self.mu.invert()
+            .build_annex(domains=self.souce_domains, reference=self.reference)
+            .as_subdomain()
+        )
+        form = self.maxwell(u, v, epsilon, inv_mu)
+        if self.souce_domains != []:
+            form += self.maxwell(
+                u1, v, epsilon - epsilon_a, inv_mu - inv_mu_a, domain=self.souce_domains
+            )
+
+        # for bnd in self.pec_boundaries:
+        #     normal = self.geometry.unit_normal_vector
+        #     form -= dot(xi * (grad(u1) * v), normal) * self.ds(bnd)
+        weak = form.real + form.imag
+        return weak
+
+    @property
+    def weak(self):
+        u1 = self.source.expression
+        u = self.trial
+        v = self.test
+        return self._weak(u, v, u1)
+
+    def build_pec_boundary_conditions(self):
+        applied_function = -self.source.expression
+        applied_function = project(applied_function, self.real_function_space)
+        _boundary_conditions = build_pec_boundary_conditions(
+            self.pec_boundaries, self.geometry, self.function_space, applied_function
+        )
+        return _boundary_conditions
+
+    def build_boundary_conditions(self):
+        self._boundary_conditions = self.build_pec_boundary_conditions()
+        return self._boundary_conditions
 
 
-class WeakFormBuilder:
-    def __init__(self, formulation, measure):
-        self.formulation = formulation
-        self.measure = measure
-        self.lhs = 0
+class Maxwell3DPeriodic(Maxwell3D):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.propagation_vector = self.source.wavenumber * np.array(
+            [np.cos(self.source.angle), np.sin(self.source.angle)]
+        )
+        k0 = self.source.wavenumber
+        theta0, phi0 = self.source.angle[0:2]
+        alpha0 = k0 * np.cos(theta0) * np.cos(phi0)
+        beta0 = k0 * np.cos(theta0) * np.sin(phi0)
+        gamma0 = k0 * np.sin(theta0)
+        self.propagation_vector = np.array([alpha0, beta0, gamma0])
 
-    def build_lhs(self):
-        dx = self.measure["dx"]
-        for domain, term in self.formulation.lhs["all"].items():
-            self.lhs += (term.real + term.imag) * dx(domain)
+        self.phasor_vect = [
+            phasor(
+                self.propagation_vector[i],
+                direction=i,
+                degree=self.source.degree,
+                domain=self.geometry.mesh,
+            )
+            for i in range(3)
+        ]
+        self.phasor = self.phasor_vect[0] * self.phasor_vect[1]
+        self.annex_field = make_stack(
+            self.geometry,
+            self.coefficients,
+            self.source,
+            source_domains=self.souce_domains,
+            degree=self.source.degree,
+            dim=3,
+        )

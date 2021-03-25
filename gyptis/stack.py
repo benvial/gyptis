@@ -9,7 +9,9 @@ import numpy as np
 from numpy.linalg import inv
 from scipy.constants import c, epsilon_0, mu_0
 
-from .sources import field_stack_2D, field_stack_3D
+from .source import field_stack_2D, field_stack_3D
+from .complex import Complex
+from .materials import Subdomain
 
 pi = np.pi
 
@@ -179,5 +181,104 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
     Q = sum(Q_)
     # print(Q_)
     # print(R, T, Q, R + T + Q)
+    propagation_constants = alpha0, beta0, gamma
+    efficiencies = dict(R=R, T=T, Q=Q)
 
-    return phi, alpha0, beta0, gamma, R, T
+    return phi, propagation_constants, efficiencies
+
+
+def make_stack(
+    geometry,
+    coefficients,
+    plane_wave,
+    polarization="TE",
+    source_domains=[],
+    degree=1,
+    dim=2,
+):
+    epsilon, mu = coefficients
+    config = OrderedDict(
+        {
+            "superstrate": {
+                "epsilon": epsilon.dict["superstrate"],
+                "mu": mu.dict["superstrate"],
+            },
+            "substrate": {
+                "epsilon": epsilon.dict["substrate"],
+                "mu": mu.dict["substrate"],
+            },
+        }
+    )
+    if dim == 2:
+        if polarization == "TE":
+            _psi = np.pi / 2
+            _phi_ind = 2
+        else:
+            _psi = 0
+            _phi_ind = 8
+
+        stack_output = get_coeffs_stack(
+            config, plane_wave.wavelength, pi / 2 - plane_wave.angle, 0, _psi,
+        )
+        phi_, propagation_constants, efficiencies_stack = stack_output
+        alpha0, _, beta, = propagation_constants
+        phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
+        phi = (np.array(phi) / phi[0][0]).tolist()
+
+        u_stack = [
+            field_stack_2D(p, alpha0, b, yshift=0, domain=geometry.mesh)
+            for p, b in zip(phi, beta)
+        ]
+        phi0 = [phi[0][0], 0]
+        u_0 = field_stack_2D(phi0, alpha0, beta[0], yshift=0, domain=geometry.mesh)
+
+    else:
+        stack_output = get_coeffs_stack(
+            config,
+            plane_wave.wavelength,
+            pi / 2 - plane_wave.angle[0],
+            plane_wave.angle[1],
+            plane_wave.angle[2],
+        )
+        phi_, propagation_constants, efficiencies_stack = stack_output
+        alpha0, beta0, gamma, = propagation_constants
+        phi = [p[:6] for p in phi_]
+        
+        u_stack = [
+            field_stack_3D(p, alpha0, beta0, g, domain=geometry.mesh)
+            for p, g in zip(phi, gamma)
+        ]
+        phi0 = np.zeros_like(phi[0])
+        phi0[::2] = phi[0][::2]
+        u_0 = field_stack_3D(phi0, alpha0, beta0, gamma[0], domain=geometry.mesh)
+
+    estack = {k: v for k, v in zip(config.keys(), u_stack)}
+    for dom in source_domains:
+        estack[dom] = estack["superstrate"]
+
+    estack["pml_bottom"] = estack["substrate"]
+    estack["pml_top"] = estack["superstrate"]
+    # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
+    e0 = {"superstrate": u_0}
+    for dom in source_domains:
+        e0[dom] = e0["superstrate"]
+    e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(0, 0)
+    ustack_coeff = Subdomain(
+        geometry.markers, geometry.domains, estack, degree=degree, domain=geometry.mesh
+    )
+
+    u0_coeff = Subdomain(
+        geometry.markers, geometry.domains, e0, degree=degree, domain=geometry.mesh
+    )
+
+    inc_field = {}
+    stack_field = {}
+    for dom in epsilon.dict.keys():
+        inc_field[dom] = e0[dom]
+        stack_field[dom] = estack[dom]
+    annex_field_dict = {"incident": inc_field, "stack": stack_field}
+    annex_field_coeff = {"incident": u0_coeff, "stack": ustack_coeff}
+    annex_field = dict(as_subdomain=annex_field_coeff, as_dict=annex_field_dict)
+    annex_field["stack_output"] = stack_output
+    annex_field["phi"] = phi
+    return annex_field

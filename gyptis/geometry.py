@@ -654,6 +654,9 @@ class Geometry(object):
                 subdomain_data=self.mesh_object["markers"][marker_dim_minus_1],
                 subdomain_dict=self.subdomains[sub_dim_dim_minus_1],
             )
+        else:
+            self.measure["ds"] = None
+            self.measure["dS"] = None
 
         self.mesh = self.mesh_object["mesh"]
         self.markers = self.mesh_object["markers"]

@@ -75,7 +75,7 @@ class Layered2D(Geometry):
         )
         return box
 
-    def build(self, **kwargs):
+    def build(self, *args, **kwargs):
 
         s = self.get_periodic_bnds(self.y0, self.total_thickness)
         periodic_id = {}
@@ -84,7 +84,7 @@ class Layered2D(Geometry):
         gmsh.model.mesh.setPeriodic(
             1, periodic_id["+x"], periodic_id["-x"], self.translation_x
         )
-        super().build(**kwargs)
+        super().build(*args, **kwargs)
 
     def get_periodic_bnds(self, y_position, thickness, eps=1e-3):
         s = {}
@@ -202,13 +202,11 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
             _psi = 0
             _phi_ind = 8
-        phi_, alpha0, _, beta, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            self.theta0,
-            0,
-            _psi,
+
+        phi_, propagation_constants, self.efficiencies_stack = get_coeffs_stack(
+            config, self.lambda0, self.theta0, 0, _psi,
         )
+        alpha0, _, beta, = propagation_constants
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
         self.phi = (np.array(self.phi) / self.phi[0][0]).tolist()
@@ -403,9 +401,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
             nu = 1 / self.epsilon["substrate"]
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
         k, beta = {}, {}
@@ -537,12 +533,9 @@ class Grating2D(ElectroMagneticSimulation2D):
 
     def plot_geometry(self, nper=1, ax=None, **kwargs):
         from .plot import plot_subdomains, plt
-
         if ax == None:
             ax = plt.gca()
-
         domains = self.geometry.subdomains["surfaces"]
-
         scatt = []
         for d in domains:
             if d not in self.geometry.layers:
@@ -556,7 +549,6 @@ class Grating2D(ElectroMagneticSimulation2D):
                 )
                 scatt_lines.append(s)
         yend = list(self.geometry.thicknesses.values())[-1]
-
         layers_lines = []
         for y0 in self.geometry.y_position.values():
             a = ax.axhline(y0, **kwargs)
@@ -564,9 +556,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         y0 += list(self.geometry.thicknesses.values())[-1]
         a = ax.axhline(y0, **kwargs)
         layers_lines.append(a)
-
         ax.set_aspect(1)
-
         return scatt_lines, layers_lines
 
     def plot_field(

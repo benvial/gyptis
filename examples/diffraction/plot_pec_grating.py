@@ -26,7 +26,6 @@ h = 8
 w = 600
 
 pmesh = 10
-pmesh_rod = 15
 
 thicknesses = OrderedDict(
     {

@@ -9,7 +9,7 @@ import pytest
 from gyptis import dolfin
 from gyptis.complex import assemble, div, dot, grad, project
 from gyptis.helpers import function2array, get_coordinates
-from gyptis.sources import *
+from gyptis.source import *
 
 
 def test_pw_2d():

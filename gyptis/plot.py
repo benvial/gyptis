@@ -14,10 +14,8 @@ from gyptis.complex import *
 
 from . import dolfin
 
-# plt.ion()
 
-
-def get_bnds(markers, domain=None, shift=(0, 0)):
+def get_boundaries(markers, domain=None, shift=(0, 0)):
 
     data = markers.array()
     triang = mesh2triang(markers.mesh())
@@ -34,21 +32,15 @@ def get_bnds(markers, domain=None, shift=(0, 0)):
 
     sub_bnds = []
     for triangtest in triangulations:
-
-        # triangtest=triangulations[2]
-
         maskedTris = triangtest.get_masked_triangles()
         verts = np.stack((triangtest.x[maskedTris], triangtest.y[maskedTris]), axis=-1)
         all_vert = np.vstack(verts).T
-        # unique_vert = np.array(list(set(tuple(p) for p in all_vert.T))).T
-        # masked_triangles = triangtest.triangles[~triangtest.mask]
         sub_triang = Triangulation(*all_vert)
 
         boundaries = []
         for i in range(len(sub_triang.triangles)):
             for j in range(3):
                 if sub_triang.neighbors[i, j] < 0:
-                    # Triangle edge (i,j) has no neighbor so is a boundary edge.
                     boundaries.append(
                         (
                             sub_triang.triangles[i, j],
@@ -68,7 +60,7 @@ def get_bnds(markers, domain=None, shift=(0, 0)):
 
 
 def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
-    sub_bnds = get_bnds(markers, domain=domain, shift=shift)
+    sub_bnds = get_boundaries(markers, domain=domain, shift=shift)
     if "c" not in kwargs and "color" not in kwargs:
         kwargs["color"] = "k"
     if ax is None:
@@ -88,7 +80,6 @@ def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
 
 def plot_subdomains(markers, **kwargs):
     return plot_boundaries(markers, **kwargs)
-    # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
 def plotcplx(test, ax=None, markers=None, proj_space=None, ref_cbar=False, **kwargs):
@@ -117,19 +108,6 @@ def plotcplx(test, ax=None, markers=None, proj_space=None, ref_cbar=False, **kwa
             cbar.set_ticklabels(lab)
         P.append(p)
         C.append(cbar)
-
-    # plt.sca(ax[1])
-    # p = dolfin.plot(test.imag, cmap="RdBu_r", **kwargs)
-    # cbar = plt.colorbar(p)
-    # if markers:
-    #     plot_subdomains(markers)
-    # if ref_cbar:
-    #     v = test.imag.vector().get_local()
-    #     mn, mx = min(v), max(v)
-    #     md = 0.5 * (mx + mn)
-    #     cbar.set_ticks([mn, md, mx])
-    #     lab = [f"{m:.2e}" for m in [mn, md, mx]]
-    #     cbar.set_ticklabels(lab)
     return P, C
 
 

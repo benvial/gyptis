@@ -30,7 +30,6 @@ if os.environ.get("GYPTIS_ADJOINT") is not None:
 else:
     ADJOINT = False
 
-
 dolfin.parameters["reorder_dofs_serial"] = False
 
 

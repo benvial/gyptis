@@ -10,8 +10,8 @@ Sources.
 import numpy as np
 import sympy as sp
 from sympy.vector import CoordSys3D
-
-from .complex import Complex, as_tensor, dolfin
+from scipy.constants import c, epsilon_0, mu_0
+from .complex import Complex, Constant, as_tensor, dolfin
 from .complex import grad as gradc
 
 _COORD = CoordSys3D("N")
@@ -49,11 +49,7 @@ def plane_wave_3d(lambda0, theta, phi, psi, amplitude=1, degree=1, domain=None):
 
     k0 = 2 * np.pi / lambda0
     K = k0 * np.array(
-        (
-            np.sin(theta) * np.cos(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(theta),
-        )
+        (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta),)
     )
     K_ = _vector(sp.symbols("kx, ky, kz", real=True))
 
@@ -64,10 +60,10 @@ def plane_wave_3d(lambda0, theta, phi, psi, amplitude=1, degree=1, domain=None):
         code, kx=K[0], ky=K[1], kz=K[2], degree=degree, domain=domain
     )
     C = dolfin.as_tensor([cx, cy, cz])
-    return amplitude * Complex(prop[0] * C, prop[1] * C)
+    return Complex(prop[0] * C, prop[1] * C)
 
 
-def green_function_2d(lambda0, xs, ys, degree=1, domain=None):
+def green_function_2d(lambda0, xs, ys, amplitude=1, degree=1, domain=None):
     Xs = _vector(sp.symbols("xs, ys, 0", real=True))
     k0 = sp.symbols("k0", real=True)
     Xshift = _X - Xs
@@ -78,7 +74,12 @@ def green_function_2d(lambda0, xs, ys, degree=1, domain=None):
     KR = dolfin.Expression(
         sp.printing.ccode(kr), k0=k0_, xs=xs, ys=ys, degree=degree, domain=domain
     )
-    return -1 / 4 * Complex(dolfin.bessel_Y(0, KR), dolfin.bessel_J(0, KR))
+    return (
+        -1
+        / 4
+        * Complex(dolfin.bessel_Y(0, KR), dolfin.bessel_J(0, KR))
+        * Constant(amplitude)
+    )
 
 
 def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
@@ -173,40 +174,68 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
 
 
 class Source:
-    def __init__(self, wavelength, dimension, degree=1, domain=None):
+    def __init__(self, wavelength, dim, degree=1, domain=None):
         self.wavelength = wavelength
-        self.dimension = dimension
+        self.dim = dim
         self.degree = degree
         self.domain = domain
 
+    @property
+    def wavenumber(self):
+        return 2 * np.pi / self.wavelength
+
+    @property
+    def pulsation(self):
+        return self.wavenumber * c
+
+    @property
+    def frequency(self):
+        return c / self.wavelength
+
 
 class PlaneWave(Source):
-    def __init__(
-        self, wavelength, angle, dimension, amplitude=1, degree=1, domain=None
-    ):
-        super().__init__(wavelength, dimension, degree=degree, domain=domain)
+    def __init__(self, wavelength, angle, dim, amplitude=1, degree=1, domain=None):
+        super().__init__(wavelength, dim, degree=degree, domain=domain)
         self.angle = angle
         self.amplitude = amplitude
-        self._gradient = None
 
     @property
     def expression(self):
-        if self.dimension == 2:
-            _expression, self._gradient = plane_wave_2d(
+        if self.dim == 2:
+            _expression = plane_wave_2d(
                 self.wavelength,
                 self.angle,
                 amplitude=self.amplitude,
                 degree=self.degree,
                 domain=self.domain,
-                grad=True,
             )
         else:
-            _expression = 1
+            _expression = plane_wave_3d(
+                self.wavelength,
+                *self.angle,
+                amplitude=self.amplitude,
+                degree=self.degree,
+                domain=self.domain,
+            )
         return _expression
 
+
+class LineSource(Source):
+    def __init__(self, wavelength, position, amplitude=1, degree=1, domain=None):
+        super().__init__(wavelength, dim=2, degree=degree, domain=domain)
+        self.position = position
+        self.amplitude = amplitude
+
     @property
-    def gradient(self):
-        return self._gradient
+    def expression(self):
+        _expression = green_function_2d(
+            self.wavelength,
+            *self.position,
+            amplitude=self.amplitude,
+            degree=self.degree,
+            domain=self.domain,
+        )
+        return _expression
 
 
 #

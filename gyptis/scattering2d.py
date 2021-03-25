@@ -207,7 +207,6 @@ class Scatt2D(ElectroMagneticSimulation2D):
 
         self.u = Complex(*u.split())
         utot = self.u + self.u0
-
         self.solution = {}
         self.solution["diffracted"] = self.u
         self.solution["total"] = utot
@@ -254,7 +253,6 @@ class Scatt2D(ElectroMagneticSimulation2D):
             ax = plt.gca()
 
         domains = self.geometry.subdomains["surfaces"]
-
         scatt = []
         for d in domains:
             scatt.append(d)

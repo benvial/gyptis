@@ -14,7 +14,7 @@ from .complex import *
 from .geometry import *
 from .helpers import _translation_matrix
 from .materials import *
-from .sources import *
+from .source import *
 from .stack import *
 
 pi = np.pi

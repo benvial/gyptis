@@ -395,13 +395,13 @@ def _invert_3by3_complex_matrix(m):
     invim = np.zeros((3, 3), dtype=object)
     for i in range(3):
         for j in range(3):
-            q = inv[i][j] / determinant
+            q = inv[i][j]
             invre[i, j] = q.real
             invim[i, j] = q.imag
     invre = invre.tolist()
     invim = invim.tolist()
 
-    return Complex(dolfin.as_tensor(invre), dolfin.as_tensor(invim))
+    return Complex(dolfin.as_tensor(invre), dolfin.as_tensor(invim)) / determinant
 
 
 def _make_cst_mat(a, b):
@@ -423,18 +423,26 @@ def _coefs(a, b):
 
 
 class Coefficient:
-    def __init__(self, dict, geometry=None, pmls=[]):
+    def __init__(self, dict, geometry=None, pmls=[], dim=2, degree=1):
         self.dict = dict
         self.geometry = geometry
         self.pmls = pmls
+        self.dim = dim
+        self.degree = degree
         if geometry:
-            self.markers = geometry.mesh_object["markers"]["triangle"]
-            self.mapping = geometry.subdomains["surfaces"]
+            if self.dim == 2:
+                markers_key, mapping_key = "triangle", "surfaces"
+            else:
+                markers_key, mapping_key = "tetra", "volumes"
 
-        # if pmls:
-        #     for pml in pmls
-        # if pml:
-        #     assert
+            self.markers = geometry.mesh_object["markers"][markers_key]
+            self.mapping = geometry.subdomains[mapping_key]
+
+        if pmls is not []:
+            self.appy_pmls()
+
+    def __repr__(self):
+        return "Coefficient " + self.dict.__repr__()
 
     def build_pmls(self):
         new_material_dict = self.dict.copy()
@@ -447,6 +455,8 @@ class Coefficient:
     def build_annex(self, domains, reference):
         assert reference in self.dict.keys()
         annex_material_dict = self.dict.copy()
+        if isinstance(domains, str):
+            domains = [domains]
         for dom in domains:
             assert dom in self.dict.keys()
             annex_material_dict[dom] = self.dict[reference]
@@ -458,11 +468,14 @@ class Coefficient:
     def appy_pmls(self):
         self.dict.update(self.build_pmls())
 
-    def as_subdomain(self, degree=1):
-        return Subdomain(self.markers, self.mapping, self.dict, degree=degree)
+    def as_subdomain(self, **kwargs):
+        return Subdomain(
+            self.markers, self.mapping, self.dict, degree=self.degree, **kwargs
+        )
 
-    def as_property(self, **kwargs):
-        return make_constant_property(self.dict, **kwargs)
+    def as_property(self, dim=None, **kwargs):
+        dim = dim or self.dim
+        return make_constant_property(self.dict, dim=self.dim, **kwargs)
 
     def to_xi(self):
         new = copy.copy(self)
@@ -487,3 +500,13 @@ class Coefficient:
         )
         pltfunction = plotcplx if iscomplex(eps_plot) else plot
         return pltfunction(eps_plot, proj_space=proj_space, **kwargs)
+
+    def invert(self):
+        new = copy.copy(self)
+        for dom, val in new.dict.items():
+            val_shape = np.array(val).shape
+            if val_shape == (2, 2) or val_shape == (3, 3):
+                new.dict[dom] = np.linalg.inv(val)
+            else:
+                new.dict[dom] = 1 / val
+        return new

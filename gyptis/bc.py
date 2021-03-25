@@ -102,3 +102,29 @@ class BiPeriodicBoundary3D(dolfin.SubDomain):
             y[0] = -1000  # -self.period[0]*2.
             y[1] = -1000  # -self.period[1]*2.
             y[2] = -1000  # 0.
+
+
+def prepare_boundary_conditions(bc_dict):
+    valid_bcs = ["PEC"]
+    boundary_conditions = []
+    pec_bnds = []
+    for bnd, cond in bc_dict.items():
+        if cond not in valid_bcs:
+            raise ValueError(f"Unknown boundary condition {cond}")
+        else:
+            pec_bnds.append(bnd)
+    return pec_bnds
+
+
+def build_pec_boundary_conditions(pec_bnds, geometry, function_space, applied_function):
+    boundary_conditions = []
+    for bnd in pec_bnds:
+        bc = DirichletBC(
+            function_space,
+            applied_function,
+            geometry.boundary_markers,
+            bnd,
+            geometry.boundaries,
+        )
+        [boundary_conditions.append(b) for b in bc]
+    return boundary_conditions

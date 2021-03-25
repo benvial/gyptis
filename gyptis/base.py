@@ -13,7 +13,7 @@ from .complex import *
 from .geometry import *
 from .materials import *
 from .materials import _coefs, _invert_3by3_complex_matrix, _make_cst_mat
-from .sources import *
+from .source import *
 
 
 class Simulation(ABC):

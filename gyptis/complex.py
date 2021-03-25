@@ -84,15 +84,6 @@ def _complexify_vector_alt(func):
     return wrapper
 
 
-# def complexify_bilin(func):
-#     def wrapper(a,b, *args, **kwargs):
-#         if isinstance(z, Complex):
-#             return Complex(func(z.real, *args, **kwargs),func(z.imag, *args, **kwargs))
-#         else:
-#             return func(a,b, *args, **kwargs)
-#     return wrapper
-
-
 class Complex(object):
     """A complex object.
 
@@ -113,10 +104,6 @@ class Complex(object):
     def __init__(self, real, imag=0.0):
         self.real = real
         self.imag = imag
-        # print(type(self.real))
-        # print(type(self.imag))
-        # if type(self.real) != type(self.imag):
-        #     raise TypeError("real and imaginary parts must be of the same type")
 
     def __len__(self):
         if hasattr(self.real, "__len__") and hasattr(self.imag, "__len__"):
@@ -133,13 +120,6 @@ class Complex(object):
 
     def __getitem__(self, i):
         return Complex(self.real[i], self.imag[i])
-
-    # def __next__(self):
-    #     i = self.i
-    #     self.i += 1
-    #     yield Complex(self.real[i], self.imag[i])
-    #
-    #
 
     @_complexcheck
     def __add__(self, other):
@@ -238,8 +218,7 @@ class Complex(object):
     def __call__(self, *args, **kwargs):
         "Calls the complex function if base objects are callable"
         return Complex(
-            self.real.__call__(*args, **kwargs),
-            self.imag.__call__(*args, **kwargs),
+            self.real.__call__(*args, **kwargs), self.imag.__call__(*args, **kwargs),
         )
 
     @staticmethod
@@ -308,38 +287,32 @@ def _cplx_iter(f):
         cplx = any([iscomplex(v_) for v_ in v]) if iterable else iscomplex(v)
         if cplx:
             if iterable:
-                v_ = np.array(v)
-                v_re = v_.real
-                v_im = v_.imag
-            else:
-                v_re, v_im = v.real, v.imag
-            return Complex(f(v_re, *args, **kwargs), f(v_im, *args, **kwargs))
+                v = np.array(v)
+            return Complex(f(v.real, *args, **kwargs), f(v.imag, *args, **kwargs))
         else:
             return f(v, *args, **kwargs)
 
     return wrapper
 
 
-# def Constant(v, *args,**kwargs):
-#     iterable = isinstance(v, Iterable)
-#     cplx = any([iscomplex(v_) for v_ in v]) if iterable else iscomplex(v)
-#     if cplx:
-#         if iterable:
-#             v_re = tuple([a.real] for a in v)
-#             v_im = tuple([a.imag] for a in v)
-#         else:
-#             v_re, v_im = v.real,v.imag
-#         return Complex(dolfin.Constant(v_re,*args,**kwargs), dolfin.Constant(v_im,*args,**kwargs))
-#     else:
-#         return dolfin.Constant(v,*args,**kwargs)
-#
+def phasor(prop_cst, direction=0, **kwargs):
+    phasor_re = dolfin.Expression(
+        f"cos(prop_cst*x[{direction}])", prop_cst=prop_cst, **kwargs
+    )
+    phasor_im = dolfin.Expression(
+        f"sin(prop_cst*x[{direction}])", prop_cst=prop_cst, **kwargs
+    )
+    return Complex(phasor_re, phasor_im)
+
+
+def phase_shift(phase, **kargs):
+    phasor_re = dolfin.Expression(f"cos(phase)", phase=phase, **kargs)
+    phasor_im = dolfin.Expression(f"sin(phase)", phase=phase, **kargs)
+    return Complex(phasor_re, phasor_im)
 
 
 interpolate = _complexify_linear(dolfin.interpolate)
 assemble = _complexify_linear(dolfin.assemble)
-Function = _complexify_vector_alt(dolfin.Function)
-TrialFunction = _complexify_vector(dolfin.TrialFunction)
-TestFunction = _complexify_vector(dolfin.TestFunction)
 grad = _complexify_linear(dolfin.grad)
 div = _complexify_linear(dolfin.div)
 curl = _complexify_linear(dolfin.curl)
@@ -347,8 +320,9 @@ project = _complexify_linear(dolfin.project)
 inner = _complexify_bilinear(dolfin.inner)
 dot = _complexify_bilinear(dolfin.dot)
 cross = _complexify_bilinear(dolfin.cross)
-
 as_tensor = _cplx_iter(dolfin.as_tensor)
 as_vector = _cplx_iter(dolfin.as_vector)
-
 Constant = _cplx_iter(dolfin.Constant)
+Function = _complexify_vector_alt(dolfin.Function)
+TrialFunction = _complexify_vector(dolfin.TrialFunction)
+TestFunction = _complexify_vector(dolfin.TestFunction)
