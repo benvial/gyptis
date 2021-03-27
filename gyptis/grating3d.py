@@ -113,6 +113,7 @@ class Layered3D(Geometry):
         gmsh.model.mesh.setPeriodic(
             2, periodic_id["+y"], periodic_id["-y"], self.translation_y
         )
+        self.periodic_bnds = periodic_id
         return periodic_id
 
     def build(self, set_periodic=True, **kwargs):

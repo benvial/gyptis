@@ -88,7 +88,7 @@ class Maxwell2D(Formulation):
         source=None,
         boundary_conditions={},
         polarization="TE",
-        souce_domains=[],
+        source_domains=[],
         reference=None,
     ):
         super().__init__(
@@ -99,7 +99,7 @@ class Maxwell2D(Formulation):
             boundary_conditions=boundary_conditions,
         )
 
-        self.souce_domains = souce_domains
+        self.source_domains = source_domains
         self.reference = reference
 
         self.epsilon, self.mu = self.coefficients
@@ -123,15 +123,15 @@ class Maxwell2D(Formulation):
         xi = self.xi.as_subdomain()
         chi = self.chi.as_subdomain()
         xi_a = self.xi.build_annex(
-            domains=self.souce_domains, reference=self.reference
+            domains=self.source_domains, reference=self.reference
         ).as_subdomain()
         chi_a = self.chi.build_annex(
-            domains=self.souce_domains, reference=self.reference
+            domains=self.source_domains, reference=self.reference
         ).as_subdomain()
         form = self.maxwell(u, v, xi, chi)
-        if self.souce_domains != []:
+        if self.source_domains != []:
             form += self.maxwell(
-                u1, v, xi - xi_a, chi - chi_a, domain=self.souce_domains
+                u1, v, xi - xi_a, chi - chi_a, domain=self.source_domains
             )
         if self.polarization == "TM":
             for bnd in self.pec_boundaries:
@@ -149,7 +149,7 @@ class Maxwell2D(Formulation):
 
     def build_pec_boundary_conditions(self, applied_function):
 
-        if self.polarization == "TE":
+        if self.polarization == "TE" and self.pec_boundaries != []:
             ## FIXME: project is slow, avoid it.
             applied_function = project(applied_function, self.real_function_space)
             _boundary_conditions = build_pec_boundary_conditions(
@@ -186,7 +186,7 @@ class Maxwell2DPeriodic(Maxwell2D):
             self.coefficients,
             self.source,
             polarization=self.polarization,
-            source_domains=self.souce_domains,
+            source_domains=self.source_domains,
             degree=self.source.degree,
             dim=2,
         )
@@ -212,7 +212,7 @@ class Maxwell3D(Formulation):
         function_space,
         source=None,
         boundary_conditions={},
-        souce_domains=[],
+        source_domains=[],
         reference=None,
     ):
         super().__init__(
@@ -223,7 +223,7 @@ class Maxwell3D(Formulation):
             boundary_conditions=boundary_conditions,
         )
 
-        self.souce_domains = souce_domains
+        self.source_domains = source_domains
         self.reference = reference
         self.epsilon, self.mu = self.coefficients
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
@@ -238,17 +238,21 @@ class Maxwell3D(Formulation):
         inv_mu = self.mu.invert().as_subdomain()
 
         epsilon_a = self.epsilon.build_annex(
-            domains=self.souce_domains, reference=self.reference
+            domains=self.source_domains, reference=self.reference
         ).as_subdomain()
         inv_mu_a = (
             self.mu.invert()
-            .build_annex(domains=self.souce_domains, reference=self.reference)
+            .build_annex(domains=self.source_domains, reference=self.reference)
             .as_subdomain()
         )
         form = self.maxwell(u, v, epsilon, inv_mu)
-        if self.souce_domains != []:
+        if self.source_domains != []:
             form += self.maxwell(
-                u1, v, epsilon - epsilon_a, inv_mu - inv_mu_a, domain=self.souce_domains
+                u1,
+                v,
+                epsilon - epsilon_a,
+                inv_mu - inv_mu_a,
+                domain=self.source_domains,
             )
 
         # for bnd in self.pec_boundaries:
@@ -264,25 +268,28 @@ class Maxwell3D(Formulation):
         v = self.test
         return self._weak(u, v, u1)
 
-    def build_pec_boundary_conditions(self):
-        applied_function = -self.source.expression
-        applied_function = project(applied_function, self.real_function_space)
-        _boundary_conditions = build_pec_boundary_conditions(
-            self.pec_boundaries, self.geometry, self.function_space, applied_function
-        )
+    def build_pec_boundary_conditions(self, applied_function):
+        if self.pec_boundaries != []:
+            applied_function = project(applied_function, self.real_function_space)
+            _boundary_conditions = build_pec_boundary_conditions(
+                self.pec_boundaries,
+                self.geometry,
+                self.function_space,
+                applied_function,
+            )
+        else:
+            _boundary_conditions = []
         return _boundary_conditions
 
     def build_boundary_conditions(self):
-        self._boundary_conditions = self.build_pec_boundary_conditions()
+        applied_function = -self.source.expression
+        self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
 
 
 class Maxwell3DPeriodic(Maxwell3D):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.propagation_vector = self.source.wavenumber * np.array(
-            [np.cos(self.source.angle), np.sin(self.source.angle)]
-        )
         k0 = self.source.wavenumber
         theta0, phi0 = self.source.angle[0:2]
         alpha0 = k0 * np.cos(theta0) * np.cos(phi0)
@@ -304,7 +311,19 @@ class Maxwell3DPeriodic(Maxwell3D):
             self.geometry,
             self.coefficients,
             self.source,
-            source_domains=self.souce_domains,
+            source_domains=self.source_domains,
             degree=self.source.degree,
             dim=3,
         )
+
+    @property
+    def weak(self):
+        u1 = self.annex_field["as_subdomain"]["stack"]
+        u = self.trial * self.phasor
+        v = self.test * self.phasor.conj
+        return self._weak(u, v, u1)
+
+    def build_boundary_conditions(self):
+        applied_function = -self.annex_field["as_subdomain"]["stack"] * self.phasor.conj
+        self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
+        return self._boundary_conditions

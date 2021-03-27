@@ -9,9 +9,9 @@ import numpy as np
 from numpy.linalg import inv
 from scipy.constants import c, epsilon_0, mu_0
 
-from .source import field_stack_2D, field_stack_3D
 from .complex import Complex
-from .materials import Subdomain
+from .materials import Subdomain, complex_vector
+from .source import field_stack_2D, field_stack_3D
 
 pi = np.pi
 
@@ -218,10 +218,18 @@ def make_stack(
             _phi_ind = 8
 
         stack_output = get_coeffs_stack(
-            config, plane_wave.wavelength, pi / 2 - plane_wave.angle, 0, _psi,
+            config,
+            plane_wave.wavelength,
+            pi / 2 - plane_wave.angle,
+            0,
+            _psi,
         )
         phi_, propagation_constants, efficiencies_stack = stack_output
-        alpha0, _, beta, = propagation_constants
+        (
+            alpha0,
+            _,
+            beta,
+        ) = propagation_constants
         phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
         phi = (np.array(phi) / phi[0][0]).tolist()
 
@@ -231,7 +239,37 @@ def make_stack(
         ]
         phi0 = [phi[0][0], 0]
         u_0 = field_stack_2D(phi0, alpha0, beta[0], yshift=0, domain=geometry.mesh)
+        estack = {k: v for k, v in zip(config.keys(), u_stack)}
 
+        for dom in source_domains:
+            estack[dom] = estack["superstrate"]
+
+        estack["pml_bottom"] = estack["substrate"]
+        estack["pml_top"] = estack["superstrate"]
+
+        print(estack)
+        # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
+        e0 = {"superstrate": u_0}
+        for dom in source_domains:
+            e0[dom] = e0["superstrate"]
+        e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(0, 0)
+
+        ustack_coeff = Subdomain(
+            geometry.markers,
+            geometry.domains,
+            estack,
+            degree=degree,
+            domain=geometry.mesh,
+        )
+        u0_coeff = Subdomain(
+            geometry.markers, geometry.domains, e0, degree=degree, domain=geometry.mesh
+        )
+
+        inc_field = {}
+        stack_field = {}
+        for dom in epsilon.dict.keys():
+            inc_field[dom] = e0[dom]
+            stack_field[dom] = estack[dom]
     else:
         stack_output = get_coeffs_stack(
             config,
@@ -241,9 +279,13 @@ def make_stack(
             plane_wave.angle[2],
         )
         phi_, propagation_constants, efficiencies_stack = stack_output
-        alpha0, beta0, gamma, = propagation_constants
+        (
+            alpha0,
+            beta0,
+            gamma,
+        ) = propagation_constants
         phi = [p[:6] for p in phi_]
-        
+
         u_stack = [
             field_stack_3D(p, alpha0, beta0, g, domain=geometry.mesh)
             for p, g in zip(phi, gamma)
@@ -252,30 +294,52 @@ def make_stack(
         phi0[::2] = phi[0][::2]
         u_0 = field_stack_3D(phi0, alpha0, beta0, gamma[0], domain=geometry.mesh)
 
-    estack = {k: v for k, v in zip(config.keys(), u_stack)}
-    for dom in source_domains:
-        estack[dom] = estack["superstrate"]
+        ustack_coeff = []
+        u0_coeff = []
+        estack_list = []
+        e0_list = []
+        for comp in range(3):
+            estack = {k: v[comp] for k, v in zip(config.keys(), u_stack)}
+            for dom in source_domains:
+                estack[dom] = estack["superstrate"]
 
-    estack["pml_bottom"] = estack["substrate"]
-    estack["pml_top"] = estack["superstrate"]
-    # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
-    e0 = {"superstrate": u_0}
-    for dom in source_domains:
-        e0[dom] = e0["superstrate"]
-    e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(0, 0)
-    ustack_coeff = Subdomain(
-        geometry.markers, geometry.domains, estack, degree=degree, domain=geometry.mesh
-    )
+            estack["pml_bottom"] = estack["substrate"]
+            estack["pml_top"] = estack["superstrate"]
 
-    u0_coeff = Subdomain(
-        geometry.markers, geometry.domains, e0, degree=degree, domain=geometry.mesh
-    )
+            # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
+            e0 = {"superstrate": u_0}
+            for dom in source_domains:
+                e0[dom] = e0["superstrate"]
+            e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = Complex(0, 0)
 
-    inc_field = {}
-    stack_field = {}
-    for dom in epsilon.dict.keys():
-        inc_field[dom] = e0[dom]
-        stack_field[dom] = estack[dom]
+            _ustack_coeff = Subdomain(
+                geometry.markers,
+                geometry.domains,
+                estack,
+                degree=degree,
+                domain=geometry.mesh,
+            )
+            _u0_coeff = Subdomain(
+                geometry.markers,
+                geometry.domains,
+                e0,
+                degree=degree,
+                domain=geometry.mesh,
+            )
+            ustack_coeff.append(_ustack_coeff)
+            u0_coeff.append(_u0_coeff)
+            estack_list.append(estack)
+            e0_list.append(e0)
+
+        ustack_coeff = complex_vector(ustack_coeff)
+        u0_coeff = complex_vector(u0_coeff)
+
+        inc_field = {}
+        stack_field = {}
+        for dom in epsilon.dict.keys():
+            inc_field[dom] = complex_vector([e0[dom] for e0 in e0_list])
+            stack_field[dom] = complex_vector([estack[dom] for estack in estack_list])
+
     annex_field_dict = {"incident": inc_field, "stack": stack_field}
     annex_field_coeff = {"incident": u0_coeff, "stack": ustack_coeff}
     annex_field = dict(as_subdomain=annex_field_coeff, as_dict=annex_field_dict)

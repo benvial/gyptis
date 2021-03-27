@@ -5,9 +5,9 @@
 
 from . import dolfin as df
 from .base import *
+from .bc import PeriodicBoundary2DX
+from .bc import _DirichletBC as DirichletBCReal
 from .grating3d import *
-from .helpers import DirichletBC as DirichletBCReal
-from .helpers import PeriodicBoundary2DX
 
 
 class Grating2DElstat(Simulation2D):
@@ -79,6 +79,12 @@ class Grating2DElstat(Simulation2D):
     def assemble(self):
         self.assemble_lhs()
         self.assemble_rhs()
+
+    def build_system(self):
+        pass
+
+    def prepare(self):
+        pass
 
     def solve_system(self, direct=False):
         Ah = self.Ah[0]

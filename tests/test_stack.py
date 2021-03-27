@@ -24,7 +24,7 @@ def test_stack():
             "substrate": {"epsilon": 3, "mu": 1.0},
         }
     )
-    
+
     phi_, propagation_constants, efficiencies_stack = get_coeffs_stack(
         config, lambda0, theta0, phi0, psi0
     )

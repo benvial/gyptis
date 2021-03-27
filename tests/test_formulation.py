@@ -57,7 +57,7 @@ def test_maxwell2d():
         V,
         source=pw,
         boundary_conditions=bcs,
-        souce_domains="cyl",
+        source_domains="cyl",
         reference="box",
     )
 
@@ -103,7 +103,7 @@ def test_maxwell2d():
         function_space,
         source=pw,
         boundary_conditions=bcs,
-        souce_domains="cyl",
+        source_domains="cyl",
         reference="box",
     )
     maxwell.build_boundary_conditions()
@@ -112,8 +112,8 @@ def test_maxwell2d():
 lambda0, period = 1, 1
 
 
-
 from gyptis.grating2d import Layered2D, OrderedDict
+
 thicknesses = OrderedDict(
     {
         "pml_bottom": lambda0,
@@ -124,11 +124,23 @@ thicknesses = OrderedDict(
     }
 )
 
-degree=1
+degree = 1
 geom = Layered2D(period, thicknesses)
 geom.build()
-epsilon = dict({"substrate": 3, "groove": 1, "superstrate": 1,})
-mu = dict({"substrate": 1, "groove": 1, "superstrate": 1,})
+epsilon = dict(
+    {
+        "substrate": 3,
+        "groove": 1,
+        "superstrate": 1,
+    }
+)
+mu = dict(
+    {
+        "substrate": 1,
+        "groove": 1,
+        "superstrate": 1,
+    }
+)
 stretch = 1 - 1j
 pml_top = PML(
     "y", stretch=stretch, matched_domain="superstrate", applied_domain="pml_top"
@@ -143,17 +155,18 @@ function_space = ComplexFunctionSpace(geom.mesh, "CG", degree)
 pw = PlaneWave(wavelength=lambda0, angle=0, dim=2, domain=geom.mesh, degree=degree)
 
 from gyptis.stack import make_stack_2d
+
 out = make_stack_2d(
     geom, coefficients, pw, polarization="TE", source_domains=["groove"], degree=1
 )
-bcs ={}
+bcs = {}
 maxwell_per2d = Maxwell2DPeriodic(
     geom,
     coefficients,
     function_space,
     source=pw,
     boundary_conditions=bcs,
-    souce_domains=["groove"],
+    source_domains=["groove"],
     reference="superstrate",
 )
 

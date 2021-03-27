@@ -9,8 +9,9 @@ Sources.
 
 import numpy as np
 import sympy as sp
-from sympy.vector import CoordSys3D
 from scipy.constants import c, epsilon_0, mu_0
+from sympy.vector import CoordSys3D
+
 from .complex import Complex, Constant, as_tensor, dolfin
 from .complex import grad as gradc
 
@@ -49,7 +50,11 @@ def plane_wave_3d(lambda0, theta, phi, psi, amplitude=1, degree=1, domain=None):
 
     k0 = 2 * np.pi / lambda0
     K = k0 * np.array(
-        (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta),)
+        (
+            np.sin(theta) * np.cos(phi),
+            np.sin(theta) * np.sin(phi),
+            np.cos(theta),
+        )
     )
     K_ = _vector(sp.symbols("kx, ky, kz", real=True))
 

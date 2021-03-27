@@ -4,8 +4,10 @@
 # License: MIT
 
 
-import pytest
 from pprint import pprint
+
+import pytest
+
 import gyptis
 from gyptis.geometry import *
 from gyptis.helpers import list_time
@@ -147,7 +149,6 @@ def test_scatt2d_pec(polarization):
         polarization=polarization,
         boundary_conditions=bcs,
     )
-    
 
     u = s.solve()
     list_time()
@@ -157,12 +158,12 @@ def test_scatt2d_pec(polarization):
 
 # @pytest.mark.parametrize("degree", [1, 2])
 # def test_scatt3d(degree):
-# 
+#
 # degree = 1
 # wavelength = 1
 # epsilon = dict(box=1, sphere=3)
 # mu = dict(box=1, sphere=1)
-# 
+#
 # lmin = wavelength / 1
 
 # geom = BoxPML(
@@ -178,22 +179,22 @@ def test_scatt2d_pec(polarization):
 # geom.set_size("box", lmin)
 # geom.set_size("sphere", lmin)
 # geom.build()
-# 
+#
 # mesh = geom.mesh
-# 
+#
 # pw = PlaneWave(
 #     wavelength=wavelength, angle=(0, 0, 0), dim=3, domain=mesh, degree=degree
 # )
 # bcs={}
 # s = Scatt3D(geom, epsilon, mu, pw, boundary_conditions=bcs)
-# 
+#
 # s.solve()
 # list_time()
-# 
-# 
+#
+#
 ### PEC
-# 
-# 
+#
+#
 # geom = BoxPML(
 #     dim=3,
 #     box_size=(2 * wavelength, 2 * wavelength, 2 * wavelength),
@@ -206,35 +207,174 @@ def test_scatt2d_pec(polarization):
 # geom.set_size("box", lmin)
 # bnd_sphere = geom.get_boundaries("box")[-1]
 # geom.add_physical(bnd_sphere, "bnd_sphere", dim=2)
-# 
+#
 # geom.build(0)
-# 
+#
 # epsilon = dict(box=1)
 # mu = dict(box=1)
-# 
-# 
+#
+#
 # mesh = geom.mesh
-# 
+#
 # pw = PlaneWave(
 #     wavelength=wavelength, angle=(0, 0, 0), dim=3, domain=mesh, degree=degree
 # )
 # bcs={"bnd_sphere": "PEC"}
 # s = Scatt3D(geom, epsilon, mu, pw, boundary_conditions=bcs)
-# 
+#
 # s.solve()
 # list_time()
-# 
 
 
-@pytest.mark.parametrize("polarization", ["TE","TM"])
-def test_grating2d( polarization):
+####### Grating 3D
+
+from gyptis.grating3d import Layered3D, OrderedDict
+
+p = 1000
+
+##  ---------- incident wave ----------
+lambda0 = p / 2
+theta0 = 0 * np.pi / 180
+phi0 = 0 * np.pi / 180
+psi0 = 0 * np.pi / 180
+
+##  ---------- geometry ----------
+
+period = (p, p)
+grooove_thickness = p / 20
+hole_radius = p / 4
+thicknesses = OrderedDict(
+    {
+        "pml_bottom": lambda0,
+        "substrate": lambda0 / 1,
+        "groove": grooove_thickness,
+        "superstrate": lambda0 / 1,
+        "pml_top": lambda0,
+    }
+)
+dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
+
+##  ---------- mesh ----------
+parmesh = 4
+
+degree = 2
+
+parmesh_hole = parmesh * 1
+
+parmesh_groove = parmesh
+parmesh_pml = parmesh * 2 / 3
+
+mesh_params = dict(
+    {
+        "pml_bottom": parmesh_pml,
+        "substrate": parmesh,
+        "groove": parmesh_groove * 2,
+        "hole": parmesh_hole * 2,
+        "superstrate": parmesh,
+        "pml_top": parmesh_pml,
+    }
+)
+
+##  ---------- materials ----------
+eps_groove = (1.75 - 1.5j) ** 2
+eps_hole = 1
+eps_substrate = 1.5 ** 2
+
+epsilon = dict(
+    {
+        "substrate": eps_substrate,
+        "groove": eps_groove,
+        "hole": eps_hole,
+        "superstrate": 1,
+    }
+)
+mu = dict({"substrate": 1, "groove": 1, "hole": 1, "superstrate": 1})
+
+index = dict()
+for e, m in zip(epsilon.items(), mu.items()):
+    index[e[0]] = np.mean(
+        (np.array(e[1]).real.max() * np.array(m[1]).real.max()) ** 0.5
+    ).real
+
+##  ---------- build geometry ----------
+geom = Layered3D(period, thicknesses, kill=False)
+
+groove = geom.layers["groove"]
+substrate = geom.layers["substrate"]
+superstrate = geom.layers["superstrate"]
+z0 = geom.z_position["groove"]
+
+hole = geom.add_cylinder(
+    0,
+    0,
+    z0,
+    0,
+    0,
+    z0 + grooove_thickness,
+    hole_radius,
+)
+
+superstrate, substrate, hole, groove = geom.fragment(
+    [superstrate, substrate, groove], hole
+)
+# hole, groove = geom.fragment(hole, groove)
+geom.add_physical(groove, "groove")
+geom.add_physical(hole, "hole")
+geom.add_physical(substrate, "substrate")
+geom.add_physical(superstrate, "superstrate")
+
+index["pml_top"] = index["substrate"]
+index["pml_bottom"] = index["substrate"]
+pmesh = {k: lambda0 / (index[k] * mesh_params[k]) for k, p in mesh_params.items()}
+geom.set_mesh_size(pmesh)
+mesh_object = geom.build()
+
+pw = PlaneWave(
+    wavelength=lambda0, angle=(np.pi / 2, 0, 0), dim=3, domain=mesh, degree=degree
+)
+bcs = {}
+s = Grating3D(
+    geom, epsilon, mu, pw, boundary_conditions=bcs, degree=degree, periodic_map_tol=1e-6
+)
+
+s.solve()
+list_time()
+print("  >> computing diffraction efficiencies")
+print("---------------------------------------")
+
+effs = s.diffraction_efficiencies(2, subdomain_absorption=True, orders=True)
+# effs = s.diffraction_efficiencies(2, subdomain_absorption=False, orders=True)
+pprint(effs)
+R = np.sum(effs["R"])
+T = np.sum(effs["T"])
+Q = sum([q for t in effs["Q"].values() for q in t.values()])
+print("ΣR = ", R)
+print("ΣT = ", T)
+print("ΣQ = ", Q)
+print("B  = ", effs["B"])
+list_time()
+
+E1 = s.formulation.annex_field["as_subdomain"]["stack"]
+# E = s.solution["total"]
+# E = project(E,s.formulation.real_function_space)
+# dolfin.File("test.pvd") << E.real
+#
+# W = dolfin.FunctionSpace(geom.mesh, "CG", 2)
+# dolfin.File("Ex.pvd") << project(E1[0].real, W)
+# dolfin.File("Ey.pvd") << project(E1[1].real, W)
+# dolfin.File("Ez.pvd") << project(E1[2].real, W)
+
+
+@pytest.mark.parametrize("polarization", ["TE", "TM"])
+def test_grating2d(polarization):
+
+    from scipy.spatial.transform import Rotation
 
     from gyptis.grating2d import Layered2D, OrderedDict
-    from scipy.spatial.transform import Rotation
 
     wavelength = 1
     lmin = wavelength / 15
-    degree= 2
+    degree = 2
     period = 0.8
 
     thicknesses = OrderedDict(
@@ -250,7 +390,6 @@ def test_grating2d( polarization):
     rot = Rotation.from_euler("zyx", [10, 0, 0], degrees=True)
     rmat = rot.as_matrix()
     eps_diff = rmat @ np.diag((8 - 0.1j, 3 - 0.1j, 4 - 0.2j)) @ rmat.T
-
 
     mu_groove = rmat @ np.diag((2 - 0.1j, 9 - 0.1j, 3 - 0.2j)) @ rmat.T
 
@@ -277,9 +416,12 @@ def test_grating2d( polarization):
 
     angle = np.pi / 2 - theta0 * np.pi / 180
 
-    pw = PlaneWave(wavelength=wavelength, angle=angle, dim=2, domain=mesh, degree=degree)
-    s = Grating2D(geom, epsilon, mu, source=pw, degree=degree, polarization=polarization)
-
+    pw = PlaneWave(
+        wavelength=wavelength, angle=angle, dim=2, domain=mesh, degree=degree
+    )
+    s = Grating2D(
+        geom, epsilon, mu, source=pw, degree=degree, polarization=polarization
+    )
 
     u = s.solve()
     list_time()
@@ -300,11 +442,10 @@ def test_grating2d( polarization):
     s.plot_geometry(nper=3, c="k")
 
 
-
-# 
+#
 # ###### PEC
 # plt.close("all")
-# 
+#
 # wavelength = 600
 # period = 800
 # h = 8
@@ -314,9 +455,9 @@ def test_grating2d( polarization):
 # lmin_pec = h / 8
 # degree = 2
 # polarization = "TE"
-# 
+#
 # from gyptis.grating2d import Layered2D, OrderedDict
-# 
+#
 # thicknesses = OrderedDict(
 #     {
 #         "pml_bottom": wavelength,
@@ -327,40 +468,40 @@ def test_grating2d( polarization):
 #     }
 # )
 # from scipy.spatial.transform import Rotation
-# 
+#
 # rot = Rotation.from_euler("zyx", [20, 0, 0], degrees=True)
 # rmat = rot.as_matrix()
 # eps_groove = 1#rmat @ np.diag((4 - 0.01j, 3 - 0.01j, 2 - 0.02j)) @ rmat.T
 # mu_groove = 1#rmat @ np.diag((2 - 0.01j, 4 - 0.01j, 3 - 0.02j)) @ rmat.T
-# 
+#
 # epsilon = dict({"substrate": 1., "groove": eps_groove, "superstrate": 1})
 # mu = dict({"substrate": 1., "groove": mu_groove, "superstrate": 1})
-# 
+#
 # geom = Layered2D(period, thicknesses)
-# 
+#
 # yc = geom.y_position["groove"] + thicknesses["groove"] / 2
 # diff = geom.add_ellipse(0, yc, 0, w / 2, h / 2)
 # groove = geom.cut(geom.layers["groove"], diff)
-# 
+#
 # geom.add_physical(groove, "groove")
 # bnds = geom.get_boundaries("groove")
 # geom.add_physical(bnds[-1], "hole", dim=1)
-# 
+#
 # for dom in ["substrate", "superstrate", "pml_bottom", "pml_top", "groove"]:
 #     geom.set_size(dom, lmin)
-# 
+#
 # geom.set_size("hole", lmin_pec, dim=1)
-# 
+#
 # geom.build()
-# 
-# 
+#
+#
 # angle = np.pi / 2 - theta0 * np.pi / 180
-# 
+#
 # pw = PlaneWave(wavelength=wavelength, angle=angle, dim=2, domain=mesh, degree=degree)
-# 
+#
 # boundary_conditions = {"hole": "PEC"}
-# 
-# 
+#
+#
 # s = Grating2D(
 #     geom,
 #     epsilon,
@@ -389,47 +530,47 @@ def test_grating2d( polarization):
 # # s.plot_geometry(nper=3, c="k")
 # plt.ion()
 # f = s.formulation
-# 
-# 
+#
+#
 # # xi = xi_a
 # # chi = chi_a
-# 
+#
 # dx = f.dx
 # ds = f.ds
-# 
+#
 # k0 = Constant(f.source.wavenumber)
 # normal = f.geometry.unit_normal_vector
-# 
-# 
+#
+#
 # def a(u, v, xi, where="everywhere"):
 #     form = -inner(xi * grad(u), grad(v))
 #     return form * dx(where)
-# 
-# 
+#
+#
 # def b(u, v, xi, where="everywhere"):
 #     form = 0.5 * dot(xi * (grad(u) * v - u * grad(v)), normal)
 #     # form =  dot(xi * (grad(u) * v ), normal)
 #     return form * ds(where)
-# 
-# 
+#
+#
 # def c(u, v, chi, where="everywhere"):
 #     form = k0 ** 2 * chi * u * v
 #     return form * dx(where)
-# 
-# 
+#
+#
 # def F(u, v, xi, chi, where="everywhere"):
 #     return a(u, v, xi, where=where) + c(u, v, chi, where=where)
-# 
-# 
+#
+#
 # u = f.trial * f.phasor
 # v = f.test * f.phasor.conj
-# 
+#
 # ### --------
 # xi = f.xi.as_subdomain()
 # chi = f.chi.as_subdomain()
 # xi_a = f.xi.build_annex(domains=f.souce_domains, reference=f.reference).as_subdomain()
 # chi_a = f.chi.build_annex(domains=f.souce_domains, reference=f.reference).as_subdomain()
-# 
+#
 # list_time()
 # u1 = f.annex_field["as_subdomain"]["stack"]
 # F0 = F(u, v, xi, chi) + F(u1, v, xi - xi_a, chi - chi_a, where=f.souce_domains)
@@ -443,7 +584,7 @@ def test_grating2d( polarization):
 # # chi = f.chi.as_property()
 # # xi_a = f.xi.build_annex(domains=f.souce_domains, reference=f.reference).as_property()
 # # chi_a = f.chi.build_annex(domains=f.souce_domains, reference=f.reference).as_property()
-# 
+#
 # # u1 = f.annex_field["as_dict"]["stack"]
 # # F0 = 0
 # # for dom in geom.domains:
@@ -452,7 +593,7 @@ def test_grating2d( polarization):
 # #
 # # for dom in f.souce_domains:
 # #     F0 += F(u1[dom], v, xi[dom] - xi_a[dom], chi[dom] - chi_a[dom], dom)
-# 
+#
 # F0 = (F0.real + F0.imag)
 # ### --------
 # s.matrix = assemble(dolfin.lhs(F0))
@@ -480,5 +621,5 @@ def test_grating2d( polarization):
 # utot = s.solution["total"]
 # plotcplx(u)
 # plotcplx(utot)
-# 
+#
 # # plotcplx(u1, mesh=geom.mesh)
