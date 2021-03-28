@@ -1,8 +1,10 @@
-numpy
 scipy
 matplotlib
 dolfin-adjoint
 meshio
 gmsh
-h5py --no-binary=h5py
+h5py
 nlopt
+# the packages below are installed by fenics on conda
+numpy
+sympy

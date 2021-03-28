@@ -58,7 +58,12 @@ def test_grating3d():
     eps_substrate = 1.5 ** 2
 
     epsilon = dict(
-        {"substrate": eps_substrate, "groove": eps_groove, "hole": 1, "superstrate": 1,}
+        {
+            "substrate": eps_substrate,
+            "groove": eps_groove,
+            "hole": 1,
+            "superstrate": 1,
+        }
     )
     mu = dict({"substrate": 1, "groove": 1, "hole": 1, "superstrate": 1})
 
@@ -76,7 +81,15 @@ def test_grating3d():
     superstrate = model.layers["superstrate"]
     z0 = model.z_position["groove"]
 
-    hole = model.add_cylinder(0, 0, z0, 0, 0, z0 + grooove_thickness, hole_radius,)
+    hole = model.add_cylinder(
+        0,
+        0,
+        z0,
+        0,
+        0,
+        z0 + grooove_thickness,
+        hole_radius,
+    )
 
     superstrate, substrate, hole, groove = model.fragment(
         [superstrate, substrate, groove], hole

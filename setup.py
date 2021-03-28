@@ -16,13 +16,14 @@ with open(os.path.join(base_dir, "gyptis", "__about__.py"), "rb") as f:
 
 
 required = [
-    "numpy",
     "scipy",
     "dolfin-adjoint",
     "meshio",
     "gmsh",
     "h5py",
     "nlopt",
+    "numpy",
+    "simpy",
 ]
 
 _classifiers = [

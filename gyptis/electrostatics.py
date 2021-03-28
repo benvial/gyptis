@@ -12,7 +12,11 @@ from .grating3d import *
 
 class Grating2DElstat(Simulation2D):
     def __init__(
-        self, geometry, epsilon, degree=1, boundary_conditions={},
+        self,
+        geometry,
+        epsilon,
+        degree=1,
+        boundary_conditions={},
     ):
         super().__init__(
             geometry, degree=degree, boundary_conditions=boundary_conditions
@@ -106,7 +110,11 @@ class Grating2DElstat(Simulation2D):
 
 class Grating3DElstat(Grating2DElstat, Grating3D):
     def __init__(
-        self, geometry, epsilon, degree=1, boundary_conditions={},
+        self,
+        geometry,
+        epsilon,
+        degree=1,
+        boundary_conditions={},
     ):
         Grating3D.__init__(
             self,

@@ -62,7 +62,13 @@ def test_subdomain_complex(degree):
     tol = 1e-15
     values = dict(cyl=12 + 2j, box=1)
     sub = Subdomain(markers, domains, values, degree=degree)
-    sub_py = Subdomain(markers, domains, values, degree=degree, cpp=False,)
+    sub_py = Subdomain(
+        markers,
+        domains,
+        values,
+        degree=degree,
+        cpp=False,
+    )
 
     a = assemble(sub * dx)
     a_py = assemble(sub_py * dx)

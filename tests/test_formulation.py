@@ -127,8 +127,20 @@ thicknesses = OrderedDict(
 degree = 1
 geom = Layered2D(period, thicknesses)
 geom.build()
-epsilon = dict({"substrate": 3, "groove": 1, "superstrate": 1,})
-mu = dict({"substrate": 1, "groove": 1, "superstrate": 1,})
+epsilon = dict(
+    {
+        "substrate": 3,
+        "groove": 1,
+        "superstrate": 1,
+    }
+)
+mu = dict(
+    {
+        "substrate": 1,
+        "groove": 1,
+        "superstrate": 1,
+    }
+)
 stretch = 1 - 1j
 pml_top = PML(
     "y", stretch=stretch, matched_domain="superstrate", applied_domain="pml_top"

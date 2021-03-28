@@ -279,7 +279,10 @@ banner:
 	@sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans 
 	@cat ./docs/_assets/gyptis.ans
 
-
+## Make checksum for release
+checksum:
+	@echo v$(VERSION)
+	curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256
 
 #################################################################################
 # Self Documenting Commands                                                     #

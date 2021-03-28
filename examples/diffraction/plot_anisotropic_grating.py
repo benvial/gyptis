@@ -76,7 +76,10 @@ mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 model.set_mesh_size(mesh_size)
 
 model.build(
-    interactive=False, generate_mesh=True, write_mesh=True, read_info=True,
+    interactive=False,
+    generate_mesh=True,
+    write_mesh=True,
+    read_info=True,
 )
 all_domains = model.subdomains["surfaces"]
 domains = [k for k in all_domains.keys() if k not in ["pml_bottom", "pml_top"]]
@@ -88,7 +91,13 @@ epsilon["substrate"] = 2.25
 epsilon["rod"] = np.array([[2.592, 0.251, 0], [0.251, 2.592, 0], [0, 0, 2.829]])
 
 
-grating = Grating2D(model, epsilon, mu, lambda0=lambda0, degree=2,)
+grating = Grating2D(
+    model,
+    epsilon,
+    mu,
+    lambda0=lambda0,
+    degree=2,
+)
 
 for jangle, angle in enumerate([0, 20, 40]):
     grating.theta0 = angle * np.pi / 180
