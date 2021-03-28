@@ -65,11 +65,7 @@ class Simulation2D(Simulation):
     """Base class for 2D simulations"""
 
     def __init__(
-        self,
-        geometry,
-        degree=1,
-        element="CG",
-        boundary_conditions={},
+        self, geometry, degree=1, element="CG", boundary_conditions={},
     ):
         self.geometry = geometry
         self.dim = geometry.dim
@@ -132,8 +128,7 @@ class ElectroMagneticSimulation2D(Simulation2D):
             self.epsilon, self.mu, self.source_domains, ref_material
         )
         self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            self.epsilon_annex,
-            self.mu_annex,
+            self.epsilon_annex, self.mu_annex,
         )
         if self.polarization == "TE":
             self.xi, self.chi = _make_cst_mat(self.mu, self.epsilon)
@@ -315,11 +310,7 @@ class Simulation3D(Simulation):
     """Base class for 3D simulations"""
 
     def __init__(
-        self,
-        geometry,
-        degree=1,
-        element="N1curl",
-        boundary_conditions={},
+        self, geometry, degree=1, element="N1curl", boundary_conditions={},
     ):
         self.geometry = geometry
         self.dim = geometry.dim
@@ -411,8 +402,7 @@ class ElectroMagneticSimulation3D(Simulation3D):
             self.epsilon, self.mu, self.source_domains, ref_material
         )
         self.epsilon_coeff_annex, self.mu_coeff_annex = self._make_subdomains(
-            self._epsilon_annex,
-            self._mu_annex,
+            self._epsilon_annex, self._mu_annex,
         )
 
         self.inv_mu_coeff = _invert_3by3_complex_matrix(self.mu_coeff)

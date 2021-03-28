@@ -15,13 +15,7 @@ from .source import *
 
 class Scatt3D(ElectroMagneticSimulation3D):
     def __init__(
-        self,
-        geometry,
-        epsilon,
-        mu,
-        pml_stretch=1 - 1j,
-        mat_degree=None,
-        **kwargs,
+        self, geometry, epsilon, mu, pml_stretch=1 - 1j, mat_degree=None, **kwargs,
     ):
         super().__init__(geometry, epsilon, mu, **kwargs)
 

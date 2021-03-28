@@ -178,19 +178,9 @@ class Scatt3D(Simulation):
             )
 
         epsilon_coeff = Coefficient(
-            epsilon,
-            geometry,
-            pmls=pmls,
-            degree=mat_degree,
-            dim=3,
+            epsilon, geometry, pmls=pmls, degree=mat_degree, dim=3,
         )
-        mu_coeff = Coefficient(
-            mu,
-            geometry,
-            pmls=pmls,
-            degree=mat_degree,
-            dim=3,
-        )
+        mu_coeff = Coefficient(mu, geometry, pmls=pmls, degree=mat_degree, dim=3,)
 
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["box"] + pml_names
@@ -316,11 +306,7 @@ class Grating2D(Simulation):
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
-        orders_num = np.linspace(
-            -N_d_order,
-            N_d_order,
-            2 * N_d_order + 1,
-        )
+        orders_num = np.linspace(-N_d_order, N_d_order, 2 * N_d_order + 1,)
 
         k, beta = {}, {}
         for d in ["substrate", "superstrate"]:
@@ -563,8 +549,7 @@ class Grating3D(Simulation):
         self.degree = degree
         self.periodic_map_tol = periodic_map_tol
         self.periodic_bcs = BiPeriodicBoundary3D(
-            self.period,
-            map_tol=self.periodic_map_tol,
+            self.period, map_tol=self.periodic_map_tol,
         )
         function_space = ComplexFunctionSpace(
             geometry.mesh, "N1curl", degree, constrained_domain=self.periodic_bcs
@@ -583,11 +568,7 @@ class Grating3D(Simulation):
         )
 
         epsilon_coeff = Coefficient(
-            epsilon,
-            geometry,
-            pmls=[pml_bottom, pml_top],
-            degree=mat_degree,
-            dim=3,
+            epsilon, geometry, pmls=[pml_bottom, pml_top], degree=mat_degree, dim=3,
         )
         mu_coeff = Coefficient(
             mu, geometry, pmls=[pml_bottom, pml_top], degree=mat_degree, dim=3
@@ -629,11 +610,7 @@ class Grating3D(Simulation):
         subdomain_absorption=False,
         verbose=False,
     ):
-        orders_num = np.linspace(
-            -N_d_order,
-            N_d_order,
-            2 * N_d_order + 1,
-        )
+        orders_num = np.linspace(-N_d_order, N_d_order, 2 * N_d_order + 1,)
 
         k, gamma = {}, {}
         for d in ["substrate", "superstrate"]:

@@ -204,17 +204,9 @@ class Grating2D(ElectroMagneticSimulation2D):
             _phi_ind = 8
 
         phi_, propagation_constants, self.efficiencies_stack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            self.theta0,
-            0,
-            _psi,
+            config, self.lambda0, self.theta0, 0, _psi,
         )
-        (
-            alpha0,
-            _,
-            beta,
-        ) = propagation_constants
+        (alpha0, _, beta,) = propagation_constants
         thick = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
         self.phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
         self.phi = (np.array(self.phi) / self.phi[0][0]).tolist()
@@ -409,9 +401,7 @@ class Grating2D(ElectroMagneticSimulation2D):
         else:
             nu = 1 / self.epsilon["substrate"]
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -self.N_d_order, self.N_d_order, 2 * self.N_d_order + 1,
         )
 
         k, beta = {}, {}

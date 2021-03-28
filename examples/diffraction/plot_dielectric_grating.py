@@ -103,13 +103,7 @@ mu = {d: 1 for d in domains}
 # Lagrange finite elements.
 
 grating = Grating2D(
-    geom,
-    epsilon,
-    mu,
-    polarization="TE",
-    lambda0=lambda0,
-    theta0=theta0,
-    degree=2,
+    geom, epsilon, mu, polarization="TE", lambda0=lambda0, theta0=theta0, degree=2,
 )
 
 grating.N_d_order = 1

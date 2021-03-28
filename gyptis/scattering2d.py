@@ -63,10 +63,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         self._prepare_materials(ref_material="box", pmls=True)
         if self.source == "PW":
             self.u0 = plane_wave_2d(
-                self.lambda0,
-                self.theta0,
-                degree=self.degree,
-                domain=self.mesh,
+                self.lambda0, self.theta0, degree=self.degree, domain=self.mesh,
             )
 
         else:
@@ -152,10 +149,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         self.bh.update(bh)
 
     def assemble(
-        self,
-        domains=None,
-        source_domains=None,
-        pec_bnds=None,
+        self, domains=None, source_domains=None, pec_bnds=None,
     ):
         domains = self.domains if domains is None else domains
         source_domains = (
@@ -225,10 +219,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
             t = -time.time()
             self.lambda0 = w
             self.u0 = plane_wave_2d(
-                self.lambda0,
-                self.theta0,
-                domain=self.mesh,
-                degree=self.degree,
+                self.lambda0, self.theta0, domain=self.mesh, degree=self.degree,
             )
             self.gradu0 = grad(self.u0)
             self.weak_form()

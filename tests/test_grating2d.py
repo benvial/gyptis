@@ -53,13 +53,7 @@ epsilon = dict(
     }
 )
 mu = dict(
-    {
-        "substrate": 1,
-        "groove": 1,
-        "sublayer": 1,
-        "island": mu_island,
-        "superstrate": 1,
-    }
+    {"substrate": 1, "groove": 1, "sublayer": 1, "island": mu_island, "superstrate": 1,}
 )
 
 index = dict()

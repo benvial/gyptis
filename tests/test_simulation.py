@@ -342,8 +342,8 @@ psi0 = 0 * np.pi / 180
 ##  ---------- geometry ----------
 
 period = (0.3, 0.3)
-R, a, b = 0.15/2, 0.1, 0.05
-grooove_thickness = 6*b
+R, a, b = 0.15 / 2, 0.1, 0.05
+grooove_thickness = 6 * b
 
 thicknesses = OrderedDict(
     {
@@ -399,19 +399,20 @@ substrate = geom.layers["substrate"]
 superstrate = geom.layers["superstrate"]
 z0 = geom.z_position["groove"]
 
-ellipse = geom.add_ellipse(R, 0, z0 +1* b, a/2, b/2, surface=True)
-geom.rotate(ellipse,(0,0,0),(1,0,0),np.pi/2,dim=1)
+ellipse = geom.add_ellipse(R, 0, z0 + 1 * b, a / 2, b / 2, surface=True)
+geom.rotate(ellipse, (0, 0, 0), (1, 0, 0), np.pi / 2, dim=1)
 
 # line = geom.add_circle(0, 0, z0 + 1* b, R, surface=False)
 # line = geom.add_curve_loop([line])
 
-nturns = 1.
+nturns = 1.0
 npts = 20
 p = []
 for i in range(0, npts):
     theta = i * 2 * np.pi / (npts)
-    gmsh.model.occ.addPoint(R * np.cos(theta), R * np.sin(theta),
-                            b/2+z0, 1, 1000 + i)
+    gmsh.model.occ.addPoint(
+        R * np.cos(theta), R * np.sin(theta), b / 2 + z0, 1, 1000 + i
+    )
     p.append(1000 + i)
 gmsh.model.occ.addSpline(p, 1000)
 
@@ -419,9 +420,7 @@ gmsh.model.occ.addSpline(p, 1000)
 line = gmsh.model.occ.addWire([1000], 1000)
 
 
-
 torus = geom.add_pipe([(2, ellipse)], line)[0][-1]
-
 
 
 geom.remove([(2, ellipse)])
@@ -432,20 +431,17 @@ geom.remove([(2, ellipse)])
 # sections = []
 # for angle in rot:
 #     ell = geom.copy([(1,ellipse)])
-# 
+#
 #     geom.rotate(ell[0][-1],(0,0,0),(0,0,1),angle,dim=1)
 #     ell = geom.add_curve_loop([ell[0][-1]])
 #     sections.append(ell)
-# 
+#
 # torus = geom.add_thru_sections(sections)[0][-1]
 # gmsh.model.occ.addCurveLoop([13], 13)
 # gmsh.model.occ.addThruSections([11, 12, 13], 11, True, True)
 
 
-
-torus, *groove = geom.fragment(
-     torus, groove
-)
+torus, *groove = geom.fragment(torus, groove)
 # hole, groove = geom.fragment(hole, groove)
 geom.add_physical(groove, "groove")
 geom.add_physical(torus, "torus")

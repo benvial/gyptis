@@ -66,10 +66,7 @@ model.set_mesh_size(mesh_size)
 model.set_mesh_size({"rod_bnds": h / 8}, dim=1)
 
 model.build(
-    interactive=False,
-    generate_mesh=True,
-    write_mesh=True,
-    read_info=True,
+    interactive=False, generate_mesh=True, write_mesh=True, read_info=True,
 )
 
 

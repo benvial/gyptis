@@ -218,18 +218,10 @@ def make_stack(
             _phi_ind = 8
 
         stack_output = get_coeffs_stack(
-            config,
-            plane_wave.wavelength,
-            pi / 2 - plane_wave.angle,
-            0,
-            _psi,
+            config, plane_wave.wavelength, pi / 2 - plane_wave.angle, 0, _psi,
         )
         phi_, propagation_constants, efficiencies_stack = stack_output
-        (
-            alpha0,
-            _,
-            beta,
-        ) = propagation_constants
+        (alpha0, _, beta,) = propagation_constants
         phi = [[p[_phi_ind], p[_phi_ind + 1]] for p in phi_]
         phi = (np.array(phi) / phi[0][0]).tolist()
 
@@ -279,11 +271,7 @@ def make_stack(
             plane_wave.angle[2],
         )
         phi_, propagation_constants, efficiencies_stack = stack_output
-        (
-            alpha0,
-            beta0,
-            gamma,
-        ) = propagation_constants
+        (alpha0, beta0, gamma,) = propagation_constants
         phi = [p[:6] for p in phi_]
 
         u_stack = [
