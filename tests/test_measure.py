@@ -10,10 +10,10 @@ from test_geometry import geom2D
 from gyptis import dolfin
 from gyptis.measure import *
 
-model = geom2D(mesh_size=0.01)
+model = geom2D(mesh_size=0.1)
 
 
-def test_measure(model=model, tol=1e-13):
+def test_measure(model=model, tol=1e-9):
     dx = Measure(
         "dx",
         domain=model.mesh_object["mesh"],
@@ -31,9 +31,9 @@ def test_measure(model=model, tol=1e-13):
     assert area == dolfin.assemble(1 * _dx)
     assert abs(area - model.square_size ** 2) < tol
     area_cyl = dolfin.assemble(1 * dx("cyl"))
-    assert abs(area_cyl - pi * model.radius ** 2) < 1e-4
+    assert abs(area_cyl - model.cyl_size ** 2) < tol
     area_box = dolfin.assemble(1 * dx("box"))
-    assert abs(area_box - (model.square_size ** 2 - pi * model.radius ** 2)) < 1e-4
+    assert abs(area_box - (model.square_size ** 2 - model.cyl_size ** 2)) < tol
 
     ## exterior_facets
 
@@ -53,10 +53,10 @@ def test_measure(model=model, tol=1e-13):
         subdomain_dict=model.subdomains["curves"],
     )
 
-    len_circ = dolfin.assemble(1 * dS("cyl_bnds"))
-    assert abs(len_circ - 2 * pi * model.radius) < 1e-4
+    len_cyl = dolfin.assemble(1 * dS("cyl_bnds"))
+    assert abs(len_cyl - 4 * model.cyl_size) < tol
     len_box = dolfin.assemble(1 * ds("outer_bnds"))
-    assert abs(len_box - model.square_size * 4) < 1e-4
+    assert abs(len_box - model.square_size * 4) < tol
 
     area = dolfin.assemble(1 * dx("everywhere"))
     assert abs(area - model.square_size ** 2) < tol

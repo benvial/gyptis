@@ -12,10 +12,10 @@ from gyptis.bc import *
 from gyptis.bc import _DirichletBC
 from gyptis.complex import *
 
-model = geom2D(mesh_size=0.01)
+model = geom2D(mesh_size=0.1)
 
-
-def test_dirichlet(model=model, tol=1e-13):
+if __name__ == "__main__":
+    # def test_dirichlet(model=model, tol=1e-13):
     dx = model.measure["dx"]
     ds = model.measure["ds"]
     dS = model.measure["dS"]
@@ -23,7 +23,7 @@ def test_dirichlet(model=model, tol=1e-13):
     boundaries_dict = model.subdomains["curves"]
     markers_line = model.mesh_object["markers"]["line"]
 
-    ubnd = dolfin.project(dolfin.Expression("x[0]", degree=2), W)
+    ubnd = dolfin.project(dolfin.Expression("x[0]*x[1]", degree=2), W)
 
     bc1 = _DirichletBC(W, 1, markers_line, "outer_bnds", boundaries_dict)
     bc2 = _DirichletBC(W, ubnd, markers_line, "cyl_bnds", boundaries_dict)
@@ -36,12 +36,29 @@ def test_dirichlet(model=model, tol=1e-13):
     a = dolfin.assemble(u * ds("outer_bnds"))
     assert np.abs(a - 4 * model.square_size) ** 2 < 1e-10
 
-    r = model.radius
-    T = np.linspace(0, 2 * np.pi, 100)
-    U = []
-    for t in T:
-        U.append(u(r * np.cos(t), r * np.sin(t)))
+    r = model.cyl_size
+    T = np.linspace(-r, r, 50) / 2
 
-    x = r * np.cos(T)
-    assert np.all(np.abs(np.array(U) - x) ** 2 < 1e-6)
-    assert np.mean(np.abs(np.array(U) - x) ** 2) < 1e-6
+    U = [u(t, -r / 2) for t in T]
+    exact = -r / 2 * T
+    assert np.all(np.abs(np.array(U) - exact) ** 2 < 1e-6)
+
+    U = [u(t, r / 2) for t in T]
+    exact = r / 2 * T
+    assert np.all(np.abs(np.array(U) - exact) ** 2 < 1e-6)
+
+    U = [u(-r / 2, t) for t in T]
+    exact = -r / 2 * T
+    assert np.all(np.abs(np.array(U) - exact) ** 2 < 1e-6)
+
+    U = [u(r / 2, t) for t in T]
+    exact = r / 2 * T
+    assert np.all(np.abs(np.array(U) - exact) ** 2 < 1e-6)
+
+    # U.append(u(t, -r / 2))
+    # U.append(u(r / 2, t))
+    # U.append(u(-r / 2, t))
+
+    # print(U)
+    # assert np.all(np.abs(np.array(U) - 1) ** 2 < 1e-6)
+    # assert np.mean(np.abs(np.array(U) - 1) ** 2) < 1e-6

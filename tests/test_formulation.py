@@ -3,6 +3,9 @@
 # Author: Benjamin Vial
 # License: MIT
 
+from collections import OrderedDict
+
+from gyptis.api import BoxPML
 from gyptis.complex import ComplexFunctionSpace
 from gyptis.formulation import *
 from gyptis.geometry import *
@@ -152,12 +155,20 @@ epsilon_coeff = Coefficient(epsilon, geometry=geom, pmls=[pml_top, pml_bottom])
 mu_coeff = Coefficient(mu, geometry=geom, pmls=[pml_top, pml_bottom])
 coefficients = epsilon_coeff, mu_coeff
 function_space = ComplexFunctionSpace(geom.mesh, "CG", degree)
-pw = PlaneWave(wavelength=lambda0, angle=0, dim=2, domain=geom.mesh, degree=degree)
+pw = PlaneWave(
+    wavelength=lambda0, angle=np.pi / 4, dim=2, domain=geom.mesh, degree=degree
+)
 
-from gyptis.stack import make_stack_2d
+from gyptis.stack import make_stack
 
-out = make_stack_2d(
-    geom, coefficients, pw, polarization="TE", source_domains=["groove"], degree=1
+out = make_stack(
+    geom,
+    coefficients,
+    pw,
+    polarization="TE",
+    source_domains=["groove"],
+    degree=1,
+    dim=2,
 )
 bcs = {}
 maxwell_per2d = Maxwell2DPeriodic(

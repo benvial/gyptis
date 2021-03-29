@@ -13,22 +13,29 @@ https://www.osapublishing.org/josaa/fulltext.cfm?uri=josaa-35-1-163&id=380136
 import pytest
 from scipy.constants import c, epsilon_0, mu_0
 
-from gyptis import geometry
+from gyptis import dolfin, geometry
 from gyptis.plot import *
-from gyptis.scattering3d import *
+from gyptis.scattering3d import BoxPML3D, Scatt3D
+from gyptis.source import PlaneWave
+
+plt.ion()
 
 
-def test_marked_mesh(shared_datadir):
+def test_scatterring3d(shared_datadir):
+    degree = 1
+    ## needed for surface integral in parallel (mpi)
+    dolfin.parameters["ghost_mode"] = "shared_facet"
+    dolfin.parameters["form_compiler"]["quadrature_degree"] = 2
+
     scs_file = shared_datadir / "sphere_diel.csv"
     benchmark = np.loadtxt(scs_file, delimiter=",")
 
-    ## needed for surface integral in parallel (mpi)
-    dolfin.parameters["ghost_mode"] = "shared_facet"
+    degree = 1
 
     pmesh = 1
 
     pmesh_scatt = 1 * pmesh
-    degree = 1
+
     eps_sphere = 4
 
     # plt.ion()
@@ -52,7 +59,7 @@ def test_marked_mesh(shared_datadir):
         box_size = (b, b, b)
         pml_width = (lambda0, lambda0, lambda0)
 
-        g = BoxPML(3, box_size=box_size, pml_width=pml_width, verbose=4)
+        g = BoxPML3D(box_size=box_size, pml_width=pml_width, verbose=4)
 
         radius_cs_sphere = 0.8 * min(g.box_size) / 2
         box = g.box
@@ -92,7 +99,19 @@ def test_marked_mesh(shared_datadir):
         epsilon = dict(sphere=eps_sphere, box=1)
         mu = dict(sphere=1, box=1)
 
-        s = Scatt3D(g, epsilon, mu, lambda0=lambda0, degree=degree)
+        pw = PlaneWave(
+            wavelength=lambda0, angle=(0, 0, 0), dim=3, domain=g.mesh, degree=degree
+        )
+        bcs = {}
+        s = Scatt3D(
+            g,
+            epsilon,
+            mu,
+            pw,
+            boundary_conditions=bcs,
+            degree=degree,
+        )
+
         s.solve()
         #
         # E = s.solution["diffracted"]
@@ -115,10 +134,13 @@ def test_marked_mesh(shared_datadir):
         # print(test)
         #
         # print(check)
-        n_out = s.unit_normal_vector
+        n_out = g.unit_normal_vector
         Es = s.solution["diffracted"]
 
-        Hs = s.inv_mu_coeff / Complex(0, dolfin.Constant(s.omega * mu_0)) * curl(Es)
+        inv_mu_coeff = s.coefficients[1].invert().as_subdomain()
+        omega = s.source.pulsation
+
+        Hs = inv_mu_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Es)
 
         # Hs = s.inv_mu_coeff / (Complex(0,  s.omega * mu_0)) * curl(Es)
 

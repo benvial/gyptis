@@ -7,268 +7,162 @@
 import glob
 import os
 
-from PIL import Image
+from . import ADJOINT, dolfin
+from .complex import *
+from .formulation import Maxwell2D
+from .geometry import *
+from .materials import *
+from .simulation import Simulation
+from .source import *
 
-from .base import *
 
-# from .helpers import _get_form
+class BoxPML2D(Geometry):
+    def __init__(
+        self,
+        box_size=(1, 1),
+        box_center=(0, 0),
+        pml_width=(0.2, 0.2),
+        model_name="2D box with PMLs",
+        mesh_name="mesh.msh",
+        data_dir=None,
+        **kwargs,
+    ):
+        super().__init__(
+            model_name=model_name, mesh_name=mesh_name, data_dir=data_dir, dim=2
+        )
+        self.box_size = box_size
+        self.box_center = box_center
+        self.pml_width = pml_width
+
+        def _addrect_center(rect_size):
+            corner = -np.array(rect_size) / 2
+            corner = tuple(corner) + (0,)
+            return self.add_rectangle(*corner, *rect_size)
+
+        def _translate(tag, t):
+            translation = tuple(t) + (0,)
+            self.translate(self.dimtag(tag), *translation)
+
+        def _add_pml(s, t):
+            pml = _addrect_center(s)
+            _translate(pml, t)
+            return pml
+
+        box = _addrect_center(self.box_size)
+        s = (self.pml_width[0], self.box_size[1])
+        t = np.array([self.pml_width[0] / 2 + self.box_size[0] / 2, 0])
+        pmlxp = _add_pml(s, t)
+        pmlxm = _add_pml(s, -t)
+        s = (self.box_size[0], self.pml_width[1])
+        t = np.array([0, self.pml_width[1] / 2 + self.box_size[1] / 2])
+        pmlyp = _add_pml(s, t)
+        pmlym = _add_pml(s, -t)
+
+        s = (self.pml_width[0], self.pml_width[1])
+        t = np.array(
+            [
+                self.pml_width[0] / 2 + self.box_size[0] / 2,
+                self.pml_width[1] / 2 + self.box_size[1] / 2,
+            ]
+        )
+        pmlxypp = _add_pml(s, t)
+        pmlxymm = _add_pml(s, -t)
+        pmlxypm = _add_pml(s, (-t[0], t[1]))
+        pmlxymp = _add_pml(s, (t[0], -t[1]))
+
+        all_dom = [
+            box,
+            pmlxp,
+            pmlxm,
+            pmlyp,
+            pmlym,
+            pmlxypp,
+            pmlxypm,
+            pmlxymm,
+            pmlxymp,
+        ]
+        _translate(all_dom, self.box_center)
+
+        self.box = box
+        self.pmls = all_dom[1:]
+
+        self.fragment(self.box, self.pmls)
+        self.add_physical(box, "box")
+        self.add_physical([pmlxp, pmlxm], "pmlx")
+        self.add_physical([pmlyp, pmlym], "pmly")
+        self.add_physical([pmlxypp, pmlxypm, pmlxymm, pmlxymp], "pmlxy")
 
 
-class Scatt2D(ElectroMagneticSimulation2D):
+class Scatt2D(Simulation):
     def __init__(
         self,
         geometry,
         epsilon,
         mu,
+        source,
+        boundary_conditions={},
+        polarization="TE",
+        degree=1,
+        mat_degree=1,
         pml_stretch=1 - 1j,
-        source="PW",
-        xs=(0, 0),
-        **kwargs,
     ):
+        assert isinstance(geometry, BoxPML2D)
+        assert source.dim == 2
+        function_space = ComplexFunctionSpace(geometry.mesh, "CG", degree)
+        pmlx = PML(
+            "x", stretch=pml_stretch, matched_domain="box", applied_domain="pmlx"
+        )
+        pmly = PML(
+            "y", stretch=pml_stretch, matched_domain="box", applied_domain="pmly"
+        )
+        pmlxy = PML(
+            "xy", stretch=pml_stretch, matched_domain="box", applied_domain="pmlxy"
+        )
 
-        super().__init__(geometry, epsilon, mu, **kwargs)
-        self.pml_stretch = pml_stretch
-        self.complex_space = ComplexFunctionSpace(self.mesh, self.element, self.degree)
-        self.real_space = dolfin.FunctionSpace(self.mesh, self.element, self.degree)
+        epsilon_coeff = Coefficient(
+            epsilon, geometry, pmls=[pmlx, pmly, pmlxy], degree=mat_degree
+        )
+        mu_coeff = Coefficient(
+            mu, geometry, pmls=[pmlx, pmly, pmlxy], degree=mat_degree
+        )
 
-        self.no_source_domains = ["box", "pmlx", "pmly", "pmlxy"]
-        self.source_domains = [
-            z for z in self.domains if z not in self.no_source_domains
+        coefficients = epsilon_coeff, mu_coeff
+        no_source_domains = ["box", "pmlx", "pmly", "pmlxy"]
+        source_domains = [
+            dom for dom in geometry.domains if dom not in no_source_domains
         ]
-        self.pec_bnds = []
-        self._boundary_conditions = self.boundary_conditions
-        self.Ah = {}
-        self.bh = {}
-
-        self.utrial = TrialFunction(self.complex_space)
-        self.utest = TestFunction(self.complex_space)
-        self.source = source
-        assert self.source in ["PW", "LS"]
-
-        self.xs = xs
-
-    def _make_pmls(self):
-        pmlx = PML("x", stretch=self.pml_stretch)
-        pmly = PML("y", stretch=self.pml_stretch)
-        pmlxy = PML("xy", stretch=self.pml_stretch)
-        t = [np.array(pml.transformation_matrix()) for pml in [pmlx, pmly, pmlxy]]
-
-        eps_pml_ = [(self.epsilon["box"] * t_).tolist() for t_ in t]
-        mu_pml_ = [(self.mu["box"] * t_).tolist() for t_ in t]
-        epsilon_pml = dict(pmlx=eps_pml_[0], pmly=eps_pml_[1], pmlxy=eps_pml_[2])
-        mu_pml = dict(pmlx=mu_pml_[0], pmly=mu_pml_[1], pmlxy=mu_pml_[2])
-        return epsilon_pml, mu_pml
-
-    def prepare(self):
-        self._prepare_materials(ref_material="box", pmls=True)
-        if self.source == "PW":
-            self.u0 = plane_wave_2d(
-                self.lambda0,
-                self.theta0,
-                degree=self.degree,
-                domain=self.mesh,
-            )
-
-        else:
-            self.u0 = green_function_2d(
-                self.lambda0,
-                self.xs[0],
-                self.xs[1],
-                degree=self.degree,
-                domain=self.mesh,
-            )
-        self.gradu0 = grad(self.u0)
-
-    def build_rhs(self):
-        return build_rhs(
-            self.u0,
-            # self.annex_field["stack"],
-            self.utest,
-            self.xi,
-            self.chi,
-            self.xi_annex,
-            self.chi_annex,
-            self.source_domains,
+        formulation = Maxwell2D(
+            geometry,
+            coefficients,
+            function_space,
+            source=source,
+            source_domains=source_domains,
+            reference="box",
+            polarization=polarization,
+            boundary_conditions=boundary_conditions,
         )
 
-    def build_lhs_boundaries(self):
-        return build_lhs_boundaries(
-            self.utrial,
-            self.utest,
-            self.xi_coeff,
-            self.pec_bnds,
-            self.unit_normal_vector,
-        )
+        super().__init__(geometry, formulation)
 
-    def build_lhs(self):
-        return build_lhs(self.utrial, self.utest, self.xi, self.chi, self.domains)
+        self.degree = degree
 
-    def build_rhs_boundaries(self):
-        return build_rhs_boundaries(
-            self.u0,
-            self.utest,
-            self.xi_coeff_annex,
-            self.pec_bnds,
-            self.unit_normal_vector,
-        )
-
-    def weak_form(self):
-
-        self.lhs = self.build_lhs()
-
-        if self.polarization == "TM":
-            lhs_bnds = self.build_lhs_boundaries()
-            self.lhs.update(lhs_bnds)
-
-        self.rhs = self.build_rhs()
-
-        if self.polarization == "TM":
-            rhs_bnds = self.build_rhs_boundaries()
-            self.rhs.update(rhs_bnds)
-
-    def assemble_lhs(self, domains=None, pec_bnds=None):
-        domains = self.domains if domains is None else domains
-        pec_bnds = self.pec_bnds if pec_bnds is None else pec_bnds
-        Ah = {}
-        for d in domains:
-            Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
-
-        if self.polarization == "TM":
-            for d in pec_bnds:
-                Ah[d] = [assemble(A * self.ds(d)) for A in self.lhs[d]]
-        self.Ah.update(Ah)
-
-    def assemble_rhs(self, source_domains=None, pec_bnds=None):
-        source_domains = (
-            self.source_domains if source_domains is None else source_domains
-        )
-        pec_bnds = self.pec_bnds if pec_bnds is None else pec_bnds
-        bh = {}
-        for d in source_domains:
-            bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
-        if self.polarization == "TM":
-            for d in pec_bnds:
-                bh[d] = [assemble(b * self.ds(d)) for b in self.rhs[d]]
-        self.bh.update(bh)
-
-    def assemble(
-        self,
-        domains=None,
-        source_domains=None,
-        pec_bnds=None,
-    ):
-        domains = self.domains if domains is None else domains
-        source_domains = (
-            self.source_domains if source_domains is None else source_domains
-        )
-        pec_bnds = self.pec_bnds if pec_bnds is None else pec_bnds
-        self.assemble_lhs(domains=domains, pec_bnds=pec_bnds)
-        self.assemble_rhs(source_domains=source_domains, pec_bnds=pec_bnds)
-
-    def build_system(self):
-        self.matrix = make_system_matrix(
-            self.domains,
-            self.pec_bnds,
-            self.Ah,
-            self.k0,
-            boundary=(self.polarization == "TM"),
-        )
-        self.vector = make_system_vector(
-            self.source_domains,
-            self.pec_bnds,
-            self.bh,
-            self.k0,
-            boundary=(self.polarization == "TM"),
-        )
-        # Ah.form = _get_form(self.Ah)
-        # bh.form = _get_form(self.bh)
-
-    def solve_system(self, direct=True, again=False):
-
-        for bc in self._boundary_conditions:
-            bc.apply(self.matrix, self.vector)
-
-        VVect = dolfin.VectorFunctionSpace(self.mesh, self.element, self.degree)
-        u = dolfin.Function(VVect)
-
-        if not again:
-            if direct:
-                self.solver = dolfin.LUSolver(self.matrix, "mumps")
-            else:
-                self.solver = dolfin.PETScKrylovSolver("cg", "petsc_amg")  ## iterative
-                self.solver.parameters["absolute_tolerance"] = 1e-7
-                self.solver.parameters["relative_tolerance"] = 1e-12
-                self.solver.parameters["maximum_iterations"] = 1000
-                self.solver.parameters["monitor_convergence"] = True
-                self.solver.parameters["nonzero_initial_guess"] = False
-                self.solver.parameters["report"] = True
-
-        self.solver.solve(u.vector(), self.vector)
-
-        self.u = Complex(*u.split())
-        utot = self.u + self.u0
+    def solve_system(self, again=False):
+        u = super().solve_system(again=again, vector_function=False)
         self.solution = {}
-        self.solution["diffracted"] = self.u
-        self.solution["total"] = utot
+        self.solution["diffracted"] = u
+        self.solution["total"] = u + self.source.expression
+        return u
 
-    def solve(self, direct=True, again=False):
-        self.prepare()
-        self.weak_form()
-        self.assemble()
-        self.build_system()
-        self.solve_system(direct=direct, again=again)
-
-    def wavelength_sweep(self, wavelengths):
-
-        wl_sweep = []
-        for i, w in enumerate(wavelengths):
-            t = -time.time()
-            self.lambda0 = w
-            self.u0 = plane_wave_2d(
-                self.lambda0,
-                self.theta0,
-                domain=self.mesh,
-                degree=self.degree,
-            )
-            self.gradu0 = grad(self.u0)
-            self.weak_form()
-            if i == 0:
-                self.assemble()
-
-                dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-            else:
-                self.assemble_rhs()
-            self.solve()
-
-            dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-            wl_sweep.append(self.u)
-            t += time.time()
-            print(f"iter {t:0.2f}s")
-        return wl_sweep
-
-    def plot_geometry(self, ax=None, **kwargs):
-        from .plot import plot_subdomains, plt
-
-        if ax == None:
-            ax = plt.gca()
-
-        domains = self.geometry.subdomains["surfaces"]
-        scatt = []
-        for d in domains:
-            scatt.append(d)
-        scatt_ids = [domains[d] for d in scatt]
-        scatt_lines = []
-        for id in scatt_ids:
-            s = plot_subdomains(self.markers, domain=id, **kwargs)
-            scatt_lines.append(s)
-        ax.set_aspect(1)
-
-        return scatt_lines
-
-    def _phase_shift(self, phase):
-        phasor_re = dolfin.Expression(f"cos(phase)", phase=phase, degree=self.degree)
-        phasor_im = dolfin.Expression(f"sin(phase)", phase=phase, degree=self.degree)
-        return Complex(phasor_re, phasor_im)
+    # def local_density_of_states(self, x, y):
+    #     ldos = np.zeros((len(x), len(y)))
+    #     for ix, x_ in enumerate(x):
+    #         for iy, y_ in enumerate(y):
+    #             print(x_, y_)
+    #             self.source.position = x_, y_
+    #             self.assemble_rhs()
+    #             u = self.solve_system(again=True)
+    #             ldos[ix, iy] = u(self.source.position).imag
+    #     return ldos
 
     def plot_field(
         self,
@@ -276,7 +170,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         mincmap=None,
         maxcmap=None,
         fig=None,
-        anim_phase=0,
+        phase=0,
         callback=None,
         **kwargs,
     ):
@@ -290,11 +184,11 @@ class Scatt2D(ElectroMagneticSimulation2D):
             ax = plt.gca()
         if "cmap" not in kwargs:
             kwargs["cmap"] = "RdBu_r"
-        per_plots = []
-        f = u * self._phase_shift(anim_phase)
+
+        f = u * phase_shift(phase, degree=self.degree)
         fplot = f.real
         if ADJOINT:
-            fplot = project(fplot, self.real_space)
+            fplot = project(fplot, self.formulation.real_function_space)
         pp = dolfin.plot(fplot, **kwargs)
 
         ppmax = pp.cvalues[-1]
@@ -313,9 +207,13 @@ class Scatt2D(ElectroMagneticSimulation2D):
         if callback is not None:
             callback(**kwargs)
 
-        return per_plots, cb
+        return pp, cb
 
     def animate_field(self, n=11, filename="animation.gif", **kwargs):
+        import tempfile
+
+        from PIL import Image
+
         from .plot import plt
 
         anim = []
@@ -325,7 +223,7 @@ class Scatt2D(ElectroMagneticSimulation2D):
         for iplot in range(n):
             number_str = str(iplot).zfill(4)
             pngname = f"{tmpdir}/animation_tmp_{number_str}.png"
-            p = self.plot_field(anim_phase=phase[iplot], **kwargs)
+            p = self.plot_field(anim=phase[iplot], **kwargs)
             fig = plt.gcf()
             fig.savefig(pngname)
             fig.clear()

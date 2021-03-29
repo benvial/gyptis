@@ -8,30 +8,30 @@ from math import pi
 import pytest
 
 from gyptis import dolfin
+from gyptis.api import BoxPML
 from gyptis.geometry import *
 
 
-def geom2D(square_size=1, radius=0.3, mesh_size=0.1):
-    model = Geometry("Cylinder", dim=2)
+def geom2D(square_size=1, cyl_size=0.3, mesh_size=0.1):
+    model = Geometry("Square", dim=2)
     box = model.add_rectangle(
         -square_size / 2, -square_size / 2, 0, square_size, square_size
     )
-    cyl = model.add_disk(0, 0, 0, radius, radius)
+    cyl = model.add_rectangle(-cyl_size / 2, -cyl_size / 2, 0, cyl_size, cyl_size)
     cyl, box = model.fragment(cyl, box)
-    model.synchronize()
 
     model.add_physical(box, "box")
     model.add_physical(cyl, "cyl")
 
-    outer_bnds = model.get_boundaries("box")[:-1]
+    outer_bnds = model.get_boundaries("box")[:-4]
     cyl_bnds = model.get_boundaries("cyl")
     model.add_physical(outer_bnds, "outer_bnds", dim=1)
     model.add_physical(cyl_bnds, "cyl_bnds", dim=1)
     model.set_size("box", 1 * mesh_size)
     model.set_size("cyl", 1 * mesh_size)
     model.set_size("cyl_bnds", mesh_size, dim=1)
-    mesh_object = model.build(interactive=False)
-    model.radius = radius
+    mesh_object = model.build()
+    model.cyl_size = cyl_size
     model.square_size = square_size
 
     return model
@@ -47,9 +47,7 @@ def test_2D():
     # }
     dx = model.measure["dx"]
     area_cyl = dolfin.assemble(1 * dx("cyl"))
-    print(area_cyl)
-    print(pi * model.radius ** 2)
-    assert abs(area_cyl - pi * model.radius ** 2) < 1e-4
+    assert abs(area_cyl - model.cyl_size ** 2) < 1e-4
 
 
 def test_3D():

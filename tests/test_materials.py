@@ -9,16 +9,16 @@ from numpy import e, pi
 from test_geometry import geom2D
 
 import gyptis
+from gyptis.api import BoxPML
 from gyptis.complex import *
 from gyptis.geometry import *
 from gyptis.materials import *
 
-model = geom2D(mesh_size=0.01)
+model = geom2D(mesh_size=0.1)
 mesh = model.mesh_object["mesh"]
 dx = model.measure["dx"]
-r = model.radius
+r = model.cyl_size
 l = model.square_size
-
 markers = model.mesh_object["markers"]["triangle"]
 domains = model.subdomains["surfaces"]
 
@@ -28,7 +28,7 @@ W = dolfin.FunctionSpace(mesh, "CG", 1)
 
 @pytest.mark.parametrize("degree", [0, 1, 2])
 def test_subdomain(degree):
-    tol = 1e-6
+    tol = 1e-2
     values = dict(cyl=12, box=1)
     sub = Subdomain(markers, domains, values, degree=degree)
     sub_py = Subdomain(markers, domains, values, degree=degree, cpp=False)
@@ -37,18 +37,18 @@ def test_subdomain(degree):
     a_py = dolfin.assemble(sub_py * dx)
     assert a == a_py
 
-    a_cyl = pi * r ** 2
+    a_cyl = r ** 2
     a_box = l ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
 
     assert abs(a - a_test) ** 2 < tol
 
-    f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=degree, r=r)
+    f = dolfin.Expression("(x[0]*x[0]+x[1]*x[1])", degree=degree, r=r)
 
     values = dict(cyl=f, box=1)
     sub_with_function = Subdomain(markers, domains, values, degree=degree)
     I = dolfin.assemble(sub_with_function * dx("cyl"))
-    Iexact = pi * r ** 2 * (1 - 1 / e)
+    Iexact = 4 / 3 * r ** 3
     assert abs(I - Iexact) ** 2 < tol
     sub_with_function_python = Subdomain(
         markers, domains, values, degree=degree, cpp=False
@@ -74,10 +74,10 @@ def test_subdomain_complex(degree):
     a_py = assemble(sub_py * dx)
     assert a == a_py
 
-    a_cyl = pi * r ** 2
+    a_cyl = r ** 2
     a_box = l ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
-    tol1 = 1e-6
+    tol1 = 1e-2
     assert abs(a - a_test) ** 2 < tol1
     f = dolfin.Expression(" exp(-pow(x[0]/r,2) - pow(x[1]/r,2))", degree=degree, r=r)
 
@@ -135,23 +135,15 @@ def test_coefficient():
 
     epsilon = dict(box=1, cyl=3)
     eps = Coefficient(epsilon)
-    print(eps)
-    print(eps.dict)
-    print(eps.build_pmls())
-    print(eps.dict)
 
     pmlx = PML("x", stretch=1 - 1j, matched_domain="box", applied_domain="pmlx")
     pmly = PML("y", stretch=1 - 1j, matched_domain="box", applied_domain="pmly")
     pmlxy = PML("xy", stretch=1 - 1j, matched_domain="box", applied_domain="pmlxy")
 
     eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
-    print(eps.build_pmls())
-    print(eps.dict)
     eps.appy_pmls()
-    print(eps.dict)
 
     eps_subdomain = eps.as_subdomain()
-    print(eps_subdomain)
 
     # eps.plot()
     eps.plot(component=(1, 1))
@@ -163,14 +155,10 @@ def test_coefficient():
     eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
 
     eps_prop = eps.as_property()
-    print(eps_prop)
     eps_prop = eps.as_property(dim=3)
-    print(eps_prop)
 
     xi = eps.to_xi()
-    print(xi.dict)
     chi = eps.to_chi()
-    print(chi.dict)
 
 
 # TODO: be careful here

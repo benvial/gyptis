@@ -69,9 +69,7 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
     M = [inv(b) for b in B]
     Pi = [_matrix_pi(m, g) for m, g in zip(M, gamma)]
     T_ = [_matrix_t(g, e) for g, e in zip(gamma[1:-1], thicknesses)]
-    # T.append(np.eye(4))
     Tr = T_ + [np.eye(4)]
-    # T = [np.eye(4)] + T_
 
     M1 = np.eye(4)
     p_prev = Pi[0]
@@ -156,8 +154,6 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
 
     P0 = 0.5 * np.sqrt(epsilon_0 / mu_0) * np.cos(theta0)
 
-    # q = [l * (sum(abs(p) ** 2)) for l, p in zip(losses, phi)]
-
     th = [0] + thicknesses + [0]
     tcum = np.cumsum([0] + thicknesses).tolist()
     tcum += [tcum[-1]]
@@ -177,10 +173,7 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
     ]
 
     Q_ = [-0.5 * epsilon_0 * omega / P0 * q_ for q_ in q]
-
     Q = sum(Q_)
-    # print(Q_)
-    # print(R, T, Q, R + T + Q)
     propagation_constants = alpha0, beta0, gamma
     efficiencies = dict(R=R, T=T, Q=Q)
 
@@ -247,7 +240,6 @@ def make_stack(
         estack["pml_bottom"] = estack["substrate"]
         estack["pml_top"] = estack["superstrate"]
 
-        print(estack)
         # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
         e0 = {"superstrate": u_0}
         for dom in source_domains:

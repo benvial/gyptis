@@ -19,7 +19,7 @@ mesh = geom.mesh_object["mesh"]
 dx = geom.measure["dx"]
 markers = geom.mesh_object["markers"]["triangle"]
 domains = geom.subdomains["surfaces"]
-r = geom.radius
+r = geom.cyl_size
 l = geom.square_size
 
 

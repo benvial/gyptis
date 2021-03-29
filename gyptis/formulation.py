@@ -79,6 +79,16 @@ class Formulation(ABC):
         pass
 
 
+def _find_domains_function(coeffs, list_domains=None):
+    dom_function = []
+    for coeff in coeffs:
+        list_domains = list_domains or list(coeff.dict.keys())
+        dom_function += [k for k, v in coeff.dict.items() if hasattr(v, "ufl_shape")]
+    dom_function = np.unique(dom_function).tolist()
+    dom_no_function = [k for k in list_domains if k not in dom_function]
+    return dom_function, dom_no_function
+
+
 class Maxwell2D(Formulation):
     def __init__(
         self,
@@ -128,11 +138,38 @@ class Maxwell2D(Formulation):
         chi_a = self.chi.build_annex(
             domains=self.source_domains, reference=self.reference
         ).as_subdomain()
-        form = self.maxwell(u, v, xi, chi)
+
+        xi_dict = self.xi.as_property()
+        chi_dict = self.chi.as_property()
+        xi_a_dict = self.xi.build_annex(
+            domains=self.source_domains, reference=self.reference
+        ).as_property()
+        chi_a_dict = self.chi.build_annex(
+            domains=self.source_domains, reference=self.reference
+        ).as_property()
+
+        dom_func, dom_no_func = _find_domains_function((self.xi, self.chi))
+        source_dom_func, source_dom_no_func = _find_domains_function(
+            (self.xi, self.chi), self.source_domains
+        )
+
+        form = self.maxwell(u, v, xi, chi, domain=dom_no_func)
+        for dom in dom_func:
+            form += self.maxwell(u, v, xi_dict[dom], chi_dict[dom], domain=dom)
+
         if self.source_domains != []:
-            form += self.maxwell(
-                u1, v, xi - xi_a, chi - chi_a, domain=self.source_domains
-            )
+            if source_dom_no_func != []:
+                form += self.maxwell(
+                    u1, v, xi - xi_a, chi - chi_a, domain=source_dom_no_func
+                )
+            for dom in source_dom_func:
+                form += self.maxwell(
+                    u1,
+                    v,
+                    xi_dict[dom] - xi_a_dict[dom],
+                    chi_dict[dom] - chi_a_dict[dom],
+                    domain=dom,
+                )
         if self.polarization == "TM":
             for bnd in self.pec_boundaries:
                 normal = self.geometry.unit_normal_vector
@@ -148,7 +185,6 @@ class Maxwell2D(Formulation):
         return self._weak(u, v, u1)
 
     def build_pec_boundary_conditions(self, applied_function):
-
         if self.polarization == "TE" and self.pec_boundaries != []:
             ## FIXME: project is slow, avoid it.
             applied_function = project(applied_function, self.real_function_space)

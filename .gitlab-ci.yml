@@ -26,7 +26,6 @@ test:
     - source ~/.bashrc
     - pip install -e .
     - pip install -r dev/requirements.txt
-    - export TERM=xterm-256color
     - make test
     - coverage xml
   artifacts:

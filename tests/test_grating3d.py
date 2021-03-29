@@ -5,24 +5,30 @@
 
 from pprint import pprint
 
-from gyptis.grating3d import *
+import numpy as np
 
-# dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
+from gyptis import dolfin
+from gyptis.grating3d import Grating3D, Layered3D, OrderedDict
+from gyptis.helpers import list_time
+from gyptis.source import PlaneWave
 
 
-def test_grating3d():
-    # if __name__ == "__main__":
+def test_grating3d(degree=1):
+    dolfin.parameters["form_compiler"]["quadrature_degree"] = 2
 
     ##  ---------- incident wave ----------
-    lambda0 = 500
-    theta0 = 0 * pi / 180
-    phi0 = 0 * pi / 180
-    psi0 = 0 * pi / 180
+    p = 1000
+
+    lambda0 = p * 3
+    theta0 = 0 * np.pi / 180
+    phi0 = 0 * np.pi / 180
+    psi0 = 0 * np.pi / 180
 
     ##  ---------- geometry ----------
-    grooove_thickness = 50
-    hole_radius = 500 / 2
-    period = (1000, 1000)
+
+    period = (p, p)
+    grooove_thickness = p / 20
+    hole_radius = p / 4
     thicknesses = OrderedDict(
         {
             "pml_bottom": lambda0,
@@ -34,20 +40,19 @@ def test_grating3d():
     )
 
     ##  ---------- mesh ----------
-    parmesh = 5
-
-    N_d_order = 1
-    degree = 2
+    parmesh = 4
 
     parmesh_hole = parmesh * 1
+
+    parmesh_groove = parmesh
     parmesh_pml = parmesh * 2 / 3
 
     mesh_params = dict(
         {
             "pml_bottom": parmesh_pml,
             "substrate": parmesh,
-            "groove": parmesh,
-            "hole": parmesh_hole,
+            "groove": parmesh_groove * 2,
+            "hole": parmesh_hole * 2,
             "superstrate": parmesh,
             "pml_top": parmesh_pml,
         }
@@ -55,13 +60,14 @@ def test_grating3d():
 
     ##  ---------- materials ----------
     eps_groove = (1.75 - 1.5j) ** 2
+    eps_hole = 1
     eps_substrate = 1.5 ** 2
 
     epsilon = dict(
         {
             "substrate": eps_substrate,
             "groove": eps_groove,
-            "hole": 1,
+            "hole": eps_hole,
             "superstrate": 1,
         }
     )
@@ -74,14 +80,14 @@ def test_grating3d():
         ).real
 
     ##  ---------- build geometry ----------
-    model = Layered3D(period, thicknesses, kill=False)
+    geom = Layered3D(period, thicknesses, kill=False)
 
-    groove = model.layers["groove"]
-    substrate = model.layers["substrate"]
-    superstrate = model.layers["superstrate"]
-    z0 = model.z_position["groove"]
+    groove = geom.layers["groove"]
+    substrate = geom.layers["substrate"]
+    superstrate = geom.layers["superstrate"]
+    z0 = geom.z_position["groove"]
 
-    hole = model.add_cylinder(
+    hole = geom.add_cylinder(
         0,
         0,
         z0,
@@ -91,49 +97,52 @@ def test_grating3d():
         hole_radius,
     )
 
-    superstrate, substrate, hole, groove = model.fragment(
+    superstrate, substrate, hole, groove = geom.fragment(
         [superstrate, substrate, groove], hole
     )
-    # hole, groove = model.fragment(hole, groove)
-    model.add_physical(groove, "groove")
-    model.add_physical(hole, "hole")
-    model.add_physical(substrate, "substrate")
-    model.add_physical(superstrate, "superstrate")
+    # hole, groove = geom.fragment(hole, groove)
+    geom.add_physical(groove, "groove")
+    geom.add_physical(hole, "hole")
+    geom.add_physical(substrate, "substrate")
+    geom.add_physical(superstrate, "superstrate")
 
-    model.set_size(
-        "substrate", lambda0 / (index["substrate"] * mesh_params["substrate"])
-    )
-    model.set_size(
-        "superstrate", lambda0 / (index["superstrate"] * mesh_params["superstrate"])
-    )
-    model.set_size(
-        "pml_bottom", lambda0 / (index["substrate"] * mesh_params["pml_bottom"])
-    )
-    model.set_size("pml_top", lambda0 / (index["superstrate"] * mesh_params["pml_top"]))
-    model.set_size("groove", lambda0 / (index["groove"] * mesh_params["groove"]))
-    model.set_size("hole", lambda0 / (index["hole"] * mesh_params["hole"]))
+    index["pml_top"] = index["substrate"]
+    index["pml_bottom"] = index["substrate"]
+    pmesh = {k: lambda0 / (index[k] * mesh_params[k]) for k, p in mesh_params.items()}
+    geom.set_mesh_size(pmesh)
+    mesh_object = geom.build()
 
-    mesh_object = model.build()
-
-    ##  ---------- grating ----------
-
-    g = Grating3D(
-        model,
-        epsilon,
-        mu,
-        lambda0=lambda0,
-        theta0=theta0,
-        phi0=phi0,
-        psi0=psi0,
+    pw = PlaneWave(
+        wavelength=lambda0,
+        angle=(np.pi / 2, 0, 0),
+        dim=3,
+        domain=geom.mesh,
         degree=degree,
     )
+    bcs = {}
+    s = Grating3D(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        boundary_conditions=bcs,
+        degree=degree,
+        periodic_map_tol=1e-6,
+    )
 
-    g.mat_degree = degree
-    g.solve(direct=True)
-    g.N_d_order = N_d_order
-
+    s.solve()
+    list_time()
     print("  >> computing diffraction efficiencies")
     print("---------------------------------------")
 
-    effs = g.diffraction_efficiencies(subdomain_absorption=True)
-    print(effs)
+    effs = s.diffraction_efficiencies(2, subdomain_absorption=True, orders=True)
+    # effs = s.diffraction_efficiencies(2, subdomain_absorption=False, orders=True)
+    pprint(effs)
+    R = np.sum(effs["R"])
+    T = np.sum(effs["T"])
+    Q = sum([q for t in effs["Q"].values() for q in t.values()])
+    print("ΣR = ", R)
+    print("ΣT = ", T)
+    print("ΣQ = ", Q)
+    print("B  = ", effs["B"])
+    list_time()

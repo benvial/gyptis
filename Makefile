@@ -17,6 +17,8 @@ VERSION=$(shell python3 -c "import gyptis; print(gyptis.__version__)")
 BRANCH=$(shell git branch --show-current)
 URL=$(shell python3 -c "import gyptis; print(gyptis.__website__)")
 LESSC=$(PROJECT_DIR)/docs/node_modules/less/bin/lessc
+GITLAB_PROJECT_ID=22161961
+GITLAB_GROUP_ID=11118791
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -229,10 +231,10 @@ cleantest:
 test: cleantest
 	$(call message,${@})
 	@export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests \
-	--cov=./$(PROJECT_NAME) --cov-report term $(TEST_ARGS)
+	--cov=./$(PROJECT_NAME) --cov-report term --durations=0 $(TEST_ARGS) 
 	@export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests \
 	--cov=./$(PROJECT_NAME) --cov-append --cov-report term \
-	--cov-report html --cov-report xml $(TEST_ARGS)
+	--cov-report html --cov-report xml --durations=0 $(TEST_ARGS)
 
 ## Run the test suite (parallel)
 testpara: cleantest
@@ -248,13 +250,21 @@ covdoc:
 	
 
 ## Tag and push tags
-tag: banner
+tag:
 	$(call message,${@})
 	# Make sure we're on the master branch
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@echo "  version v$(VERSION)"
 	git tag v$(VERSION)
 	git push --tags
+	
+## Create a release
+release:
+	$(call message,${@})
+	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
+	@gitlab project-release create --project-id $(GITLAB_PROJECT_ID) \
+	--name "version $(VERSION)" --tag-name "v$(VERSION)" --description "Released version $(VERSION)"
+                                     
 
 ## Package 
 package: setup.py
@@ -272,12 +282,6 @@ pipy: package
 
 ## Tag and upload to pipy
 publish: tag pipy
-
-## Make the terminal banner
-banner:
-	$(call message,${@})
-	@sed -r 's/__GYPTIS_VERSION__/$(VERSION)/g' ./docs/_assets/banner.ans > ./docs/_assets/gyptis.ans 
-	@cat ./docs/_assets/gyptis.ans
 
 ## Make checksum for release
 checksum:

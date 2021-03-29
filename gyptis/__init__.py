@@ -53,3 +53,5 @@ dolfin.PETScOptions.set("pc_type", "lu")
 # dolfin.PETScOptions.set('mat_mumps_icntl_24', 1)
 
 # dolfin.set_log_level(1)
+
+from .api import *

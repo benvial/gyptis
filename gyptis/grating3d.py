@@ -5,38 +5,16 @@
 
 from collections import OrderedDict
 
-import numpy as np
+from scipy.constants import c, epsilon_0, mu_0
 
-from . import ADJOINT, dolfin
-from .base import ElectroMagneticSimulation3D
-from .bc import BiPeriodicBoundary3D, DirichletBC
+from . import dolfin
+from .bc import BiPeriodicBoundary3D
 from .complex import *
+from .formulation import Maxwell3DPeriodic
 from .geometry import *
 from .helpers import _translation_matrix
-from .materials import *
-from .source import *
-from .stack import *
-
-pi = np.pi
-
-
-# lu_params = {"report": True, "symmetric": False, "verbose": True}
-#
-#
-# krylov_params = {
-#     "absolute_tolerance": 1.0e-1,
-#     "divergence_limit": 1000.0,
-#     "error_on_nonconvergence": True,
-#     "maximum_iterations": 500,
-#     "monitor_convergence": True,
-#     "nonzero_initial_guess": False,
-#     "relative_tolerance": 1.0e-1,
-#     "report": True,
-# }
-
-
-# dolfin.set_log_level(10)
-# dolfin.parameters["form_compiler"]["quadrature_degree"] = 5  #
+from .materials import PML, Coefficient
+from .simulation import Simulation
 
 
 class Layered3D(Geometry):
@@ -146,307 +124,116 @@ class Layered3D(Geometry):
         return s
 
 
-# Physics
-
-
-class Grating3D(ElectroMagneticSimulation3D):
+class Grating3D(Simulation):
     def __init__(
         self,
         geometry,
         epsilon,
         mu,
+        source,
+        boundary_conditions={},
+        degree=1,
+        mat_degree=1,
         pml_stretch=1 - 1j,
-        mat_degree=None,
         periodic_map_tol=1e-8,
-        **kwargs,
     ):
-        super().__init__(geometry, epsilon, mu, **kwargs)
+        assert isinstance(geometry, Layered3D)
+        assert source.dim == 3
 
-        self.mat_degree = mat_degree or self.degree
+        self.period = geometry.period
         self.epsilon = epsilon
         self.mu = mu
-        self.pml_stretch = pml_stretch
-        self.period = self.geometry.period
-
-        self.N_d_order = 0
+        self.degree = degree
         self.periodic_map_tol = periodic_map_tol
-
-        self.no_source_domains = ["substrate", "pml_top", "pml_bottom", "superstrate"]
-        self.source_domains = [
-            z for z in self.epsilon.keys() if z not in self.no_source_domains
-        ]
-
-        # self.E0 = plane_wave_3d(
-        #     self.lambda0, self.theta0, self.phi0, self.psi0, domain=self.mesh
-        # )
-
         self.periodic_bcs = BiPeriodicBoundary3D(
-            self.geometry.period,
+            self.period,
             map_tol=self.periodic_map_tol,
         )
-
-        self.complex_space = ComplexFunctionSpace(
-            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
+        function_space = ComplexFunctionSpace(
+            geometry.mesh, "N1curl", degree, constrained_domain=self.periodic_bcs
         )
-        self.real_space = dolfin.FunctionSpace(
-            self.mesh, self.element, self.degree, constrained_domain=self.periodic_bcs
+        pml_bottom = PML(
+            "z",
+            stretch=pml_stretch,
+            matched_domain="substrate",
+            applied_domain="pml_bottom",
+        )
+        pml_top = PML(
+            "z",
+            stretch=pml_stretch,
+            matched_domain="superstrate",
+            applied_domain="pml_top",
         )
 
-    def _phasor(self, *args, **kwargs):
-        phasor_re = dolfin.Expression("cos(alpha*x[0] + beta*x[1])", *args, **kwargs)
-        phasor_im = dolfin.Expression("sin(alpha*x[0] + beta*x[1])", *args, **kwargs)
-        return Complex(phasor_re, phasor_im)
+        epsilon_coeff = Coefficient(
+            epsilon,
+            geometry,
+            pmls=[pml_bottom, pml_top],
+            degree=mat_degree,
+            dim=3,
+        )
+        mu_coeff = Coefficient(
+            mu, geometry, pmls=[pml_bottom, pml_top], degree=mat_degree, dim=3
+        )
 
-    def _phasor_z(self, *args, **kwargs):
-        phasor_re = dolfin.Expression("cos(gamma*x[2])", *args, **kwargs)
-        phasor_im = dolfin.Expression("sin(gamma*x[2])", *args, **kwargs)
-        return Complex(phasor_re, phasor_im)
-
-    def _make_pmls(self):
-        pml = PML("z", stretch=self.pml_stretch)
-        t = pml.transformation_matrix()
-        eps_pml_ = [
-            (self.epsilon[d] * t).tolist() for d in ["substrate", "superstrate"]
+        coefficients = epsilon_coeff, mu_coeff
+        no_source_domains = ["substrate", "superstrate", "pml_bottom", "pml_top"]
+        source_domains = [
+            dom for dom in geometry.domains if dom not in no_source_domains
         ]
-        mu_pml_ = [(self.mu[d] * t).tolist() for d in ["substrate", "superstrate"]]
-        epsilon_pml = dict(pml_bottom=eps_pml_[0], pml_top=eps_pml_[1])
-        mu_pml = dict(pml_bottom=mu_pml_[0], pml_top=mu_pml_[1])
-        return epsilon_pml, mu_pml
 
-    def make_stack(self):
-
-        config = OrderedDict(
-            {
-                "superstrate": {
-                    "epsilon": self.epsilon["superstrate"],
-                    "mu": self.mu["superstrate"],
-                },
-                "substrate": {
-                    "epsilon": self.epsilon["substrate"],
-                    "mu": self.mu["substrate"],
-                },
-            }
-        )
-        self.Phi, alpha0, beta0, gamma, self.Rstack, self.Tstack = get_coeffs_stack(
-            config,
-            self.lambda0,
-            self.theta0,
-            self.phi0,
-            self.psi0,
-        )
-        self.Phi = [p[:6] for p in self.Phi]
-
-        self.E_stack = [
-            field_stack_3D(p, alpha0, beta0, g, domain=self.mesh)
-            for p, g in zip(self.Phi, gamma)
-        ]
-        self.Phi0 = np.zeros_like(self.Phi[0])
-        self.Phi0[::2] = self.Phi[0][::2]
-
-        self.E_0 = field_stack_3D(self.Phi0, alpha0, beta0, gamma[0], domain=self.mesh)
-        estack = {k: list(v) for k, v in zip(config.keys(), self.E_stack)}
-
-        for dom in self.source_domains:
-            estack[dom] = estack["superstrate"]
-        estack["pml_bottom"] = estack["pml_top"] = np.zeros(3)
-
-        e0 = {"superstrate": list(self.E_0)}
-        for dom in self.source_domains:
-            e0[dom] = e0["superstrate"]
-        e0["substrate"] = e0["pml_bottom"] = e0["pml_top"] = np.zeros(3)
-
-        self.E_stack_coeff = Subdomain(
-            self.markers, self.domains, estack, degree=self.mat_degree, domain=self.mesh
+        formulation = Maxwell3DPeriodic(
+            geometry,
+            coefficients,
+            function_space,
+            source=source,
+            source_domains=source_domains,
+            reference="superstrate",
+            boundary_conditions=boundary_conditions,
         )
 
-        self.E0_coeff = Subdomain(
-            self.markers, self.domains, e0, degree=self.mat_degree, domain=self.mesh
-        )
-        inc_field = {}
-        stack_field = {}
-        for dom in self.source_domains:
-            inc_field[dom] = complex_vector(e0[dom])
-            stack_field[dom] = complex_vector(estack[dom])
-        self.annex_field = {"incident": inc_field, "stack": stack_field}
+        super().__init__(geometry, formulation)
 
-    def prepare(self):
-        self._prepare_materials(ref_material="superstrate", pmls=True)
-        self.make_stack()
-        self.alpha0 = self.k0 * np.sin(self.theta0) * np.cos(self.phi0)
-        self.beta0 = self.k0 * np.sin(self.theta0) * np.sin(self.phi0)
-        self.gamma0 = self.k0 * np.cos(self.theta0)
-
-        self.phasor = self._phasor(
-            degree=self.mat_degree,
-            domain=self.mesh,
-            alpha=self.alpha0,
-            beta=self.beta0,
-        )
-
-        self.k_para = (
-            self.alpha0 * self.unit_vectors[0] + self.beta0 * self.unit_vectors[1]
-        )
-
-        self._prepare_bcs()
-
-    def weak_form(self):
-        W = self.complex_space
-        dx = self.dx
-        self.E = Function(W)
-        Etrial = TrialFunction(W)
-        Etest = TestFunction(W)
-
-        self.lhs = {}
-        self.rhs = {}
-
-        for d in self.domains:
-            L = (
-                -inner(self.inv_mu[d] * curl(Etrial), curl(Etest)),
-                -1j
-                * (
-                    dot(self.inv_mu[d] * cross(self.k_para, Etrial), curl(Etest))
-                    - dot(self.inv_mu[d] * cross(self.k_para, Etest), curl(Etrial))
-                ),
-                -inner(
-                    cross(self.inv_mu[d] * cross(self.k_para, Etrial), self.k_para),
-                    Etest,
-                ),
-                inner(self.eps[d] * Etrial, Etest),
-            )
-            self.lhs[d] = [t.real + t.imag for t in L]
-        for d in self.source_domains:
-            if self.eps[d].real.ufl_shape == (3, 3):
-                eps_annex = tensor_const(np.eye(3) * self._epsilon_annex[d])
-            else:
-                eps_annex = self._epsilon_annex[d]
-
-            if self.inv_mu[d].real.ufl_shape == (3, 3):
-                inv_mu_annex = tensor_const(np.eye(3) * 1 / self._mu_annex[d])
-            else:
-                inv_mu_annex = self.inv_mu_annex[d]
-
-            delta_epsilon = self.eps[d] - eps_annex
-            delta_inv_mu = self.inv_mu[d] - inv_mu_annex
-            b = (
-                inner(delta_inv_mu * curl(self.annex_field["stack"][d]), curl(Etest))
-                * self.phasor.conj,
-                -inner(delta_epsilon * self.annex_field["stack"][d], Etest)
-                * self.phasor.conj,
-            )
-
-            self.rhs[d] = [t.real + t.imag for t in b]
-
-    def assemble_lhs(self):
-        self.Ah = {}
-        for d in self.domains:
-            self.Ah[d] = [assemble(A * self.dx(d)) for A in self.lhs[d]]
-
-    # LHS = 0
-    # for A in g.lhs[d]:
-    #     LHS += A * g.dx(d)
-
-    def assemble_rhs(self):
-        self.bh = {}
-        for d in self.source_domains:
-            self.bh[d] = [assemble(b * self.dx(d)) for b in self.rhs[d]]
-
-    def assemble(self):
-        self.assemble_lhs()
-        self.assemble_rhs()
-
-    def build_system(self):
-
-        for i, d in enumerate(self.domains):
-            Ah_ = self.Ah[d][0] + self.k0 ** 2 * self.Ah[d][3]
-            if ADJOINT:
-                form_ = self.Ah[d][0].form + self.k0 ** 2 * self.Ah[d][3].form
-            if i == 0:
-                Ah = Ah_
-                if ADJOINT:
-                    form = form_
-            else:
-                Ah += Ah_
-                if ADJOINT:
-                    form += form_
-            if self.alpha0 ** 2 + self.beta0 ** 2 != 0:
-                Ah += self.Ah[d][1] + self.Ah[d][2]
-                if ADJOINT:
-                    form += self.Ah[d][1].form + self.Ah[d][2].form
-        if ADJOINT:
-            Ah.form = form
-
-        for i, d in enumerate(self.source_domains):
-            bh_ = self.bh[d][0] + self.k0 ** 2 * self.bh[d][1]
-            if ADJOINT:
-                form_ = self.bh[d][0].form + self.k0 ** 2 * self.bh[d][1].form
-            if i == 0:
-                bh = bh_
-                if ADJOINT:
-                    form = form_
-            else:
-                bh += bh_
-                if ADJOINT:
-                    form += form_
-        if ADJOINT:
-            bh.form = form
-
-        self.matrix = Ah
-        self.vector = bh
-
-    def solve_system(self, direct=True):
-        self.E = dolfin.Function(self.complex_space)
-
-        for bc in self._boundary_conditions:
-            bc.apply(self.matrix, self.vector)
-
-        if direct:
-            # solver = dolfin.LUSolver(Ah) ### direct
-            solver = dolfin.LUSolver("mumps")
-            # solver.parameters.update(lu_params)
-            solver.solve(self.matrix, self.E.vector(), self.vector)
-        else:
-            solver = dolfin.PETScKrylovSolver()  ## iterative
-            # solver.parameters.update(krylov_params)
-            solver.solve(self.matrix, self.E.vector(), self.vector)
-
-        Eper = Complex(*self.E.split())
-        E = Eper * self.phasor
-        Etot = E + self.E_stack_coeff
+    def solve_system(self, again=False):
+        uper = super().solve_system(again=again, vector_function=False)
+        u_annex = self.formulation.annex_field["as_subdomain"]["stack"]
+        u = uper * self.formulation.phasor
         self.solution = {}
-        self.solution["periodic"] = Eper
-        self.solution["diffracted"] = E
-        self.solution["total"] = Etot
-
-    #
-    #
-    #
-    # def solve(self, direct=True):
-    #     self.prepare()
-    #     self.weak_form()
-    #     self.assemble()
-    #     self.build_system()
-    #     self.solve_system(direct=direct)
-    #
+        self.solution["periodic"] = uper
+        self.solution["diffracted"] = u
+        self.solution["total"] = u + u_annex
+        return u
 
     def diffraction_efficiencies(
-        self, cplx_effs=False, orders=False, subdomain_absorption=False, verbose=False
+        self,
+        N_d_order=0,
+        cplx_effs=False,
+        orders=False,
+        subdomain_absorption=False,
+        verbose=False,
     ):
         orders_num = np.linspace(
-            -self.N_d_order,
-            self.N_d_order,
-            2 * self.N_d_order + 1,
+            -N_d_order,
+            N_d_order,
+            2 * N_d_order + 1,
         )
 
         k, gamma = {}, {}
         for d in ["substrate", "superstrate"]:
-            k[d] = self.k0 * np.sqrt(complex(self.epsilon[d] * self.mu[d]))
-            gamma[d] = np.conj(np.sqrt(k[d] ** 2 - self.alpha0 ** 2 - self.beta0 ** 2))
+            k[d] = self.source.wavenumber * np.sqrt(
+                complex(self.epsilon[d] * self.mu[d])
+            )
+            gamma[d] = np.conj(
+                np.sqrt(
+                    k[d] ** 2
+                    - self.formulation.propagation_vector[0] ** 2
+                    - self.formulation.propagation_vector[1] ** 2
+                )
+            )
 
-        r_annex = self.Phi[0][1::2]
-        t_annex = self.Phi[-1][::2]
-        zpos = self.geometry.z_position
-        thickness = self.geometry.thicknesses
-        period_x, period_y = self.period
+        Phi = self.formulation.annex_field["phi"]
+        r_annex = Phi[0][1::2]
+        t_annex = Phi[-1][::2]
         eff_annex = dict(substrate=t_annex, superstrate=r_annex)
         Eper = self.solution["periodic"]
         effn = []
@@ -460,33 +247,41 @@ class Grating3D(ElectroMagneticSimulation3D):
                     print(f"order ({n},{m})")
                     print("*" * 55)
                 delta = 1 if n == m == 0 else 0
-                qn = n * 2 * np.pi / period_x
-                pm = m * 2 * np.pi / period_y
-                alpha_n = self.alpha0 + qn
-                beta_m = self.beta0 + pm
+                qn = n * 2 * np.pi / self.period[0]
+                pm = m * 2 * np.pi / self.period[1]
+                alpha_n = self.formulation.propagation_vector[0] + qn
+                beta_m = self.formulation.propagation_vector[1] + pm
                 efficiencies = {}
                 efficiencies_complex = {}
                 for d in ["substrate", "superstrate"]:
                     s = 1 if d == "superstrate" else -1
                     # s = 1 if d == "substrate" else -1
                     gamma_nm = np.sqrt(k[d] ** 2 - alpha_n ** 2 - beta_m ** 2)
-                    ph_xy = self._phasor(
-                        degree=self.degree, domain=self.mesh, alpha=-qn, beta=-pm
+                    ph_x = phasor(
+                        -qn, direction=0, degree=self.degree, domain=self.mesh
                     )
-                    ph_z = self._phasor_z(
-                        degree=self.degree, domain=self.mesh, gamma=s * gamma_nm.real
+                    ph_y = phasor(
+                        -pm, direction=1, degree=self.degree, domain=self.mesh
                     )
+                    ph_z = phasor(
+                        s * gamma_nm.real,
+                        direction=2,
+                        degree=self.degree,
+                        domain=self.mesh,
+                    )
+                    ph_xy = ph_x * ph_y
                     Jnm = []
                     for comp in range(3):
                         Jnm.append(
                             assemble(Eper[comp] * ph_xy * ph_z * self.dx(d))
-                            / (period_x * period_y)
+                            / (self.period[0] * self.period[1])
                         )
-                    ph_pos = np.exp(-s * 1j * gamma_nm * zpos[d])
+                    ph_pos = np.exp(-s * 1j * gamma_nm * self.geometry.z_position[d])
                     eff, sqnorm_eff = [], 0
                     for comp in range(3):
                         eff_ = (
-                            delta * eff_annex[d][comp] + Jnm[comp] / thickness[d]
+                            delta * eff_annex[d][comp]
+                            + Jnm[comp] / self.geometry.thicknesses[d]
                         ) * ph_pos
                         sqnorm_eff += eff_ * eff_.conj
                         eff.append(eff_)
@@ -533,7 +328,7 @@ class Grating3D(ElectroMagneticSimulation3D):
             self.period[0]
             * self.period[1]
             * (epsilon_0 / mu_0) ** 0.5
-            * (np.cos(self.theta0))
+            * (np.sin(self.source.angle[0]))
             / 2
         )
         doms_no_pml = [
@@ -541,50 +336,46 @@ class Grating3D(ElectroMagneticSimulation3D):
         ]
         Etot = self.solution["total"]
         # curl E = i ω μ_0 μ H
-
-        Htot = self.inv_mu_coeff / (1j * self.omega * mu_0) * curl(Etot)
+        inv_mu = self.formulation.mu.invert().as_subdomain()
+        Htot = inv_mu / (1j * self.source.pulsation * mu_0) * curl(Etot)
         Qelec, Qmag = {}, {}
         if subdomain_absorption:
             for d in doms_no_pml:
                 if np.all(self.epsilon[d].imag) == 0:
                     Qelec[d] = 0
                 else:
-
-                    Etot = self.annex_field["stack"][d] + self.solution["diffracted"]
-                    elec_nrj_dens = dot(self.epsilon[d] * Etot, Etot.conj)
-                    Qelec[d] = (
-                        -0.5
-                        * epsilon_0
-                        * self.omega
-                        * assemble(elec_nrj_dens * self.dx(d))
-                        / P0
-                    ).imag
+                    # Etot = (
+                    #     self.formulation.annex_field["as_dict"]["stack"][d]
+                    #     + self.solution["diffracted"]
+                    # )
+                    elec_nrj_dens = dolfin.Constant(
+                        0.5 * epsilon_0 * self.source.pulsation
+                    ) * dot(self.epsilon[d] * Etot, Etot.conj)
+                    Qelec[d] = -assemble(elec_nrj_dens * self.dx(d)).imag / P0
                 if np.all(self.mu[d].imag) == 0:
                     Qmag[d] = 0
                 else:
-                    mag_nrj_dens = dot(self.mu[d] * Htot, Htot.conj)
-                    Qmag[d] = (
-                        -0.5
-                        * mu_0
-                        * self.omega
-                        * assemble(mag_nrj_dens * self.dx(d))
-                        / P0
-                    ).imag
+                    mag_nrj_dens = dolfin.Constant(
+                        0.5 * mu_0 * self.source.pulsation
+                    ) * dot(self.mu[d] * Htot, Htot.conj)
+                    Qmag[d] = -assemble(mag_nrj_dens * self.dx(d)).imag / P0
             Q = sum(Qelec.values()) + sum(Qmag.values())
         else:
-            elec_nrj_dens = dot(self.epsilon_coeff * Etot, Etot.conj)
+            epsilon_coeff = self.formulation.epsilon.as_subdomain()
+            mu_coeff = self.formulation.mu.as_subdomain()
+            elec_nrj_dens = dot(epsilon_coeff * Etot, Etot.conj)
             Qelec = (
                 -0.5
                 * epsilon_0
-                * self.omega
+                * self.source.pulsation
                 * assemble(elec_nrj_dens * self.dx(doms_no_pml))
                 / P0
             ).imag
-            mag_nrj_dens = dot(self.mu_coeff * Htot, Htot.conj)
+            mag_nrj_dens = dot(mu_coeff * Htot, Htot.conj)
             Qmag = (
                 -0.5
                 * mu_0
-                * self.omega
+                * self.source.pulsation
                 * assemble(mag_nrj_dens * self.dx(doms_no_pml))
                 / P0
             ).imag

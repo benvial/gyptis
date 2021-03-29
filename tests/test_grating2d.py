@@ -3,223 +3,159 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import sys
-import time
+
 from pprint import pprint
 
-import matplotlib.pyplot as plt
 import pytest
+from scipy.spatial.transform import Rotation
 
-import gyptis
-from gyptis.grating2d import *
-from gyptis.helpers import list_time, rot_matrix_2d
+from gyptis import Grating, Layered
+from gyptis.geometry import *
+from gyptis.grating2d import Grating2D, Layered2D, OrderedDict
+from gyptis.helpers import list_time
 from gyptis.plot import *
+from gyptis.source import *
 
-plt.ion()
+pytest_params = [("TE", 1), ("TM", 1), ("TE", 2), ("TM", 2)]
 
-
-lambda0 = 1
-theta0 = 30 * np.pi / 180
-
-order = 2
-parmesh = 10
-parmesh_pml = parmesh * 2 / 3
-period = 0.8
-island_width = period * 3 / 4
-island_thickness = 0.4 * period
-
-tr = np.pi / 5
-
-R = rot_matrix_2d(tr)
-eps_island = np.diag([6 - 0.02j, 4 - 0.021j, 3 - 0.021j])
-eps_island = R.T @ eps_island @ R
-
-mu_island = np.diag([5 - 0.03j, 3 - 0.02j, 2 - 0.01j])
-mu_island = R.T @ mu_island @ R
-
-# eps_island = 8
-# mu_island = 1
-eps_substrate = 2
-mu_substrate = 1.35
-eps_sublayer = 4
-
-epsilon = dict(
-    {
-        "substrate": eps_substrate,
-        "groove": 1,
-        "sublayer": eps_sublayer,
-        "island": eps_island,
-        "superstrate": 1,
-    }
-)
-mu = dict(
-    {
-        "substrate": 1,
-        "groove": 1,
-        "sublayer": 1,
-        "island": mu_island,
-        "superstrate": 1,
-    }
-)
-
-index = dict()
-for (d, e), (d, m) in zip(epsilon.items(), mu.items()):
-    index[d] = np.mean((np.array(e).real.max() * np.array(m).real.max()) ** 0.5).real
-index["pml_bottom"] = index["substrate"]
-index["pml_top"] = index["superstrate"]
-
-thicknesses = OrderedDict(
-    {
-        "pml_bottom": lambda0,
-        "substrate": 1 * lambda0,
-        "sublayer": 0.5 * lambda0,
-        "groove": island_thickness * 1.3,
-        "superstrate": 1 * lambda0,
-        "pml_top": lambda0,
-    }
-)
-
-model = Layered2D(period, thicknesses, kill=False)
-#
-groove = model.layers["groove"]
-sublayer = model.layers["sublayer"]
-y0 = model.y_position["groove"]
-island = model.add_rectangle(-island_width / 2, y0, 0, island_width, island_thickness)
-island, sublayer, groove = model.fragment(island, [groove, sublayer])
-# island, sublayer = model.fragment(island, sublayer)
-# groove, sublayer = model.fragment(groove, sublayer)
-model.add_physical(groove, "groove")
-model.add_physical(island, "island")
-model.add_physical(sublayer, "sublayer")
-mesh_size = dict(
-    {
-        "pml_bottom": parmesh_pml,
-        "substrate": parmesh,
-        "sublayer": parmesh,
-        "groove": parmesh,
-        "superstrate": parmesh,
-        "island": parmesh,
-        "pml_top": parmesh_pml,
-    }
-)
-m = {d: lambda0 / (s * i) for (d, s), (d, i) in zip(mesh_size.items(), index.items())}
-
-model.set_mesh_size(m)
-#
-face_top = model.get_boundaries("pml_top")[-2]
-face_bottom = model.get_boundaries("pml_bottom")[0]
-model.add_physical(face_top, "face_top", dim=1)
-model.add_physical(face_bottom, "face_bottom", dim=1)
-
-# mesh_object = model.build(
-#     interactive=True, generate_mesh=True, read_info=False, write_mesh=False
-# )
-mesh_object = model.build()
-
-mesh = model.mesh_object["mesh"]
+tol_balance = 1e-2
+pmesh = 10
 
 
-@pytest.fixture
-def init():
-    g = Grating2D(
-        model,
+@pytest.mark.parametrize("polarization,degree", pytest_params)
+def test_grating2d(polarization, degree):
+
+    wavelength = 1
+    lmin = wavelength / pmesh
+    period = 0.8
+    R = period / 3
+
+    thicknesses = OrderedDict(
+        {
+            "pml_bottom": wavelength,
+            "substrate": wavelength,
+            "groove": 3 * R,
+            "superstrate": wavelength,
+            "pml_top": wavelength,
+        }
+    )
+
+    rot = Rotation.from_euler("zyx", [10, 0, 0], degrees=True)
+    rmat = rot.as_matrix()
+    eps_diff = rmat @ np.diag((8 - 0.1j, 3 - 0.1j, 4 - 0.2j)) @ rmat.T
+
+    mu_groove = rmat @ np.diag((2 - 0.1j, 9 - 0.1j, 3 - 0.2j)) @ rmat.T
+
+    epsilon = dict({"substrate": 2.1, "groove": 1, "superstrate": 1, "diff": eps_diff})
+    mu = dict({"substrate": 1.6, "groove": mu_groove, "superstrate": 1, "diff": 1})
+
+    geom = Layered(2, period, thicknesses)
+
+    yc = geom.y_position["groove"] + thicknesses["groove"] / 2
+    diff = geom.add_circle(0, yc, 0, R)
+    diff, groove = geom.fragment(diff, geom.layers["groove"])
+    geom.add_physical(groove, "groove")
+    geom.add_physical(diff, "diff")
+
+    [geom.set_size(pml, lmin) for pml in ["pml_bottom", "pml_top"]]
+    geom.set_size("groove", lmin)
+    geom.set_size("diff", lmin)
+
+    geom.build()
+
+    theta0 = 10
+
+    angle = np.pi / 2 - theta0 * np.pi / 180
+
+    pw = PlaneWave(
+        wavelength=wavelength, angle=angle, dim=2, domain=geom.mesh, degree=degree
+    )
+    s = Grating(geom, epsilon, mu, source=pw, degree=degree, polarization=polarization)
+
+    u = s.solve()
+    list_time()
+
+    plt.ion()
+    effs = s.diffraction_efficiencies(1, orders=True, subdomain_absorption=True)
+    print(effs)
+
+    if degree == 2:
+        assert abs(effs["B"] - 1) < tol_balance, "Unsatified energy balance"
+
+    plt.ion()
+    # s.plot_geometry(c="k")
+
+    plt.clf()
+
+    s.plot_field(nper=3)
+    s.plot_geometry(nper=3, c="k")
+
+
+@pytest.mark.parametrize("polarization,degree", pytest_params)
+def test_grating2dpec(polarization, degree):
+    wavelength = 600
+    period = 800
+    h = 300
+    w = 600
+    theta0 = 20
+    lmin = wavelength / pmesh
+    lmin_pec = h / (pmesh * 2)
+    thicknesses = OrderedDict(
+        {
+            "pml_bottom": wavelength,
+            "substrate": wavelength,
+            "groove": wavelength,
+            "superstrate": wavelength,
+            "pml_top": wavelength,
+        }
+    )
+    rot = Rotation.from_euler("zyx", [20, 0, 0], degrees=True)
+    rmat = rot.as_matrix()
+    eps_groove = 1  # rmat @ np.diag((4 - 0.01j, 3 - 0.01j, 2 - 0.02j)) @ rmat.T
+    mu_groove = 1  # rmat @ np.diag((2 - 0.01j, 4 - 0.01j, 3 - 0.02j)) @ rmat.T
+
+    epsilon = dict({"substrate": 1.0, "groove": eps_groove, "superstrate": 1})
+    mu = dict({"substrate": 1.0, "groove": mu_groove, "superstrate": 1})
+
+    geom = Layered2D(period, thicknesses)
+
+    yc = geom.y_position["groove"] + thicknesses["groove"] / 2
+    diff = geom.add_ellipse(0, yc, 0, w / 2, h / 2)
+    groove = geom.cut(geom.layers["groove"], diff)
+
+    geom.add_physical(groove, "groove")
+    bnds = geom.get_boundaries("groove")
+    geom.add_physical(bnds[-1], "hole", dim=1)
+
+    for dom in ["substrate", "superstrate", "pml_bottom", "pml_top", "groove"]:
+        geom.set_size(dom, lmin)
+
+    geom.set_size("hole", lmin_pec, dim=1)
+
+    geom.build()
+
+    angle = np.pi / 2 - theta0 * np.pi / 180
+
+    pw = PlaneWave(
+        wavelength=wavelength, angle=angle, dim=2, domain=geom.mesh, degree=degree
+    )
+
+    boundary_conditions = {"hole": "PEC"}
+
+    s = Grating2D(
+        geom,
         epsilon,
         mu,
-        polarization="TE",
-        lambda0=lambda0,
-        theta0=theta0,
-        degree=order,
+        source=pw,
+        degree=degree,
+        polarization=polarization,
+        boundary_conditions=boundary_conditions,
     )
-    g.N_d_order = 2
-
-    ctrl0 = dolfin.Expression("1", degree=2)
-    Actrl = dolfin.FunctionSpace(mesh, "DG", 0)
-    ctrl = dolfin.project(ctrl0, Actrl)
-    eps = Complex(4, 0) * ctrl
-
-    epsilon["sublayer"] = eps
-    g.ctrl = ctrl
-    return g
-
-
-def test_TE(init):
-
-    g = init
-    ctrl = g.ctrl
-
-    t = -time.time()
-    g.solve()
-
-    plt.figure()
-
-    nper = 2
-    per_plots, cb = g.plot_field(nper=nper)
-    scatt_lines, layers_lines = g.plot_geometry(nper=nper, c="k")
-    [layers_lines[i].remove() for i in [0, 1, 4, 5]]
-    plt.axis("off")
-    # plt.axis("off")
-
-    field = g.solution["total"]
-    J = assemble(inner(field, field.conj) * g.dx("substrate")).real
-
-    if gyptis.ADJOINT:
-        dJdx = dolfin.compute_gradient(J, dolfin.Control(ctrl))
-
-    t += time.time()
+    u = s.solve()
     list_time()
-    print("-" * 60)
-    print(f"solution time {t:.4f}s")
-    print("-" * 60)
-
-    t = -time.time()
-
-    effsTE = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
-    pprint(effsTE)
-
-    print("Qtot", g.Qtot)
-
-    if gyptis.ADJOINT:
-        dRdx = dolfin.compute_gradient(effsTE["R"][g.N_d_order], dolfin.Control(ctrl))
-        plot(dRdx, markers=g.markers)
-
-    t += time.time()
+    effs = s.diffraction_efficiencies(1, orders=True, subdomain_absorption=True)
+    pprint(effs)
+    if degree == 2:
+        assert abs(effs["B"] - 1) < tol_balance, "Unsatified energy balance"
+    # # s.plot_geometry(c="k")
     #
-    print("-" * 60)
-    print(f"postpro time {t:.4f}s")
-    print("-" * 60)
-
-    fig, ax = plt.subplots(1, 2)
-    proj_space = dolfin.FunctionSpace(g.mesh, "CG", 2)
-    plotcplx(g.solution["diffracted"], ax=ax, proj_space=proj_space)
-
-    assert abs(effsTE["B"] - 1) < 1e-3
-
-
-def test_TM(init):
-
-    g = init
-
-    ctrl = g.ctrl
-    ### TM polarization ####
-
-    g.polarization = "TM"
-    t = -time.time()
-    g.solve()
-    t += time.time()
-    list_time()
-    print("-" * 60)
-    print(f"solution time {t:.4f}s")
-    print("-" * 60)
-
-    t = -time.time()
-    effsTM = g.diffraction_efficiencies(orders=True, subdomain_absorption=True)
-    pprint(effsTM)
-    print("Qtot", g.Qtot)
-    t += time.time()
-    print("-" * 60)
-    print(f"postpro time {t:.4f}s")
-    print("-" * 60)
-
-    assert abs(effsTM["B"] - 1) < 1e-3
-
-    return g
