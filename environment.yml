@@ -1,0 +1,17 @@
+name: gyptis
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.6
+  - pip
+  - fenics
+  - dolfin-adjoint
+  - nlopt
+  - meshio
+  - numpy
+  - scipy
+  - simpy
+  - matplotlib
+  - pip:
+    - gmsh
+    - gyptis
