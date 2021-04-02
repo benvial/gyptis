@@ -179,12 +179,11 @@ def test_ellipse():
         c1 /= g.Ellipse((0.5 * np.cos(t), 0.5 * np.sin(t), 0), (0.07, 0.07))
 
         c2.append(c1[0])
-        print(len(c1))
         c1 = c1[1]
 
-    c2 = sum(c2[1:], start=c2[0])
+    c2 = sum(c2[1:], c2[0])
 
-    print(c2.get_boundaries())
+    c2.get_boundaries()
 
     c2 << "c2"
     c1 << "c1"

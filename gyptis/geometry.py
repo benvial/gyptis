@@ -343,7 +343,7 @@ class Geometry(object):
         dim=3,
         gmsh_args=None,
         kill=True,
-        verbose=0,
+        options={},
     ):
         self.model_name = model_name
         self.mesh_name = mesh_name
@@ -355,7 +355,7 @@ class Geometry(object):
         self.measure = {}
         self.mesh = {}
         self.markers = {}
-        self.verbose = verbose
+        self.options = options
 
         for object_name in dir(occ):
             if (
@@ -385,8 +385,13 @@ class Geometry(object):
             gmsh.initialize(self.gmsh_args)
         else:
             gmsh.initialize()
+        #
 
-        gmsh_options.set("General.Verbosity", self.verbose)
+        # parallel meshing, this will use OMP_NUM_THREADS
+        for k, v in options.items():
+            gmsh_options.set(k, v)
+
+        # gmsh_options.set("General.Verbosity", 0)
 
     @wraps(_Circle.__init__)
     def Circle(self, *args, **kwargs):

@@ -59,7 +59,7 @@ def test_scatterring3d(shared_datadir):
         box_size = (b, b, b)
         pml_width = (lambda0, lambda0, lambda0)
 
-        g = BoxPML3D(box_size=box_size, pml_width=pml_width, verbose=4)
+        g = BoxPML3D(box_size=box_size, pml_width=pml_width)
 
         radius_cs_sphere = 0.8 * min(g.box_size) / 2
         box = g.box
