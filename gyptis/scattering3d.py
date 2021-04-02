@@ -25,7 +25,11 @@ class BoxPML3D(Geometry):
         **kwargs,
     ):
         super().__init__(
-            model_name=model_name, mesh_name=mesh_name, data_dir=data_dir, dim=3
+            model_name=model_name,
+            mesh_name=mesh_name,
+            data_dir=data_dir,
+            dim=3,
+            **kwargs,
         )
         self.box_size = box_size
         self.box_center = box_center
