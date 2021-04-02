@@ -7,9 +7,12 @@ Example of a dielectric diffraction grating.
 """
 # sphinx_gallery_thumbnail_number = 2
 
-from gyptis import dolfin
-from gyptis.grating2d import *
-from gyptis.plot import *
+import matplotlib.pyplot as plt
+import numpy as np
+from collections import OrderedDict
+from gyptis import Layered, Grating, PlaneWave
+
+plt.ion()
 
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating
@@ -28,7 +31,7 @@ n_rod = 1.4  # refractive index of the rods
 # interface (the :math:`y` axis)
 
 lambda0 = 600
-theta0 = 20 * np.pi / 180
+theta0 = 20  # in degrees
 
 ##############################################################################
 # The thicknesses of the different layers are specified with an
@@ -62,9 +65,9 @@ mesh_param = dict(
 )
 
 ##############################################################################
-# Let's create the geometry using the :class:`~gyptis.grating2d.Layered2D`
+# Let's create the geometry using the :class:`~gyptis.Layered`
 # class:
-geom = Layered2D(period, thicknesses)
+geom = Layered(2, period, thicknesses)
 groove = geom.layers["groove"]
 y0 = geom.y_position["groove"] + thicknesses["groove"] / 2
 rod = geom.add_ellipse(0, y0, 0, ax, ay)
@@ -77,8 +80,9 @@ geom.build()
 
 
 ######################################################################
-# The mesh can be visualized with ``dolfin`` plot function :
+# The mesh can be visualized:
 
+plt.figure()
 geom.plot_mesh(lw=1)
 geom.plot_subdomains(lw=2, c="#d76c4a")
 plt.axis("off")
@@ -102,19 +106,15 @@ mu = {d: 1 for d in domains}
 # :math:`\boldsymbol{E} = E_z \boldsymbol{e_z}`) and the ``degree`` of
 # Lagrange finite elements.
 
-grating = Grating2D(
-    geom,
-    epsilon,
-    mu,
-    polarization="TE",
-    lambda0=lambda0,
-    theta0=theta0,
-    degree=2,
-)
+angle = (90 - theta0) * np.pi / 180
+
+pw = PlaneWave(lambda0, angle, dim=2)
+
+grating = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 
 grating.N_d_order = 1
 grating.solve()
-effs_TE = grating.diffraction_efficiencies(orders=True)
+effs_TE = grating.diffraction_efficiencies(1, orders=True)
 
 E = grating.solution["total"]
 
@@ -129,27 +129,29 @@ print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TE['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 
 
-######################################################################
-# We switch to TM polarization
-
-grating.polarization = "TM"
-grating.solve()
-effs_TM = grating.diffraction_efficiencies(orders=True)
-
-H = grating.solution["total"]
-
 
 ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
-
 fig, ax = plt.subplots(1, 2)
-plot(E.real, ax=ax[0], cmap="RdBu_r")
-plot_subdomains(grating.markers, ax=ax[0])
+grating.plot_field(ax=ax[0])
+grating.plot_geometry(ax=ax[0])
 ax[0].set_ylim(ylim)
 ax[0].set_axis_off()
 ax[0].set_title("$E_z$ (TE)")
 
-plot(H.real, ax=ax[1], cmap="RdBu_r")
-plot_subdomains(grating.markers, ax=ax[1])
+
+######################################################################
+# We switch to TM polarization
+
+
+grating = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+grating.solve()
+effs_TM = grating.diffraction_efficiencies(1,orders=True)
+
+H = grating.solution["total"]
+
+
+grating.plot_field(ax=ax[1])
+grating.plot_geometry(ax=ax[1])
 ax[1].set_ylim(ylim)
 ax[1].set_axis_off()
 ax[1].set_title("$H_z$ (TM)")

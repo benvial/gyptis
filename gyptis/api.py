@@ -4,16 +4,40 @@
 # License: MIT
 
 
-__all__ = ["BoxPML", "Layered", "Scattering", "Grating"]
+__all__ = ["Complex", "Layered", "Scattering", "Grating", "PlaneWave", "LineSource"]
 
+# 
+# from . import complex
+# from . import complex
+from .complex import Complex
 from .grating2d import Grating2D, Layered2D
 from .grating3d import Grating3D, Layered3D
 from .scattering2d import BoxPML2D, Scatt2D
 from .scattering3d import BoxPML3D, Scatt3D
+from .source import PlaneWave, LineSource
 
 
 class BoxPML:
+    """BoxPML(dim, x,y,z)
+    Creates a computational domain with Perfectly Matched Layers (PMLs).
+    
+    Parameters
+    ----------
+    dim : int
+        Geometric dimension (either 2 or 3, the default is 3).
+    *args : type
+        Description of parameter `*args`.
+    **kwargs : type
+        Description of parameter `**kwargs`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+    """
+
     def __new__(self, dim=3, *args, **kwargs):
+
         if dim not in [2, 3]:
             raise ValueError("dimension must be 2 or 3")
         if dim == 3:

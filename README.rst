@@ -26,7 +26,7 @@ Computational photonics in Python
 
 https://gyptis.gitlab.io
 
-.. image:: https://gitlab.com/gyptis/gyptis/docs/_assets/landing.png
+.. image:: https://gitlab.com/gyptis/gyptis/-/raw/master/docs/_assets/landing.png
    :align: center
    :alt: landing
 
@@ -39,7 +39,6 @@ come and go.
 Installation
 ------------
 
-Gyptis requires FEniCS and Gmsh to be installed, see 
 
 Conda
 ~~~~~
@@ -65,9 +64,18 @@ is being developed and should be available soon.
 Pipy
 ~~~~
 
-The package is `available on pipy <https://pypi.org/project/gyptis/>`_, but 
-note it does not install FeniCS, which should be built separately.
+The package is `available on pipy <https://pypi.org/project/gyptis/>`_. 
+To install, use:
 
+
+.. code-block:: bash
+
+  pip install gyptis
+  
+
+.. note::
+  This does not install FeniCS, which should be built separately 
+  (see `instructions <https://fenicsproject.org/download/>`_) 
 
 
 Docker

@@ -10,8 +10,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from gyptis import dolfin
-from gyptis.grating2d import *
+from collections import OrderedDict
+from gyptis import Layered, Grating, PlaneWave
 from gyptis.plot import *
 
 ##############################################################################
@@ -51,37 +51,34 @@ mesh_param = dict(
 )
 
 
-model = Layered2D(period, thicknesses, kill=False)
-groove = model.layers["groove"]
-substrate = model.layers["substrate"]
-y0 = model.y_position["groove"]
+geom = Layered(2, period, thicknesses)
+groove = geom.layers["groove"]
+substrate = geom.layers["substrate"]
+y0 = geom.y_position["groove"]
 P = []
-P.append(model.add_point(-width_bottom / 2, y0, 0))
-P.append(model.add_point(width_bottom / 2, y0, 0))
-P.append(model.add_point(width_top / 2, y0 + height, 0))
-P.append(model.add_point(-width_top / 2, y0 + height, 0))
+P.append(geom.add_point(-width_bottom / 2, y0, 0))
+P.append(geom.add_point(width_bottom / 2, y0, 0))
+P.append(geom.add_point(width_top / 2, y0 + height, 0))
+P.append(geom.add_point(-width_top / 2, y0 + height, 0))
 L = [
-    model.add_line(P[0], P[1]),
-    model.add_line(P[1], P[2]),
-    model.add_line(P[2], P[3]),
-    model.add_line(P[3], P[0]),
+    geom.add_line(P[0], P[1]),
+    geom.add_line(P[1], P[2]),
+    geom.add_line(P[2], P[3]),
+    geom.add_line(P[3], P[0]),
 ]
-cl = model.add_curve_loop(L)
-rod = model.add_plane_surface(model.dimtag(cl, 1)[0])
-substrate, groove, rod = model.cut([substrate, groove], rod)
-model.add_physical(rod, "rod")
-model.add_physical(groove, "groove")
-model.add_physical(substrate, "substrate")
+cl = geom.add_curve_loop(L)
+rod = geom.add_plane_surface(geom.dimtag(cl, 1)[0])
+substrate, groove, rod = geom.cut([substrate, groove], rod)
+geom.add_physical(rod, "rod")
+geom.add_physical(groove, "groove")
+geom.add_physical(substrate, "substrate")
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
-model.set_mesh_size(mesh_size)
+geom.set_mesh_size(mesh_size)
 
-model.build(
-    interactive=False,
-    generate_mesh=True,
-    write_mesh=True,
-    read_info=True,
+geom.build(
+    interactive=False, generate_mesh=True, write_mesh=True, read_info=True,
 )
-all_domains = model.subdomains["surfaces"]
+all_domains = geom.subdomains["surfaces"]
 domains = [k for k in all_domains.keys() if k not in ["pml_bottom", "pml_top"]]
 
 epsilon = {d: 1 for d in domains}
@@ -91,64 +88,54 @@ epsilon["substrate"] = 2.25
 epsilon["rod"] = np.array([[2.592, 0.251, 0], [0.251, 2.592, 0], [0, 0, 2.829]])
 
 
-grating = Grating2D(
-    model,
-    epsilon,
-    mu,
-    lambda0=lambda0,
-    degree=2,
-)
 
 for jangle, angle in enumerate([0, 20, 40]):
-    grating.theta0 = angle * np.pi / 180
-    grating.polarization = "TE"
-    grating.N_d_order = 2
-    grating.prepare()
-    grating.weak_form()
-    grating.assemble()
-    grating.build_system()
-    grating.solve()
-    effs_TE = grating.diffraction_efficiencies(orders=True)
+    
+    angle_degree = (90 - angle) * np.pi / 180
+    
+    pw = PlaneWave(lambda0, angle_degree, dim=2)
+    grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+    grating_TE.solve()
+    effs_TE = grating_TE.diffraction_efficiencies(2, orders=True)
 
-    E = grating.solution["total"]
-    print(f"angle = {angle}, {grating.polarization} polarization")
+    E = grating_TE.solution["total"]
+    print(f"angle = {angle}, TE polarization")
     print("--------------------------------")
     print("R: ", effs_TE["R"])
     print("T: ", effs_TE["T"])
 
-    ylim = model.y_position["substrate"], model.y_position["pml_top"]
-    d = grating.period
+    ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
+    d = grating_TE.period
     nper = 8
 
     vminTE, vmaxTE = -1.5, 1.7
     plt.sca(ax[jangle][0])
-    per_plots, cb = grating.plot_field(nper=nper)
+    per_plots, cb = grating_TE.plot_field(nper=nper)
     cb.remove()
-    scatt_lines, layers_lines = grating.plot_geometry(nper=nper, c="k")
+    scatt_lines, layers_lines = grating_TE.plot_geometry(nper=nper, c="k")
     [layers_lines[i].remove() for i in [0, 1, 3, 4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
+    
+    #### TM
+    
+    grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
 
-    grating.polarization = "TM"
-    grating.prepare()
-    grating.weak_form()
-    grating.assemble()
-    grating.build_system()
-    grating.solve()
-    effs_TM = grating.diffraction_efficiencies(orders=True)
+    grating_TM.solve()
+    effs_TM = grating_TM.diffraction_efficiencies(2, orders=True)
 
-    H = grating.solution["total"]
-    print(f"angle = {angle}, {grating.polarization} polarization")
+    H = grating_TM.solution["total"]
+    print(f"angle = {angle}, TM polarization")
     print("--------------------------------")
     print("R: ", effs_TM["R"])
     print("T: ", effs_TM["T"])
 
     vminTM, vmaxTM = -2.5, 2.5
     plt.sca(ax[jangle][1])
-    per_plots, cb = grating.plot_field(nper=nper)
+    per_plots, cb = grating_TM.plot_field(nper=nper)
     cb.remove()
-    scatt_lines, layers_lines = grating.plot_geometry(nper=nper, c="k")
+    scatt_lines, layers_lines = grating_TM.plot_geometry(nper=nper, c="k")
     [layers_lines[i].remove() for i in [0, 1, 3, 4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)

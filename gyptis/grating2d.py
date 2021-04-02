@@ -334,7 +334,7 @@ class Grating2D(Simulation):
         self.Qdomains = Qdomains
         return Q, Qdomains
 
-    def plot_geometry(self, nper=1, ax=None, **kwargs):
+    def plot_geometry(self, nper=1, ax=None, c="k", **kwargs):
         from .plot import plot_subdomains, plt
 
         if ax == None:
@@ -352,13 +352,14 @@ class Grating2D(Simulation):
                     self.geometry.markers,
                     domain=scatt_ids,
                     shift=(i * self.period, 0),
+                    c=c,
                     **kwargs,
                 )
                 scatt_lines.append(s)
         yend = list(self.geometry.thicknesses.values())[-1]
         layers_lines = []
         for y0 in self.geometry.y_position.values():
-            a = ax.axhline(y0, **kwargs)
+            a = ax.axhline(y0, c=c, **kwargs)
             layers_lines.append(a)
         y0 += list(self.geometry.thicknesses.values())[-1]
         a = ax.axhline(y0, **kwargs)
@@ -369,10 +370,10 @@ class Grating2D(Simulation):
     def plot_field(
         self,
         nper=1,
+        fig=None,
         ax=None,
         mincmap=None,
         maxcmap=None,
-        fig=None,
         phase=0,
         callback=None,
         **kwargs,
@@ -396,6 +397,7 @@ class Grating2D(Simulation):
             fplot = f.real
             if ADJOINT:
                 fplot = project(fplot, self.formulation.real_function_space)
+            plt.sca(ax)
             pp = dolfin.plot(fplot, transform=t + ax.transData, **kwargs)
             per_plots.append(pp)
 
