@@ -115,8 +115,7 @@ def test_scatt2d_ls(degree, polarization):
 def test_scatt2d_pec(polarization):
 
     geom = BoxPML2D(
-        box_size=(4 * wavelength, 4 * wavelength),
-        pml_width=(wavelength, wavelength),
+        box_size=(4 * wavelength, 4 * wavelength), pml_width=(wavelength, wavelength),
     )
     cyl = geom.add_circle(0, 0, 0, 0.2)
     box = geom.cut(geom.box, cyl)

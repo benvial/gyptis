@@ -165,19 +165,9 @@ class Scatt3D(Simulation):
             )
 
         epsilon_coeff = Coefficient(
-            epsilon,
-            geometry,
-            pmls=pmls,
-            degree=mat_degree,
-            dim=3,
+            epsilon, geometry, pmls=pmls, degree=mat_degree, dim=3,
         )
-        mu_coeff = Coefficient(
-            mu,
-            geometry,
-            pmls=pmls,
-            degree=mat_degree,
-            dim=3,
-        )
+        mu_coeff = Coefficient(mu, geometry, pmls=pmls, degree=mat_degree, dim=3,)
 
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["box"] + pml_names

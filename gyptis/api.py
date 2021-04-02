@@ -6,7 +6,7 @@
 
 __all__ = ["Complex", "Layered", "Scattering", "Grating", "PlaneWave", "LineSource"]
 
-# 
+#
 # from . import complex
 # from . import complex
 from .complex import Complex
@@ -14,7 +14,7 @@ from .grating2d import Grating2D, Layered2D
 from .grating3d import Grating3D, Layered3D
 from .scattering2d import BoxPML2D, Scatt2D
 from .scattering3d import BoxPML3D, Scatt3D
-from .source import PlaneWave, LineSource
+from .source import LineSource, PlaneWave
 
 
 class BoxPML:

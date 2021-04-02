@@ -197,11 +197,7 @@ class Grating2D(Simulation):
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
-        orders_num = np.linspace(
-            -N_d_order,
-            N_d_order,
-            2 * N_d_order + 1,
-        )
+        orders_num = np.linspace(-N_d_order, N_d_order, 2 * N_d_order + 1,)
 
         k, beta = {}, {}
         for d in ["substrate", "superstrate"]:

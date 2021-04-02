@@ -7,10 +7,12 @@ Example of a dielectric diffraction grating.
 """
 # sphinx_gallery_thumbnail_number = 2
 
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import OrderedDict
-from gyptis import Layered, Grating, PlaneWave
+
+from gyptis import Grating, Layered, PlaneWave
 
 plt.ion()
 
@@ -129,7 +131,6 @@ print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TE['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 
 
-
 ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
 fig, ax = plt.subplots(1, 2)
 grating.plot_field(ax=ax[0])
@@ -145,7 +146,7 @@ ax[0].set_title("$E_z$ (TE)")
 
 grating = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
 grating.solve()
-effs_TM = grating.diffraction_efficiencies(1,orders=True)
+effs_TM = grating.diffraction_efficiencies(1, orders=True)
 
 H = grating.solution["total"]
 

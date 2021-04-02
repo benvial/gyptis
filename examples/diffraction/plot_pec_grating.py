@@ -6,10 +6,12 @@
 Example of a perfectly conducting diffraction grating.
 """
 
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import OrderedDict
-from gyptis import Layered, Grating, PlaneWave
+
+from gyptis import Grating, Layered, PlaneWave
 
 plt.ion()
 

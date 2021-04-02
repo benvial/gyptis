@@ -6,12 +6,13 @@
 Example of diffraction grating with trapezoidal ridges made from an anisotropic material.
 """
 
+from collections import OrderedDict
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from collections import OrderedDict
-from gyptis import Layered, Grating, PlaneWave
+from gyptis import Grating, Layered, PlaneWave
 from gyptis.plot import *
 
 ##############################################################################
@@ -88,11 +89,10 @@ epsilon["substrate"] = 2.25
 epsilon["rod"] = np.array([[2.592, 0.251, 0], [0.251, 2.592, 0], [0, 0, 2.829]])
 
 
-
 for jangle, angle in enumerate([0, 20, 40]):
-    
+
     angle_degree = (90 - angle) * np.pi / 180
-    
+
     pw = PlaneWave(lambda0, angle_degree, dim=2)
     grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
     grating_TE.solve()
@@ -117,9 +117,9 @@ for jangle, angle in enumerate([0, 20, 40]):
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
-    
+
     #### TM
-    
+
     grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
 
     grating_TM.solve()

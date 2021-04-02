@@ -22,7 +22,6 @@ from . import dolfin
 from .measure import Measure
 from .mesh import read_mesh
 
-
 _geometry_module = sys.modules[__name__]
 
 geo = gmsh.model.geo
