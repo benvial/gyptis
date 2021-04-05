@@ -315,7 +315,7 @@ sphinx_gallery_conf = {
     "binder": {
         "org": "gyptis",
         "repo": "gyptis.gitlab.io",
-        "branch": "master",
+        "branch": "doc",
         "binderhub_url": "https://mybinder.org",
         "dependencies": "../environment.yml",
         "notebooks_dir": "notebooks",

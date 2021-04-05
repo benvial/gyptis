@@ -50,6 +50,11 @@ def process_html(fn, lines):
         line = line.replace("\*args", "*args")
         line = line.replace("\*\*kwargs", "**kwargs")
         line = line.replace("col-md-3", "col-md-2")
+        line = line.replace(
+            "https://mybinder.org/v2/gh/gyptis/gyptis.gitlab.io",
+            "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io",
+        )
+
         # line = line.replace("gyptis.", "")
         new_lines.append(line)
     return new_lines

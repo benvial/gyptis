@@ -95,6 +95,15 @@ Or you can pull the docker image
 .. code-block:: bash
 
   docker pull gyptis/gyptis:latest
+  
+  
+To run the image, use
+
+.. code-block:: bash
+
+  docker run -it gyptis/gyptis:latest
+  
+
 
 
 Contributing
