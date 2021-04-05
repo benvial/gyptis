@@ -14,8 +14,6 @@ import numpy as np
 
 from gyptis import Grating, Layered, PlaneWave
 
-plt.ion()
-
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating
 # and compare with results given in [PopovGratingBook]_.
@@ -103,7 +101,7 @@ mu = {d: 1 for d in domains}
 
 ######################################################################
 # Now we can create an instance of the simulation class
-# :class:`~gyptis.grating2d.Grating2D`, where we specify the
+# :class:`~gyptis.Grating`, where we specify the
 # Transverse Electric polarization case (electric field out of plane
 # :math:`\boldsymbol{E} = E_z \boldsymbol{e_z}`) and the ``degree`` of
 # Lagrange finite elements.
@@ -112,13 +110,12 @@ angle = (90 - theta0) * np.pi / 180
 
 pw = PlaneWave(lambda0, angle, dim=2)
 
-grating = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+gratingTE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 
-grating.N_d_order = 1
-grating.solve()
-effs_TE = grating.diffraction_efficiencies(1, orders=True)
-
-E = grating.solution["total"]
+gratingTE.N_d_order = 1
+gratingTE.solve()
+effs_TE = gratingTE.diffraction_efficiencies(1, orders=True)
+E = gratingTE.solution["total"]
 
 ### reference
 T_ref = dict(TE=[0.2070, 1.0001], TM=[0.8187, 1.0001])
@@ -130,43 +127,41 @@ print("--------------------------------")
 print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TE['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 
-
-ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
-fig, ax = plt.subplots(1, 2)
-grating.plot_field(ax=ax[0])
-grating.plot_geometry(ax=ax[0])
-ax[0].set_ylim(ylim)
-ax[0].set_axis_off()
-ax[0].set_title("$E_z$ (TE)")
-
-
 ######################################################################
 # We switch to TM polarization
 
-
-grating = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
-grating.solve()
-effs_TM = grating.diffraction_efficiencies(1, orders=True)
-
-H = grating.solution["total"]
+gratingTM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+gratingTM.solve()
+effs_TM = gratingTM.diffraction_efficiencies(1, orders=True)
+H = gratingTM.solution["total"]
 
 
-grating.plot_field(ax=ax[1])
-grating.plot_geometry(ax=ax[1])
+######################################################################
+# Let's visualize the fields
+
+fig, ax = plt.subplots(1, 2)
+ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
+gratingTE.plot_field(ax=ax[0])
+gratingTE.plot_geometry(ax=ax[0])
+ax[0].set_ylim(ylim)
+ax[0].set_axis_off()
+ax[0].set_title("$E_z$ (TE)")
+gratingTM.plot_field(ax=ax[1])
+gratingTM.plot_geometry(ax=ax[1])
 ax[1].set_ylim(ylim)
 ax[1].set_axis_off()
 ax[1].set_title("$H_z$ (TM)")
 fig.tight_layout()
 fig.show()
 
+######################################################################
+# Results are in good agreement with the reference
+
 print("Transmission coefficient")
 print(" order      ref       calc")
 print("--------------------------------")
 print(f"   0       {T_ref['TM'][0]:.4f}    {effs_TM['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TM'][1]:.4f}    {effs_TM['B']:.4f}   ")
-
-#
-# print(f"{R_calc['TE']}")
 
 ######################################################################
 #

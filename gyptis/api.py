@@ -4,7 +4,16 @@
 # License: MIT
 
 
-__all__ = ["Complex", "Layered", "Scattering", "Grating", "PlaneWave", "LineSource"]
+__all__ = [
+    "Complex",
+    "Layered",
+    "Scattering",
+    "Grating",
+    "PlaneWave",
+    "LineSource",
+    "BoxPML",
+    "Layered",
+]
 
 #
 # from . import complex
@@ -20,7 +29,7 @@ from .source import LineSource, PlaneWave
 class BoxPML:
     """BoxPML(dim, x,y,z)
     Creates a computational domain with Perfectly Matched Layers (PMLs).
-    
+
     Parameters
     ----------
     dim : int

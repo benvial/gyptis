@@ -68,7 +68,10 @@ geom.set_mesh_size(mesh_size)
 geom.set_mesh_size({"rod_bnds": h / 8}, dim=1)
 
 geom.build(
-    interactive=False, generate_mesh=True, write_mesh=True, read_info=True,
+    interactive=False,
+    generate_mesh=True,
+    write_mesh=True,
+    read_info=True,
 )
 
 
@@ -77,28 +80,27 @@ domains = [k for k in thicknesses.keys() if k not in ["pml_bottom", "pml_top"]]
 epsilon = {d: 1 for d in domains}
 mu = {d: 1 for d in domains}
 
-polarization = "TE"
 angle = (90 - theta0) * np.pi / 180
 pw = PlaneWave(lambda0, angle, dim=2)
-grating = Grating(
+
+gratingTE = Grating(
     geom,
     epsilon,
     mu,
     source=pw,
-    polarization=polarization,
+    polarization="TE",
     degree=2,
     boundary_conditions={"rod_bnds": "PEC"},
 )
 
 
-grating.solve()
-effs_TE = grating.diffraction_efficiencies(1, orders=True)
+gratingTE.solve()
+effs_TE = gratingTE.diffraction_efficiencies(1, orders=True)
 
-E = grating.solution["total"]
+E = gratingTE.solution["total"]
 
 ### reference
 T_ref = dict(TE=[0.0639, 1.0000], TM=[0.1119, 1.0000])
-
 
 print("Transmission coefficient")
 print(" order      ref       calc")
@@ -107,34 +109,34 @@ print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TE['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
 
 
-ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
-fig, ax = plt.subplots(1, 2)
-grating.plot_field(ax=ax[0])
-grating.plot_geometry(ax=ax[0])
-ax[0].set_ylim(ylim)
-ax[0].set_axis_off()
-ax[0].set_title("$E_z$ (TE)")
-
 ######################################################################
 # We switch to TM polarization
-polarization = "TM"
-grating = Grating(
+
+gratingTM = Grating(
     geom,
     epsilon,
     mu,
     source=pw,
-    polarization=polarization,
+    polarization="TM",
     degree=2,
     boundary_conditions={"rod_bnds": "PEC"},
 )
 
-grating.solve()
-effs_TM = grating.diffraction_efficiencies(2, orders=True)
+gratingTM.solve()
+effs_TM = gratingTM.diffraction_efficiencies(2, orders=True)
 
-H = grating.solution["total"]
+H = gratingTM.solution["total"]
 
-grating.plot_field(ax=ax[1])
-grating.plot_geometry(ax=ax[1])
+
+fig, ax = plt.subplots(1, 2)
+ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
+gratingTE.plot_field(ax=ax[0])
+gratingTE.plot_geometry(ax=ax[0])
+ax[0].set_ylim(ylim)
+ax[0].set_axis_off()
+ax[0].set_title("$E_z$ (TE)")
+gratingTM.plot_field(ax=ax[1])
+gratingTM.plot_geometry(ax=ax[1])
 ax[1].set_ylim(ylim)
 ax[1].set_axis_off()
 ax[1].set_title("$H_z$ (TM)")
@@ -147,8 +149,6 @@ print("--------------------------------")
 print(f"   0       {T_ref['TM'][0]:.4f}    {effs_TM['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TM'][1]:.4f}    {effs_TM['B']:.4f}   ")
 
-#
-# print(f"{R_calc['TE']}")
 
 ######################################################################
 #

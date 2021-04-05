@@ -173,7 +173,7 @@ html_theme_options = {
 
 # (Optional) Logo. Should be small enough to fit the navbar (ideally 24x24).
 # Path should be relative to the ``_static`` files directory.
-html_logo = "./_assets/gyptis.png"
+html_logo = "./_assets/gyptis-name.png"
 # html_logo = ""
 
 # The name of an image file (within the static path) to use as favicon of the
@@ -312,4 +312,14 @@ sphinx_gallery_conf = {
     "doc_module": package.__name__,
     "default_thumb_file": html_logo,
     "show_memory": True,
+    "binder": {
+        "org": "gyptis",
+        "repo": "gyptis.gitlab.io",
+        "branch": "master",
+        "binderhub_url": "https://mybinder.org",
+        "dependencies": "../environment.yml",
+        "notebooks_dir": "notebooks",
+        "use_jupyter_lab": False,
+    },
 }
+# https://mybinder.org/v2/gh/gyptis/gyptis.gitlab.io/master?filepath=notebooks/auto_examples/diffraction/plot_dielectric_grating.ipynb

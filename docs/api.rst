@@ -1,8 +1,5 @@
 
 
-
-
-
 =============
 API Reference
 =============
@@ -45,7 +42,6 @@ Base classes
    :template: class.rst
 
    geometry.Geometry
-   geometry.BoxPML
 
 .. 
 .. 

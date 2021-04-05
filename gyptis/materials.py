@@ -13,7 +13,11 @@ from gyptis.complex import *
 
 class PML(object):
     def __init__(
-        self, direction="x", stretch=1 - 1j, matched_domain=None, applied_domain=None,
+        self,
+        direction="x",
+        stretch=1 - 1j,
+        matched_domain=None,
+        applied_domain=None,
     ):
         self.direction = direction
         self.stretch = stretch

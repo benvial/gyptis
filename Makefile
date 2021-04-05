@@ -105,9 +105,8 @@ testenv:
 	$(PYTHON_INTERPRETER) dev/testenv.py
 
 ## Install Python dependencies
-req: testenv
+req:
 	$(call message,${@})
-	source activate $(PROJECT_NAME)
 ifeq (True,$(HAS_CONDA))
 		dev/installreq requirements.txt
 else
