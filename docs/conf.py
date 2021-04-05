@@ -318,7 +318,7 @@ sphinx_gallery_conf = {
         "branch": "doc",
         "binderhub_url": "https://mybinder.org",
         "dependencies": "../environment.yml",
-        "notebooks_dir": "notebooks",
+        "notebooks_dir": "docs/_build/html/notebooks",
         "use_jupyter_lab": False,
     },
 }
