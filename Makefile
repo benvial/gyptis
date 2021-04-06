@@ -194,7 +194,8 @@ less:
 	$(LESSC) theme.less  ../theme.css && \
 	$(LESSC) custom_styles.less  ../custom_styles.css && \
 	$(LESSC) custom_gallery.less  ../custom_gallery.css && \
-	$(LESSC) custom_pygments.less  ../custom_pygments.css
+	$(LESSC) custom_pygments.less  ../custom_pygments.css && \
+	$(LESSC) custom_notebook.less  ../custom_notebook.css
 
 ## Build html documentation (only updated examples)
 docfast: less
