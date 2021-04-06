@@ -22,7 +22,7 @@ staging:
 
 
 test:
-  stage: test
+  stage: testing
   script:
     - source ~/.bashrc
     - pip install -e .
