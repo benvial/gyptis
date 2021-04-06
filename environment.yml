@@ -14,4 +14,5 @@ dependencies:
   - matplotlib
   - pip:
     - gmsh
-    - gyptis
+    - "--editable=."
+    # - gyptis
