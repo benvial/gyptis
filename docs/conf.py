@@ -310,7 +310,7 @@ sphinx_gallery_conf = {
     # "image_scrapers": ("matplotlib", PNGScraper()),
     # Modules for which function level galleries are created.
     "doc_module": package.__name__,
-    "default_thumb_file": html_logo,
+    "default_thumb_file": "./_assets/gyptis.png",
     "show_memory": True,
     "binder": {
         "org": "gyptis",
