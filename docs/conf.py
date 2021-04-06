@@ -46,6 +46,7 @@ extensions = [
     # 'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
     # "sphinx.ext.mathjax",
+    "sphinxcontrib.rsvgconverter",
     "sphinx_gallery.gen_gallery",
     "sphinx_copybutton",
     # 'sphinx_issues',
@@ -87,16 +88,15 @@ copyright = "{}, {}".format(date.today().year, author)
 
 
 host = "gitlab"
-github = host == "github"
 
 
 html_context = {
     "description": package.__description__,
     "show_fork": True,
-    "github": github,
-    "repo": f"gyptis/{package.__name__}",
+    "repo": f"{package.__name__}/{package.__name__}",
     "show_pip_install": True,
     "pipname": package.__name__,
+    "dockername": f"{package.__name__}/{package.__name__}",
 }
 
 
@@ -307,6 +307,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": "auto_examples",
     # directory where function granular galleries are stored
     "backreferences_dir": "generated/backreferences",
+    "remove_config_comments": True,
     # "image_scrapers": ("matplotlib", PNGScraper()),
     # Modules for which function level galleries are created.
     "doc_module": package.__name__,

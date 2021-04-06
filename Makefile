@@ -252,11 +252,9 @@ covdoc:
 ## Tag and push tags
 tag:
 	$(call message,${@})
-	# Make sure we're on the master branch
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@echo "  version v$(VERSION)"
-	git tag v$(VERSION) || echo
-	git push --tags  || echo
+	@git tag v$(VERSION) && git push --tags || echo Ignoring tag since it already exists
 	
 ## Create a release
 release:

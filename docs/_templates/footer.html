@@ -7,18 +7,15 @@
       {%- if show_pip_install %}
       <div class="col-md-8">
         <div class="foot-fa">
-          <a href=https://pypi.org/project/{{pipname}} target="_blank">
-            <i class="fab fa-python"></i>
-          </a>
-          {%- if github %}
-          <a href=https://github.com/{{repo}} target="_blank">
-            <i class="fab fa-github fa-1x"></i>
-          </a>
-          {%- else %}
           <a href=https://gitlab.com/{{repo}} target="_blank">
             <i class="fab fa-gitlab fa-1x"></i>
           </a>
-          {%- endif %}
+          <a href=https://pypi.org/project/{{pipname}} target="_blank">
+            <i class="fab fa-python"></i>
+          </a>
+          <a href=https://hub.docker.com/repository/docker/{{dockername}} target="_blank">
+            <i class="fab fa-docker"></i>
+          </a>
         </div>
       </div>
       {%- endif %}

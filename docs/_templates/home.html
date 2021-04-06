@@ -1,4 +1,3 @@
-
 {%- extends "layout.html" %}
 
 {%- block content %}
@@ -14,11 +13,13 @@
 
       <div class="col-md-6">
         <h1 class="homepage-title">{{project}}</h1>
-        <h2>{{description}}</h2>
-        
-        
+        <h2 class="homepage-subtitle">{{description}}</h2>
 
-      
+        <div class="homepage-description">
+          {%- include "../description.rst" %}
+        </div>
+
+
       </div>
       <div class="col-md-6">
 
@@ -49,6 +50,53 @@
     </div>
   </div>
 </section>
+
+<section class="features-banner">
+  <div class="container">
+
+    <div class="row">
+      <div class="col-md-6 vcenter">
+        <div class="media">
+          <span class="media-left">
+            <img src="_assets/gmsh.svg" alt="mesh">
+          </span>
+          <div class="media-body">
+            <h4 class="media-heading">Constructive solid geometry and high quality meshing with the most popular open-source mesh generator Gmsh.</h4>
+
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 vcenter">
+        <div class="media">
+          <span class="media-left">
+            <img src="_assets/fenics.svg" alt="fenics">
+          </span>
+          <div class="media-body">
+            <h4 class="media-heading">Solve Maxwell's equations with the powerful Finite element library FeniCS.</h4>
+
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+
+
+
+    <!-- <div class="row">
+      <div class="col-md-6">
+        Install with docker
+      </div>
+      <div class="col-md-6">
+          <div class="col-md-6">
+            Install with pip
+          </div>
+      </div>
+    </div> -->
+  </div>
+</section>
+
 
 {{ _webpack.body_post() }}
 

@@ -94,16 +94,14 @@ section img {
   // max-height: 150px;
 }
 
-div.section h1, section h1 {
+div.section h1,
+section h1 {
   text-transform: uppercase;
   margin-bottom: 10px;
   text-align: right;
   color: @brand-primary;
   padding-bottom: 1em;
 }
-
-
-
 
 section p {
   margin-bottom: 30px;
@@ -539,6 +537,10 @@ input {
   color: @brand-primary;
 }
 
+.fab.fa-docker:hover {
+  color: @brand-info;
+}
+
 div.body {
   min-width: auto;
   max-width: -moz-max-content;
@@ -615,10 +617,6 @@ ul.search li {
   position: fixed;
 }
 
-.homepage-title {
-  text-align: left;
-}
-
 .bd-search .icon {
   top: 22px;
   color: @brand-primary;
@@ -681,7 +679,62 @@ a.copybtn {
   padding-right: 5px;
 }
 
-
 body {
-    padding-top: 100px;
+  padding-top: 100px;
+}
+// 
+// .reference.internal.nav-link {
+//   margin-left: 10px !important;
+//   margin-right: 10px !important;
+// }
+
+.navbar-nav > li {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.homepage-title {
+  text-align: left;
+  padding-bottom: 20px;
+}
+
+.homepage-description {
+  padding-top: 60px;
+  font-size: 110%;
+  color: @gray;
+  font-style: italic;
+}
+
+.homepage-subtitle {
+  padding-bottom: 20px;
+  font-size: 210%;
+}
+
+.features-container {
+  display: inline-block;
+  vertical-align: center;
+  padding: 20px;
+}
+
+.features-banner {
+  color: @gray-base;
+  background-color: @gray-light;
+}
+
+.media > .pull-left,
+.media-left {
+  padding-right: 60px; // min-height: 120px;
+  width: 130px;
+}
+
+.media {
+  padding: 40px;
+  align-items: center;
+  max-width: 600px;
+}
+
+.vcenter {
+  display: inline-block;
+  vertical-align: middle;
+  float: none;
 }

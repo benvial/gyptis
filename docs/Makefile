@@ -214,8 +214,13 @@ pseudoxml:
 	$(SPHINXBUILD) -b pseudoxml $(ALLSPHINXOPTS) $(BUILDDIR)/pseudoxml
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
+# 
+# show:
+# 	@python -c "import webbrowser, os; \
+# 	path = os.path.relpath(os.getcwd(),os.path.expanduser(os.getenv('HOME'))) ; \
+# 	webbrowser.get('firefox').open_new_tab(f'http://localhost:8000/{path}/_build/html/index.html')"
 
+	
 show:
-	@python -c "import webbrowser, os; \
-	path = os.path.relpath(os.getcwd(),os.path.expanduser(os.getenv('HOME'))) ; \
-	webbrowser.get('firefox').open_new_tab(f'http://localhost:8000/{path}/_build/html/index.html')"
+	@python -c "import webbrowser; \
+	webbrowser.get('firefox').open_new_tab('$(PWD)/$(BUILDDIR)/html/index.html')"

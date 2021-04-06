@@ -2,7 +2,7 @@
 
 .. title:: Home
 
-.. include:: description.rst
+
 
 
 .. toctree::
