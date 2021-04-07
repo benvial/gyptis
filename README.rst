@@ -11,7 +11,10 @@
 .. image:: https://img.shields.io/pypi/v/gyptis?color=blue&logo=python&logoColor=yellow&style=for-the-badge   
   :target: https://pypi.org/project/gyptis/
   :alt: PyPI
-
+  
+.. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4667806-5fadad?style=for-the-badge
+  :target: https://doi.org/10.5281/zenodo.4667806
+   
 .. image:: https://img.shields.io/github/license/mashape/apistatus.svg?style=for-the-badge
    :alt: Licence: MIT
 
