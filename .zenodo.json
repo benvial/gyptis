@@ -1,7 +1,7 @@
 
 {
-         'title': 'Gyptis',
-         'upload_type': 'software',
-         'description': 'Computational Photonics in Python',
-         'creators': [{'name': 'Vial, Benjamin'}]
+         "title": "Gyptis",
+         "upload_type": "software",
+         "description": "Computational Photonics in Python",
+         "creators": [{"name": "Vial, Benjamin"}]
 }
