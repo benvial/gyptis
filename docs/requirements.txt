@@ -4,3 +4,4 @@ sphinx_gallery
 sphinx-copybutton
 memory_profiler
 numpydoc
+sphinxcontrib-svg2pdfconverter
