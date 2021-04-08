@@ -16,7 +16,7 @@ def test_simple(pmesh=10):
     degree = 2
 
     wavelength = 0.3
-    options = {"General.NumThreads": 4, "Mesh.Algorithm": 7, "General.Verbosity": 4}
+    options = {"General.NumThreads": 0, "Mesh.Algorithm": 6, "General.Verbosity": 2}
     geom = BoxPML(
         dim=2,
         box_size=(4 * wavelength, 4 * wavelength),
