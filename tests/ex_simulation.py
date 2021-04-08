@@ -140,12 +140,7 @@ eps_torus = -21 - 20j
 eps_substrate = 1.5 ** 2
 
 epsilon = dict(
-    {
-        "substrate": eps_substrate,
-        "groove": 1,
-        "torus": eps_torus,
-        "superstrate": 1,
-    }
+    {"substrate": eps_substrate, "groove": 1, "torus": eps_torus, "superstrate": 1,}
 )
 mu = dict({"substrate": 1, "groove": 1, "torus": 1, "superstrate": 1})
 

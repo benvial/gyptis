@@ -227,7 +227,7 @@ class Scatt2D(Simulation):
         for iplot in range(n):
             number_str = str(iplot).zfill(4)
             pngname = f"{tmpdir}/animation_tmp_{number_str}.png"
-            p = self.plot_field(anim=phase[iplot], **kwargs)
+            p = self.plot_field(phase=phase[iplot], **kwargs)
             fig = plt.gcf()
             fig.savefig(pngname)
             fig.clear()

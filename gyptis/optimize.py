@@ -13,9 +13,15 @@ from .helpers import *
 from .materials import tensor_const
 
 
-def simp(a, s_min=1, s_max=2, p=1):
+def simp(a, s_min=1, s_max=2, p=1, complex=True):
     """Solid isotropic material with penalisation (SIMP)"""
-    return s_min + (s_max - s_min) * a ** p
+    if complex:
+        return Complex(
+            simp(a, s_min=s_min.real, s_max=s_max.real, p=p, complex=False),
+            simp(a, s_min=s_min.imag, s_max=s_max.imag, p=p, complex=False),
+        )
+    else:
+        return s_min + (s_max - s_min) * a ** p
 
 
 def tanh(x):
@@ -136,8 +142,8 @@ def scipy_minimize(
 
 
 def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
-    markers = geometry.markers["triangle"]
-    domains = geometry.subdomains["surfaces"]
+    markers = geometry.markers
+    domains = geometry.domains
     a = df.Function(source_space)
     mdes = markers.where_equal(domains[subdomain])
     a = function2array(a)

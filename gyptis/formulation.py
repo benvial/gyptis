@@ -79,11 +79,20 @@ class Formulation(ABC):
         pass
 
 
+def _is_dolfin_function(f):
+    if iscomplex(f):
+        out = hasattr(f.real, "ufl_shape") or hasattr(f.imag, "ufl_shape")
+    else:
+        out = hasattr(f, "ufl_shape")
+    return out
+
+
 def _find_domains_function(coeffs, list_domains=None):
     dom_function = []
     for coeff in coeffs:
         list_domains = list_domains or list(coeff.dict.keys())
-        dom_function += [k for k, v in coeff.dict.items() if hasattr(v, "ufl_shape")]
+
+        dom_function += [k for k, v in coeff.dict.items() if _is_dolfin_function(v)]
     dom_function = np.unique(dom_function).tolist()
     dom_no_function = [k for k in list_domains if k not in dom_function]
     return dom_function, dom_no_function

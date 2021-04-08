@@ -5,6 +5,7 @@
 
 import copy
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang
@@ -126,3 +127,15 @@ def plot(test, ax=None, markers=None, proj_space=None, **kwargs):
         plot_subdomains(markers)
 
     return p, cbar
+
+
+def pause(interval):
+    backend = plt.rcParams["backend"]
+    if backend in matplotlib.rcsetup.interactive_bk:
+        figManager = matplotlib._pylab_helpers.Gcf.get_active()
+        if figManager is not None:
+            canvas = figManager.canvas
+            if canvas.figure.stale:
+                canvas.draw()
+            canvas.start_event_loop(interval)
+            return
