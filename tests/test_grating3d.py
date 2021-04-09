@@ -87,15 +87,7 @@ def test_grating3d(degree=1):
     superstrate = geom.layers["superstrate"]
     z0 = geom.z_position["groove"]
 
-    hole = geom.add_cylinder(
-        0,
-        0,
-        z0,
-        0,
-        0,
-        z0 + grooove_thickness,
-        hole_radius,
-    )
+    hole = geom.add_cylinder(0, 0, z0, 0, 0, z0 + grooove_thickness, hole_radius,)
 
     superstrate, substrate, hole, groove = geom.fragment(
         [superstrate, substrate, groove], hole

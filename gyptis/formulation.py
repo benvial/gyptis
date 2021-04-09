@@ -182,7 +182,7 @@ class Maxwell2D(Formulation):
         if self.polarization == "TM":
             for bnd in self.pec_boundaries:
                 normal = self.geometry.unit_normal_vector
-                form -= dot(xi * (grad(u1) * v), normal) * self.ds(bnd)
+                form -= dot( grad(u1) , normal) * v * self.ds(bnd)
         weak = form.real + form.imag
         return weak
 

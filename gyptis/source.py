@@ -50,11 +50,7 @@ def plane_wave_3d(lambda0, theta, phi, psi, amplitude=1, degree=1, domain=None):
 
     k0 = 2 * np.pi / lambda0
     K = k0 * np.array(
-        (
-            np.sin(theta) * np.cos(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(theta),
-        )
+        (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta),)
     )
     K_ = _vector(sp.symbols("kx, ky, kz", real=True))
 

@@ -77,10 +77,7 @@ mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 geom.set_mesh_size(mesh_size)
 
 geom.build(
-    interactive=False,
-    generate_mesh=True,
-    write_mesh=True,
-    read_info=True,
+    interactive=False, generate_mesh=True, write_mesh=True, read_info=True,
 )
 all_domains = geom.subdomains["surfaces"]
 domains = [k for k in all_domains.keys() if k not in ["pml_bottom", "pml_top"]]

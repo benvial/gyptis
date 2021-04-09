@@ -272,14 +272,14 @@ package: setup.py
 	python3 setup.py sdist
 	python3 setup.py bdist_wheel --universal
 
-## Upload to pipy
-pipy: package
+## Upload to pypi
+pypi: package
 	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@twine upload dist/*
 
-## Tag and upload to pipy
-publish: tag pipy
+## Tag and upload to pypi
+publish: tag pypi
 
 ## Make checksum for release
 checksum:

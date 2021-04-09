@@ -19,7 +19,7 @@ from gyptis.source import *
 pytest_params = [("TE", 1), ("TM", 1), ("TE", 2), ("TM", 2)]
 
 tol_balance = 1e-2
-pmesh = 10
+pmesh = 13
 
 
 @pytest.mark.parametrize("polarization,degree", pytest_params)
@@ -97,7 +97,7 @@ def test_grating2dpec(polarization, degree):
     period = 800
     h = 300
     w = 600
-    theta0 = 20
+    theta0 = 30
     lmin = wavelength / pmesh
     lmin_pec = h / (pmesh * 2)
     thicknesses = OrderedDict(
@@ -111,11 +111,11 @@ def test_grating2dpec(polarization, degree):
     )
     rot = Rotation.from_euler("zyx", [20, 0, 0], degrees=True)
     rmat = rot.as_matrix()
-    eps_groove = 1  # rmat @ np.diag((4 - 0.01j, 3 - 0.01j, 2 - 0.02j)) @ rmat.T
-    mu_groove = 1  # rmat @ np.diag((2 - 0.01j, 4 - 0.01j, 3 - 0.02j)) @ rmat.T
+    eps_groove = rmat @ np.diag((4 - 0.01j, 3 - 0.01j, 2 - 0.02j)) @ rmat.T
+    mu_groove = rmat @ np.diag((2 - 0.001j, 4 - 0.001j, 3 - 0.002j)) @ rmat.T
 
-    epsilon = dict({"substrate": 1.0, "groove": eps_groove, "superstrate": 1})
-    mu = dict({"substrate": 1.0, "groove": mu_groove, "superstrate": 1})
+    epsilon = dict({"substrate": 1.7, "groove": eps_groove, "superstrate": 1})
+    mu = dict({"substrate": 1.2, "groove": mu_groove, "superstrate": 1})
 
     geom = Layered2D(period, thicknesses)
 
@@ -153,7 +153,7 @@ def test_grating2dpec(polarization, degree):
     )
     u = s.solve()
     list_time()
-    effs = s.diffraction_efficiencies(1, orders=True, subdomain_absorption=True)
+    effs = s.diffraction_efficiencies(2, orders=True, subdomain_absorption=True)
     pprint(effs)
     if degree == 2:
         assert abs(effs["B"] - 1) < tol_balance, "Unsatified energy balance"
