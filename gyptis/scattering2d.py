@@ -22,6 +22,7 @@ class BoxPML2D(Geometry):
         box_size=(1, 1),
         box_center=(0, 0),
         pml_width=(0.2, 0.2),
+        Rcalc=0,
         model_name="2D box with PMLs",
         mesh_name="mesh.msh",
         data_dir=None,
@@ -91,10 +92,21 @@ class BoxPML2D(Geometry):
         self.pmls = all_dom[1:]
 
         self.fragment(self.box, self.pmls)
+
+        if Rcalc > 0:
+            cyl_calc = self.add_circle(*self.box_center, 0, Rcalc)
+            box, cyl_calc = self.fragment(box, cyl_calc)
+            self.box = [box, cyl_calc]
+
         self.add_physical(box, "box")
         self.add_physical([pmlxp, pmlxm], "pmlx")
         self.add_physical([pmlyp, pmlym], "pmly")
         self.add_physical([pmlxypp, pmlxypm, pmlxymm, pmlxymp], "pmlxy")
+
+        if Rcalc > 0:
+            bnds = self.get_boundaries("box")
+            self.calc_bnds = bnds[0]
+            self.add_physical(self.calc_bnds, "calc_bnds", dim=1)
 
 
 class Scatt2D(Simulation):
@@ -157,6 +169,50 @@ class Scatt2D(Simulation):
         self.solution["total"] = u + self.source.expression
         return u
 
+    @property
+    def time_average_incident_poynting_vector_norm(self):
+        Z0 = np.sqrt(mu_0 / epsilon_0)
+        S0 = 1 / (2 * Z0) if self.formulation.polarization == "TE" else 0.5 * Z0
+        return S0
+
+    def scattering_cross_section(self):
+        uscatt = self.solution["diffracted"]
+        vscatt = self.formulation.get_dual(uscatt)
+        Sscatt = (Constant(0.5) * uscatt * vscatt.conj).real
+        n = self.geometry.unit_normal_vector
+        Ws = assemble(dot(n, Sscatt)("+") * self.dS("calc_bnds"))
+        S0 = self.time_average_incident_poynting_vector_norm
+        SCS = abs(Ws / S0)
+        return SCS
+
+    def absorption_cross_section(self):
+        utot = self.solution["total"]
+        vtot = self.formulation.get_dual(utot)
+        Stot = (Constant(0.5) * utot * vtot.conj).real
+        n = self.geometry.unit_normal_vector
+        Wa = assemble(dot(n, Stot)("+") * self.dS("calc_bnds"))
+        S0 = self.time_average_incident_poynting_vector_norm
+        ACS = abs(Wa / S0)
+        return ACS
+
+    def extinction_cross_section(self):
+        ui = self.source.expression
+        vi = self.formulation.get_dual(ui)
+        uscatt = self.solution["diffracted"]
+        vscatt = self.formulation.get_dual(uscatt)
+        Se = (Constant(0.5) * (uscatt * vi.conj + ui * vscatt.conj)).real
+        n = self.geometry.unit_normal_vector
+        We = assemble(dot(n, Se)("+") * self.dS("calc_bnds"))
+        S0 = self.time_average_incident_poynting_vector_norm
+        ECS = abs(We / S0)
+        return ECS
+
+    def get_cross_sections(self):
+        scs = self.scattering_cross_section()
+        acs = self.absorption_cross_section()
+        ecs = self.extinction_cross_section()
+        return dict(scattering=scs, absorption=acs, extinction=ecs)
+
     # def local_density_of_states(self, x, y):
     #     ldos = np.zeros((len(x), len(y)))
     #     for ix, x_ in enumerate(x):
@@ -191,13 +247,20 @@ class Scatt2D(Simulation):
 
         f = u * phase_shift(phase, degree=self.degree)
         fplot = f.real
-        if ADJOINT:
-            fplot = project(fplot, self.formulation.real_function_space)
+        fplot = project(
+            fplot,
+            self.formulation.real_function_space,
+            solver_type="cg",
+            preconditioner_type="jacobi",
+        )
         pp = dolfin.plot(fplot, **kwargs)
 
         ppmax = pp.cvalues[-1]
         ppmin = pp.cvalues[0]
         ax.set_aspect(1)
+        bs = self.geometry.box_size
+        ax.set_xlim(-bs[0] / 2, bs[0] / 2)
+        ax.set_ylim(-bs[1] / 2, bs[1] / 2)
         mincmap = mincmap or ppmin
         maxcmap = maxcmap or ppmax
         pp.set_clim(mincmap, maxcmap)

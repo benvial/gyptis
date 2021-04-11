@@ -10,12 +10,23 @@ Finite element weak formulations.
 from abc import ABC, abstractmethod
 
 import numpy as np
+from scipy.constants import epsilon_0, mu_0
 
 from . import dolfin
 from .bc import *
 from .complex import *
 from .source import PlaneWave
 from .stack import make_stack
+
+
+def _project_bc_function(applied_function, function_space):
+    ## FIXME: project is slow, avoid it.
+    return project(
+        applied_function,
+        function_space,
+        solver_type="cg",
+        preconditioner_type="jacobi",
+    )
 
 
 class Formulation(ABC):
@@ -182,7 +193,7 @@ class Maxwell2D(Formulation):
         if self.polarization == "TM":
             for bnd in self.pec_boundaries:
                 normal = self.geometry.unit_normal_vector
-                form -= dot( grad(u1) , normal) * v * self.ds(bnd)
+                form -= dot(grad(u1), normal) * v * self.ds(bnd)
         weak = form.real + form.imag
         return weak
 
@@ -195,8 +206,10 @@ class Maxwell2D(Formulation):
 
     def build_pec_boundary_conditions(self, applied_function):
         if self.polarization == "TE" and self.pec_boundaries != []:
-            ## FIXME: project is slow, avoid it.
-            applied_function = project(applied_function, self.real_function_space)
+
+            applied_function = _project_bc_function(
+                applied_function, self.real_function_space
+            )
             _boundary_conditions = build_pec_boundary_conditions(
                 self.pec_boundaries,
                 self.geometry,
@@ -212,6 +225,14 @@ class Maxwell2D(Formulation):
         applied_function = -self.source.expression
         self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
+
+    def get_dual(self, field):
+        coeff = (
+            1j * self.source.pulsation * mu_0
+            if self.polarization == "TE"
+            else -1j * self.source.pulsation * epsilon_0
+        )
+        return self.xi.as_subdomain() / Constant(coeff) * grad(field)
 
 
 class Maxwell2DPeriodic(Maxwell2D):
@@ -315,7 +336,9 @@ class Maxwell3D(Formulation):
 
     def build_pec_boundary_conditions(self, applied_function):
         if self.pec_boundaries != []:
-            applied_function = project(applied_function, self.real_function_space)
+            applied_function = _project_bc_function(
+                applied_function, self.real_function_space
+            )
             _boundary_conditions = build_pec_boundary_conditions(
                 self.pec_boundaries,
                 self.geometry,

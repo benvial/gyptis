@@ -197,7 +197,11 @@ class Grating2D(Simulation):
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
-        orders_num = np.linspace(-N_d_order, N_d_order, 2 * N_d_order + 1,)
+        orders_num = np.linspace(
+            -N_d_order,
+            N_d_order,
+            2 * N_d_order + 1,
+        )
 
         k, beta = {}, {}
         for d in ["substrate", "superstrate"]:
@@ -391,8 +395,13 @@ class Grating2D(Simulation):
             t = Affine2D().translate(i * self.period, 0)
             f = u * phase_shift(i * alpha * self.period + phase, degree=self.degree)
             fplot = f.real
-            if ADJOINT:
-                fplot = project(fplot, self.formulation.real_function_space)
+            # if ADJOINT:
+            fplot = project(
+                fplot,
+                self.formulation.real_function_space,
+                solver_type="cg",
+                preconditioner_type="jacobi",
+            )
             plt.sca(ax)
             pp = dolfin.plot(fplot, transform=t + ax.transData, **kwargs)
             per_plots.append(pp)
