@@ -22,8 +22,8 @@ badge:
     - latest_release_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
     - echo "{\"commits\":\"$commits\", \"release_tag"\:\"$latest_release_tag\"}" > badges.json
   artifacts:
-  paths:
-      - badges.json
+    paths:
+        - badges.json
 
 
 container:
