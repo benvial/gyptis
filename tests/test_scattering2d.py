@@ -147,3 +147,60 @@ def test_scatt2d_pec(polarization):
     u = s.solve()
     list_time()
     print(assemble(u * s.formulation.dx))
+
+
+@pytest.mark.parametrize("polarization", ["TE", "TM"])
+def test_scatt2d_scs(polarization):
+    pmesh = 6
+    wavelength = 452
+    eps_core = 2
+    eps_shell = 6
+
+    R1 = 60
+    R2 = 30
+    Rcalc = 2 * R1
+    lmin = wavelength / pmesh
+    pml_width = wavelength
+
+    lbox = Rcalc * 2 * 1.1
+    geom = BoxPML(
+        dim=2,
+        box_size=(lbox, lbox),
+        pml_width=(pml_width, pml_width),
+        Rcalc=Rcalc,
+    )
+    box = geom.box
+    shell = geom.add_circle(0, 0, 0, R1)
+    out = geom.fragment(shell, box)
+    box = out[1:3]
+    shell = out[0]
+    core = geom.add_circle(0, 0, 0, R2)
+    core, shell = geom.fragment(core, shell)
+    geom.add_physical(box, "box")
+    geom.add_physical(core, "core")
+    geom.add_physical(shell, "shell")
+    [geom.set_size(pml, lmin * 0.7) for pml in geom.pmls]
+    geom.set_size("box", lmin)
+    geom.set_size("core", lmin / eps_core ** 0.5)
+    geom.set_size("shell", lmin / eps_shell ** 0.5)
+    geom.build()
+    pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
+    epsilon = dict(box=1, core=eps_core, shell=eps_shell)
+    mu = dict(box=1, core=1, shell=1)
+
+    s = Scattering(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        degree=2,
+        polarization="TM",
+    )
+    s.solve()
+    cs = s.get_cross_sections()
+    assert np.allclose(
+        cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-12
+    )
+    print(cs["extinction"])
+    print(cs["scattering"] + cs["absorption"])
+    print(abs(cs["scattering"] + cs["absorption"] - cs["extinction"]))

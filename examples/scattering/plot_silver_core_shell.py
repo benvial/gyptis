@@ -123,18 +123,24 @@ geom.plot_subdomains()
 
 
 ##############################################################################
-# Compute cros sections and check energy conservation (optical theorem)
+# Compute cross sections and check energy conservation (optical theorem)
 
 cs = s.get_cross_sections()
-assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-2)
+assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-12)
 print(cs["extinction"])
 print(cs["scattering"] + cs["absorption"])
+print(abs(cs["scattering"] + cs["absorption"] - cs["extinction"]))
 
 
-geom = create_geometry(wavelength_min, pml_width=wavelength_max)
+##############################################################################
+# Compute spectra using adaptive sampling. The function needs to return a scalar
+# (which will be monitored by tha sampler) as its first output.
+
+from gyptis.sample import adaptive_sampler
 
 
 def cs_vs_wl(wavelength):
+    geom = create_geometry(wavelength, pml_width=wavelength)
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
     omega = 2 * np.pi * c / (wavelength * 1e-9)
     epsilon = dict(box=1, core=2, shell=epsilon_silver(omega))
@@ -148,18 +154,20 @@ def cs_vs_wl(wavelength):
     )
     s.solve()
     cs = s.get_cross_sections()
-    print(cs)
     return cs["scattering"], cs
 
 
-from gyptis.sample import adaptive_sampler
-
-wl = np.linspace(wavelength_min, wavelength_max, 20)
+wl = np.linspace(wavelength_min, wavelength_max, 30)
 wla, out = adaptive_sampler(cs_vs_wl, wl)
 cs = [_[1] for _ in out]
 scs = np.array([d["scattering"] for d in cs])
 acs = np.array([d["absorption"] for d in cs])
 ecs = np.array([d["extinction"] for d in cs])
+
+
+##############################################################################
+# Plot and comparison with benchmark
+
 
 benchmark_scs = np.loadtxt("scs_r2_30nm.csv", delimiter=",")
 benchmark_acs = np.loadtxt("acs_r2_30nm.csv", delimiter=",")
@@ -169,7 +177,7 @@ plt.plot(
     benchmark_scs[:, 1],
     "-",
     alpha=0.5,
-    lw=6,
+    lw=4,
     c="#df6482",
     label="scatt. ref.",
 )
@@ -179,7 +187,7 @@ plt.plot(
     benchmark_acs[:, 1],
     "-",
     alpha=0.5,
-    lw=6,
+    lw=4,
     c="#6e8cd0",
     label="abs. ref.",
 )
@@ -188,11 +196,6 @@ plt.xlabel("wavelength (nm)")
 plt.ylabel("cross sections (nm)")
 plt.legend()
 plt.tight_layout()
-
-# plt.figure()
-# B = (scs + acs) / ecs
-# plt.plot(wla, B)
-
 
 ######################################################################
 #
