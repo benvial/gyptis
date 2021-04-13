@@ -6,6 +6,9 @@ Core shell nanorod
 Scattering by a dielectric cylinder coated with silver.
 """
 
+
+# sphinx_gallery_thumbnail_number = 2
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c
@@ -13,7 +16,6 @@ from scipy.constants import c
 from gyptis import BoxPML, Scattering
 from gyptis.source import PlaneWave
 
-plt.ion()
 
 
 ##############################################################################
@@ -39,7 +41,7 @@ def epsilon_silver(omega):
 
 
 wavelength_min = 250
-wavelength_max = 1000
+wavelength_max = 800
 wl = np.linspace(wavelength_min, wavelength_max, 100)
 omega = 2 * np.pi * c / (wl * 1e-9)
 epsAg = epsilon_silver(omega)
@@ -71,10 +73,7 @@ def create_geometry(wavelength, pml_width):
 
     lbox = Rcalc * 2 * 1.1
     geom = BoxPML(
-        dim=2,
-        box_size=(lbox, lbox),
-        pml_width=(pml_width, pml_width),
-        Rcalc=Rcalc,
+        dim=2, box_size=(lbox, lbox), pml_width=(pml_width, pml_width), Rcalc=Rcalc,
     )
     box = geom.box
     shell = geom.add_circle(0, 0, 0, R1)
@@ -86,10 +85,10 @@ def create_geometry(wavelength, pml_width):
     geom.add_physical(box, "box")
     geom.add_physical(core, "core")
     geom.add_physical(shell, "shell")
-    [geom.set_size(pml, lmin * 0.7) for pml in geom.pmls]
+    [geom.set_size(pml, lmin * 1) for pml in geom.pmls]
     geom.set_size("box", lmin)
-    geom.set_size("core", lmin / ncore)
-    geom.set_size("shell", lmin / nAg)
+    geom.set_size("core", 0.5*lmin / ncore)
+    geom.set_size("shell", 0.5*lmin / nAg)
     geom.build()
     return geom
 
@@ -109,27 +108,23 @@ mu = dict(box=1, core=1, shell=1)
 ##############################################################################
 # Scattering problem
 
-s = Scattering(
-    geom,
-    epsilon,
-    mu,
-    pw,
-    degree=2,
-    polarization="TM",
-)
+s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
 s.solve()
 s.plot_field()
-geom.plot_subdomains()
+geom_lines = geom.plot_subdomains()
+plt.xlabel(r"$x$ (nm)")
+plt.ylabel(r"$y$ (nm)")
+plt.tight_layout()
 
 
 ##############################################################################
 # Compute cross sections and check energy conservation (optical theorem)
 
 cs = s.get_cross_sections()
-assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-12)
 print(cs["extinction"])
 print(cs["scattering"] + cs["absorption"])
 print(abs(cs["scattering"] + cs["absorption"] - cs["extinction"]))
+assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-12)
 
 
 ##############################################################################
@@ -144,17 +139,10 @@ def cs_vs_wl(wavelength):
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
     omega = 2 * np.pi * c / (wavelength * 1e-9)
     epsilon = dict(box=1, core=2, shell=epsilon_silver(omega))
-    s = Scattering(
-        geom,
-        epsilon,
-        mu,
-        pw,
-        degree=2,
-        polarization="TM",
-    )
+    s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
     s.solve()
     cs = s.get_cross_sections()
-    return cs["scattering"], cs
+    return cs["absorption"], cs
 
 
 wl = np.linspace(wavelength_min, wavelength_max, 30)
@@ -177,24 +165,26 @@ plt.plot(
     benchmark_scs[:, 1],
     "-",
     alpha=0.5,
-    lw=4,
+    lw=2,
     c="#df6482",
-    label="scatt. ref.",
+    label="scattering reference",
 )
-plt.plot(wla, scs, c="#df6482", label="scatt. gyptis")
+plt.plot(wla, scs, c="#df6482", label="scattering gyptis")
 plt.plot(
     benchmark_acs[:, 0],
     benchmark_acs[:, 1],
     "-",
     alpha=0.5,
-    lw=4,
+    lw=2,
     c="#6e8cd0",
-    label="abs. ref.",
+    label="absorption reference",
 )
-plt.plot(wla, acs, c="#6e8cd0", label="abs. gyptis")
+plt.plot(wla, acs, c="#6e8cd0", label="absorption gyptis")
 plt.xlabel("wavelength (nm)")
 plt.ylabel("cross sections (nm)")
 plt.legend()
+plt.xlim(wavelength_min,wavelength_max)
+plt.ylim(0,)
 plt.tight_layout()
 
 ######################################################################

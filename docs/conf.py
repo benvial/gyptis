@@ -308,6 +308,7 @@ sphinx_gallery_conf = {
     # directory where function granular galleries are stored
     "backreferences_dir": "generated/backreferences",
     "remove_config_comments": True,
+    'reset_modules': (),
     # "image_scrapers": ("matplotlib", PNGScraper()),
     # Modules for which function level galleries are created.
     "doc_module": package.__name__,

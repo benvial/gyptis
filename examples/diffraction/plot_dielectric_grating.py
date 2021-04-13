@@ -7,12 +7,13 @@ Example of a dielectric diffraction grating.
 """
 # sphinx_gallery_thumbnail_number = 2
 
+
+from gyptis import Grating, Layered, PlaneWave
 from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gyptis import Grating, Layered, PlaneWave
 
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating

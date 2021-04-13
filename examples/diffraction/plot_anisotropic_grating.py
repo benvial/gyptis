@@ -19,7 +19,7 @@ from gyptis.plot import *
 # We will study this benchmark and compare with results
 # given in [PopovGratingBook]_.
 
-fig, ax = plt.subplots(3, 2, figsize=(7, 9))
+fig, ax = plt.subplots(3, 2, figsize=(3.5, 5.5))
 
 
 lambda0 = 633
@@ -77,10 +77,7 @@ mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 geom.set_mesh_size(mesh_size)
 
 geom.build(
-    interactive=False,
-    generate_mesh=True,
-    write_mesh=True,
-    read_info=True,
+    interactive=False, generate_mesh=True, write_mesh=True, read_info=True,
 )
 all_domains = geom.subdomains["surfaces"]
 domains = [k for k in all_domains.keys() if k not in ["pml_bottom", "pml_top"]]
@@ -147,8 +144,6 @@ for jangle, angle in enumerate([0, 20, 40]):
     ax[jangle][0].set_title(fr"$\theta = {angle}\degree$")
     ax[jangle][1].set_title(fr"$\theta = {angle}\degree$")
 
-    # plt.tight_layout()
-
 
 divider = make_axes_locatable(ax[0, 0])
 cax = divider.new_vertical(size="5%", pad=0.5)
@@ -156,7 +151,7 @@ fig.add_axes(cax)
 mTE = plt.cm.ScalarMappable(cmap="RdBu")
 mTE.set_clim(vminTE, vmaxTE)
 cbarTE = fig.colorbar(mTE, cax=cax, orientation="horizontal")
-cax.set_title(r"${\rm Re}\, E_z$ (TE)", fontsize=20)
+cax.set_title(r"${\rm Re}\, E_z$ (TE)")
 
 divider = make_axes_locatable(ax[0, 1])
 cax = divider.new_vertical(size="5%", pad=0.5)
@@ -164,13 +159,12 @@ mTM = plt.cm.ScalarMappable(cmap="RdBu")
 mTM.set_clim(vminTM, vmaxTM)
 fig.add_axes(cax)
 cbarTM = fig.colorbar(mTM, cax=cax, orientation="horizontal")
-cax.set_title(r"${\rm Re}\, H_z$ (TM)", fontsize=20)
+cax.set_title(r"${\rm Re}\, H_z$ (TM)")
 
 plt.tight_layout()
-plt.subplots_adjust(wspace=-0.1)
+plt.subplots_adjust(wspace=-0.1, hspace=-0.3)
 
 
-#
 ######################################################################
 #
 # .. [PopovGratingBook] T. Antonakakis et al.,

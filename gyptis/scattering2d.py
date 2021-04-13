@@ -213,16 +213,23 @@ class Scatt2D(Simulation):
         ecs = self.extinction_cross_section()
         return dict(scattering=scs, absorption=acs, extinction=ecs)
 
-    # def local_density_of_states(self, x, y):
-    #     ldos = np.zeros((len(x), len(y)))
-    #     for ix, x_ in enumerate(x):
-    #         for iy, y_ in enumerate(y):
-    #             print(x_, y_)
-    #             self.source.position = x_, y_
-    #             self.assemble_rhs()
-    #             u = self.solve_system(again=True)
-    #             ldos[ix, iy] = u(self.source.position).imag
-    #     return ldos
+    def local_density_of_states(self, x, y):
+        self.source.position = x, y
+        if hasattr(self,"solution"):
+            self.assemble_rhs()
+            self.solve_system(again=True)
+        else:
+            self.solve()
+        u = self.solution["total"]
+        delta = 1 + dolfin.DOLFIN_EPS_LARGE
+        evalpoint = (
+            max(dolfin.DOLFIN_EPS_LARGE, x * delta),
+            max(dolfin.DOLFIN_EPS_LARGE, y * delta),
+        )
+        ldos = (
+            -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
+        )
+        return ldos
 
     def plot_field(
         self,

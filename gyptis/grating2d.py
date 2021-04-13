@@ -170,7 +170,7 @@ class Grating2D(Simulation):
 
     def diffraction_efficiencies(
         self,
-        N_d_order=0,
+        N_order=0,
         cplx_effs=False,
         orders=False,
         subdomain_absorption=False,
@@ -197,11 +197,7 @@ class Grating2D(Simulation):
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
-        orders_num = np.linspace(
-            -N_d_order,
-            N_d_order,
-            2 * N_d_order + 1,
-        )
+        orders_num = np.linspace(-N_order, N_order, 2 * N_order + 1,)
 
         k, beta = {}, {}
         for d in ["substrate", "superstrate"]:
@@ -346,16 +342,18 @@ class Grating2D(Simulation):
                 scatt.append(d)
         scatt_ids = [domains[d] for d in scatt]
         scatt_lines = []
+        
         if len(scatt_ids) > 0:
             for i in range(nper):
-                s = plot_subdomains(
-                    self.geometry.markers,
-                    domain=scatt_ids,
-                    shift=(i * self.period, 0),
-                    c=c,
-                    **kwargs,
-                )
-                scatt_lines.append(s)
+                for sid in scatt_ids:
+                    s = plot_subdomains(
+                        self.geometry.markers,
+                        domain=sid,
+                        shift=(i * self.period, 0),
+                        c=c,
+                        **kwargs,
+                    )
+                    scatt_lines.append(s)
         yend = list(self.geometry.thicknesses.values())[-1]
         layers_lines = []
         for y0 in self.geometry.y_position.values():
@@ -370,6 +368,8 @@ class Grating2D(Simulation):
     def plot_field(
         self,
         nper=1,
+        type="real",
+        field="total",
         fig=None,
         ax=None,
         mincmap=None,
@@ -383,7 +383,7 @@ class Grating2D(Simulation):
 
         from .plot import plt
 
-        u = self.solution["total"]
+        u = self.solution[field]
         if ax == None:
             ax = plt.gca()
         if "cmap" not in kwargs:
@@ -394,7 +394,21 @@ class Grating2D(Simulation):
             alpha = self.formulation.propagation_vector[0]
             t = Affine2D().translate(i * self.period, 0)
             f = u * phase_shift(i * alpha * self.period + phase, degree=self.degree)
-            fplot = f.real
+            if type == "real":
+                fplot = f.real
+            elif type == "imag":
+                fplot = f.imag
+            elif type == "module":
+                fplot = f.module
+            elif type == "phase":
+                fplot = f.phase
+            else:
+                raise (
+                    ValueError(
+                        f"wrong plot type {type}, choose between real, imag, module or phase"
+                    )
+                )
+
             # if ADJOINT:
             fplot = project(
                 fplot,

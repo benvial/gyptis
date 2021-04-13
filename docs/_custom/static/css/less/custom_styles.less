@@ -98,7 +98,7 @@ div.section h1,
 section h1 {
   text-transform: uppercase;
   margin-bottom: 10px;
-  text-align: right;
+  text-align: left;
   color: @brand-primary;
   padding-bottom: 1em;
 }
@@ -666,6 +666,29 @@ ul.search li {
 
 i.fab {
   font-size: 0.8em !important;
+  padding-right: 12px;
+}
+
+.icondld {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  -webkit-mask-size: cover;
+  mask-size: cover;
+  margin-right: 16px;
+  vertical-align: sub;
+}
+
+.icon-python {
+  background: @gray-base;
+  -webkit-mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg);
+  mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg);
+}
+
+.icon-jupyter {
+  background: @gray-base;
+  -webkit-mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg);
+  mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg);
 }
 
 a.copybtn {
@@ -682,6 +705,9 @@ a.copybtn {
 body {
   padding-top: 100px;
 }
+
+
+
 // 
 // .reference.internal.nav-link {
 //   margin-left: 10px !important;
