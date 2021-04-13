@@ -78,10 +78,7 @@ def derivative(f, x, ctrl_space=None, array=True):
     dfdx = df.compute_gradient(f, df.Control(x))
     if ctrl_space is not None:
         dfdx = project(
-            dfdx,
-            ctrl_space,
-            solver_type="cg",
-            preconditioner_type="jacobi",
+            dfdx, ctrl_space, solver_type="cg", preconditioner_type="jacobi",
         )
     if array:
         return function2array(dfdx)
@@ -153,12 +150,7 @@ def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
     mdes = markers.where_equal(domains[subdomain])
     a = function2array(a)
     a[mdes] = function2array(
-        project(
-            x,
-            target_space,
-            solver_type="cg",
-            preconditioner_type="jacobi",
-        )
+        project(x, target_space, solver_type="cg", preconditioner_type="jacobi",)
     )
     ctrl = array2function(a, source_space)
     return ctrl

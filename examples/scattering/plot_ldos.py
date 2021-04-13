@@ -49,11 +49,7 @@ def plot_rods(ax, rod_positions):
 def create_geometry(wavelength, pml_width, group=False):
     lmin = wavelength / pmesh
 
-    geom = BoxPML(
-        dim=2,
-        box_size=(16, 16),
-        pml_width=(pml_width, pml_width),
-    )
+    geom = BoxPML(dim=2, box_size=(16, 16), pml_width=(pml_width, pml_width),)
     box = geom.box
     cylinders = []
     for pos in rod_positions:

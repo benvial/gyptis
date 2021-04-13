@@ -218,8 +218,7 @@ class Complex(object):
     def __call__(self, *args, **kwargs):
         "Calls the complex function if base objects are callable"
         return Complex(
-            self.real.__call__(*args, **kwargs),
-            self.imag.__call__(*args, **kwargs),
+            self.real.__call__(*args, **kwargs), self.imag.__call__(*args, **kwargs),
         )
 
     @staticmethod

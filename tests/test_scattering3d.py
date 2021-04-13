@@ -103,14 +103,7 @@ def test_scatterring3d(shared_datadir):
             wavelength=lambda0, angle=(0, 0, 0), dim=3, domain=g.mesh, degree=degree
         )
         bcs = {}
-        s = Scatt3D(
-            g,
-            epsilon,
-            mu,
-            pw,
-            boundary_conditions=bcs,
-            degree=degree,
-        )
+        s = Scatt3D(g, epsilon, mu, pw, boundary_conditions=bcs, degree=degree,)
 
         s.solve()
         #
