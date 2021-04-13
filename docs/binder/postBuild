@@ -1,0 +1,4 @@
+set -ex
+
+mkdir -p ${HOME}/.config/matplotlib
+cp -f gyptis.mplstyle ${HOME}/.config/matplotlib/matplotlibrc

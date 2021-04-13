@@ -197,7 +197,11 @@ class Grating2D(Simulation):
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
-        orders_num = np.linspace(-N_order, N_order, 2 * N_order + 1,)
+        orders_num = np.linspace(
+            -N_order,
+            N_order,
+            2 * N_order + 1,
+        )
 
         k, beta = {}, {}
         for d in ["substrate", "superstrate"]:
@@ -342,7 +346,7 @@ class Grating2D(Simulation):
                 scatt.append(d)
         scatt_ids = [domains[d] for d in scatt]
         scatt_lines = []
-        
+
         if len(scatt_ids) > 0:
             for i in range(nper):
                 for sid in scatt_ids:

@@ -16,8 +16,6 @@ from scipy.constants import c
 from gyptis import BoxPML, Scattering
 from gyptis.source import PlaneWave
 
-
-
 ##############################################################################
 # Reference results are taken from [Jandieri2015]_.
 # We first define a function for the Drude Lorentz model of silver permittivity.
@@ -73,7 +71,10 @@ def create_geometry(wavelength, pml_width):
 
     lbox = Rcalc * 2 * 1.1
     geom = BoxPML(
-        dim=2, box_size=(lbox, lbox), pml_width=(pml_width, pml_width), Rcalc=Rcalc,
+        dim=2,
+        box_size=(lbox, lbox),
+        pml_width=(pml_width, pml_width),
+        Rcalc=Rcalc,
     )
     box = geom.box
     shell = geom.add_circle(0, 0, 0, R1)
@@ -87,8 +88,8 @@ def create_geometry(wavelength, pml_width):
     geom.add_physical(shell, "shell")
     [geom.set_size(pml, lmin * 1) for pml in geom.pmls]
     geom.set_size("box", lmin)
-    geom.set_size("core", 0.5*lmin / ncore)
-    geom.set_size("shell", 0.5*lmin / nAg)
+    geom.set_size("core", 0.5 * lmin / ncore)
+    geom.set_size("shell", 0.5 * lmin / nAg)
     geom.build()
     return geom
 
@@ -108,7 +109,14 @@ mu = dict(box=1, core=1, shell=1)
 ##############################################################################
 # Scattering problem
 
-s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+s = Scattering(
+    geom,
+    epsilon,
+    mu,
+    pw,
+    degree=2,
+    polarization="TM",
+)
 s.solve()
 s.plot_field()
 geom_lines = geom.plot_subdomains()
@@ -139,7 +147,14 @@ def cs_vs_wl(wavelength):
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
     omega = 2 * np.pi * c / (wavelength * 1e-9)
     epsilon = dict(box=1, core=2, shell=epsilon_silver(omega))
-    s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+    s = Scattering(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        degree=2,
+        polarization="TM",
+    )
     s.solve()
     cs = s.get_cross_sections()
     return cs["absorption"], cs
@@ -183,8 +198,10 @@ plt.plot(wla, acs, c="#6e8cd0", label="absorption gyptis")
 plt.xlabel("wavelength (nm)")
 plt.ylabel("cross sections (nm)")
 plt.legend()
-plt.xlim(wavelength_min,wavelength_max)
-plt.ylim(0,)
+plt.xlim(wavelength_min, wavelength_max)
+plt.ylim(
+    0,
+)
 plt.tight_layout()
 
 ######################################################################

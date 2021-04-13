@@ -7,14 +7,14 @@ Diffraction by a grating of silver-coated circular nanocylinders on a dielectric
 """
 
 
-
 from collections import OrderedDict
 from pprint import pprint
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import c
-from gyptis import Layered, Grating, PlaneWave
 
+from gyptis import Grating, Layered, PlaneWave
 
 ##############################################################################
 # Reference results are taken from [Jandieri2015]_.
@@ -98,9 +98,9 @@ geom.set_size("shell", 0.5 * lmin / nAg)
 geom.build(0)
 
 
-
 ##############################################################################
 # Define the incident plane wave and materials and the diffraction problem
+
 
 def solve(wavelength):
 
@@ -116,7 +116,14 @@ def solve(wavelength):
         superstrate=1,
     )
     mu = {d: 1 for d in epsilon.keys()}
-    g = Grating(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+    g = Grating(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        degree=2,
+        polarization="TM",
+    )
     g.solve()
 
     return g
@@ -141,21 +148,33 @@ for ax, wavelength in zip(axes, [316, 452]):
     [layers_lines[i].remove() for i in range(6)]
     ax.set_axis_off()
     ax.annotate(
-        fr"$\lambda_0={wavelength}$ nm", (0.6, 0.2), c="w", xycoords="axes fraction"
+        fr"$\lambda_0={wavelength}$ nm",
+        (0.6, 0.2),
+        c="w",
+        xycoords="axes fraction",
+        weight="medium",
     )
-    ax.annotate(fr"$\Lambda={period}$ nm", (0.6, 0.1), c="w", xycoords="axes fraction")
+    ax.annotate(
+        fr"$\Lambda={period}$ nm",
+        (0.6, 0.1),
+        c="w",
+        xycoords="axes fraction",
+        weight="medium",
+    )
     fig.tight_layout()
 
+    # Compute diffraction efficiencies
+
     effs = g.diffraction_efficiencies()
+
     print(" ")
     print(f"diffraction efficiencies, wavelength = {wavelength} nm")
     print("-------------------------------------------------------")
-    
-    print("gyptis")
-    pprint(effs,width=30)
-    print("reference")
-    pprint(effs_ref[f"{wavelength}"],width=30)
 
+    print("gyptis")
+    pprint(effs, width=30)
+    print("reference")
+    pprint(effs_ref[f"{wavelength}"], width=30)
 
 
 ######################################################################

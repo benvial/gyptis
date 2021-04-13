@@ -215,7 +215,7 @@ class Scatt2D(Simulation):
 
     def local_density_of_states(self, x, y):
         self.source.position = x, y
-        if hasattr(self,"solution"):
+        if hasattr(self, "solution"):
             self.assemble_rhs()
             self.solve_system(again=True)
         else:
@@ -226,9 +226,7 @@ class Scatt2D(Simulation):
             max(dolfin.DOLFIN_EPS_LARGE, x * delta),
             max(dolfin.DOLFIN_EPS_LARGE, y * delta),
         )
-        ldos = (
-            -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
-        )
+        ldos = -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
         return ldos
 
     def plot_field(

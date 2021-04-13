@@ -297,7 +297,12 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://doc.python.org/": None}
+intersphinx_mapping = {
+    "https://doc.python.org/3/": None,
+    "https://docs.scipy.org/doc/scipy/reference/": None,
+    "https://matplotlib.org/stable/": None,
+    "https://numpy.org/doc/stable/": None,
+}
 
 
 sphinx_gallery_conf = {
@@ -308,7 +313,10 @@ sphinx_gallery_conf = {
     # directory where function granular galleries are stored
     "backreferences_dir": "generated/backreferences",
     "remove_config_comments": True,
-    'reset_modules': (),
+    "reset_modules": (),
+    # "first_notebook_cell": (
+    #     "import matplotlib\n" "mpl.style.use('gyptis')\n" "%matplotlib inline"
+    # ),
     # "image_scrapers": ("matplotlib", PNGScraper()),
     # Modules for which function level galleries are created.
     "doc_module": package.__name__,

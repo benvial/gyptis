@@ -28,7 +28,7 @@ endif
 
 
 ifdef TEST_PARALLEL
-TEST_ARGS=-n auto --dist loadscope
+TEST_ARGS=-n auto #--dist loadscope
 endif
 
 
