@@ -71,7 +71,10 @@ def create_geometry(wavelength, pml_width):
 
     lbox = Rcalc * 2 * 1.1
     geom = BoxPML(
-        dim=2, box_size=(lbox, lbox), pml_width=(pml_width, pml_width), Rcalc=Rcalc,
+        dim=2,
+        box_size=(lbox, lbox),
+        pml_width=(pml_width, pml_width),
+        Rcalc=Rcalc,
     )
     box = geom.box
     shell = geom.add_circle(0, 0, 0, R1)
@@ -106,7 +109,14 @@ mu = dict(box=1, core=1, shell=1)
 ##############################################################################
 # Scattering problem
 
-s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+s = Scattering(
+    geom,
+    epsilon,
+    mu,
+    pw,
+    degree=2,
+    polarization="TM",
+)
 s.solve()
 s.plot_field()
 geom_lines = geom.plot_subdomains()
@@ -137,7 +147,14 @@ def cs_vs_wl(wavelength):
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
     omega = 2 * np.pi * c / (wavelength * 1e-9)
     epsilon = dict(box=1, core=2, shell=epsilon_silver(omega))
-    s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+    s = Scattering(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        degree=2,
+        polarization="TM",
+    )
     s.solve()
     cs = s.get_cross_sections()
     return cs["absorption"], cs
@@ -182,7 +199,9 @@ plt.xlabel("wavelength (nm)")
 plt.ylabel("cross sections (nm)")
 plt.legend()
 plt.xlim(wavelength_min, wavelength_max)
-plt.ylim(0,)
+plt.ylim(
+    0,
+)
 plt.tight_layout()
 
 ######################################################################

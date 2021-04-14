@@ -116,7 +116,14 @@ def solve(wavelength):
         superstrate=1,
     )
     mu = {d: 1 for d in epsilon.keys()}
-    g = Grating(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+    g = Grating(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        degree=2,
+        polarization="TM",
+    )
     g.solve()
 
     return g

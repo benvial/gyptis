@@ -332,4 +332,3 @@ sphinx_gallery_conf = {
         "use_jupyter_lab": False,
     },
 }
-# https://mybinder.org/v2/gh/gyptis/gyptis.gitlab.io/master?filepath=notebooks/auto_examples/diffraction/plot_dielectric_grating.ipynb

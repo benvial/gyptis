@@ -114,7 +114,8 @@ def test_scatt2d_ls(degree, polarization):
 def test_scatt2d_pec(polarization):
 
     geom = BoxPML2D(
-        box_size=(4 * wavelength, 4 * wavelength), pml_width=(wavelength, wavelength),
+        box_size=(4 * wavelength, 4 * wavelength),
+        pml_width=(wavelength, wavelength),
     )
     cyl = geom.add_circle(0, 0, 0, 0.2)
     box = geom.cut(geom.box, cyl)
@@ -163,7 +164,10 @@ def test_scatt2d_scs(polarization):
 
     lbox = Rcalc * 2 * 1.1
     geom = BoxPML(
-        dim=2, box_size=(lbox, lbox), pml_width=(pml_width, pml_width), Rcalc=Rcalc,
+        dim=2,
+        box_size=(lbox, lbox),
+        pml_width=(pml_width, pml_width),
+        Rcalc=Rcalc,
     )
     box = geom.box
     shell = geom.add_circle(0, 0, 0, R1)
@@ -184,7 +188,14 @@ def test_scatt2d_scs(polarization):
     epsilon = dict(box=1, core=eps_core, shell=eps_shell)
     mu = dict(box=1, core=1, shell=1)
 
-    s = Scattering(geom, epsilon, mu, pw, degree=2, polarization="TM",)
+    s = Scattering(
+        geom,
+        epsilon,
+        mu,
+        pw,
+        degree=2,
+        polarization="TM",
+    )
     s.solve()
     cs = s.get_cross_sections()
     assert np.allclose(
