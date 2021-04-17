@@ -7,12 +7,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="179.72476mm"
-   height="48.637585mm"
-   viewBox="0 0 179.72476 48.637585"
+   width="196mm"
+   height="60mm"
+   viewBox="0 0 196 60"
    version="1.1"
    id="svg8"
-   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15, custom)"
    sodipodi:docname="gyptis-name.svg"
    inkscape:export-filename="/home/bench/dev/gyptis/gyptis/docs/_assets/gyptis-name.png"
    inkscape:export-xdpi="600"
@@ -65,19 +65,18 @@
     <path
        id="rect1061"
        style="fill:#333333;fill-opacity:0.994181;stroke-width:0"
-       d="m 164.71289,146.63281 v 38.15235 l 76.11133,71.12304 -16.45313,13.83594 -59.6582,-55.74805 v 100.16993 h 145.63477 v -95.61329 a 56.692913,56.692913 0 0 1 -36.73047,13.50782 56.692913,56.692913 0 0 1 -56.69336,-56.69141 56.692913,56.692913 0 0 1 7.82422,-28.73633 z"
-       transform="scale(0.26458333)" />
+       d="M 58.396961,43.029933 V 53.124409 L 78.53475,71.94238 74.181526,75.603139 58.396961,60.853134 V 87.356428 H 96.929493 V 62.058745 a 15,15 0 0 1 -9.71827,3.573944 15,15 0 0 1 -15.000118,-14.999602 15,15 0 0 1 2.070158,-7.603154 z" />
     <circle
        style="fill:#e6843d;fill-opacity:1;stroke-width:0"
        id="path1183"
-       cx="72.305046"
-       cy="46.485508"
+       cx="87.121727"
+       cy="50.718845"
        r="12" />
     <text
        xml:space="preserve"
        id="text832"
        style="font-size:7.05556px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect834);fill:#333333;fill-opacity:0.996078;"
-       transform="matrix(1.1199974,0,0,1.1199974,-7.1648229,-0.46007252)"><tspan
+       transform="matrix(1.1199974,0,0,1.1199974,7.1226778,4.8315944)"><tspan
          x="90.861328"
          y="64.529268"><tspan
            style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans, Light';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;fill-opacity:0.996078">GYPTIS</tspan></tspan></text>

@@ -1,5 +1,18 @@
 @import "variables.less";
 
+
+body {
+  font-family: @font-family-serif;
+  font-size: @font-size-base;
+  // line-height: @line-height-base;
+  color: @gray-base;
+  // padding-top: 100px;
+}
+
+
+
+
+
 .dropdown-menu > li > a:hover,
 .navbar-default,
 .navbar-default .navbar-nav > .active > a,
@@ -29,59 +42,15 @@
   text-decoration-color: @brand-primary;
   text-decoration-thickness: 2px;
 }
-// .navbar-default .navbar-brand:focus,
-// .navbar-default .navbar-brand:hover {
-//   color: @gray-base;
-//   background-color: transparent;
-// }
-@media screen and (max-width: 767px) {
-  .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus,
-  .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover {
-    color: @gray-base;
-    background-color: transparent;
-  }
-}
 
-body {
-  font-family: @font-family-serif;
-  font-size: @font-size-base;
-  line-height: 1.42857143;
-  color: @gray-base;
-  // color: @gray-base;
-  margin: 0;
-  font-size: @font-size-base;
-  // padding: 0px;
-}
-/* body {
-  padding-top: 70px;
-} */
-/* sidebar */
-/* .navbar-brand,
- .navbar-nav li a {
-   height: 76px;
-   line-height: 76px;
-   padding-top: 0;
- } */
-/*
-dt {
-    font-weight: bold;
-    display: table;
-    margin: 5px 0;
-    font-size: 90%;
-    line-height: normal;
-    background: #ffefec;
-    color: #A44034;
-    border-top: solid 3px #de7a6a;
-    padding: 5px;
-    position: relative;
-} */
-/*
-@media (min-width: 1200px) { */
-.container-fluid {
-  max-width: 600px;
-  /* or 950px */
-}
-/* } */
+// @media screen and (max-width: 767px) {
+//   .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus,
+//   .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover {
+//     color: @gray-base;
+//     background-color: transparent;
+//   }
+// }
+ 
 section {
   // text-align: center;
   padding: 60px 0;
@@ -459,16 +428,16 @@ input {
 } */
 #return-to-top {
   position: fixed;
-  bottom: 20px;
-  right: 30px;
+  bottom: 50px;
+  right: 50px;
   background: @brand-primary;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   display: block;
   text-decoration: none;
-  -webkit-border-radius: 35px;
-  -moz-border-radius: 35px;
-  border-radius: 35px;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
+  border-radius: 20px;
   display: none;
   -webkit-transition: all 0.3s linear;
   -moz-transition: all 0.3s ease;
@@ -482,6 +451,8 @@ input {
   color: #fff;
   margin: 0;
   position: relative;
+  left: 12px !important;;
+  top: 10px !important;
   left: 16px;
   top: 13px;
   font-size: 19px;
@@ -625,7 +596,7 @@ ul.search li {
 .bd-sidebar {
   background: @gray-lighter;
   margin-top: -80px;
-  padding-top: 100px;
+  padding-top: 90px;
   padding-left: 2rem;
   padding-right: 2rem;
   height: auto;
@@ -637,10 +608,10 @@ ul.search li {
   max-width: 100%;
 }
 
-.pl-md-5,
-.px-md-5 {
-  padding-left: 9rem !important;
-}
+// .pl-md-5,
+// .px-md-5 {
+//   padding-left: 9rem !important;
+// }
 
 .navbar-nav > .active > .nav-link {
   color: @gray-base !important;
@@ -681,14 +652,14 @@ i.fab {
 
 .icon-python {
   background: @gray-base;
-  -webkit-mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg);
-  mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg);
+  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg");
+  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg");
 }
 
 .icon-jupyter {
   background: @gray-base;
-  -webkit-mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg);
-  mask-image: url(https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg);
+  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg");
+  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg");
 }
 
 a.copybtn {
@@ -701,13 +672,6 @@ a.copybtn {
   padding-left: 5px;
   padding-right: 5px;
 }
-
-body {
-  padding-top: 100px;
-}
-
-
-
 // 
 // .reference.internal.nav-link {
 //   margin-left: 10px !important;

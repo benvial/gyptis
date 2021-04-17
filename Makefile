@@ -3,7 +3,7 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: clean lint req doc help
+.PHONY: clean lint req doc help dev
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -107,12 +107,7 @@ testenv:
 ## Install Python dependencies
 req:
 	$(call message,${@})
-ifeq (True,$(HAS_CONDA))
-		dev/installreq requirements.txt
-else
-		$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
-endif
-	$(PYTHON_INTERPRETER) -m pip install -e.
+	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
 ## Install Python dependencies for dev and test
 dev:
@@ -190,8 +185,8 @@ save: clean style gl
 ## Make documentation css
 less:
 	$(call message,${@})
+	@rm -f docs/_custom/static/css/*.css
 	@cd docs/_custom/static/css/less && \
-	$(LESSC) theme.less  ../theme.css && \
 	$(LESSC) custom_styles.less  ../custom_styles.css && \
 	$(LESSC) custom_gallery.less  ../custom_gallery.css && \
 	$(LESSC) custom_pygments.less  ../custom_pygments.css && \

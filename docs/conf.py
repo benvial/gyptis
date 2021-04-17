@@ -139,11 +139,11 @@ html_static_path = ["_custom/static"]
 
 
 def setup(app):
-    app.add_css_file("css/theme.css")
+    # app.add_css_file("css/theme.css")
     app.add_css_file("css/custom_styles.css")
     app.add_css_file("css/custom_gallery.css")
     app.add_css_file("css/custom_pygments.css")
-    # app.add_js_file("js/custom.js")
+    app.add_js_file("js/custom.js")
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
