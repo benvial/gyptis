@@ -44,6 +44,7 @@ MANIFEST
 .coverage*
 bin
 docs/package-lock.json
+docs/package.json
 
 # Logs and databases #
 ######################
