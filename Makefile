@@ -177,10 +177,29 @@ gl:
 	@read -p "Enter commit message: " MSG; \
 	git commit -a -m "$$MSG"
 	@git push origin $(BRANCH)
+	
+
 
 ## Clean, reformat and push to gitlab
 save: clean style gl
 	$(call message,${@})
+	
+
+## Push to gitlab (skipping continuous integration)
+gl-noci:
+	$(call message,${@})
+	@git add -A
+	@read -p "Enter commit message: " MSG; \
+	git commit -a -m "$$MSG [skip ci]"
+	@git push origin $(BRANCH)
+	
+	
+
+## Clean, reformat and push to gitlab (skipping continuous integration)
+save-noci: clean style gl-noci
+	$(call message,${@})
+	
+
 
 ## Make documentation css
 less:
