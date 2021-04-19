@@ -299,8 +299,8 @@ class Grating3D(Simulation):
         T_nm = [[e["substrate"].real for e in b] for b in effn]
         R_nm = [[e["superstrate"].real for e in b] for b in effn]
 
-        t_nm = [[e["substrate"] for e in b] for b in effn]
-        r_nm = [[e["superstrate"] for e in b] for b in effn]
+        t_nm = [[e["substrate"] for e in b] for b in effn_cplx]
+        r_nm = [[e["superstrate"] for e in b] for b in effn_cplx]
 
         T = sum([sum(_) for _ in T_nm])
         R = sum([sum(_) for _ in R_nm])
