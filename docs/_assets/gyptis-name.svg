@@ -53,7 +53,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -62,23 +62,17 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-43.580285,-34.485508)">
-    <path
-       id="rect1061"
-       style="fill:#333333;fill-opacity:0.994181;stroke-width:0"
-       d="M 58.396961,43.029933 V 53.124409 L 78.53475,71.94238 74.181526,75.603139 58.396961,60.853134 V 87.356428 H 96.929493 V 62.058745 a 15,15 0 0 1 -9.71827,3.573944 15,15 0 0 1 -15.000118,-14.999602 15,15 0 0 1 2.070158,-7.603154 z" />
-    <circle
-       style="fill:#e6843d;fill-opacity:1;stroke-width:0"
-       id="path1183"
-       cx="87.121727"
-       cy="50.718845"
-       r="12" />
     <text
        xml:space="preserve"
        id="text832"
        style="font-size:7.05556px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect834);fill:#333333;fill-opacity:0.996078;"
-       transform="matrix(1.1199974,0,0,1.1199974,7.1226778,4.8315944)"><tspan
+       transform="matrix(1.1199974,0,0,1.1199974,9.2393446,4.8315944)"><tspan
          x="90.861328"
          y="64.529268"><tspan
            style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans, Light';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;fill-opacity:0.996078">GYPTIS</tspan></tspan></text>
+    <path
+       id="rect854"
+       style="fill:#d35f5f;fill-opacity:0.996078;stroke:#9b3600;stroke-width:0"
+       d="M 77.175476,38.18091 66.649507,48.706876 V 80.284781 L 77.175476,90.810749 103.49073,64.49549 95.596769,56.601523 H 82.438118 v 5.262645 h 5.263324 v 5.262644 h -5.263324 -5.262642 v -5.262644 -5.262645 -5.263324 h 5.262642 7.895327 z M 61.386862,53.969521 50.860895,64.49549 61.386862,75.021456 Z" />
   </g>
 </svg>

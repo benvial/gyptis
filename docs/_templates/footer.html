@@ -5,7 +5,7 @@
   <div class="container">
     <div class="row">
       {%- if show_pip_install %}
-      <div class="col-md-8">
+      <div class="col-md-6">
         <div class="foot-fa">
           <a href=https://gitlab.com/{{repo}} target="_blank">
             <i class="fab fa-gitlab fa-1x"></i>
@@ -20,15 +20,15 @@
       </div>
       {%- endif %}
       {%- if show_fork %}
-      <div class="col-md-4">
+      <div class="col-md-6">
 
         <div class="footer-copyright">
-          {{project}} version {{version}}.
+          <p>{{project}} version {{version}}.</p>
           {%- if show_copyright %}
           {%- if hasdoc('copyright') %}
-          {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}. {% endtrans %}
+          {% trans path=pathto('copyright'), copyright=copyright|e %}<p>&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}. </p>{% endtrans %}
           {%- else %}
-          {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}. {% endtrans %}
+          {% trans copyright=copyright|e %}<p>&copy; Copyright {{ copyright }}.</p>{% endtrans %}
           {%- endif %}
           {%- endif %}
           {%- if last_updated %}

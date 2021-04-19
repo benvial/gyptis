@@ -1,5 +1,14 @@
 @import "variables.less";
 
+:root {
+  --pst-font-size-base: @font-size-base;
+  --pst-color-success: 10, 83, 130;
+  --pst-color-info: 69, 149, 125;
+  /*23, 162, 184;*/
+  --pst-color-warning: 236, 206, 52;
+  --pst-color-danger: 210, 95, 95;
+  --pst-color-text-base: 51, 51, 51;
+}
 
 body {
   font-family: @font-family-serif;
@@ -9,9 +18,13 @@ body {
   // padding-top: 100px;
 }
 
-
-
-
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: @gray-base!important;
+}
 
 .dropdown-menu > li > a:hover,
 .navbar-default,
@@ -42,7 +55,6 @@ body {
   text-decoration-color: @brand-primary;
   text-decoration-thickness: 2px;
 }
-
 // @media screen and (max-width: 767px) {
 //   .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus,
 //   .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover {
@@ -50,7 +62,7 @@ body {
 //     background-color: transparent;
 //   }
 // }
- 
+
 section {
   // text-align: center;
   padding: 60px 0;
@@ -63,8 +75,7 @@ section img {
   // max-height: 150px;
 }
 
-div.section h1,
-section h1 {
+h1 {
   text-transform: uppercase;
   margin-bottom: 10px;
   text-align: left;
@@ -98,21 +109,16 @@ section.color-header h2 {
 
 .btn-round {
   border-radius: 10px !important;
-  color: @gray-base;
+  color: white;
   background-color: transparent;
-  border-color: @gray-base;
+  border-color: white;
   margin-top: 16px;
 }
 
 .btn-round.focus,
-.btn-round:focus {
-  color: @gray-base-light;
-  border-color: @gray-base-light;
-}
-
 .btn-round:hover {
-  color: @gray-base-light;
-  border-color: @gray-base-light;
+  color: #e3e2e2;
+  border-color: #e3e2e2;
 }
 
 section.button-banner {
@@ -136,12 +142,19 @@ section.color-footer {
 
 .footer .footer-copyright {
   background-color: @gray-base;
+  font-family: @font-family-monospace;
   color: #919191;
   font-size: 80%;
   padding-top: 4px;
   padding-bottom: 4px;
   text-align: center;
 }
+
+.footer .footer-copyright p {
+  margin: 10px;
+  color: #ccc;
+}
+
 // .footer .row {
 //   margin-bottom: 30px;
 // }
@@ -149,11 +162,6 @@ section.color-footer {
 .footer .navbar-brand {
   margin-top: 45px;
   height: 65px;
-}
-
-.footer .footer-copyright p {
-  margin: 10px;
-  color: #ccc;
 }
 
 .footer ul {
@@ -205,6 +213,8 @@ section.color-footer {
 
 .foot-fa {
   font-size: 180%;
+  padding-top: 16px;
+  text-align: center;
 }
 
 .foot-fa a {
@@ -412,7 +422,7 @@ input {
 }
 
 .btn {
-  border-width: 3px;
+  border-width: 2px;
   border-radius: 0;
   box-shadow: none;
   text-transform: uppercase;
@@ -428,8 +438,8 @@ input {
 } */
 #return-to-top {
   position: fixed;
-  bottom: 50px;
-  right: 50px;
+  bottom: 8%;
+  right: 2%;
   background: @brand-primary;
   width: 40px;
   height: 40px;
@@ -451,8 +461,8 @@ input {
   color: #fff;
   margin: 0;
   position: relative;
-  left: 12px !important;;
-  top: 10px !important;
+  left: 12px !important;
+  top: 7px !important;
   left: 16px;
   top: 13px;
   font-size: 19px;
@@ -505,11 +515,11 @@ input {
 }
 
 .fab.fa-gitlab:hover {
-  color: @brand-primary;
+  color: @brand-secondary;
 }
 
 .fab.fa-docker:hover {
-  color: @brand-info;
+  color: @brand-secondary;
 }
 
 div.body {
@@ -607,7 +617,6 @@ ul.search li {
 .container-xl {
   max-width: 100%;
 }
-
 // .pl-md-5,
 // .px-md-5 {
 //   padding-left: 9rem !important;
@@ -649,6 +658,9 @@ i.fab {
   margin-right: 16px;
   vertical-align: sub;
 }
+// .icondld:hover {
+//   background: @brand-primary;
+// }
 
 .icon-python {
   background: @gray-base;
@@ -727,4 +739,40 @@ a.copybtn {
   display: inline-block;
   vertical-align: middle;
   float: none;
+}
+
+a {
+  color: @brand-secondary;
+}
+
+a:hover {
+  color: lighten(@brand-secondary, 15%);
+  text-decoration: underline lighten(@brand-secondary, 15%) 1px;
+}
+
+.toc-h2.nav-item.toc-entry:hover > a {
+  color: @brand-secondary;
+}
+
+.xref.download.docutils.literal.notranslate > span.pre {
+  background: inherit;
+}
+
+.sig-param {
+  color: @gray-base;
+}
+
+.sig-paren {
+  font-size: larger;
+  color: @gray-base;
+}
+
+.sig-name.descname {
+  color: @brand-primary;
+}
+
+.bd-sidebar .nav .active > a,
+.bd-sidebar .nav .active:hover > a {
+  font-weight: 600;
+  color: @brand-secondary;
 }

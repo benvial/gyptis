@@ -7,14 +7,14 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="40.724762mm"
-   height="48.637585mm"
-   viewBox="0 0 40.724762 48.637585"
+   width="40mm"
+   height="40mm"
+   viewBox="0 0 40 40"
    version="1.1"
    id="svg8"
-   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15, custom)"
    sodipodi:docname="gyptis.svg"
-   inkscape:export-filename="/home/bench/dev/gyptis/docs/_assets/gyptis.png"
+   inkscape:export-filename="/home/bench/dev/gyptis/gyptis/docs/_assets/gyptis.png"
    inkscape:export-xdpi="600"
    inkscape:export-ydpi="600">
   <defs
@@ -26,9 +26,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="37.676876"
-     inkscape:cy="158.04745"
+     inkscape:zoom="4.0450671"
+     inkscape:cx="49.835778"
+     inkscape:cy="99.222342"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -46,7 +46,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -56,15 +56,9 @@
      id="layer1"
      transform="translate(-43.580285,-34.485508)">
     <path
-       id="rect1061"
-       style="fill:#333333;fill-opacity:0.994181;stroke-width:0"
-       d="m 164.71289,146.63281 v 38.15235 l 76.11133,71.12304 -16.45313,13.83594 -59.6582,-55.74805 v 100.16993 h 145.63477 v -95.61329 a 56.692913,56.692913 0 0 1 -36.73047,13.50782 56.692913,56.692913 0 0 1 -56.69336,-56.69141 56.692913,56.692913 0 0 1 7.82422,-28.73633 z"
-       transform="scale(0.26458333)" />
-    <circle
-       style="fill:#e6843d;fill-opacity:1;stroke-width:0"
-       id="path1183"
-       cx="72.305046"
-       cy="46.485508"
-       r="12" />
+       id="rect854"
+       style="fill:#d35f5f;fill-opacity:0.996078;stroke:#9b3600;stroke-width:0"
+       d="M 75.589844,0 45.353516,30.236328 V 120.94531 L 75.589844,151.18164 151.18164,75.589844 128.50586,52.914062 H 90.707031 V 68.03125 H 105.82617 V 83.148438 H 90.707031 75.589844 V 68.03125 52.914062 37.794922 H 90.707031 113.38672 Z M 30.236328,45.353516 0,75.589844 30.236328,105.82617 Z"
+       transform="matrix(0.26458333,0,0,0.26458333,43.580285,34.485508)" />
   </g>
 </svg>
