@@ -310,30 +310,7 @@ class _Ellipse(GeometryPrimitive):
 
 
 class Geometry(object):
-    """Base class for geometry models.
-
-    Parameters
-    ----------
-    model_name : str
-        Name of the model
-    mesh_name : str
-        Name of the mesh file (.msh).
-    data_dir : str
-        Directory to store generated mesh and data.
-    dim : int
-        Dimension of the problem.
-
-    Attributes
-    ----------
-    subdomains : dict
-        Dictionary containing mapping from physical domains names to their
-        index.
-    model_name
-    mesh_name
-    dim
-    data_dir
-
-    """
+    """Base class for geometry models."""
 
     def __init__(
         self,
@@ -342,7 +319,7 @@ class Geometry(object):
         data_dir=None,
         dim=3,
         gmsh_args=None,
-        kill=True,
+        finalize=True,
         options={},
     ):
         self.model_name = model_name
@@ -374,7 +351,7 @@ class Geometry(object):
         self._gmsh_add_spline = self.add_spline
         del self.add_spline
 
-        if kill:
+        if finalize:
             try:
                 gmsh.finalize()
             except:

@@ -19,15 +19,12 @@ class BoxPML3D(Geometry):
         box_size=(1, 1, 1),
         box_center=(0, 0, 0),
         pml_width=(0.2, 0.2, 0.2),
+        Rcalc=0,
         model_name="3D box with PMLs",
-        mesh_name="mesh.msh",
-        data_dir=None,
         **kwargs,
     ):
         super().__init__(
             model_name=model_name,
-            mesh_name=mesh_name,
-            data_dir=data_dir,
             dim=3,
             **kwargs,
         )
@@ -121,6 +118,12 @@ class BoxPML3D(Geometry):
         _translate([self.box] + self.pmls, self.box_center)
 
         self.fragment(self.box, self.pmls)
+
+        if Rcalc > 0:
+            sphere_calc = self.add_sphere(*self.box_center, Rcalc)
+            box, sphere_calc = self.fragment(box, sphere_calc)
+            self.box = [box, sphere_calc]
+
         #
 
         self.add_physical(box, "box")
@@ -133,6 +136,11 @@ class BoxPML3D(Geometry):
         self.add_physical(pmlxz, "pmlxz")
 
         self.add_physical(pml3, "pmlxyz")
+
+        if Rcalc > 0:
+            bnds = self.get_boundaries("box")
+            self.calc_bnds = bnds[0]
+            self.add_physical(self.calc_bnds, "calc_bnds", dim=2)
 
 
 class Scatt3D(Simulation):

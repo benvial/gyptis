@@ -156,7 +156,7 @@ for e, m in zip(epsilon.items(), mu.items()):
     ).real
 
 ##  ---------- build geometry ----------
-geom = Layered3D(period, thicknesses, kill=False)
+geom = Layered3D(period, thicknesses, finalize=False)
 
 groove = geom.layers["groove"]
 substrate = geom.layers["substrate"]

@@ -165,11 +165,11 @@ div.sphx-glr-footer {
   max-width: 100%;
 }
 
-dd > p > a {
+.citation > dd > p > a {
   visibility: hidden;
 }
 
-dd > p > a.reference.external::before {
+.citation >dd > p > a.reference.external::before {
   color: @brand-primary;
   font-family: "Font Awesome 5 Free";
   content: "\f35d";
@@ -178,16 +178,16 @@ dd > p > a.reference.external::before {
   padding-left: 6px;
 }
 
-dd > p > a {
+.citation >dd > p > a {
   visibility: hidden;
   position: absolute;
 }
 
-dd > p > a.reference.external:hover::before {
+.citation >dd > p > a.reference.external:hover::before {
   color: lighten(@brand-primary, 13.5%);
 }
 
-dd > p > a.reference.external:focus::before {
+.citation >dd > p > a.reference.external:focus::before {
   color: lighten(@brand-primary, 13.5%);
 }
 

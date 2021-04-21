@@ -80,7 +80,7 @@ def test_grating3d(degree=1):
         ).real
 
     ##  ---------- build geometry ----------
-    geom = Layered3D(period, thicknesses, kill=False)
+    geom = Layered3D(period, thicknesses, finalize=False)
 
     groove = geom.layers["groove"]
     substrate = geom.layers["substrate"]
