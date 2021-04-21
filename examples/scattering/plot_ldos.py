@@ -166,6 +166,6 @@ plt.tight_layout()
 ######################################################################
 #
 # .. [Asatryan2001] A. A. Asatryan et al.,
-#   Two-dimensional local density of states in two-dimensional photonic crystals
+#   Two-dimensional local density of states in two-dimensional photonic crystals.
 #   Opt. Express, vol. 8, no. 3, pp. 191–196, (2001).
-#   `<https://www.doi.org/110.1364/OE.8.000191>`_
+#   `<https://www.doi.org/10.1364/OE.8.000191>`_

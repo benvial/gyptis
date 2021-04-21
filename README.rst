@@ -3,37 +3,40 @@
 .. image:: https://img.shields.io/gitlab/pipeline/gyptis/gyptis/master?style=for-the-badge
    :target: https://gitlab.com/gyptis/gyptis/commits/master
    :alt: pipeline status
-
-
+   
 .. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4667806-5fadad?style=for-the-badge
   :target: https://doi.org/10.5281/zenodo.4667806
   
 .. image:: https://img.shields.io/badge/license-MIT-blue?color=bb798f&style=for-the-badge
-  :target: https://gitlab.com/gyptis/docker/-/blob/master/LICENCE.txt
+  :target: https://gitlab.com/gyptis/gyptis/-/blob/master/LICENCE.txt
   :alt: license
-
+    
 .. image:: https://img.shields.io/pypi/v/gyptis?color=blue&logo=pypi&logoColor=e9d672&style=for-the-badge   
   :target: https://pypi.org/project/gyptis/
   :alt: PyPI
   
 .. image:: https://img.shields.io/pypi/dm/gyptis?logo=pypi&logoColor=e9d672&style=for-the-badge   
+   :target:  https://pypi.org/project/gyptis/
    :alt: PyPI - Downloads
-
+   
 .. image:: https://img.shields.io/pypi/status/gyptis?logo=pypi&logoColor=e9d672&style=for-the-badge   
+   :target:  https://pypi.org/project/gyptis/
    :alt: PyPI - Status
-
+   
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge
+   :target:  https://black.readthedocs.io/en/stable/
    :alt: Code style: black
- 
+   
 .. image:: https://img.shields.io/gitlab/coverage/gyptis/gyptis/master?logo=s&logoColor=white&style=for-the-badge
  :target: https://gitlab.com/gyptis/gyptis/commits/master
  :alt: coverage report 
-
+   
 .. image:: https://img.shields.io/codeclimate/maintainability/benvial/gyptis?logo=code-climate&style=for-the-badge   
    :target: https://codeclimate.com/github/benvial/gyptis
    :alt: Code Climate maintainability
    
-
+   
+.. inclusion-marker-badges
 
 GYPTIS
 ======
@@ -53,9 +56,11 @@ It is in early stage and currently being actively developed, so features might
 come and go.
 
 
+
 Installation
 ------------
 
+.. inclusion-marker-install-start
 
 Conda
 ~~~~~
@@ -120,7 +125,8 @@ To run the image, use
 
   docker run -it gyptis/gyptis:latest
   
-
+  
+.. inclusion-marker-install-end
 
 
 Contributing
