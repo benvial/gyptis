@@ -16,7 +16,7 @@ from gyptis.scattering2d import *
 
 plt.ion()
 
-polarization = "TE"
+polarization = "TM"
 degree = 2
 wavelength = 0.3
 pmesh = 3
@@ -42,7 +42,7 @@ mu = dict(box=1, cyl=1)
 
 
 @pytest.mark.parametrize(
-    "degree,polarization", [(1, "TE"), (2, "TE"), (1, "TM"), (2, "TM")]
+    "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_scatt2d_pw(degree, polarization):
 
@@ -75,7 +75,7 @@ def test_scatt2d_pw(degree, polarization):
 
 
 @pytest.mark.parametrize(
-    "degree,polarization", [(1, "TE"), (2, "TE"), (1, "TM"), (2, "TM")]
+    "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_scatt2d_ls(degree, polarization):
     gf = LineSource(wavelength, (-wavelength, 0), domain=mesh, degree=degree)
@@ -110,7 +110,7 @@ def test_scatt2d_ls(degree, polarization):
     os.system("rm -rf animation.gif")
 
 
-@pytest.mark.parametrize("polarization", ["TE", "TM"])
+@pytest.mark.parametrize("polarization", ["TM", "TE"])
 def test_scatt2d_pec(polarization):
 
     geom = BoxPML2D(
@@ -149,7 +149,7 @@ def test_scatt2d_pec(polarization):
     print(assemble(u * s.formulation.dx))
 
 
-@pytest.mark.parametrize("polarization", ["TE", "TM"])
+@pytest.mark.parametrize("polarization", ["TM", "TE"])
 def test_scatt2d_scs(polarization):
     pmesh = 6
     wavelength = 452
@@ -194,7 +194,7 @@ def test_scatt2d_scs(polarization):
         mu,
         pw,
         degree=2,
-        polarization="TM",
+        polarization="TE",
     )
     s.solve()
     cs = s.get_cross_sections()

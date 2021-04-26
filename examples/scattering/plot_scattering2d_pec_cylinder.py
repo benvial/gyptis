@@ -23,7 +23,7 @@ kR = np.linspace(0.09, 10, 15)
 wl = 2 * np.pi * R / kR
 
 scs_gyptis = dict()
-for polarization in ["TE", "TM"]:
+for polarization in ["TM", "TE"]:
     scsnorm = []
 
     for wavelength in wl:
@@ -73,8 +73,8 @@ for polarization in ["TE", "TM"]:
     scs_gyptis[polarization] = scsnorm
 
 
-color = dict(TE="#da8555", TM="#4fb4a5")
-for polarization in ["TE", "TM"]:
+color = dict(TM="#da8555", TE="#4fb4a5")
+for polarization in ["TM", "TE"]:
     scs_file = f"scs_pec_{polarization}.csv"
     benchmark = np.loadtxt(scs_file, delimiter=",")
     plt.plot(

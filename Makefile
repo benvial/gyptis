@@ -211,20 +211,18 @@ less:
 	$(LESSC) custom_pygments.less  ../custom_pygments.css && \
 	$(LESSC) custom_notebook.less  ../custom_notebook.css
 
-## Build html documentation (only updated examples)
-docfast: less
-	$(call message,${@})
-	@cd docs && make -s html && make -s postpro-html
-
+	
 ## Install requirements for building documentation
 doc-req:
 	$(call message,${@})
 	@cd docs && pip install -r requirements.txt && npm install lessc
 
-## Build html documentation
+
+## Build html documentation (only updated examples)
 doc: less
 	$(call message,${@})
-	@cd docs && make -s clean && make -s html && make -s postpro-html
+	@cd docs && make -s html && make -s postpro-html
+
 
 ## Build html documentation (without examples)
 doc-noplot: less
@@ -232,9 +230,24 @@ doc-noplot: less
 	@cd docs && make -s clean && make -s html-noplot && make -s postpro-html
 
 ## Show locally built html documentation in a browser
-showdoc:
+show-doc:
 	$(call message,${@})
 	@cd docs && make -s show
+	
+## Show locally built pdf documentation
+show-pdf:
+	$(call message,${@})
+	@cd docs && make -s show-pdf
+	
+## Build pdf documentation (only updated examples)
+pdf:
+	$(call message,${@})
+	@cd docs && make -s latexpdf
+	
+## Build pdf documentation (without examples)
+pdf-noplot:
+	$(call message,${@})
+	@cd docs && make -s latexpdf-noplot
 
 ## Clean test coverage reports
 cleantest:

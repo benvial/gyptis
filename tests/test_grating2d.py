@@ -16,7 +16,7 @@ from gyptis.helpers import list_time
 from gyptis.plot import *
 from gyptis.source import *
 
-pytest_params = [("TE", 1), ("TM", 1), ("TE", 2), ("TM", 2)]
+pytest_params = [("TM", 1), ("TE", 1), ("TM", 2), ("TE", 2)]
 
 tol_balance = 1e-2
 pmesh = 13

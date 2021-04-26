@@ -5,16 +5,18 @@
 Documentation
 =============
 
-.. raw:: html
+.. only:: html
 
-  <div class=badges>
+  .. raw:: html
 
-.. include:: ../README.rst
-  :end-before: inclusion-marker-badges
-  
-.. raw:: html
+    <div class=badges>
 
-  </div>
+  .. include:: ../README.rst
+    :end-before: inclusion-marker-badges
+    
+  .. raw:: html
+
+    </div>
   
 
 
@@ -36,6 +38,9 @@ For a more practical introduction, check the
    
    installation
    api
+   
+.. only:: html
+   
    indexsearch
    
 

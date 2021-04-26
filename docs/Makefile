@@ -151,9 +151,17 @@ latex:
 
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
-	@echo "Running LaTeX files through pdflatex..."
-	$(MAKE) -C $(BUILDDIR)/latex all-pdf
-	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
+	@echo "Running LaTeX files through xelatex..."
+	$(MAKE) PDFLATEX=xelatex -C $(BUILDDIR)/latex all-pdf
+	@echo "xelatex finished; the PDF files are in $(BUILDDIR)/latex."
+	
+latexpdf-noplot: export SPHX_GLR_THEME = $(theme)
+latexpdf-noplot:
+	$(SPHINXBUILD) -D plot_gallery=0 -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@echo "Running LaTeX files through xelatex..."
+	$(MAKE) PDFLATEX=xelatex -C $(BUILDDIR)/latex all-pdf
+	@echo "xelatex finished; the PDF files are in $(BUILDDIR)/latex."
+
 
 latexpdfja:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
@@ -224,3 +232,6 @@ pseudoxml:
 show:
 	@python -c "import webbrowser; \
 	webbrowser.get('firefox').open_new_tab('$(PWD)/$(BUILDDIR)/html/index.html')"
+
+show-pdf:
+	@xdg-open $(PWD)/$(BUILDDIR)/latex/gyptis.pdf

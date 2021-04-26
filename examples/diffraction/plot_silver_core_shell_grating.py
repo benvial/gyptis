@@ -122,7 +122,7 @@ def solve(wavelength):
         mu,
         pw,
         degree=2,
-        polarization="TM",
+        polarization="TE",
     )
     g.solve()
 

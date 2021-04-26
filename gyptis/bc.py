@@ -27,6 +27,64 @@ class DirichletBC:
         return bcre, bcim
 
 
+def _on_bnd(p, p1, p2):
+    x, y = p
+    x1, y1 = p1
+    x2, y2 = p2
+    if x1 == x2:
+        return dolfin.near(x, x1)
+    else:
+        return dolfin.near(y - y1, (y2 - y1) / (x2 - x1) * (x - x1))
+
+
+class BiPeriodic2D(dolfin.SubDomain):
+    def __init__(self, vectors, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.vectors = vectors
+        self.vertices = [
+            (0, 0),
+            (self.vectors[0][0], self.vectors[0][1]),
+            (
+                self.vectors[0][0] + self.vectors[1][0],
+                self.vectors[0][1] + self.vectors[1][1],
+            ),
+            (self.vectors[1][0], self.vectors[1][1]),
+        ]
+
+    def inside(self, x, on_boundary):
+        on_bottom = _on_bnd(x, self.vertices[0], self.vertices[1])
+        on_left = _on_bnd(x, self.vertices[3], self.vertices[0])
+
+        on_vert_0 = dolfin.near(x[0], self.vertices[0][0]) and dolfin.near(
+            x[1], self.vertices[0][1]
+        )
+        on_vert_3 = dolfin.near(x[0], self.vertices[3][0]) and dolfin.near(
+            x[1], self.vertices[3][1]
+        )
+
+        return bool(
+            (on_bottom or on_left) and (not (on_vert_0 or on_vert_3)) and on_boundary
+        )
+
+    def map(self, x, y):
+        verts = self.vertices.copy()
+        verts.append(self.vertices[0])
+        on_right = _on_bnd(x, self.vertices[1], self.vertices[2])
+        on_top = _on_bnd(x, self.vertices[2], self.vertices[3])
+        # if on_right and on_top:
+        #     y[0] = x[0] - self.vectors[0][0]
+        #     y[1] = x[1] - self.vectors[1][1]
+        if on_right:
+            y[0] = x[0] - self.vectors[0][0]
+            y[1] = x[1] - self.vectors[0][1]
+        elif on_top:
+            y[0] = x[0] - self.vectors[1][0]
+            y[1] = x[1] - self.vectors[1][1]
+        else:
+            y[0] = -1000
+            y[1] = -1000
+
+
 class PeriodicBoundary2DX(dolfin.SubDomain):
     def __init__(self, period, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -107,7 +107,7 @@ class Grating2D(Simulation):
         mu,
         source,
         boundary_conditions={},
-        polarization="TE",
+        polarization="TM",
         degree=1,
         mat_degree=1,
         pml_stretch=1 - 1j,
@@ -193,7 +193,7 @@ class Grating2D(Simulation):
             A dictionary containing the diffraction efficiencies.
 
         """
-        if self.formulation.polarization == "TE":
+        if self.formulation.polarization == "TM":
             nu = 1 / self.mu["substrate"]
         else:
             nu = 1 / self.epsilon["substrate"]
@@ -284,7 +284,7 @@ class Grating2D(Simulation):
 
         xi_0, chi_0 = (
             (mu_0, epsilon_0)
-            if self.formulation.polarization == "TE"
+            if self.formulation.polarization == "TM"
             else (epsilon_0, mu_0)
         )
 
@@ -325,7 +325,7 @@ class Grating2D(Simulation):
             Qxi = assemble(nrj_xi_dens * self.dx(doms_no_pml)) / P0
             Q = Qxi + Qchi
 
-        if self.formulation.polarization == "TE":
+        if self.formulation.polarization == "TM":
             Qdomains = {"electric": Qchi, "magnetic": Qxi}
         else:
             Qdomains = {"electric": Qxi, "magnetic": Qchi}

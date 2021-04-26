@@ -165,7 +165,7 @@ out = make_stack(
     geom,
     coefficients,
     pw,
-    polarization="TE",
+    polarization="TM",
     source_domains=["groove"],
     degree=1,
     dim=2,

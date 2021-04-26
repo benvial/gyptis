@@ -111,15 +111,17 @@ class Scatt2D(Simulation):
         geometry,
         epsilon,
         mu,
-        source,
+        source = None,
         boundary_conditions={},
-        polarization="TE",
+        polarization="TM",
+        modal=False,
         degree=1,
         mat_degree=1,
         pml_stretch=1 - 1j,
     ):
         assert isinstance(geometry, BoxPML2D)
-        assert source.dim == 2
+        if source is not None:
+            assert source.dim == 2
         function_space = ComplexFunctionSpace(geometry.mesh, "CG", degree)
         pmlx = PML(
             "x", stretch=pml_stretch, matched_domain="box", applied_domain="pmlx"
@@ -140,9 +142,12 @@ class Scatt2D(Simulation):
 
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["box", "pmlx", "pmly", "pmlxy"]
-        source_domains = [
-            dom for dom in geometry.domains if dom not in no_source_domains
-        ]
+        if modal:
+            source_domains = []
+        else:
+            source_domains = [
+                dom for dom in geometry.domains if dom not in no_source_domains
+            ]
         formulation = Maxwell2D(
             geometry,
             coefficients,
@@ -151,6 +156,7 @@ class Scatt2D(Simulation):
             source_domains=source_domains,
             reference="box",
             polarization=polarization,
+            modal=modal,
             boundary_conditions=boundary_conditions,
         )
 
@@ -168,7 +174,7 @@ class Scatt2D(Simulation):
     @property
     def time_average_incident_poynting_vector_norm(self):
         Z0 = np.sqrt(mu_0 / epsilon_0)
-        S0 = 1 / (2 * Z0) if self.formulation.polarization == "TE" else 0.5 * Z0
+        S0 = 1 / (2 * Z0) if self.formulation.polarization == "TM" else 0.5 * Z0
         return S0
 
     def scattering_cross_section(self):

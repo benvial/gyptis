@@ -37,6 +37,7 @@ class Formulation(ABC):
         function_space,
         source=None,
         boundary_conditions={},
+        modal=False,
     ):
         self.geometry = geometry
         self.coefficients = coefficients
@@ -45,6 +46,7 @@ class Formulation(ABC):
         self.trial = TrialFunction(self.function_space)
         self.test = TestFunction(self.function_space)
         self.boundary_conditions = boundary_conditions
+        self.modal = modal
 
         self.measure = geometry.measure
         self.dx = self.measure["dx"]
@@ -117,9 +119,10 @@ class Maxwell2D(Formulation):
         function_space,
         source=None,
         boundary_conditions={},
-        polarization="TE",
+        polarization="TM",
         source_domains=[],
         reference=None,
+        modal=False,
     ):
         super().__init__(
             geometry,
@@ -127,6 +130,7 @@ class Maxwell2D(Formulation):
             function_space,
             source=source,
             boundary_conditions=boundary_conditions,
+            modal=modal,
         )
 
         self.source_domains = source_domains
@@ -135,7 +139,7 @@ class Maxwell2D(Formulation):
         self.epsilon, self.mu = self.coefficients
         self.polarization = polarization
 
-        if self.polarization == "TE":
+        if self.polarization == "TM":
             self.xi = self.mu.to_xi()
             self.chi = self.epsilon.to_chi()
         else:
@@ -145,28 +149,22 @@ class Maxwell2D(Formulation):
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
     def maxwell(self, u, v, xi, chi, domain="everywhere"):
-        k0 = Constant(self.source.wavenumber)
-        form = -inner(xi * grad(u), grad(v)) + k0 ** 2 * chi * u * v
-        return form * self.dx(domain)
+
+        form = []
+        form.append(-inner(xi * grad(u), grad(v)))
+        form.append(chi * u * v)
+        if self.modal:
+            return [form[0] * self.dx(domain), -form[1] * self.dx(domain)]
+        else:
+            k0 = Constant(self.source.wavenumber)
+            return (form[0] + k0 ** 2 * form[1]) * self.dx(domain)
 
     def _weak(self, u, v, u1):
         xi = self.xi.as_subdomain()
         chi = self.chi.as_subdomain()
-        xi_a = self.xi.build_annex(
-            domains=self.source_domains, reference=self.reference
-        ).as_subdomain()
-        chi_a = self.chi.build_annex(
-            domains=self.source_domains, reference=self.reference
-        ).as_subdomain()
 
         xi_dict = self.xi.as_property()
         chi_dict = self.chi.as_property()
-        xi_a_dict = self.xi.build_annex(
-            domains=self.source_domains, reference=self.reference
-        ).as_property()
-        chi_a_dict = self.chi.build_annex(
-            domains=self.source_domains, reference=self.reference
-        ).as_property()
 
         dom_func, dom_no_func = _find_domains_function((self.xi, self.chi))
         source_dom_func, source_dom_no_func = _find_domains_function(
@@ -175,9 +173,28 @@ class Maxwell2D(Formulation):
 
         form = self.maxwell(u, v, xi, chi, domain=dom_no_func)
         for dom in dom_func:
-            form += self.maxwell(u, v, xi_dict[dom], chi_dict[dom], domain=dom)
+            if self.modal:
+                form_dom_func = self.maxwell(
+                    u, v, xi_dict[dom], chi_dict[dom], domain=dom
+                )
+                form = [form[i] + form_extra[i] for i in range(2)]
+            else:
+                form += self.maxwell(u, v, xi_dict[dom], chi_dict[dom], domain=dom)
 
         if self.source_domains != []:
+            xi_a = self.xi.build_annex(
+                domains=self.source_domains, reference=self.reference
+            ).as_subdomain()
+            chi_a = self.chi.build_annex(
+                domains=self.source_domains, reference=self.reference
+            ).as_subdomain()
+            xi_a_dict = self.xi.build_annex(
+                domains=self.source_domains, reference=self.reference
+            ).as_property()
+            chi_a_dict = self.chi.build_annex(
+                domains=self.source_domains, reference=self.reference
+            ).as_property()
+
             if source_dom_no_func != []:
                 form += self.maxwell(
                     u1, v, xi - xi_a, chi - chi_a, domain=source_dom_no_func
@@ -190,22 +207,26 @@ class Maxwell2D(Formulation):
                     chi_dict[dom] - chi_a_dict[dom],
                     domain=dom,
                 )
-        if self.polarization == "TM":
+        if self.polarization == "TE":
             for bnd in self.pec_boundaries:
                 normal = self.geometry.unit_normal_vector
                 form -= dot(grad(u1), normal) * v * self.ds(bnd)
-        weak = form.real + form.imag
+
+        if self.modal:
+            weak = [f.real + f.imag for f in form]
+        else:
+            weak = form.real + form.imag
         return weak
 
     @property
     def weak(self):
-        u1 = self.source.expression
+        u1 = self.source.expression if self.source is not None else 0
         u = self.trial
         v = self.test
         return self._weak(u, v, u1)
 
     def build_pec_boundary_conditions(self, applied_function):
-        if self.polarization == "TE" and self.pec_boundaries != []:
+        if self.polarization == "TM" and self.pec_boundaries != []:
 
             applied_function = _project_bc_function(
                 applied_function, self.real_function_space
@@ -222,17 +243,47 @@ class Maxwell2D(Formulation):
         return _boundary_conditions
 
     def build_boundary_conditions(self):
-        applied_function = -self.source.expression
+        applied_function = Constant(0) if self.modal else -self.source.expression
         self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
 
-    def get_dual(self, field):
+    def get_dual(self, field, pulsation=None):
+        pulsation = pulsation or self.source.pulsation
         coeff = (
-            1j * self.source.pulsation * mu_0
-            if self.polarization == "TE"
-            else -1j * self.source.pulsation * epsilon_0
+            1j * pulsation * mu_0
+            if self.polarization == "TM"
+            else -1j * pulsation * epsilon_0
         )
         return self.xi.as_subdomain() / Constant(coeff) * grad(field)
+
+
+class Maxwell2DBands(Maxwell2D):
+    def __init__(self, *args, propagation_vector=(0, 0), degree=1, **kwargs):
+        super().__init__(*args, **kwargs, modal=True)
+        self.propagation_vector = propagation_vector
+        self.degree = degree
+
+    @property
+    def phasor(self):
+        _phasor = phasor(
+            self.propagation_vector[0],
+            direction=0,
+            degree=self.degree,
+            domain=self.geometry.mesh,
+        )
+        _phasor *= phasor(
+            self.propagation_vector[1],
+            direction=1,
+            degree=self.degree,
+            domain=self.geometry.mesh,
+        )
+        return _phasor
+
+    @property
+    def weak(self):
+        u = self.trial * self.phasor
+        v = self.test * self.phasor.conj
+        return super()._weak(u, v, Constant(0))
 
 
 class Maxwell2DPeriodic(Maxwell2D):

@@ -111,7 +111,7 @@ angle = (90 - theta0) * np.pi / 180
 
 pw = PlaneWave(lambda0, angle, dim=2)
 
-gratingTE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+gratingTE = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
 
 gratingTE.N_d_order = 1
 gratingTE.solve()
@@ -119,19 +119,19 @@ effs_TE = gratingTE.diffraction_efficiencies(1, orders=True)
 E = gratingTE.solution["total"]
 
 ### reference
-T_ref = dict(TE=[0.2070, 1.0001], TM=[0.8187, 1.0001])
+T_ref = dict(TM=[0.2070, 1.0001], TE=[0.8187, 1.0001])
 
 
 print("Transmission coefficient")
 print(" order      ref       calc")
 print("--------------------------------")
-print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TE['T'][1]:.4f} ")
-print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TE['B']:.4f}   ")
+print(f"   0       {T_ref['TM'][0]:.4f}    {effs_TE['T'][1]:.4f} ")
+print(f"  sum      {T_ref['TM'][1]:.4f}    {effs_TE['B']:.4f}   ")
 
 ######################################################################
-# We switch to TM polarization
+# We switch to TE polarization
 
-gratingTM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+gratingTM = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 gratingTM.solve()
 effs_TM = gratingTM.diffraction_efficiencies(1, orders=True)
 H = gratingTM.solution["total"]
@@ -146,12 +146,12 @@ gratingTE.plot_field(ax=ax[0])
 gratingTE.plot_geometry(ax=ax[0])
 ax[0].set_ylim(ylim)
 ax[0].set_axis_off()
-ax[0].set_title("$E_z$ (TE)")
+ax[0].set_title("$E_z$ (TM)")
 gratingTM.plot_field(ax=ax[1])
 gratingTM.plot_geometry(ax=ax[1])
 ax[1].set_ylim(ylim)
 ax[1].set_axis_off()
-ax[1].set_title("$H_z$ (TM)")
+ax[1].set_title("$H_z$ (TE)")
 fig.tight_layout()
 fig.show()
 
@@ -161,8 +161,8 @@ fig.show()
 print("Transmission coefficient")
 print(" order      ref       calc")
 print("--------------------------------")
-print(f"   0       {T_ref['TM'][0]:.4f}    {effs_TM['T'][1]:.4f} ")
-print(f"  sum      {T_ref['TM'][1]:.4f}    {effs_TM['B']:.4f}   ")
+print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TM['T'][1]:.4f} ")
+print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TM['B']:.4f}   ")
 
 ######################################################################
 #

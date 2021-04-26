@@ -12,7 +12,7 @@ from gyptis.source import PlaneWave
 
 
 def test_simple(pmesh=10):
-    polarization = "TE"
+    polarization = "TM"
     degree = 2
 
     wavelength = 0.3

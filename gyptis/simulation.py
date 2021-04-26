@@ -4,7 +4,7 @@
 # License: MIT
 
 from . import dolfin
-from .complex import Complex, assemble
+from .complex import Complex, assemble, Function
 
 
 class Simulation:
@@ -70,3 +70,69 @@ class Simulation:
         self.assemble(**kwargs)
         self.apply_boundary_conditions()
         return self.solve_system(again=again, **kwargs)
+
+    def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, parameters={}):
+
+        wf = self.formulation.weak
+        # A = assemble(wf[0])
+        # B = assemble(wf[1])
+
+        dummy_vector = dolfin.Constant(0) * self.formulation.test * self.formulation.dx
+        dv = dummy_vector.real + dummy_vector.imag
+
+        # Assemble matrices
+        A = dolfin.PETScMatrix()
+        B = dolfin.PETScMatrix()
+        b = dolfin.PETScVector()
+
+        bcs = self.formulation.build_boundary_conditions()
+
+        dolfin.assemble_system(wf[0], dv, bcs, A_tensor=A, b_tensor=b)
+        dolfin.assemble_system(wf[1], dv, bcs, A_tensor=B, b_tensor=b)
+
+        eigensolver = dolfin.SLEPcEigenSolver(
+            dolfin.as_backend_type(A), dolfin.as_backend_type(B)
+        )
+        # eigensolver.parameters["problem_type"] = "gen_hermitian"
+        eigensolver.parameters["spectrum"] = "target real"
+        # eigensolver.parameters["spectrum"] = "target magnitude"
+        eigensolver.parameters["solver"] = "krylov-schur"
+        # eigensolver.parameters["solver"] = "power"
+        eigensolver.parameters["spectral_shift"] = wavevector_target ** 2
+        eigensolver.parameters["spectral_transform"] = "shift-and-invert"
+        eigensolver.parameters["tolerance"] = tol
+        # eigensolver.parameters["solver"] = "mumps"
+        dolfin.PETScOptions.set("st_ksp_type", "preonly")
+        dolfin.PETScOptions.set("st_pc_type", "lu")
+        # dolfin.PETScOptions.set("st_pc_factor_mat_solver_type", "mumps")
+        # dolfin.PETScOptions.set("eps_max_it", "300")
+        # dolfin.PETScOptions.set("eps_target", "0.00001")
+        # dolfin.PETScOptions.set("eps_mpd", "600")
+        # dolfin.PETScOptions.set("eps_nev", "400")
+
+        # eigensolver.parameters["verbose"] = True  # for debugging
+        eigensolver.parameters.update(parameters)
+        eigensolver.solve(n_eig)
+
+        nconv = eigensolver.get_number_converged()
+
+        self.solution = {}
+        self.solution["converged"] = nconv
+
+        
+        KNs = []
+        UNs = []
+
+        for j in range(nconv):
+            ev_re, ev_im, rx, cx = eigensolver.get_eigenpair(j)
+            eig_vec = Function(self.formulation.function_space)
+            eig_vec.real.vector()[:] = rx
+            eig_vec.imag.vector()[:] = cx
+            ev = ev_re + 1j * ev_im
+            kn = (ev) ** 0.5
+            KNs.append(kn)
+            UNs.append(eig_vec)
+
+        self.solution["eigenvalues"] = KNs
+        self.solution["eigenvectors"] = UNs
+        return self.solution

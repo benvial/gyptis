@@ -240,20 +240,41 @@ htmlhelp_basename = package.__name__ + "_doc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
+# latex_elements = {
+#     # The paper size ('letterpaper' or 'a4paper').
+#     #
+#     # 'papersize': 'letterpaper',
+#     # The font size ('10pt', '11pt' or '12pt').
+#     #
+#     # 'pointsize': '10pt',
+#     # Additional stuff for the LaTeX preamble.
+#     #
+#     # 'preamble': '',
+#     # Latex figure (float) alignment
+#     #
+#     # 'figure_align': 'htbp',
+# }
+
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    # 'papersize': 'letterpaper',
+    "papersize": "a4paper",
     # The font size ('10pt', '11pt' or '12pt').
     #
-    # 'pointsize': '10pt',
+    "pointsize": "10pt",
     # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
+    "preamble": r"""
+       \usepackage{gyptis}
+        \renewcommand{\subtitle}{%s}
+
+        """
+    % (package.__description__),
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
 }
+
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
@@ -262,12 +283,19 @@ latex_documents = [
     (
         master_doc,
         package.__name__ + ".tex",
-        package.__name__ + " Documentation",
+        "Documentation",
         package.__author__,
         "manual",
     )
 ]
+# latex_docclass = {
+#    'manual': 'gyptis',
+# }
+latex_additional_files = [
+    "_custom/latex/gyptis.sty",
+]
 
+latex_logo = html_logo
 
 # -- Options for manual page output ---------------------------------------
 

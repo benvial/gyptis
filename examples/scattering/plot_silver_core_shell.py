@@ -115,7 +115,7 @@ s = Scattering(
     mu,
     pw,
     degree=2,
-    polarization="TM",
+    polarization="TE",
 )
 s.solve()
 s.plot_field()
@@ -153,7 +153,7 @@ def cs_vs_wl(wavelength):
         mu,
         pw,
         degree=2,
-        polarization="TM",
+        polarization="TE",
     )
     s.solve()
     cs = s.get_cross_sections()

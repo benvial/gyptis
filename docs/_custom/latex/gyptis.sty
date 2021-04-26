@@ -1,0 +1,163 @@
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{gyptis}[2021/04/21 Gyptis documentation]
+
+
+\providecommand{\subtitle}{Subtitle}
+\providecommand{\release}{Release}
+\providecommand{\releasename}{Releasename}
+
+
+\RequirePackage{hyperref}
+\RequirePackage{fancyhdr}
+\RequirePackage{graphicx}
+\RequirePackage{setspace}
+\RequirePackage{tabulary}
+% \RequirePackage[top=2cm, bottom=2.8cm, left=2.5cm, right=2.5cm]{geometry}
+\RequirePackage{titlesec}
+% \usepackage{color, colortbl}
+
+% % Languages
+% \RequirePackage{polyglossia}
+% \setdefaultlanguage{german}
+% \setotherlanguage[variant=uk]{english}
+% 
+% Date format
+\RequirePackage[ddmmyyyy]{datetime}
+\renewcommand{\dateseparator}{.}
+
+% Font
+\RequirePackage{fontspec}
+\setmainfont{Nunito Sans}
+\setsansfont{Nunito Sans Light}
+\setmonofont{IBM Plex Mono}
+% \newcommand{HeaderFamily}{Nunito Sans}
+
+% 
+\definecolor{gyptisred}{HTML}{d25f5f}
+\definecolor{gyptisgreen}{HTML}{45957d}
+\definecolor{gyptislightgray}{HTML}{9d9d9d}
+% \definecolor{gyptis-light-gray}{rgb}{253, 253, 253}
+% \renewcommand{\py@HeaderFamily}{\sffamily}
+% \renewcommand{\py@TitleColor}{\color{gyptis-red}}
+% \renewcommand{\py@VerbatimColor}{\color{gyptis-light-gray}}
+% \renewcommand{\py@VerbatimBorderColor}{\color{gyptis-light-gray}}
+
+% 
+% \sphinxDeclareColorOption{TitleColor}{{rgb}{210, 95, 95}}
+% \sphinxDeclareColorOption{InnerLinkColor}{{rgb}{0.208,0.374,0.486}}
+% \sphinxDeclareColorOption{OuterLinkColor}{{rgb}{0.216,0.439,0.388}}
+% \sphinxDeclareColorOption{VerbatimColor}{{rgb}{1,1,1}}
+% \sphinxDeclareColorOption{VerbatimBorderColor}{{rgb}{0,0,0}}
+
+% \PassOptionsToPackage{colorlinks,breaklinks,%
+%  linkcolor=\color{gyptis-green},filecolor=\color{gyptis-green},%
+%  menucolor=\color{gyptis-green},urlcolor=\color{gyptis-green},%
+%  citecolor=\color{gyptis-green}}{hyperref}
+
+
+
+\sphinxsetup{TitleColor={HTML}{d25f5f},
+             InnerLinkColor={HTML}{45957d},
+            OuterLinkColor={HTML}{45957d},
+           VerbatimColor={HTML}{f1f1f1},
+          VerbatimBorderColor={HTML}{f1f1f1},
+}
+
+% 
+% @gray-base: rgb(51,51,51);
+% @gray: rgb(159, 151, 155);
+% @brand-primary: rgb(210, 95, 95); // #d25f5f
+% @brand-secondary: rgb(69, 149, 125); // #45957d
+% @brand-success: rgb(116, 190, 97);
+% @brand-info: rgb(126, 128, 153);
+% @brand-warning: rgb(193, 172, 129);
+
+% InnerLinkColor
+% 
+% OuterLinkColor
+% 
+% VerbatimColor
+% 
+% VerbatimBorderColor
+% 
+% VerbatimHighlightColor
+
+\titleformat{\chapter}{\Huge\color{gyptisred}}{\thechapter.\ }
+{0em}{}[\vspace{2ex}{\titlerule[3pt]}]
+
+\fancypagestyle{normal}{
+ \fancyhf{}
+ \fancyfoot[RO]{{\color{gyptislightgray}\py@HeaderFamily\thepage}}
+ \fancyfoot[LO]{{\color{gyptislightgray}\py@HeaderFamily\nouppercase{\rightmark}}}
+ \fancyhead[RO]{{\color{gyptislightgray}\py@HeaderFamily \@title\sphinxheadercomma\py@release}}
+ \if@twoside
+  \fancyfoot[LE]{{\color{gyptislightgray}\py@HeaderFamily\thepage}}
+  \fancyfoot[RE]{{\color{gyptislightgray}\py@HeaderFamily\nouppercase{\leftmark}}}
+  \fancyhead[LE]{{\color{gyptislightgray}\py@HeaderFamily \@title\sphinxheadercomma\py@release}}
+ \fi
+ \renewcommand{\headrulewidth}{0.4pt}
+ \renewcommand{\footrulewidth}{0.4pt}
+ % define chaptermark with \@chappos when \@chappos is available for Japanese
+ \ltx@ifundefined{@chappos}{}
+   {\def\chaptermark##1{\markboth{\@chapapp\space\thechapter\space\@chappos\space ##1}{}}}
+ }
+% Update the plain style so we get the page number & footer line,
+% but not a chapter or section title.  This is to keep the first
+% page of a chapter `clean.'
+\fancypagestyle{plain}{
+ \fancyhf{}
+ \fancyfoot[RO]{{\color{gyptislightgray}\py@HeaderFamily\thepage}}
+ \if@twoside\fancyfoot[LE]{{\color{gyptislightgray}\py@HeaderFamily\thepage}}\fi
+ \renewcommand{\headrulewidth}{0pt}
+ \renewcommand{\footrulewidth}{0.4pt}
+ }
+ 
+\renewcommand{\headrule}{\hbox to\headwidth{%
+  \color{gyptislightgray}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{%
+  \color{gyptislightgray}\leaders\hrule height \footrulewidth\hfill}}
+
+  \renewcommand{\sphinxmaketitle}{%
+    \let\sphinxrestorepageanchorsetting\relax
+    \ifHy@pageanchor\def\sphinxrestorepageanchorsetting{\Hy@pageanchortrue}\fi
+    \hypersetup{pageanchor=false}% avoid duplicate destination warnings
+    \begin{titlepage}%
+      \let\footnotesize\small
+      \let\footnoterule\relax
+      % \noindent\rule{\textwidth}{1pt}\par
+        \begingroup % for PDF information dictionary
+         \def\endgraf{ }\def\and{\& }%
+         \pdfstringdefDisableCommands{\def\\{, }}% overwrite hyperref setup
+         \hypersetup{pdfauthor={\@author}, pdftitle={\@title}}%
+        \endgroup
+      \begin{flushright}%
+        \sphinxlogo
+        \py@HeaderFamily
+        
+        \vfill\vfill
+        {\Huge \@title \par}
+        {\color{gyptislightgray}\itshape\LARGE \py@release\releaseinfo \par}
+        \vfill
+        % {\LARGE
+        %   \begin{tabular}[t]{c}
+        %     \@author
+        %   \end{tabular}\kern-\tabcolsep
+        %   \par}
+        \vfill\vfill
+        {\large
+         \@date \par
+         \vfill
+         \py@authoraddress \par
+        }%
+      \end{flushright}%\par
+      \@thanks
+    \end{titlepage}%
+    \setcounter{footnote}{0}%
+    \let\thanks\relax\let\maketitle\relax
+    %\gdef\@thanks{}\gdef\@author{}\gdef\@title{}
+    \clearpage
+    \ifdefined\sphinxbackoftitlepage\sphinxbackoftitlepage\fi
+    \if@openright\cleardoublepage\else\clearpage\fi
+    \sphinxrestorepageanchorsetting
+  }

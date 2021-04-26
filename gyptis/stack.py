@@ -184,7 +184,7 @@ def make_stack(
     geometry,
     coefficients,
     plane_wave,
-    polarization="TE",
+    polarization="TM",
     source_domains=[],
     degree=1,
     dim=2,
@@ -203,7 +203,7 @@ def make_stack(
         }
     )
     if dim == 2:
-        if polarization == "TE":
+        if polarization == "TM":
             _psi = np.pi / 2
             _phi_ind = 2
         else:

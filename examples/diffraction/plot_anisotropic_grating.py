@@ -97,12 +97,12 @@ for jangle, angle in enumerate([0, 20, 40]):
     angle_degree = (90 - angle) * np.pi / 180
 
     pw = PlaneWave(lambda0, angle_degree, dim=2)
-    grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+    grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
     grating_TE.solve()
     effs_TE = grating_TE.diffraction_efficiencies(2, orders=True)
 
     E = grating_TE.solution["total"]
-    print(f"angle = {angle}, TE polarization")
+    print(f"angle = {angle}, TM polarization")
     print("--------------------------------")
     print("R: ", effs_TE["R"])
     print("T: ", effs_TE["T"])
@@ -121,15 +121,15 @@ for jangle, angle in enumerate([0, 20, 40]):
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
 
-    #### TM
+    #### TE
 
-    grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+    grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 
     grating_TM.solve()
     effs_TM = grating_TM.diffraction_efficiencies(2, orders=True)
 
     H = grating_TM.solution["total"]
-    print(f"angle = {angle}, TM polarization")
+    print(f"angle = {angle}, TE polarization")
     print("--------------------------------")
     print("R: ", effs_TM["R"])
     print("T: ", effs_TM["T"])
@@ -154,7 +154,7 @@ fig.add_axes(cax)
 mTE = plt.cm.ScalarMappable(cmap="RdBu")
 mTE.set_clim(vminTE, vmaxTE)
 cbarTE = fig.colorbar(mTE, cax=cax, orientation="horizontal")
-cax.set_title(r"${\rm Re}\, E_z$ (TE)")
+cax.set_title(r"${\rm Re}\, E_z$ (TM)")
 
 divider = make_axes_locatable(ax[0, 1])
 cax = divider.new_vertical(size="5%", pad=0.5)
@@ -162,7 +162,7 @@ mTM = plt.cm.ScalarMappable(cmap="RdBu")
 mTM.set_clim(vminTM, vmaxTM)
 fig.add_axes(cax)
 cbarTM = fig.colorbar(mTM, cax=cax, orientation="horizontal")
-cax.set_title(r"${\rm Re}\, H_z$ (TM)")
+cax.set_title(r"${\rm Re}\, H_z$ (TE)")
 
 plt.tight_layout()
 plt.subplots_adjust(wspace=-0.1, hspace=-0.3)

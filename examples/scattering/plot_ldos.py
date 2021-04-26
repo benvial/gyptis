@@ -91,7 +91,7 @@ mu = {d: 1 for d in geom.domains}
 ##############################################################################
 # Instanciate and solve the scattering problem:
 
-s = Scattering(geom, epsilon, mu, ls, degree=2, polarization="TE")
+s = Scattering(geom, epsilon, mu, ls, degree=2, polarization="TM")
 s.solve()
 G = s.solution["total"]
 
