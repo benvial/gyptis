@@ -232,19 +232,26 @@ if __name__ == "__main__":
     ev_norma = KNs*a/(2*np.pi)
     
     print(ev_norma)
+    KX = np.linspace(0,np.pi/a)
     
-    phc = PhotonicCrystal2D(
-        lattice,
-        epsilon,
-        mu,
-        propagation_vector= (1*np.pi/a,0.*np.pi/a),
-        polarization="TM",
-        degree=1,
-    )
-    
-    phc.eigensolve(n_eig, k_target)
-    ev_norma = np.array(phc.solution["eigenvalues"])*a/(2*np.pi)
-    print(ev_norma)
+    for kx in KX:
+        
+        phc = PhotonicCrystal2D(
+            lattice,
+            epsilon,
+            mu,
+            propagation_vector= (1*np.pi/a,0.*np.pi/a),
+            polarization="TM",
+            degree=1,
+        )
+        
+        phc.eigensolve(n_eig, k_target)
+        ev_norma = np.array(phc.solution["eigenvalues"])*a/(2*np.pi)
+        print(ev_norma)
+        plt.plot(kx,ev_norma.real,"or")
+        plt.pause()
+        
+    cdsc
     
     eig_vects = phc.solution["eigenvectors"]
     
