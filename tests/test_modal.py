@@ -7,18 +7,8 @@ import pytest
 from scipy.constants import c
 
 from gyptis import BoxPML, Scattering
-from gyptis.complex import ComplexFunctionSpace
-from gyptis.formulation import *
-from gyptis.geometry import *
-from gyptis.materials import *
 from gyptis.plot import *
 
-plt.ion()
-
-dolfin.set_log_level(1)
-
-
-degree = 2
 wavelength = 14
 pmesh = 3
 lmin = wavelength / pmesh
@@ -43,51 +33,49 @@ geom.build()
 epsilon = dict(box=1, cyl=eps_cyl)
 mu = dict(box=1, cyl=1)
 
-s = Scattering(
-    geom,
-    epsilon,
-    mu,
-    modal=True,
-    polarization="TM",
+
+@pytest.mark.parametrize(
+    "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
+def test_phc(degree, polarization):
+    s = Scattering(
+        geom,
+        epsilon,
+        mu,
+        modal=True,
+        polarization=polarization,
+        degree=degree,
+    )
+    wavelength_target = 40
+    n_eig = 6
+    k_target = 2 * np.pi / wavelength_target
+    solution = s.eigensolve(n_eig, k_target)
+    KNs = solution["eigenvalues"]
+    eig_vects = solution["eigenvectors"]
+    KNs = np.array(KNs)
 
-wavelength_target = 428
-n_eig = 16
-
-
-k_target = 2 * np.pi / wavelength_target
-
-solution = s.eigensolve(n_eig, k_target)
-
-KNs = solution["eigenvalues"]
-eig_vects = solution["eigenvectors"]
-
-KNs = np.array(KNs)
-
-
-plt.close("all")
-plt.figure()
-
-plt.plot(KNs.real, KNs.imag, "o")
-
-for mode, eval in zip(eig_vects, KNs):
-    Q = -eval.real / eval.imag * 0.5
-    kre = eval.real
-    f = kre * c / (2 * np.pi) * 1e-6
-    if eval.imag < 0 and Q > 1.5:
-        print(f)
-        print(Q)
-        plot(mode.real, cmap="RdBu_r")
-        plt.title(fr"$f = {f:0.3f}\,$THz, $Q={Q:0.1f}$")
-        H = s.formulation.get_dual(mode, 1)
-        Vvect = dolfin.VectorFunctionSpace(geom.mesh, "CG", 2)
-        H = project(
-            H,
-            Vvect,
-            solver_type="cg",
-            preconditioner_type="jacobi",
-        )
-        dolfin.plot(H.real, cmap="Greys")
-        geom.plot_subdomains()
-        plt.xlim(-geom.box_size[0] / 2, geom.box_size[0] / 2)
-        plt.ylim(-geom.box_size[1] / 2, geom.box_size[1] / 2)
+    plt.close("all")
+    plt.figure()
+    plt.plot(KNs.real, KNs.imag, "o")
+    for mode, eval in zip(eig_vects, KNs):
+        if eval.imag < 0:
+            Q = -eval.real / eval.imag * 0.5
+            kre = eval.real
+            f = kre * c / (2 * np.pi) * 1e-6
+            if Q > 1.5:
+                print(f)
+                print(Q)
+                plot(mode.real, cmap="RdBu_r")
+                plt.title(fr"$f = {f:0.3f}\,$THz, $Q={Q:0.1f}$")
+                H = s.formulation.get_dual(mode, 1)
+                Vvect = dolfin.VectorFunctionSpace(geom.mesh, "CG", 2)
+                H = project(
+                    H,
+                    Vvect,
+                    solver_type="cg",
+                    preconditioner_type="jacobi",
+                )
+                dolfin.plot(H.real, cmap="Greys")
+                geom.plot_subdomains()
+                plt.xlim(-geom.box_size[0] / 2, geom.box_size[0] / 2)
+                plt.ylim(-geom.box_size[1] / 2, geom.box_size[1] / 2)

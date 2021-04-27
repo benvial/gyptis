@@ -37,7 +37,7 @@ staging:
   stage: trigdoc
   trigger: gyptis/gyptis.gitlab.io
   only:
-    - master
+    - tags
 
 
 test:

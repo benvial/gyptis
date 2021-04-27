@@ -127,6 +127,10 @@ pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "sphinx"
+highlight_language = "python3"
+
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -325,11 +329,12 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
+
 intersphinx_mapping = {
-    "https://doc.python.org/3/": None,
-    "https://docs.scipy.org/doc/scipy/reference/": None,
-    "https://matplotlib.org/stable/": None,
-    "https://numpy.org/doc/stable/": None,
+    "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "matplotlib": ("https://matplotlib.org/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
 }
 
 
@@ -341,6 +346,9 @@ sphinx_gallery_conf = {
     # directory where function granular galleries are stored
     "backreferences_dir": "generated/backreferences",
     "remove_config_comments": True,
+    "reference_url": {
+        "sphinx_gallery": None,
+    },
     "reset_modules": (),
     # "first_notebook_cell": (
     #     "import matplotlib\n" "mpl.style.use('gyptis')\n" "%matplotlib inline"

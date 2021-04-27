@@ -8,6 +8,11 @@ code, kbd, pre, samp {
     background-color: @body-bg-darker;
 }
 
+pre a {
+    color: @text-color;
+}
+
+
 pre {
     display: block;
     padding: 12px;
@@ -21,11 +26,14 @@ pre {
     border: none;
     border-radius: 0px;
 }
+
 span.pre {
-    background-color: #f3f4f7;
+    background-color: @body-bg-darker;
   }
 
-
+p code.xref.py.py-class.docutils.literal.notranslate span.pre {
+  color: #ab9a27;
+}
 
 .highlight .hll { background-color: @body-bg-darker }
 .highlight  { background: @body-bg-darker }
