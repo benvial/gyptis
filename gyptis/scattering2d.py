@@ -111,7 +111,7 @@ class Scatt2D(Simulation):
         geometry,
         epsilon,
         mu,
-        source = None,
+        source=None,
         boundary_conditions={},
         polarization="TM",
         modal=False,

@@ -3,8 +3,11 @@
 # Author: Benjamin Vial
 # License: MIT
 
+import numpy as np
+
 from . import dolfin
-from .complex import Complex, assemble, Function
+from .complex import Complex, Function, assemble
+from .helpers import array2function
 
 
 class Simulation:
@@ -98,7 +101,7 @@ class Simulation:
         # eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
         # eigensolver.parameters["solver"] = "power"
-        eigensolver.parameters["spectral_shift"] = wavevector_target ** 2
+        eigensolver.parameters["spectral_shift"] = float(wavevector_target ** 2)
         eigensolver.parameters["spectral_transform"] = "shift-and-invert"
         eigensolver.parameters["tolerance"] = tol
         # eigensolver.parameters["solver"] = "mumps"
@@ -112,27 +115,30 @@ class Simulation:
 
         # eigensolver.parameters["verbose"] = True  # for debugging
         eigensolver.parameters.update(parameters)
-        eigensolver.solve(n_eig)
+        eigensolver.solve(2 * n_eig)
 
         nconv = eigensolver.get_number_converged()
 
         self.solution = {}
         self.solution["converged"] = nconv
 
-        
         KNs = []
         UNs = []
 
         for j in range(nconv):
             ev_re, ev_im, rx, cx = eigensolver.get_eigenpair(j)
-            eig_vec = Function(self.formulation.function_space)
-            eig_vec.real.vector()[:] = rx
-            eig_vec.imag.vector()[:] = cx
+            eig_vec_re = array2function(rx, self.formulation.function_space)
+            eig_vec_im = array2function(cx, self.formulation.function_space)
+            eig_vec = Complex(*eig_vec_re) + 1j * Complex(*eig_vec_im)
+            # eig_vec = Complex(eig_vec_re[0],eig_vec_im[1])
             ev = ev_re + 1j * ev_im
             kn = (ev) ** 0.5
             KNs.append(kn)
             UNs.append(eig_vec)
 
+        KNs = np.array(KNs)[::2]
+
         self.solution["eigenvalues"] = KNs
         self.solution["eigenvectors"] = UNs
+        self.eigensolver = eigensolver
         return self.solution

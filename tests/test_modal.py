@@ -4,14 +4,14 @@
 # License: MIT
 
 import pytest
-from gyptis import BoxPML
+from scipy.constants import c
+
+from gyptis import BoxPML, Scattering
 from gyptis.complex import ComplexFunctionSpace
 from gyptis.formulation import *
 from gyptis.geometry import *
 from gyptis.materials import *
 from gyptis.plot import *
-from gyptis import Scattering
-from scipy.constants import c
 
 plt.ion()
 
