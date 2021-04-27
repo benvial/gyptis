@@ -30,14 +30,14 @@ container:
   stage: trigdocker
   trigger: gyptis/docker
   only:
-    - master
+    - tags
   
 
 staging:
   stage: trigdoc
   trigger: gyptis/gyptis.gitlab.io
   only:
-    - tags
+    - master
 
 
 test:
