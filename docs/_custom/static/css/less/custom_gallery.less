@@ -136,13 +136,7 @@ dl.footnote > dt {
   color: @body-bg!important;
 }
 
-.citation::before {
-  color: @gray-base;
-  content: "References";
-  display: block;
-  font-size: @font-size-h3;
-  padding-top: 1.7em;
-}
+
 
 .sphx-glr-script-out::before {
   color: @brand-primary;
@@ -176,11 +170,12 @@ div.sphx-glr-footer {
   visibility: visible;
   font-weight: 900;
   padding-left: 6px;
+  font-size: @font-size-base;
 }
 
 .citation >dd > p > a {
   visibility: hidden;
-  position: absolute;
+  font-size: 0px;
 }
 
 .citation >dd > p > a.reference.external:hover::before {

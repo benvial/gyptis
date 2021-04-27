@@ -13,11 +13,11 @@ Documentation
 
   .. include:: ../README.rst
     :end-before: inclusion-marker-badges
-    
+
   .. raw:: html
 
     </div>
-  
+
 
 
 Welcome! This is the documentation for Gyptis |release|, last updated on |today|.
@@ -44,13 +44,13 @@ A pdf version of this documentation is available to download `here <https://gypt
    
    installation
    api
+   biblio
 
 
 
 .. _Gmsh: https://gmsh.info/
 .. _FEniCS: https://fenicsproject.org/
 
-.. bibliography::
 
 .. 
 .. 
