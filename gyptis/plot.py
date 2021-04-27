@@ -9,11 +9,25 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.tri import Triangulation
 
 from gyptis.complex import *
 
 from . import dolfin
+
+gyptis_colors = dict(
+    red=(210 / 255, 95 / 255, 95 / 255), green=(69 / 255, 149 / 255, 125 / 255)
+)
+
+_cmap = LinearSegmentedColormap.from_list(
+    "gyptis", [gyptis_colors["green"], (1, 1, 1), gyptis_colors["red"]], N=100
+)
+plt.register_cmap(cmap=_cmap)
+_cmap = LinearSegmentedColormap.from_list(
+    "gyptis_r", [gyptis_colors["red"], (1, 1, 1), gyptis_colors["green"]], N=100
+)
+plt.register_cmap(cmap=_cmap)
 
 
 def get_boundaries(markers, domain=None, shift=(0, 0)):

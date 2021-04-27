@@ -125,7 +125,11 @@ cleandoc:
 	@cd docs && make -s clean
 
 ## Clean project
-clean: cleandoc cleantest cleangen cleanreport
+clean: cleantest cleangen cleanreport
+	$(call message,${@})
+
+## Clean all project
+clean-all: cleandoc clean
 	$(call message,${@})
 
 ## Lint using flake8

@@ -125,6 +125,8 @@ class Simulation:
         KNs = []
         UNs = []
 
+        nconv = min(2 * n_eig, nconv)
+
         for j in range(nconv):
             ev_re, ev_im, rx, cx = eigensolver.get_eigenpair(j)
             eig_vec_re = array2function(rx, self.formulation.function_space)
@@ -136,7 +138,10 @@ class Simulation:
             KNs.append(kn)
             UNs.append(eig_vec)
 
+        # HACK: We get the complex conjugates as well so compoute twice
+        # as much eigenvalues and return only half
         KNs = np.array(KNs)[::2]
+        UNs = UNs[::2]
 
         self.solution["eigenvalues"] = KNs
         self.solution["eigenvectors"] = UNs
