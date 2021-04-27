@@ -149,6 +149,19 @@ latex:
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
 	      "(use \`make latexpdf' here to do that automatically)."
 
+latex-noplot: export SPHX_GLR_THEME = $(theme)
+latex-noplot:
+	$(SPHINXBUILD) -D plot_gallery=0 -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	@echo
+	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
+	@echo "Run \`make' in that directory to run these through (pdf)latex" \
+	      "(use \`make latexpdf' here to do that automatically)."
+
+pdf:
+	@echo "Running LaTeX files through xelatex..."
+	$(MAKE) PDFLATEX=xelatex -C $(BUILDDIR)/latex all-pdf
+	@echo "xelatex finished; the PDF files are in $(BUILDDIR)/latex."
+
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through xelatex..."
