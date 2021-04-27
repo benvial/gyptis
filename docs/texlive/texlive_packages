@@ -9,9 +9,6 @@ texliveonfly latexmk
 collection-langeuropean
 collection-fontsrecommended
 
-# LuaTeX
-luaotfload
-
 # texliveonfly does not detect the following packages automatically
 minted fvextra upquote lineno xstring framed caption
 
@@ -22,34 +19,6 @@ amsmath
 armtex
 avantgar
 babel
-babel-albanian
-babel-bosnian
-babel-breton
-babel-croatian
-babel-danish
-babel-dutch
-babel-english
-babel-estonian
-babel-finnish
-babel-friulan
-babel-hungarian
-babel-icelandic
-babel-irish
-babel-kurmanji
-babel-latin
-babel-latvian
-babel-macedonian
-babel-norsk
-babel-occitan
-babel-piedmontese
-babel-romanian
-babel-romansh
-babel-samin
-babel-scottish
-babel-slovenian
-babel-swedish
-babel-turkish
-babel-welsh
 babelbib
 bibtex
 bibtex.x86_64-linux
@@ -113,29 +82,7 @@ hulipsum
 hyperref
 hyph-utf8
 hyphen-base
-hyphen-croatian
-hyphen-danish
-hyphen-dutch
-hyphen-estonian
-hyphen-finnish
-hyphen-friulan
-hyphen-hungarian
-hyphen-icelandic
-hyphen-irish
-hyphen-kurmanji
 hyphen-latin
-hyphen-latvian
-hyphen-lithuanian
-hyphen-norwegian
-hyphen-occitan
-hyphen-piedmontese
-hyphen-romanian
-hyphen-romansh
-hyphen-slovenian
-hyphen-swedish
-hyphen-turkish
-hyphen-uppersorbian
-hyphen-welsh
 hyphenex
 ifplatform
 iftex
@@ -252,6 +199,7 @@ wasysym
 wrapfig
 xdvi
 xdvi.x86_64-linux
+xcolor
 xetex
 xetex.x86_64-linux
 xetexconfig
