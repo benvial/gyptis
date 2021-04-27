@@ -17,7 +17,7 @@ from gyptis.plot import *
 
 ##############################################################################
 # We will study this benchmark and compare with results
-# given in [PopovGratingBook]_.
+# given in :cite:p:`PopovGratingBook`.
 
 fig, ax = plt.subplots(3, 2, figsize=(3.5, 5.5))
 
@@ -166,11 +166,3 @@ cax.set_title(r"${\rm Re}\, H_z$ (TE)")
 
 plt.tight_layout()
 plt.subplots_adjust(wspace=-0.1, hspace=-0.3)
-
-
-######################################################################
-#
-# .. [PopovGratingBook] T. Antonakakis et al.,
-#   Gratings: Theory and Numeric Applications.
-#   AMU,(PUP), CNRS, ECM, 2014.
-#   `<https://www.fresnel.fr/files/gratings/Second-Edition/>`_

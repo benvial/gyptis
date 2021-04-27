@@ -17,7 +17,7 @@ from gyptis import BoxPML, Scattering
 from gyptis.source import PlaneWave
 
 ##############################################################################
-# Reference results are taken from [Jandieri2015]_.
+# Reference results are taken from :cite:p:`Jandieri2015`.
 # We first define a function for the Drude Lorentz model of silver permittivity.
 
 
@@ -203,10 +203,3 @@ plt.ylim(
     0,
 )
 plt.tight_layout()
-
-######################################################################
-#
-# .. [Jandieri2015] V. Jandieri, P. Meng, K. Yasumoto, and Y. Liu,
-#   Scattering of light by gratings of metal-coated nanocylinders on dielectric substrate.
-#   Journal of the Optical Society of America A, vol. 32, p. 1384, (2015).
-#   `<https://www.doi.org/10.1364/JOSAA.32.001384>`_

@@ -46,13 +46,16 @@ extensions = [
     # 'sphinx.ext.todo',
     # 'sphinx.ext.coverage',
     # "sphinx.ext.mathjax",
+    "sphinxcontrib.bibtex",
     "sphinxcontrib.rsvgconverter",
     "sphinx_gallery.gen_gallery",
     "sphinx_copybutton",
     # 'sphinx_issues',
 ]
 
-
+bibtex_bibfiles = ["_custom/latex/biblio.bib"]
+# bibtex_default_style = "unsrtalpha"
+# bibtex_reference_style = "label"
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False

@@ -17,7 +17,7 @@ from gyptis import Grating, Layered, PlaneWave
 
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating
-# and compare with results given in [PopovGratingBook]_.
+# and compare with results given in :cite:p:`PopovGratingBook`.
 #
 # The units of lengths are in nanometers here, and we first define some
 # geometrical and optical parameters:
@@ -163,10 +163,3 @@ print(" order      ref       calc")
 print("--------------------------------")
 print(f"   0       {T_ref['TE'][0]:.4f}    {effs_TM['T'][1]:.4f} ")
 print(f"  sum      {T_ref['TE'][1]:.4f}    {effs_TM['B']:.4f}   ")
-
-######################################################################
-#
-# .. [PopovGratingBook] T. Antonakakis et al.,
-#   Gratings: Theory and Numeric Applications.
-#   AMU,(PUP), CNRS, ECM, 2014.
-#   `<https://www.fresnel.fr/files/gratings/Second-Edition/>`_

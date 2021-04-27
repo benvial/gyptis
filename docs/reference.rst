@@ -30,7 +30,13 @@ and FEniCS_ for solving Maxwell's equations.
 For a more practical introduction, check the 
 :ref:`tutorials with worked examples <sphx_glr_auto_examples>`.
 
+A pdf version of this documentation is available to download `here <https://gyptis.gitlab.io/_downloads/gyptis.pdf>`_.
 
+.. only:: html
+
+  You can use the search bar on the left or the :ref:`search page<search>` to look up for something 
+  in the documentation. Also useful are the :ref:`index<genindex>` 
+  and the :ref:`module index<modindex>` where of objects and modules are listed.
 
 .. toctree::
    :maxdepth: 2
@@ -38,17 +44,13 @@ For a more practical introduction, check the
    
    installation
    api
-   
-.. only:: html
-   
-   indexsearch
-   
-
 
 
 
 .. _Gmsh: https://gmsh.info/
 .. _FEniCS: https://fenicsproject.org/
+
+.. bibliography::
 
 .. 
 .. 

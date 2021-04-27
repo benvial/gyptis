@@ -49,6 +49,8 @@ def process_html(fn, lines):
         line = line.replace("\*args", "*args")
         line = line.replace("\*\*kwargs", "**kwargs")
         line = line.replace("col-md-3", "col-md-2")
+        line = line.replace(". URL: ", ".")
+        line = line.replace("</a>.</p>", "</a></p>")
 
         line = line.replace(
             "https://mybinder.org/v2/gh/gyptis/gyptis.gitlab.io",
@@ -60,6 +62,7 @@ def process_html(fn, lines):
             "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks/",
         )
         line = line.replace("binder_badge_logo1.svg", "binder_badge_logo.svg")
+        line = line.replace("binder_badge_logo2.svg", "binder_badge_logo.svg")
 
         line = line.replace(
             'binder" src="../../_images/binder_badge_logo.svg" width="150px"',

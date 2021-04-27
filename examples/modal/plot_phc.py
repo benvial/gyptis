@@ -19,7 +19,7 @@ from gyptis.complex import project
 from gyptis.plot import *
 
 ##############################################################################
-# Reference results are taken from [Joannopoulos2008]_ (Chapter 5 Fig. 2).
+# Reference results are taken from  :cite:p:`Joannopoulos2008` (Chapter 5 Fig. 2).
 #
 # The structure is a square lattice of dielectric
 # columns, with radius r and dielectric constant :math:`\varepsilon`.
@@ -167,11 +167,3 @@ plt.axvline(K[-1], c="k", lw=0.3)
 plt.axvline(2 * K[-1], c="k", lw=0.3)
 plt.ylabel(r"Frequency $\omega a/2\pi c$")
 plt.tight_layout()
-
-
-######################################################################
-#
-# .. [Joannopoulos2008] Joannopoulos, J. D., Johnson, S. G., Winn, J. N., & Meade, R. D.,
-#    Photonic Crystals: Molding the flow of light.
-#    Princeton Univ. Press, Princeton, NJ, (2008).
-#    `<http://ab-initio.mit.edu/book/>`_

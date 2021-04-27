@@ -13,7 +13,7 @@ from gyptis import BoxPML, Scattering
 from gyptis.source import PlaneWave
 
 ##############################################################################
-# Reference results are taken from [Ruppin2006]_.
+# Reference results are taken from :cite:p:`Ruppin2006`.
 
 pmesh = 10
 degree = 2
@@ -95,11 +95,3 @@ plt.xlabel(r"$kR$")
 plt.ylabel(r"$\sigma_{\rm s}/2R$")
 plt.legend()
 plt.tight_layout()
-
-
-######################################################################
-#
-# .. [Ruppin2006] Ruppin, R.,
-#   Scattering of electromagnetic radiation by a perfect electromagnetic conductor cylinder.
-#   Journal of Electromagnetic Waves and Applications 20.13 (2006): 1853-1860.
-#   `<https://www.tandfonline.com/doi/abs/10.1163/156939306779292219>`_

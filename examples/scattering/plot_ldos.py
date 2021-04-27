@@ -19,7 +19,7 @@ from gyptis.complex import project
 from gyptis.source import LineSource
 
 ##############################################################################
-# Reference results are taken from [Asatryan2001]_.
+# Reference results are taken from :cite:p:`Asatryan2001`.
 
 wavelength = 3.5
 pmesh = 12  # mesh parameter
@@ -162,10 +162,3 @@ plt.yticks(np.arange(-8, 9, 4))
 plt.colorbar(cs, fraction=0.04, pad=0.08)
 plt.title(r"$\log_{10}(\rho \pi c^2/2\omega)$")
 plt.tight_layout()
-
-######################################################################
-#
-# .. [Asatryan2001] A. A. Asatryan et al.,
-#   Two-dimensional local density of states in two-dimensional photonic crystals.
-#   Opt. Express, vol. 8, no. 3, pp. 191–196, (2001).
-#   `<https://www.doi.org/10.1364/OE.8.000191>`_
