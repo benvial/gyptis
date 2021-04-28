@@ -13,7 +13,7 @@ https://www.osapublishing.org/josaa/fulltext.cfm?uri=josaa-35-1-163&id=380136
 import pytest
 from scipy.constants import c, epsilon_0, mu_0
 
-from gyptis import dolfin, geometry
+from gyptis import dolfin
 from gyptis.plot import *
 from gyptis.scattering3d import BoxPML3D, Scatt3D
 from gyptis.source import PlaneWave

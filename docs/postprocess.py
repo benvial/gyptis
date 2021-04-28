@@ -50,7 +50,11 @@ def process_html(fn, lines):
         line = line.replace("\*\*kwargs", "**kwargs")
         line = line.replace("col-md-3", "col-md-2")
         line = line.replace(". URL: ", ".")
-        line = line.replace("</a>.</p>", "</a></p>")
+        # print(line)
+        # print("=======")
+        if line.startswith("<dd><p>") and line.endswith("</a>.</p>\n"):
+            print(line)
+            line = line.replace("</a>.</p>", "</a></p>")
 
         line = line.replace(
             "https://mybinder.org/v2/gh/gyptis/gyptis.gitlab.io",

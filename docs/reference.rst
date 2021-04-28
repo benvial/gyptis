@@ -30,7 +30,8 @@ and FEniCS_ for solving Maxwell's equations.
 For a more practical introduction, check the 
 :ref:`tutorials with worked examples <sphx_glr_auto_examples>`.
 
-A pdf version of this documentation is available to download `here <https://gyptis.gitlab.io/_downloads/gyptis.pdf>`_.
+A pdf version of this documentation is available to 
+download `here <https://gyptis.gitlab.io/_downloads/gyptis.pdf>`_.
 
 .. only:: html
 
@@ -47,7 +48,24 @@ A pdf version of this documentation is available to download `here <https://gypt
    biblio
 
 
+Citations
+---------
 
+If you use Gyptis in your research, we would appreciate you cite us:
+
+.. code-block:: bibtex
+
+  @software{gyptis,
+    author       = {Vial, Benjamin},
+    title        = {Gyptis},
+    month        = apr,
+    year         = 2021,
+    publisher    = {Zenodo},
+    version      = {0.2.2},
+    doi          = {10.5281/zenodo.4667806},
+    url          = {https://doi.org/10.5281/zenodo.4667806}
+    }
+     
 .. _Gmsh: https://gmsh.info/
 .. _FEniCS: https://fenicsproject.org/
 

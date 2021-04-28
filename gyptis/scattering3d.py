@@ -63,17 +63,16 @@ class BoxPML3D(Geometry):
         pmlzm = _add_pml(s, -t)
 
         s = (self.pml_width[0], self.pml_width[1], self.box_size[2])
-
         pmlxypp = _add_pml(s, [T[0], T[1], 0])
         pmlxypm = _add_pml(s, [T[0], -T[1], 0])
         pmlxymp = _add_pml(s, [-T[0], T[1], 0])
         pmlxymm = _add_pml(s, [-T[0], -T[1], 0])
 
         s = (self.box_size[0], self.pml_width[1], self.pml_width[2])
-        pmlyzpp = _add_pml(s, [0, T[1], T[0]])
-        pmlyzpm = _add_pml(s, [0, T[1], -T[0]])
-        pmlyzmp = _add_pml(s, [0, -T[1], T[0]])
-        pmlyzmm = _add_pml(s, [0, -T[1], -T[0]])
+        pmlyzpp = _add_pml(s, [0, T[1], T[2]])
+        pmlyzpm = _add_pml(s, [0, T[1], -T[2]])
+        pmlyzmp = _add_pml(s, [0, -T[1], T[2]])
+        pmlyzmm = _add_pml(s, [0, -T[1], -T[2]])
 
         s = (self.pml_width[0], self.box_size[1], self.pml_width[2])
         pmlxzpp = _add_pml(s, [T[0], 0, T[2]])
