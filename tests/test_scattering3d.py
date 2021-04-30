@@ -157,7 +157,3 @@ def test_scatterring3d(shared_datadir):
         SCSN.append(Sigma_s_norm)
 
         plt.plot(gamma, Sigma_s_norm, "or")
-        plt.pause(0.1)
-        plt.show()
-
-        # Ss =

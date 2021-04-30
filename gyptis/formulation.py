@@ -55,7 +55,7 @@ class Formulation(ABC):
 
         self.element = self.function_space.split()[0].ufl_element()
         self.real_function_space = dolfin.FunctionSpace(
-            self.geometry.mesh, self.element.family(), self.element.degree()
+            self.geometry.mesh, self.element
         )
 
     def build_lhs(self):

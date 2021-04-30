@@ -353,7 +353,7 @@ def _get_xi(prop):
         if lenp > 0:
             p = np.array(p)
             k = p[:2, :2].T
-            k /= np.linalg.det(k)
+            k = k / np.linalg.det(k)
         else:
             k = 1 / p + 0j
         new_prop[d] = k

@@ -32,63 +32,51 @@ class BoxPML3D(Geometry):
         self.box_center = box_center
         self.pml_width = pml_width
 
-        def _addbox_center(rect_size):
-            corner = -np.array(rect_size) / 2
-            corner = tuple(corner)
-            return self.add_box(*corner, *rect_size)
-
-        def _translate(tag, t):
-            translation = tuple(t)
-            self.translate(self.dimtag(tag), *translation)
-
-        def _add_pml(s, t):
-            pml = _addbox_center(s)
-            _translate(pml, t)
-            return pml
-
-        box = _addbox_center(self.box_size)
+        box = self._addbox_center(self.box_size)
         T = np.array(self.pml_width) / 2 + np.array(self.box_size) / 2
 
         s = (self.pml_width[0], self.box_size[1], self.box_size[2])
         t = np.array([T[0], 0, 0])
-        pmlxp = _add_pml(s, t)
-        pmlxm = _add_pml(s, -t)
+        pmlxp = self._add_pml(s, t)
+        pmlxm = self._add_pml(s, -t)
+
         s = (self.box_size[0], self.pml_width[1], self.box_size[2])
         t = np.array([0, T[1], 0])
-        pmlyp = _add_pml(s, t)
-        pmlym = _add_pml(s, -t)
+        pmlyp = self._add_pml(s, t)
+        pmlym = self._add_pml(s, -t)
+
         s = (self.box_size[0], self.box_size[1], self.pml_width[2])
         t = np.array([0, 0, T[2]])
-        pmlzp = _add_pml(s, t)
-        pmlzm = _add_pml(s, -t)
+        pmlzp = self._add_pml(s, t)
+        pmlzm = self._add_pml(s, -t)
 
         s = (self.pml_width[0], self.pml_width[1], self.box_size[2])
-        pmlxypp = _add_pml(s, [T[0], T[1], 0])
-        pmlxypm = _add_pml(s, [T[0], -T[1], 0])
-        pmlxymp = _add_pml(s, [-T[0], T[1], 0])
-        pmlxymm = _add_pml(s, [-T[0], -T[1], 0])
+        pmlxypp = self._add_pml(s, [T[0], T[1], 0])
+        pmlxypm = self._add_pml(s, [T[0], -T[1], 0])
+        pmlxymp = self._add_pml(s, [-T[0], T[1], 0])
+        pmlxymm = self._add_pml(s, [-T[0], -T[1], 0])
 
         s = (self.box_size[0], self.pml_width[1], self.pml_width[2])
-        pmlyzpp = _add_pml(s, [0, T[1], T[2]])
-        pmlyzpm = _add_pml(s, [0, T[1], -T[2]])
-        pmlyzmp = _add_pml(s, [0, -T[1], T[2]])
-        pmlyzmm = _add_pml(s, [0, -T[1], -T[2]])
+        pmlyzpp = self._add_pml(s, [0, T[1], T[2]])
+        pmlyzpm = self._add_pml(s, [0, T[1], -T[2]])
+        pmlyzmp = self._add_pml(s, [0, -T[1], T[2]])
+        pmlyzmm = self._add_pml(s, [0, -T[1], -T[2]])
 
         s = (self.pml_width[0], self.box_size[1], self.pml_width[2])
-        pmlxzpp = _add_pml(s, [T[0], 0, T[2]])
-        pmlxzpm = _add_pml(s, [T[0], 0, -T[2]])
-        pmlxzmp = _add_pml(s, [-T[0], 0, T[2]])
-        pmlxzmm = _add_pml(s, [-T[0], 0, -T[2]])
+        pmlxzpp = self._add_pml(s, [T[0], 0, T[2]])
+        pmlxzpm = self._add_pml(s, [T[0], 0, -T[2]])
+        pmlxzmp = self._add_pml(s, [-T[0], 0, T[2]])
+        pmlxzmm = self._add_pml(s, [-T[0], 0, -T[2]])
 
         s = (self.pml_width[0], self.pml_width[1], self.pml_width[2])
-        pmlxyzppp = _add_pml(s, [T[0], T[1], T[2]])
-        pmlxyzppm = _add_pml(s, [T[0], T[1], -T[2]])
-        pmlxyzpmp = _add_pml(s, [T[0], -T[1], T[2]])
-        pmlxyzpmm = _add_pml(s, [T[0], -T[1], -T[2]])
-        pmlxyzmpp = _add_pml(s, [-T[0], T[1], T[2]])
-        pmlxyzmpm = _add_pml(s, [-T[0], T[1], -T[2]])
-        pmlxyzmmp = _add_pml(s, [-T[0], -T[1], T[2]])
-        pmlxyzmmm = _add_pml(s, [-T[0], -T[1], -T[2]])
+        pmlxyzppp = self._add_pml(s, [T[0], T[1], T[2]])
+        pmlxyzppm = self._add_pml(s, [T[0], T[1], -T[2]])
+        pmlxyzpmp = self._add_pml(s, [T[0], -T[1], T[2]])
+        pmlxyzpmm = self._add_pml(s, [T[0], -T[1], -T[2]])
+        pmlxyzmpp = self._add_pml(s, [-T[0], T[1], T[2]])
+        pmlxyzmpm = self._add_pml(s, [-T[0], T[1], -T[2]])
+        pmlxyzmmp = self._add_pml(s, [-T[0], -T[1], T[2]])
+        pmlxyzmmm = self._add_pml(s, [-T[0], -T[1], -T[2]])
 
         pmlx = [pmlxp, pmlxm]
         pmly = [pmlyp, pmlym]
@@ -113,9 +101,7 @@ class BoxPML3D(Geometry):
 
         self.box = box
         self.pmls = pml1 + pml2 + pml3
-
-        _translate([self.box] + self.pmls, self.box_center)
-
+        self._translate([self.box] + self.pmls, self.box_center)
         self.fragment(self.box, self.pmls)
 
         if Rcalc > 0:
@@ -123,23 +109,43 @@ class BoxPML3D(Geometry):
             box, sphere_calc = self.fragment(box, sphere_calc)
             self.box = [box, sphere_calc]
 
-        #
-
         self.add_physical(box, "box")
         self.add_physical(pmlx, "pmlx")
         self.add_physical(pmly, "pmly")
         self.add_physical(pmlz, "pmlz")
-
         self.add_physical(pmlxy, "pmlxy")
         self.add_physical(pmlyz, "pmlyz")
         self.add_physical(pmlxz, "pmlxz")
-
         self.add_physical(pml3, "pmlxyz")
+
+        self.pml_physical = [
+            "pmlx",
+            "pmly",
+            "pmlz",
+            "pmlxy",
+            "pmlyz",
+            "pmlxz",
+            "pmlxyz",
+        ]
 
         if Rcalc > 0:
             bnds = self.get_boundaries("box")
             self.calc_bnds = bnds[0]
             self.add_physical(self.calc_bnds, "calc_bnds", dim=2)
+
+    def _addbox_center(self, rect_size):
+        corner = -np.array(rect_size) / 2
+        corner = tuple(corner)
+        return self.add_box(*corner, *rect_size)
+
+    def _translate(self, tag, t):
+        translation = tuple(t)
+        self.translate(self.dimtag(tag), *translation)
+
+    def _add_pml(self, s, t):
+        pml = self._addbox_center(s)
+        self._translate(pml, t)
+        return pml
 
 
 class Scatt3D(Simulation):
