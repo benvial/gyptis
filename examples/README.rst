@@ -4,7 +4,7 @@ Examples
 ========
 
 Various examples are introduced here. 
-You can run them live on `mybinder.org <https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks>`_.
+You can run them live in your browser on `mybinder.org <https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks>`_.
 
 
 .. only:: html
