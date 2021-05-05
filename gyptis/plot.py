@@ -153,3 +153,21 @@ def pause(interval):
                 canvas.draw()
             canvas.start_event_loop(interval)
             return
+
+
+def _check_plot_type(plottype, f):
+    if plottype == "real":
+        fplot = f.real
+    elif plottype == "imag":
+        fplot = f.imag
+    elif plottype == "module":
+        fplot = f.module
+    elif plottype == "phase":
+        fplot = f.phase
+    else:
+        raise (
+            ValueError(
+                f"wrong plot type {plottype}, choose between real, imag, module or phase"
+            )
+        )
+    return fplot

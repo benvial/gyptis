@@ -233,6 +233,8 @@ class Scatt2D(Simulation):
 
     def plot_field(
         self,
+        type="real",
+        field="total",
         ax=None,
         mincmap=None,
         maxcmap=None,
@@ -244,16 +246,17 @@ class Scatt2D(Simulation):
 
         import matplotlib as mpl
 
-        from .plot import plt
+        from .plot import _check_plot_type, plt
 
-        u = self.solution["total"]
+        u = self.solution[field]
         if ax == None:
             ax = plt.gca()
         if "cmap" not in kwargs:
             kwargs["cmap"] = "RdBu_r"
 
         f = u * phase_shift(phase, degree=self.degree)
-        fplot = f.real
+
+        fplot = _check_plot_type(type, f)
         fplot = project(
             fplot,
             self.formulation.real_function_space,

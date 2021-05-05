@@ -83,7 +83,7 @@ phc = PhotonicCrystal(
 # To calculate the eigenvalues and eigenvectors, we call the
 # :meth:`~gyptis.PhotonicCrystal.eigensolve` method.
 
-phc.eigensolve(n_eig=6, wavevector_target=0.5)
+solution = phc.eigensolve(n_eig=6, wavevector_target=0.5)
 
 
 ##############################################################################

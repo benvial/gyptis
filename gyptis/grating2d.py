@@ -385,7 +385,7 @@ class Grating2D(Simulation):
 
         from matplotlib.transforms import Affine2D
 
-        from .plot import plt
+        from .plot import _check_plot_type, plt
 
         u = self.solution[field]
         if ax == None:
@@ -398,21 +398,7 @@ class Grating2D(Simulation):
             alpha = self.formulation.propagation_vector[0]
             t = Affine2D().translate(i * self.period, 0)
             f = u * phase_shift(i * alpha * self.period + phase, degree=self.degree)
-            if type == "real":
-                fplot = f.real
-            elif type == "imag":
-                fplot = f.imag
-            elif type == "module":
-                fplot = f.module
-            elif type == "phase":
-                fplot = f.phase
-            else:
-                raise (
-                    ValueError(
-                        f"wrong plot type {type}, choose between real, imag, module or phase"
-                    )
-                )
-
+            fplot = _check_plot_type(type, f)
             # if ADJOINT:
             fplot = project(
                 fplot,

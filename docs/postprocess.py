@@ -12,6 +12,8 @@ import io
 import optparse
 import re
 
+import gyptis as package
+
 
 def main():
     p = optparse.OptionParser(__doc__)
@@ -49,11 +51,13 @@ def process_html(fn, lines):
         line = line.replace("\*args", "*args")
         line = line.replace("\*\*kwargs", "**kwargs")
         line = line.replace("col-md-3", "col-md-2")
+        line = line.replace(
+            "<title> &#8212;",
+            f"<title> {package.__name__}: {package.__description__} &#8212;",
+        )
+
         line = line.replace(". URL: ", ".")
-        # print(line)
-        # print("=======")
         if line.startswith("<dd><p>") and line.endswith("</a>.</p>\n"):
-            print(line)
             line = line.replace("</a>.</p>", "</a></p>")
 
         line = line.replace(

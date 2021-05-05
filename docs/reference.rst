@@ -37,7 +37,7 @@ download `here <https://gyptis.gitlab.io/_downloads/gyptis.pdf>`_.
 
   You can use the search bar on the left or the :ref:`search page<search>` to look up for something 
   in the documentation. Also useful are the :ref:`index<genindex>` 
-  and the :ref:`module index<modindex>` where of objects and modules are listed.
+  and the :ref:`module index<modindex>` where objects and modules are listed.
 
 .. toctree::
    :maxdepth: 2
@@ -51,19 +51,19 @@ download `here <https://gyptis.gitlab.io/_downloads/gyptis.pdf>`_.
 Citations
 ---------
 
-If you use Gyptis in your research, we would appreciate you cite us:
+If you use Gyptis in your research, we would appreciate you cite us 
+:cite:p:`gyptis`.
+
+.. bibliography::
+   :filter: docname in docnames
 
 .. code-block:: bibtex
 
-  @software{gyptis,
+  @misc{gyptis,
     author       = {Vial, Benjamin},
-    title        = {Gyptis},
-    month        = apr,
-    year         = 2021,
-    publisher    = {Zenodo},
-    version      = {0.2.2},
+    title        = {Gyptis: {C}omputational {P}hotonics in {P}ython (version)},
+    year         = 2020,
     doi          = {10.5281/zenodo.4667806},
-    url          = {https://doi.org/10.5281/zenodo.4667806}
     }
      
 .. _Gmsh: https://gmsh.info/

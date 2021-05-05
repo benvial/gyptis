@@ -73,21 +73,19 @@ for polarization in ["TM", "TE"]:
     scs_gyptis[polarization] = scsnorm
 
 
-color = dict(TM="#da8555", TE="#4fb4a5")
 for polarization in ["TM", "TE"]:
     scs_file = f"scs_pec_{polarization}.csv"
     benchmark = np.loadtxt(scs_file, delimiter=",")
-    plt.plot(
+    p = plt.plot(
         benchmark[:, 0],
         benchmark[:, 1],
-        c=color[polarization],
         label=f"ref. {polarization}",
     )
     plt.plot(
         kR,
         scs_gyptis[polarization],
         "o",
-        c=color[polarization],
+        c=p[0].get_c(),
         label=f"gyptis {polarization}",
     )
 

@@ -7,6 +7,6 @@
   ============
 
 .. bibliography::
-
+   :filter: not (key == "gyptis")
 
     
