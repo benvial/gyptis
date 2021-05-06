@@ -30,6 +30,7 @@ class Simulation:
 
     @source.setter
     def source(self, value):
+        self.formulation.source = value
         self._source = value
 
     def assemble_lhs(self, **kwargs):

@@ -35,43 +35,53 @@ def projection(a, beta=1, nu=0.5):
     )
 
 
-def filtering(a, rfilt=0, solver="iterative", function_space=None, order=1, dim=2):
-    assert solver in ["direct", "iterative"]
-    if np.all(rfilt == 0):
-        return a
-    else:
-        mesh = a.function_space().mesh()
-        dim = mesh.ufl_domain().geometric_dimension()
-        F = function_space or df.FunctionSpace(mesh, "CG", order)
-        bcs = []
-        af = df.TrialFunction(F)
-        vf = df.TestFunction(F)
-        if hasattr(rfilt, "shape"):
-            if np.shape(rfilt) in [(2, 2), (3, 3)]:
-                rfilt_ = tensor_const(rfilt, dim=dim, real=True)
+class Filter:
+    def __init__(self, rfilt=0, function_space=None, order=1, solver=None):
+        self.rfilt = rfilt
+        self.solver = solver
+        self.order = order
+        self._function_space = function_space
+
+    def weak(self, a):
+        self.mesh = a.function_space().mesh()
+        self.dim = self.mesh.ufl_domain().geometric_dimension()
+        self.function_space = self._function_space or df.FunctionSpace(
+            self.mesh, "CG", self.order
+        )
+        af = df.TrialFunction(self.function_space)
+        vf = df.TestFunction(self.function_space)
+        if hasattr(self.rfilt, "shape"):
+            if np.shape(self.rfilt) in [(2, 2), (3, 3)]:
+                self._rfilt = tensor_const(self.rfilt, dim=self.dim, real=True)
             else:
                 raise ValueError("Wrong shape for rfilt")
         else:
-            rfilt_ = df.Constant(rfilt)
-        a_ = (
-            df.inner(rfilt_ * df.grad(af), rfilt_ * df.grad(vf)) * df.dx
+            self._rfilt = df.Constant(self.rfilt)
+
+        lhs = (
+            df.inner(self._rfilt * df.grad(af), self._rfilt * df.grad(vf)) * df.dx
             + df.inner(af, vf) * df.dx
         )
-        L_ = df.inner(a, vf) * df.dx
-        af = df.Function(F, name="Filtered density")
-        if solver == "direct":
-            df.solve(a_ == L_, af, bcs)
-            # solve(
-            #     Ff == 0, af, bcs, solver_parameters=solver_parameters,
-            # )
-        else:
-            solver = df.KrylovSolver("cg", "jacobi")
-            # solver.parameters['relative_tolerance'] = 1e-3
-            A = df.assemble(a_)
-            b = df.assemble(L_)
-            solver.solve(A, af.vector(), b)
+        rhs = df.inner(a, vf) * df.dx
+        return lhs, rhs
 
-        return af
+    def apply(self, a):
+        if np.all(self.rfilt == 0):
+            return a
+        else:
+            lhs, rhs = self.weak(a)
+            af = df.Function(self.function_space, name="Filtered density")
+            vector = df.assemble(rhs)
+            if self.solver == None:
+                matrix = df.assemble(lhs)
+                self.solver = df.KrylovSolver(matrix, "cg", "jacobi")
+            self.solver.solve(af.vector(), vector)
+            return af
+
+
+def filtering(a, rfilt=0, function_space=None, order=1):
+    filter = Filter(rfilt, function_space, order)
+    return filter.apply(a)
 
 
 def derivative(f, x, ctrl_space=None, array=True):

@@ -40,12 +40,17 @@ def test_filter():
     rfilt = r * 0.1
     af = filtering(a, rfilt)
 
-    af = filtering(a, rfilt, solver="direct")
+    filter = Filter(rfilt)
+    af = filter.apply(a)
+
+    filter1 = Filter(rfilt, solver=filter.solver)
+    af1 = filter1.apply(a)
+
     plt.figure()
     df.plot(af)
     plt.title("isotropic")
     rfilt_aniso = np.diag([0.458 * rfilt, 3 * rfilt])
-    af_aniso = filtering(a, rfilt_aniso, solver="iterative")
+    af_aniso = filtering(a, rfilt_aniso)
 
     plt.figure()
     df.plot(af_aniso)
@@ -54,7 +59,7 @@ def test_filter():
     trot = np.pi / 3
     rot = rot_matrix_2d(trot)[:-1, :-1]
     rfilt_aniso_rot = rot.T @ rfilt_aniso @ rot
-    af_aniso_rot = filtering(a, rfilt_aniso_rot, solver="iterative")
+    af_aniso_rot = filtering(a, rfilt_aniso_rot)
     plt.figure()
     df.plot(af_aniso_rot)
     plt.title("anisotropic rotated")
