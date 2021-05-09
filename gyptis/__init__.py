@@ -15,6 +15,9 @@ from .__about__ import (
 
 __doc__ = __description__
 
+from math import e, pi
+
+from scipy.constants import c, epsilon_0, mu_0
 
 if os.environ.get("GYPTIS_ADJOINT") is not None:
     import dolfin_adjoint
@@ -51,7 +54,6 @@ dolfin.PETScOptions.set("pc_type", "lu")
 # dolfin.PETScOptions.set('mat_mumps_icntl_35', 2)
 # dolfin.PETScOptions.set('mat_mumps_icntl_36', 1)
 # dolfin.PETScOptions.set('mat_mumps_icntl_24', 1)
-
 # dolfin.set_log_level(1)
 
 from .api import *

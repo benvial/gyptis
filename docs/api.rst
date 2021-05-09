@@ -10,8 +10,8 @@ API Reference
     :no-members:
     :no-inherited-members:
 
-Base classes
-""""""""""""
+Geometry classes
+""""""""""""""""
 .. currentmodule:: gyptis
 
 .. autosummary::
@@ -22,5 +22,19 @@ Base classes
    Geometry
    BoxPML
    Layered
-
+   Lattice
  
+
+
+Physics classes
+"""""""""""""""
+.. currentmodule:: gyptis
+
+.. autosummary::
+  :nosignatures:
+  :toctree: generated/
+  :template: class.rst
+
+  Scattering
+  Grating
+  PhotonicCrystal

@@ -136,7 +136,6 @@ def test_scatterring3d(shared_datadir):
         # print(check)
         n_out = g.unit_normal_vector
         Es = s.solution["diffracted"]
-
         inv_mu_coeff = s.coefficients[1].invert().as_subdomain()
         omega = s.source.pulsation
 

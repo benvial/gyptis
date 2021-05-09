@@ -33,27 +33,67 @@ class Simulation:
         self.formulation.source = value
         self._source = value
 
-    def assemble_lhs(self, **kwargs):
-        self.formulation.build_lhs(**kwargs)
+    def assemble_lhs(self):
+        """Assemble the left hand side of the weak formulation.
+
+        Returns
+        -------
+        PETSc matrix
+            Assembled matrix.
+
+        """
+        self.formulation.build_lhs()
         self.matrix = assemble(self.formulation.lhs)
         return self.matrix
 
-    def assemble_rhs(self, **kwargs):
-        self.formulation.build_rhs(**kwargs)
+    def assemble_rhs(self):
+        """Assemble the right hand side of the weak formulation.
+
+        Returns
+        -------
+        PETSc vector
+            Assembled vector.
+
+        """
+        self.formulation.build_rhs()
         self.vector = assemble(self.formulation.rhs)
         return self.vector
 
-    def assemble(self, **kwargs):
-        self.matrix = self.assemble_lhs(**kwargs)
-        self.vector = self.assemble_rhs(**kwargs)
+    def assemble(self):
+        """Assemble the weak formulation.
+
+        Returns
+        -------
+        tuple (PETSc matrix, PETSc vector)
+            The assembled matix and vector.
+
+        """
+        self.matrix = self.assemble_lhs()
+        self.vector = self.assemble_rhs()
         return self.matrix, self.vector
 
     def apply_boundary_conditions(self):
+        """Apply boundary conditions."""
         bcs = self.formulation.build_boundary_conditions()
         for bc in bcs:
             bc.apply(self.matrix, self.vector)
 
     def solve_system(self, again=False, vector_function=True):
+        """Solve the discretized system.
+
+        Parameters
+        ----------
+        again : bool
+            Reuse solver (the default is False).
+        vector_function : bool
+            Use a vector function (the default is True).
+
+        Returns
+        -------
+        dolfin Function
+            The solution.
+
+        """
         if vector_function:
             element = self.function_space.split()[0].ufl_element()
             V_vect = dolfin.VectorFunctionSpace(
@@ -70,10 +110,19 @@ class Simulation:
         solution = Complex(*u.split())
         return solution
 
-    def solve(self, again=False, **kwargs):
-        self.assemble(**kwargs)
+    def solve(self):
+        """Assemble, apply boundary conditions and computes the solution.
+
+        Returns
+        -------
+        dolfin Function
+            The solution.
+
+        """
+
+        self.assemble()
         self.apply_boundary_conditions()
-        return self.solve_system(again=again, **kwargs)
+        return self.solve_system()
 
     def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, parameters={}):
 

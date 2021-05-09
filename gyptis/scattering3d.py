@@ -5,6 +5,7 @@
 
 
 from . import dolfin
+from ._meta import _ScatteringBase
 from .complex import *
 from .formulation import Maxwell3D
 from .geometry import *
@@ -148,7 +149,7 @@ class BoxPML3D(Geometry):
         return pml
 
 
-class Scatt3D(Simulation):
+class Scatt3D(_ScatteringBase, Simulation):
     def __init__(
         self,
         geometry,
@@ -157,7 +158,6 @@ class Scatt3D(Simulation):
         source,
         boundary_conditions={},
         degree=1,
-        mat_degree=1,
         pml_stretch=1 - 1j,
     ):
         assert isinstance(geometry, BoxPML3D)
@@ -181,14 +181,14 @@ class Scatt3D(Simulation):
             epsilon,
             geometry,
             pmls=pmls,
-            degree=mat_degree,
+            degree=degree,
             dim=3,
         )
         mu_coeff = Coefficient(
             mu,
             geometry,
             pmls=pmls,
-            degree=mat_degree,
+            degree=degree,
             dim=3,
         )
 
@@ -216,3 +216,12 @@ class Scatt3D(Simulation):
         self.solution["diffracted"] = E
         self.solution["total"] = E + self.source.expression
         return E
+
+    def scattering_cross_section(self):
+        raise NotImplementedError
+
+    def absorption_cross_section(self):
+        raise NotImplementedError
+
+    def extinction_cross_section(self):
+        raise NotImplementedError

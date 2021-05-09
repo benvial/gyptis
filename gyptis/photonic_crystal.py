@@ -111,7 +111,6 @@ class PhotonicCrystal2D(Simulation):
         boundary_conditions={},
         polarization="TM",
         degree=1,
-        mat_degree=1,
     ):
         assert isinstance(geometry, Lattice2D)
 
@@ -121,8 +120,8 @@ class PhotonicCrystal2D(Simulation):
         )
         epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
         mu = {k: m + 1e-16j for k, m in mu.items()}
-        epsilon_coeff = Coefficient(epsilon, geometry, degree=mat_degree)
-        mu_coeff = Coefficient(mu, geometry, degree=mat_degree)
+        epsilon_coeff = Coefficient(epsilon, geometry, degree=degree)
+        mu_coeff = Coefficient(mu, geometry, degree=degree)
 
         coefficients = epsilon_coeff, mu_coeff
         formulation = Maxwell2DBands(

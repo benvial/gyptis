@@ -109,7 +109,6 @@ class Grating2D(Simulation):
         boundary_conditions={},
         polarization="TM",
         degree=1,
-        mat_degree=1,
         pml_stretch=1 - 1j,
     ):
         assert isinstance(geometry, Layered2D)

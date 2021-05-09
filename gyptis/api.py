@@ -18,8 +18,9 @@ __all__ = [
     "Geometry",
 ]
 
+from ._meta import _ScatteringBase
+
 #
-# from . import complex
 # from . import complex
 from .complex import Complex
 from .geometry import Geometry
@@ -28,7 +29,13 @@ from .grating3d import Grating3D, Layered3D
 from .photonic_crystal import Lattice2D, PhotonicCrystal2D
 from .scattering2d import BoxPML2D, Scatt2D
 from .scattering3d import BoxPML3D, Scatt3D
+from .simulation import Simulation
 from .source import LineSource, PlaneWave
+
+
+def _check_dimension(dim):
+    if dim not in [2, 3]:
+        raise ValueError("dimension must be 2 or 3")
 
 
 class BoxPML(Geometry):
@@ -65,8 +72,7 @@ class Layered(Geometry):
     """Layered media."""
 
     def __new__(self, dim=3, *args, **kwargs):
-        if dim not in [2, 3]:
-            raise ValueError("dimension must be 2 or 3")
+        _check_dimension(dim)
         if dim == 3:
             return Layered3D(*args, **kwargs)
         else:
@@ -77,19 +83,17 @@ class Lattice(Geometry):
     """Unit cell for periodic problems."""
 
     def __new__(self, dim=3, *args, **kwargs):
-        if dim not in [2, 3]:
-            raise ValueError("dimension must be 2 or 3")
+        _check_dimension(dim)
         if dim == 3:
             raise NotImplementedError
         else:
             return Lattice2D(*args, **kwargs)
 
 
-class Scattering:
+class Scattering(_ScatteringBase, Simulation):
     def __new__(self, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
-        if geom.dim not in [2, 3]:
-            raise ValueError("dimension must be 2 or 3")
+        _check_dimension(geom.dim)
         if geom.dim == 3:
             return Scatt3D(*args, **kwargs)
         else:
@@ -99,8 +103,7 @@ class Scattering:
 class Grating:
     def __new__(self, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
-        if geom.dim not in [2, 3]:
-            raise ValueError("dimension must be 2 or 3")
+        _check_dimension(geom.dim)
         if geom.dim == 3:
             return Grating3D(*args, **kwargs)
         else:
@@ -110,8 +113,7 @@ class Grating:
 class PhotonicCrystal:
     def __new__(self, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
-        if geom.dim not in [2, 3]:
-            raise ValueError("dimension must be 2 or 3")
+        _check_dimension(geom.dim)
         if geom.dim == 3:
             raise NotImplementedError
         else:

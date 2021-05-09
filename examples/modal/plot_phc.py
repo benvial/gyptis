@@ -42,7 +42,7 @@ circ, cell = lattice.fragment(circ, lattice.cell)
 
 ##############################################################################
 # One needs to define physical domains associated with the basic geometrical
-# entities
+# entities:
 
 lattice.add_physical(cell, "background")
 _ = lattice.add_physical(circ, "inclusion")

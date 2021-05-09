@@ -8,6 +8,7 @@ import glob
 import os
 
 from . import ADJOINT, dolfin
+from ._meta import _ScatteringBase
 from .complex import *
 from .formulation import Maxwell2D
 from .geometry import *
@@ -105,7 +106,7 @@ class BoxPML2D(Geometry):
             self.add_physical(self.calc_bnds, "calc_bnds", dim=1)
 
 
-class Scatt2D(Simulation):
+class Scatt2D(_ScatteringBase, Simulation):
     def __init__(
         self,
         geometry,
@@ -116,7 +117,6 @@ class Scatt2D(Simulation):
         polarization="TM",
         modal=False,
         degree=1,
-        mat_degree=1,
         pml_stretch=1 - 1j,
     ):
         assert isinstance(geometry, BoxPML2D)
@@ -134,11 +134,9 @@ class Scatt2D(Simulation):
         )
 
         epsilon_coeff = Coefficient(
-            epsilon, geometry, pmls=[pmlx, pmly, pmlxy], degree=mat_degree
+            epsilon, geometry, pmls=[pmlx, pmly, pmlxy], degree=degree
         )
-        mu_coeff = Coefficient(
-            mu, geometry, pmls=[pmlx, pmly, pmlxy], degree=mat_degree
-        )
+        mu_coeff = Coefficient(mu, geometry, pmls=[pmlx, pmly, pmlxy], degree=degree)
 
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["box", "pmlx", "pmly", "pmlxy"]
@@ -180,7 +178,12 @@ class Scatt2D(Simulation):
     def scattering_cross_section(self):
         uscatt = self.solution["diffracted"]
         vscatt = self.formulation.get_dual(uscatt)
-        Sscatt = (Constant(0.5) * uscatt * vscatt.conj).real
+        re = as_vector([vscatt[1].real, -vscatt[0].real])
+        im = as_vector([vscatt[1].imag, -vscatt[0].imag])
+        EcrossHstar = uscatt * Complex(re, -im)
+        Sscatt = (Constant(0.5) * EcrossHstar).real
+        sign = -1 if self.formulation.polarization == "TM" else +1
+        Sscatt *= sign
         n = self.geometry.unit_normal_vector
         Ws = assemble(dot(n, Sscatt)("+") * self.dS("calc_bnds"))
         S0 = self.time_average_incident_poynting_vector_norm
@@ -190,9 +193,14 @@ class Scatt2D(Simulation):
     def absorption_cross_section(self):
         utot = self.solution["total"]
         vtot = self.formulation.get_dual(utot)
-        Stot = (Constant(0.5) * utot * vtot.conj).real
+        re = as_vector([vtot[1].real, -vtot[0].real])
+        im = as_vector([vtot[1].imag, -vtot[0].imag])
+        EcrossHstar = utot * Complex(re, -im)
+        Stot = (Constant(0.5) * EcrossHstar).real
+        sign = -1 if self.formulation.polarization == "TM" else +1
+        Stot *= sign
         n = self.geometry.unit_normal_vector
-        Wa = assemble(dot(n, Stot)("+") * self.dS("calc_bnds"))
+        Wa = -assemble(dot(n, Stot)("+") * self.dS("calc_bnds"))
         S0 = self.time_average_incident_poynting_vector_norm
         ACS = abs(Wa / S0)
         return ACS
@@ -202,20 +210,37 @@ class Scatt2D(Simulation):
         vi = self.formulation.get_dual(ui)
         uscatt = self.solution["diffracted"]
         vscatt = self.formulation.get_dual(uscatt)
-        Se = (Constant(0.5) * (uscatt * vi.conj + ui * vscatt.conj)).real
+        re = as_vector([vi[1].real, -vi[0].real])
+        im = as_vector([vi[1].imag, -vi[0].imag])
+        EcrossHstar = uscatt * Complex(re, -im)
+        re = as_vector([vscatt[1].real, -vscatt[0].real])
+        im = as_vector([vscatt[1].imag, -vscatt[0].imag])
+        EcrossHstar += ui * Complex(re, -im)
+        Se = (Constant(0.5) * EcrossHstar).real
+        sign = -1 if self.formulation.polarization == "TM" else +1
+        Se *= sign
         n = self.geometry.unit_normal_vector
-        We = assemble(dot(n, Se)("+") * self.dS("calc_bnds"))
+        We = -assemble(dot(n, Se)("+") * self.dS("calc_bnds"))
         S0 = self.time_average_incident_poynting_vector_norm
         ECS = abs(We / S0)
         return ECS
 
-    def get_cross_sections(self):
-        scs = self.scattering_cross_section()
-        acs = self.absorption_cross_section()
-        ecs = self.extinction_cross_section()
-        return dict(scattering=scs, absorption=acs, extinction=ecs)
-
     def local_density_of_states(self, x, y):
+        """Compute the local density of state.
+
+        Parameters
+        ----------
+        x : float
+            x coordinate.
+        y : float
+            y coordinate.
+
+        Returns
+        -------
+        float
+            The local density of states.
+
+        """
         self.source.position = x, y
         if hasattr(self, "solution"):
             self.assemble_rhs()
@@ -223,10 +248,11 @@ class Scatt2D(Simulation):
         else:
             self.solve()
         u = self.solution["total"]
-        delta = 1 + dolfin.DOLFIN_EPS_LARGE
+        eps = dolfin.DOLFIN_EPS_LARGE
+        delta = 1 + eps
         evalpoint = (
-            max(dolfin.DOLFIN_EPS_LARGE, x * delta),
-            max(dolfin.DOLFIN_EPS_LARGE, y * delta),
+            max(eps, x * delta),
+            max(eps, y * delta),
         )
         ldos = -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
         return ldos

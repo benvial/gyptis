@@ -133,7 +133,6 @@ class Grating3D(Simulation):
         source,
         boundary_conditions={},
         degree=1,
-        mat_degree=1,
         pml_stretch=1 - 1j,
         periodic_map_tol=1e-8,
     ):
@@ -169,11 +168,11 @@ class Grating3D(Simulation):
             epsilon,
             geometry,
             pmls=[pml_bottom, pml_top],
-            degree=mat_degree,
+            degree=degree,
             dim=3,
         )
         mu_coeff = Coefficient(
-            mu, geometry, pmls=[pml_bottom, pml_top], degree=mat_degree, dim=3
+            mu, geometry, pmls=[pml_bottom, pml_top], degree=degree, dim=3
         )
 
         coefficients = epsilon_coeff, mu_coeff

@@ -77,15 +77,8 @@ class Formulation(ABC):
 
     @abstractmethod
     def weak(self):
+        """Weak formulation"""
         pass
-
-    # @abstractmethod
-    # def build_lhs(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def build_rhs(self):
-    #     pass
 
     @abstractmethod
     def build_boundary_conditions(self):
@@ -254,7 +247,10 @@ class Maxwell2D(Formulation):
             if self.polarization == "TM"
             else -1j * pulsation * epsilon_0
         )
-        return self.xi.as_subdomain() / Constant(coeff) * grad(field)
+        grad_field = grad(field)
+        re = as_vector([grad_field[1].real, -grad_field[0].real])
+        im = as_vector([grad_field[1].imag, -grad_field[0].imag])
+        return self.xi.as_subdomain() / Constant(coeff) * Complex(re, im)
 
 
 class Maxwell2DBands(Maxwell2D):
