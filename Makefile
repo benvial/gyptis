@@ -183,6 +183,10 @@ gl:
 	@git push origin $(BRANCH)
 	
 
+## Show gitlab repository
+repo:
+	xdg-open https://gitlab.com/gyptis/gyptis
+
 
 ## Clean, reformat and push to gitlab
 save: clean style gl
@@ -281,10 +285,13 @@ covdoc:
 	
 
 ## Tag and push tags
-tag:
+tag: clean style
 	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
-	@echo "  version v$(VERSION)"
+	@echo "Version v$(VERSION)"
+	@git add -A
+	git commit -a -m "Publih v$(VERSION)"
+	@git push origin $(BRANCH)
 	@git tag v$(VERSION) && git push --tags || echo Ignoring tag since it already exists
 	
 ## Create a release
@@ -309,14 +316,43 @@ pypi: package
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@twine upload dist/*
 
-## Tag and upload to pypi
-publish: tag pypi
-
 ## Make checksum for release
 checksum:
 	@echo v$(VERSION)
-	curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256
+	$(eval SHA256 := $(shell curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256 | cut  -c10-))
+	@echo $(SHA256)
+	# @sed -i "s/sha256: .*/sha256: $(SHA256)/" ../test/meta.yaml
+	# @sed -i "s/number: .*/number: 0/" ../test/meta.yaml
+	# @sed -i "s/{% set version = .*/{% set version = \"$(VERSION)\" %}/" ../test/meta.yaml
+	# 
+# 
+# ## Update conda	
+# conda: checksum
+# 	@echo checksum is $(SHA256)
+# 	## 
 
+## Update conda	
+conda: checksum
+	@cd ../gyptis-feedstock && \
+# create branch in forked repo
+	git branch v$(VERSION) && \
+# change recipe: reset build number, update version and checksum
+	@sed -i "s/sha256: .*/sha256: $(SHA256)/" recipe/test/meta.yaml && \
+	@sed -i "s/number: .*/number: 0/" recipe/test/meta.yaml && \
+	@sed -i "s/{% set version = .*/{% set version = \"$(VERSION)\" %}/" recipe/test/meta.yaml && \
+# update
+	@git add -A && \
+	git commit -a -m "New version $(VERSION)" && \
+	@git push origin $(BRANCH) && \
+# create pull request
+	git pull-request --no-edit --browse
+
+
+
+## Publish release on pypi and conda-forge
+publish: tag release pypi conda
+
+	
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################

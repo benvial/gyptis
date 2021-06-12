@@ -8,6 +8,17 @@
    :target: https://gitlab.com/gyptis/gyptis/commits/master
    :alt: pipeline status
 
+.. image:: https://img.shields.io/conda/vn/conda-forge/gyptis?logo=conda-forge&color=CD5C5C&logoColor=white&style=for-the-badge   
+   :target: https://anaconda.org/conda-forge/gyptis
+   :alt: Conda (channel only)
+
+.. image:: https://img.shields.io/conda/dn/conda-forge/gyptis?logo=conda-forge&logoColor=white&style=for-the-badge
+   :alt: Conda
+
+.. image:: https://img.shields.io/conda/pn/conda-forge/gyptis?logo=conda-forge&logoColor=white&style=for-the-badge
+   :alt: Conda
+
+
 .. image:: https://img.shields.io/pypi/v/gyptis?color=blue&logo=pypi&logoColor=e9d672&style=for-the-badge   
   :target: https://pypi.org/project/gyptis/
   :alt: PyPI
@@ -152,9 +163,8 @@ Documentation and examples
 --------------------------
 
 See the `documentation website <https://gyptis.gitlab.io>`_. 
-A good starting point is to look at `examples of application <https://gyptis.gitlab.io/auto_examples/index.html>`_
- for typical 
-problems encountered in photonics.
+A good starting point is to look at `examples of application <https://gyptis.gitlab.io/auto_examples/index.html>`_ 
+for typical problems encountered in photonics.
 
 
 Contributing

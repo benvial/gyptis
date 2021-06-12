@@ -4,7 +4,7 @@ Information about the package.
 
 from datetime import date
 
-__version__ = "0.3.0"
+__version__ = "0.3.2"
 __author__ = u"Benjamin Vial"
 __author_email__ = "benjamin.vial84@gmail.com"
 __copyright__ = u"Copyright (c) 2020-{}, {} <{}>".format(
