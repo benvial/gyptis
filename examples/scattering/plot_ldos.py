@@ -87,14 +87,12 @@ epsilon = {d: n_cyl ** 2 for d in geom.domains}
 epsilon["box"] = 1
 mu = {d: 1 for d in geom.domains}
 
-
 ##############################################################################
 # Instanciate and solve the scattering problem:
 
 s = Scattering(geom, epsilon, mu, ls, degree=2, polarization="TM")
 s.solve()
 G = s.solution["total"]
-
 
 ##############################################################################
 # Here we project the function to plot on a suitable function space using an
@@ -107,7 +105,6 @@ vplot = project(
     solver_type="cg",
     preconditioner_type="jacobi",
 )
-
 
 ##############################################################################
 # Plot the Green's function:

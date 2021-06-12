@@ -10,6 +10,7 @@ import os
 from collections import OrderedDict
 
 from . import ADJOINT, dolfin
+from ._meta import _GratingBase
 from .bc import PeriodicBoundary2DX
 from .complex import *
 from .formulation import Maxwell2DPeriodic
@@ -99,7 +100,7 @@ class Layered2D(Geometry):
         return s
 
 
-class Grating2D(Simulation):
+class Grating2D(_GratingBase, Simulation):
     def __init__(
         self,
         geometry,
@@ -110,6 +111,7 @@ class Grating2D(Simulation):
         polarization="TM",
         degree=1,
         pml_stretch=1 - 1j,
+        periodic_map_tol=1e-8,
     ):
         assert isinstance(geometry, Layered2D)
         assert isinstance(source, PlaneWave)
@@ -175,23 +177,7 @@ class Grating2D(Simulation):
         subdomain_absorption=False,
         verbose=False,
     ):
-        """Postprocess diffraction efficiencies.
 
-        Parameters
-        ----------
-        cplx_effs : bool
-            If `True`, return complex coefficients (amplitude reflection and transmission).
-            If `False`, return real coefficients (power reflection and transmission)
-        orders : bool
-            If `True`, computes the transmission and reflection for all the propagating diffraction orders.
-            If `False`, returns the sum of all the propagating diffraction orders.
-
-        Returns
-        -------
-        dict
-            A dictionary containing the diffraction efficiencies.
-
-        """
         if self.formulation.polarization == "TM":
             nu = 1 / self.mu["substrate"]
         else:

@@ -130,12 +130,9 @@ def test_api():
     return g
 
 
-#
 # import importlib
 # from gyptis import geometry
-#
 # importlib.reload(geometry)
-#
 # from gyptis.geometry import *
 
 

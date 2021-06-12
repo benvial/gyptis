@@ -29,8 +29,8 @@
    :target: https://codeclimate.com/github/benvial/gyptis
    :alt: Code Climate maintainability
 
-.. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4667806-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
- :target: https://doi.org/10.5281/zenodo.4667806
+.. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4732324-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
+ :target: https://doi.org/10.5281/zenodo.4732324
  
 .. image:: https://img.shields.io/badge/license-MIT-blue?color=bb798f&logo=open-access&logoColor=white&style=for-the-badge
  :target: https://gitlab.com/gyptis/docker/-/blob/master/LICENCE.txt
@@ -67,8 +67,22 @@ Conda
 ~~~~~
 
 The easiest way is using `conda <https://www.anaconda.com/>`_. 
-We provide an `environment.yml <https://gitlab.com/gyptis/gyptis/-/blob/master/environment.yml>`_ 
-file with all the dependencies. First create the environment:
+First, add conda-forge to your channels with:
+
+.. code-block:: bash
+    
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+
+Once the conda-forge channel has been enabled, gyptis can be installed with:
+
+.. code-block:: bash
+  
+  conda install gyptis
+
+
+Alternatively, we provide an `environment.yml <https://gitlab.com/gyptis/gyptis/-/blob/master/environment.yml>`_ 
+file with all the dependencies for the master branch. First create the environment:
 
 .. code-block:: bash
 
@@ -80,9 +94,6 @@ and then activate it with
 
   conda activate gyptis
   
-A `conda-forge <https://github.com/conda-forge/staged-recipes/pull/14424>`_ package 
-is being developed and should be available soon.
-
 
 Pipy
 ~~~~
@@ -106,14 +117,21 @@ Docker
 
 Prebuilt container images are available at `DockerHub <https://hub.docker.com/r/gyptis/gyptis>`_
 
-On quick way of testing is getting the installation script
+A quick way of testing is to get the installation script
 
 .. code-block:: bash
 
   curl -s https://gyptis.gitlab.io/get | bash
+  
+
+You will then be able to run the container with 
+
+.. code-block:: bash
+
+  gyptis run
 
 
-Or you can pull the docker image
+Alternatively, you can pull the docker image
 
 .. code-block:: bash
 
@@ -128,6 +146,15 @@ To run the image, use
   
   
 .. inclusion-marker-install-end
+
+
+Documentation and examples
+--------------------------
+
+See the `documentation website <https://gyptis.gitlab.io>`_. 
+A good starting point is to look at `examples of application <https://gyptis.gitlab.io/auto_examples/index.html>`_
+ for typical 
+problems encountered in photonics.
 
 
 Contributing

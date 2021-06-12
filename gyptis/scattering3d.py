@@ -155,8 +155,10 @@ class Scatt3D(_ScatteringBase, Simulation):
         geometry,
         epsilon,
         mu,
-        source,
+        source=None,
         boundary_conditions={},
+        polarization=None,
+        modal=False,
         degree=1,
         pml_stretch=1 - 1j,
     ):

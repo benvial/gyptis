@@ -11,8 +11,9 @@ import numpy as np
 from . import dolfin
 
 
-def read_mesh(mesh_file, data_dir=None, dim=3):
+def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
     meshio_mesh = meshio.read(mesh_file)
+    base_cell_type = "tetra" if dim == 3 else "triangle"
 
     points = meshio_mesh.points[:, :2] if dim == 2 else meshio_mesh.points
     physicals = meshio_mesh.cell_data_dict["gmsh:physical"]
@@ -26,6 +27,13 @@ def read_mesh(mesh_file, data_dir=None, dim=3):
                 cells[cell_type].append(cell.data)
         cells[cell_type] = np.vstack(cells[cell_type])
 
+    if subdomains is not None:
+        doms = subdomains if hasattr(subdomains, "__len__") else list([subdomains])
+        mask = np.hstack([np.where(data_gmsh[0] == i) for i in doms])[0]
+        data_gmsh_ = data_gmsh[0][mask]
+        data_gmsh = (data_gmsh_,)
+        cells[base_cell_type] = cells[base_cell_type][mask]
+
     mesh_data = {}
     for cell_type, data in zip(cell_types, data_gmsh):
         meshio_data = meshio.Mesh(
@@ -38,8 +46,7 @@ def read_mesh(mesh_file, data_dir=None, dim=3):
 
     dolfin_mesh = dolfin.Mesh()
 
-    cell_type = "tetra" if dim == 3 else "triangle"
-    with dolfin.XDMFFile(f"{data_dir}/{cell_type}.xdmf") as infile:
+    with dolfin.XDMFFile(f"{data_dir}/{base_cell_type}.xdmf") as infile:
         infile.read(dolfin_mesh)
 
     markers = {}

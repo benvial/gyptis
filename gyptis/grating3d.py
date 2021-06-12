@@ -8,6 +8,7 @@ from collections import OrderedDict
 from scipy.constants import c, epsilon_0, mu_0
 
 from . import dolfin
+from ._meta import _GratingBase
 from .bc import BiPeriodicBoundary3D
 from .complex import *
 from .formulation import Maxwell3DPeriodic
@@ -124,7 +125,7 @@ class Layered3D(Geometry):
         return s
 
 
-class Grating3D(Simulation):
+class Grating3D(_GratingBase, Simulation):
     def __init__(
         self,
         geometry,
@@ -132,6 +133,7 @@ class Grating3D(Simulation):
         mu,
         source,
         boundary_conditions={},
+        polarization=None,
         degree=1,
         pml_stretch=1 - 1j,
         periodic_map_tol=1e-8,

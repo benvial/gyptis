@@ -34,21 +34,21 @@ def _expression2complex_2d(expr, **kwargs):
     return Complex(*dexpr)
 
 
-def plane_wave_2d(lambda0, theta, amplitude=1, degree=1, domain=None):
-    k0 = 2 * np.pi / lambda0
+def plane_wave_2d(wavelength, theta, amplitude=1, degree=1, domain=None):
+    k0 = 2 * np.pi / wavelength
     K = k0 * np.array((np.cos(theta), np.sin(theta)))
     K_ = _vector(sp.symbols("kx, ky, 0", real=True))
     expr = amplitude * sp.exp(1j * K_.dot(_X))
     return _expression2complex_2d(expr, kx=K[0], ky=K[1], degree=degree, domain=domain)
 
 
-def plane_wave_3d(lambda0, theta, phi, psi, amplitude=1, degree=1, domain=None):
+def plane_wave_3d(wavelength, theta, phi, psi, amplitude=1, degree=1, domain=None):
 
     cx = np.cos(psi) * np.cos(theta) * np.cos(phi) - np.sin(psi) * np.sin(phi)
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)
     cz = -np.cos(psi) * np.sin(theta)
 
-    k0 = 2 * np.pi / lambda0
+    k0 = 2 * np.pi / wavelength
     K = k0 * np.array(
         (
             np.sin(theta) * np.cos(phi),
@@ -68,14 +68,14 @@ def plane_wave_3d(lambda0, theta, phi, psi, amplitude=1, degree=1, domain=None):
     return Complex(prop[0] * C, prop[1] * C)
 
 
-def green_function_2d(lambda0, xs, ys, amplitude=1, degree=1, domain=None):
+def green_function_2d(wavelength, xs, ys, amplitude=1, degree=1, domain=None):
     Xs = _vector(sp.symbols("xs, ys, 0", real=True))
     k0 = sp.symbols("k0", real=True)
     Xshift = _X - Xs
     rho = sp.sqrt(Xshift.dot(Xshift))
     rho = rho.subs(_x[2], 0)
     kr = k0 * rho
-    k0_ = 2 * np.pi / lambda0
+    k0_ = 2 * np.pi / wavelength
     KR = dolfin.Expression(
         sp.printing.ccode(kr), k0=k0_, xs=xs, ys=ys, degree=degree, domain=domain
     )

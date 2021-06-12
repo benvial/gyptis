@@ -18,7 +18,7 @@ __all__ = [
     "Geometry",
 ]
 
-from ._meta import _ScatteringBase
+from ._meta import _GratingBase, _ScatteringBase
 
 #
 # from . import complex
@@ -39,7 +39,7 @@ def _check_dimension(dim):
 
 
 class BoxPML(Geometry):
-    """BoxPML(dim, box_size,box_center,pml_width,Rcalc=0, model_name="Box with PMLs",**kwargs)
+    """BoxPML(dim, box_size, box_center, pml_width, Rcalc=0, model_name="Box with PMLs", **kwargs)
     Computational domain with Perfectly Matched Layers (PMLs).
 
     Parameters
@@ -91,6 +91,38 @@ class Lattice(Geometry):
 
 
 class Scattering(_ScatteringBase, Simulation):
+    """Scattering(geometry, epsilon, mu, source=None, boundary_conditions={}, polarization="TM", modal=False, degree=1, pml_stretch=1 - 1j)
+    Scattering problem.
+
+    Parameters
+    ----------
+    geometry : :class:`~gyptis.Geometry`.
+        Description of parameter `geometry`.
+    epsilon : dict
+        Permittivity in various subdomains.
+    mu : dict
+        Permeability in various subdomains.
+    source : :class:`~gyptis.source.Source`.
+        Excitation (the default is None).
+    boundary_conditions : dict
+        Boundary conditions {"boundary": "condition"} (the default is {}).
+        Valid condition is only "PEC".
+    polarization : str
+        Polarization case (only makes sense for 2D problems, the default is "TM").
+    modal : str
+        Perform modal analysis (the default is False).
+    degree : int
+        Degree of finite elements interpolation (the default is 1).
+    pml_stretch : complex
+        Complex coordinate stretch for te PMLs (the default is 1 - 1j).
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+
     def __new__(self, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
         _check_dimension(geom.dim)
@@ -100,7 +132,38 @@ class Scattering(_ScatteringBase, Simulation):
             return Scatt2D(*args, **kwargs)
 
 
-class Grating:
+class Grating(_GratingBase, Simulation):
+    """Grating(geometry, epsilon, mu, source, boundary_conditions={}, polarization="TM", degree=1, pml_stretch=1 - 1j, periodic_map_tol=1e-8)
+    Grating problem.
+
+    Parameters
+    ----------
+    geometry : type
+        Description of parameter `geometry`.
+    epsilon : type
+        Description of parameter `epsilon`.
+    mu : type
+        Description of parameter `mu`.
+    source : type
+        Description of parameter `source`.
+    boundary_conditions : type
+        Description of parameter `boundary_conditions` (the default is {}).
+    polarization : type
+        Description of parameter `polarization` (the default is "TM").
+    degree : type
+        Description of parameter `degree` (the default is 1).
+    pml_stretch : type
+        Description of parameter `pml_stretch` (the default is 1 - 1j).
+    periodic_map_tol : type
+        Description of parameter `periodic_map_tol` (the default is 1e-8).
+
+    Returns
+    -------
+    type
+        Description of returned object.
+
+    """
+
     def __new__(self, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
         _check_dimension(geom.dim)

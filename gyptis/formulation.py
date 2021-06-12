@@ -15,18 +15,9 @@ from scipy.constants import epsilon_0, mu_0
 from . import dolfin
 from .bc import *
 from .complex import *
+from .helpers import project_iterative
 from .source import PlaneWave
 from .stack import make_stack
-
-
-def _project_bc_function(applied_function, function_space):
-    ## FIXME: project is slow, avoid it.
-    return project(
-        applied_function,
-        function_space,
-        solver_type="cg",
-        preconditioner_type="jacobi",
-    )
 
 
 class Formulation(ABC):
@@ -170,7 +161,7 @@ class Maxwell2D(Formulation):
                 form_dom_func = self.maxwell(
                     u, v, xi_dict[dom], chi_dict[dom], domain=dom
                 )
-                form = [form[i] + form_extra[i] for i in range(2)]
+                form = [form[i] + form_dom_func[i] for i in range(2)]
             else:
                 form += self.maxwell(u, v, xi_dict[dom], chi_dict[dom], domain=dom)
 
@@ -213,15 +204,15 @@ class Maxwell2D(Formulation):
 
     @property
     def weak(self):
-        u1 = self.source.expression if self.source is not None else 0
+        u1 = self.source.expression if not self.modal else 0
         u = self.trial
         v = self.test
         return self._weak(u, v, u1)
 
     def build_pec_boundary_conditions(self, applied_function):
         if self.polarization == "TM" and self.pec_boundaries != []:
-
-            applied_function = _project_bc_function(
+            ## FIXME: project is slow, avoid it.
+            applied_function = project_iterative(
                 applied_function, self.real_function_space
             )
             _boundary_conditions = build_pec_boundary_conditions(
@@ -285,9 +276,14 @@ class Maxwell2DBands(Maxwell2D):
 class Maxwell2DPeriodic(Maxwell2D):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.propagation_vector = self.source.wavenumber * np.array(
-            [np.cos(self.source.angle), np.sin(self.source.angle)]
-        )
+
+        if self.modal:
+            self.propagation_vector = np.array([self.propagation_constant, 0])
+
+        else:
+            self.propagation_vector = self.source.wavenumber * np.array(
+                [np.cos(self.source.angle), np.sin(self.source.angle)]
+            )
         self.phasor = phasor(
             self.propagation_vector[0],
             direction=0,
@@ -306,13 +302,18 @@ class Maxwell2DPeriodic(Maxwell2D):
 
     @property
     def weak(self):
-        u1 = self.annex_field["as_subdomain"]["stack"]
+        u1 = self.annex_field["as_subdomain"]["stack"] if not self.modal else 0
         u = self.trial * self.phasor
         v = self.test * self.phasor.conj
         return super()._weak(u, v, u1)
 
     def build_boundary_conditions(self):
-        applied_function = -self.annex_field["as_subdomain"]["stack"] * self.phasor.conj
+
+        applied_function = (
+            Constant(0)
+            if self.modal
+            else -self.annex_field["as_subdomain"]["stack"] * self.phasor.conj
+        )
         self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
 
@@ -383,7 +384,8 @@ class Maxwell3D(Formulation):
 
     def build_pec_boundary_conditions(self, applied_function):
         if self.pec_boundaries != []:
-            applied_function = _project_bc_function(
+            ## FIXME: project is slow, avoid it.
+            applied_function = project_iterative(
                 applied_function, self.real_function_space
             )
             _boundary_conditions = build_pec_boundary_conditions(
@@ -397,7 +399,9 @@ class Maxwell3D(Formulation):
         return _boundary_conditions
 
     def build_boundary_conditions(self):
-        applied_function = -self.source.expression
+        applied_function = (
+            Constant((0, 0, 0)) if self.modal else -self.source.expression
+        )
         self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
 

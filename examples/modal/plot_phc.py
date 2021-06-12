@@ -1,4 +1,8 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author: Benjamin Vial
+# License: MIT
+
 """
 Band diagram of 2D photonic crystal
 ===================================

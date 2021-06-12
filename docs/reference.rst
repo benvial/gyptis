@@ -61,9 +61,9 @@ If you use Gyptis in your research, we would appreciate you cite us
 
   @misc{gyptis,
     author       = {Vial, Benjamin},
-    title        = {Gyptis: {C}omputational {P}hotonics in {P}ython (version)},
+    title        = {Gyptis: {C}omputational {P}hotonics in {P}ython.},
     year         = 2020,
-    doi          = {10.5281/zenodo.4667806},
+    doi          = {10.5281/zenodo.4732324},
     }
      
 .. _Gmsh: https://gmsh.info/

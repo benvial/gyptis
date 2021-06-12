@@ -6,9 +6,7 @@ API Reference
 
 
 
-.. automodule:: gyptis
-    :no-members:
-    :no-inherited-members:
+
 
 Geometry classes
 """"""""""""""""

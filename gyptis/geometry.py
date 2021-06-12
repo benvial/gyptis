@@ -694,8 +694,13 @@ class Geometry(object):
             gmsh.finalize()
         return self.mesh_object
 
-    def read_mesh_file(self):
-        return read_mesh(self.msh_file, data_dir=self.data_dir, dim=self.dim)
+    def read_mesh_file(self, subdomains=None):
+        return read_mesh(
+            self.msh_file, data_dir=self.data_dir, dim=self.dim, subdomains=subdomains
+        )
+
+    def extract_sub_mesh(self, subdomains):
+        return self.read_mesh_file(subdomains=subdomains)["mesh"]
 
     def generate_mesh(self, generate=True, write=True, read=True):
         if generate:

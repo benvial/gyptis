@@ -241,6 +241,9 @@ class Scatt2D(_ScatteringBase, Simulation):
             The local density of states.
 
         """
+        # self.source =  LineSource(
+        #     wavelength=self.source.wavelength, position=(x, y),domain=self.mesh, degree=self.degree,
+        # )
         self.source.position = x, y
         if hasattr(self, "solution"):
             self.assemble_rhs()
@@ -250,10 +253,11 @@ class Scatt2D(_ScatteringBase, Simulation):
         u = self.solution["total"]
         eps = dolfin.DOLFIN_EPS_LARGE
         delta = 1 + eps
-        evalpoint = (
-            max(eps, x * delta),
-            max(eps, y * delta),
-        )
+        evalpoint = x * delta, y * delta
+        if evalpoint[0] == 0:
+            evalpoint = eps, evalpoint[1]
+        if evalpoint[1] == 0:
+            evalpoint = evalpoint[0], eps
         ldos = -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
         return ldos
 

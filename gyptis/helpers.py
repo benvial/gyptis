@@ -8,6 +8,7 @@ import sys
 import numpy as np
 
 from . import dolfin
+from .complex import project
 
 
 def array2function(a, A):
@@ -26,10 +27,24 @@ def array2function(a, A):
         The converted array.
 
     """
+
     u = dolfin.Function(A)
-    u.vector().set_local(a)
+    dofmap = A.dofmap()
+    x = A.tabulate_dof_coordinates().reshape((-1, 2))
+    first_dof, last_dof = dofmap.ownership_range()
+    unowned = dofmap.local_to_global_unowned()
+    # dofs = [dofmap.local_to_global_index(dof) not in unowned for dof in range(last_dof-first_dof)]
+
+    u.vector().set_local(a[first_dof:last_dof])
+    # u.vector().set_local(a)
+
+    # print("len(array2function)", len(a))
+    # print("first last ", (first_dof, last_dof))
+    # print("len(sub array)", len(a[first_dof:last_dof]))
+
     dolfin.as_backend_type(u.vector()).update_ghost_values()
     u.vector().apply("insert")
+
     return u
 
 
@@ -62,9 +77,9 @@ def get_coordinates(A):
     return dof_coordinates
 
 
-def mpi_print(s):
+def mpi_print(*args, **kwargs):
     if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
-        print(s)
+        print(*args, **kwargs)
         sys.stdout.flush()
 
 
@@ -126,3 +141,12 @@ def _translation_matrix(t):
     M = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
     M[3], M[7], M[11] = t
     return M
+
+
+def project_iterative(applied_function, function_space):
+    return project(
+        applied_function,
+        function_space,
+        solver_type="cg",
+        preconditioner_type="jacobi",
+    )

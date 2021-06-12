@@ -97,25 +97,24 @@ for jangle, angle in enumerate([0, 20, 40]):
     angle_degree = (90 - angle) * np.pi / 180
 
     pw = PlaneWave(lambda0, angle_degree, dim=2)
-    grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
-    grating_TE.solve()
-    effs_TE = grating_TE.diffraction_efficiencies(2, orders=True)
+    grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+    grating_TM.solve()
+    effs_TE = grating_TM.diffraction_efficiencies(2, orders=True)
 
-    E = grating_TE.solution["total"]
     print(f"angle = {angle}, TM polarization")
     print("--------------------------------")
     print("R: ", effs_TE["R"])
     print("T: ", effs_TE["T"])
 
     ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
-    d = grating_TE.period
+    d = grating_TM.period
     nper = 8
 
-    vminTE, vmaxTE = -1.5, 1.7
+    vmin_TM, vmax_TM = -1.5, 1.7
     plt.sca(ax[jangle][0])
-    per_plots, cb = grating_TE.plot_field(nper=nper)
+    per_plots, cb = grating_TM.plot_field(nper=nper)
     cb.remove()
-    scatt_lines, layers_lines = grating_TE.plot_geometry(nper=nper, c="k")
+    scatt_lines, layers_lines = grating_TM.plot_geometry(nper=nper, c="k")
     [layers_lines[i].remove() for i in [0, 1, 3, 4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
@@ -123,22 +122,22 @@ for jangle, angle in enumerate([0, 20, 40]):
 
     #### TE
 
-    grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+    grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 
-    grating_TM.solve()
-    effs_TM = grating_TM.diffraction_efficiencies(2, orders=True)
+    grating_TE.solve()
+    effs_TM = grating_TE.diffraction_efficiencies(2, orders=True)
 
-    H = grating_TM.solution["total"]
+    H = grating_TE.solution["total"]
     print(f"angle = {angle}, TE polarization")
     print("--------------------------------")
     print("R: ", effs_TM["R"])
     print("T: ", effs_TM["T"])
 
-    vminTM, vmaxTM = -2.5, 2.5
+    vmin_TE, vmax_TE = -2.5, 2.5
     plt.sca(ax[jangle][1])
-    per_plots, cb = grating_TM.plot_field(nper=nper)
+    per_plots, cb = grating_TE.plot_field(nper=nper)
     cb.remove()
-    scatt_lines, layers_lines = grating_TM.plot_geometry(nper=nper, c="k")
+    scatt_lines, layers_lines = grating_TE.plot_geometry(nper=nper, c="k")
     [layers_lines[i].remove() for i in [0, 1, 3, 4]]
     plt.ylim(ylim)
     plt.xlim(-d / 2, nper * d - d / 2)
@@ -151,17 +150,19 @@ for jangle, angle in enumerate([0, 20, 40]):
 divider = make_axes_locatable(ax[0, 0])
 cax = divider.new_vertical(size="5%", pad=0.5)
 fig.add_axes(cax)
-mTE = plt.cm.ScalarMappable(cmap="RdBu")
-mTE.set_clim(vminTE, vmaxTE)
-cbarTE = fig.colorbar(mTE, cax=cax, orientation="horizontal")
+mTM = plt.cm.ScalarMappable(cmap="RdBu")
+mTM.set_clim(vmin_TM, vmax_TM)
+
+cbarTM = fig.colorbar(mTM, cax=cax, orientation="horizontal")
 cax.set_title(r"${\rm Re}\, E_z$ (TM)")
 
 divider = make_axes_locatable(ax[0, 1])
 cax = divider.new_vertical(size="5%", pad=0.5)
-mTM = plt.cm.ScalarMappable(cmap="RdBu")
-mTM.set_clim(vminTM, vmaxTM)
+
+mTE = plt.cm.ScalarMappable(cmap="RdBu")
+mTE.set_clim(vmin_TE, vmax_TE)
 fig.add_axes(cax)
-cbarTM = fig.colorbar(mTM, cax=cax, orientation="horizontal")
+cbarTE = fig.colorbar(mTE, cax=cax, orientation="horizontal")
 cax.set_title(r"${\rm Re}\, H_z$ (TE)")
 
 plt.tight_layout()

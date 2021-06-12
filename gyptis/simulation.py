@@ -124,7 +124,7 @@ class Simulation:
         self.apply_boundary_conditions()
         return self.solve_system()
 
-    def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, parameters={}):
+    def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, **kwargs):
 
         wf = self.formulation.weak
         # A = assemble(wf[0])
@@ -147,8 +147,8 @@ class Simulation:
             dolfin.as_backend_type(A), dolfin.as_backend_type(B)
         )
         # eigensolver.parameters["problem_type"] = "gen_hermitian"
-        eigensolver.parameters["spectrum"] = "target real"
-        # eigensolver.parameters["spectrum"] = "target magnitude"
+        # eigensolver.parameters["spectrum"] = "target real"
+        eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
         # eigensolver.parameters["solver"] = "power"
         eigensolver.parameters["spectral_shift"] = float(wavevector_target ** 2)
@@ -163,8 +163,7 @@ class Simulation:
         # dolfin.PETScOptions.set("eps_mpd", "600")
         # dolfin.PETScOptions.set("eps_nev", "400")
 
-        # eigensolver.parameters["verbose"] = True  # for debugging
-        eigensolver.parameters.update(parameters)
+        eigensolver.parameters.update(kwargs)
         eigensolver.solve(2 * n_eig)
 
         nconv = eigensolver.get_number_converged()
@@ -188,7 +187,7 @@ class Simulation:
             KNs.append(kn)
             UNs.append(eig_vec)
 
-        # HACK: We get the complex conjugates as well so compoute twice
+        # HACK: We get the complex conjugates as well so compute twice
         # as much eigenvalues and return only half
         KNs = np.array(KNs)[::2]
         UNs = UNs[::2]
