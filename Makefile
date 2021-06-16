@@ -26,17 +26,12 @@ else
 HAS_CONDA=True
 endif
 
-
 ifdef TEST_PARALLEL
 TEST_ARGS=-n auto #--dist loadscope
 endif
 
 
-	
-
 message = @make -s printmessage RULE=${1}
-
-
 
 printmessage: 
 	@sed -n -e "/^## / { \
@@ -185,6 +180,7 @@ gl:
 
 ## Show gitlab repository
 repo:
+	$(call message,${@})
 	xdg-open https://gitlab.com/gyptis/gyptis
 
 
@@ -290,7 +286,7 @@ tag: clean style
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@echo "Version v$(VERSION)"
 	@git add -A
-	git commit -a -m "Publih v$(VERSION)"
+	git commit -a -m "Publish v$(VERSION)"
 	@git push origin $(BRANCH)
 	@git tag v$(VERSION) && git push --tags || echo Ignoring tag since it already exists
 	
@@ -302,7 +298,7 @@ release:
 	--name "version $(VERSION)" --tag-name "v$(VERSION)" --description "Released version $(VERSION)"
                                      
 
-## Package 
+## Create python package
 package: setup.py
 	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
@@ -318,39 +314,30 @@ pypi: package
 
 ## Make checksum for release
 checksum:
+	$(call message,${@})
 	@echo v$(VERSION)
 	$(eval SHA256 := $(shell curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256 | cut  -c10-))
 	@echo $(SHA256)
-	# @sed -i "s/sha256: .*/sha256: $(SHA256)/" ../test/meta.yaml
-	# @sed -i "s/number: .*/number: 0/" ../test/meta.yaml
-	# @sed -i "s/{% set version = .*/{% set version = \"$(VERSION)\" %}/" ../test/meta.yaml
-	# 
-# 
-# ## Update conda	
-# conda: checksum
-# 	@echo checksum is $(SHA256)
-# 	## 
 
-## Update conda	
+## Update conda-forge package
 conda: checksum
-	@cd ../gyptis-feedstock && \
-# create branch in forked repo
-	git branch v$(VERSION) && \
-# change recipe: reset build number, update version and checksum
-	@sed -i "s/sha256: .*/sha256: $(SHA256)/" recipe/test/meta.yaml && \
-	@sed -i "s/number: .*/number: 0/" recipe/test/meta.yaml && \
-	@sed -i "s/{% set version = .*/{% set version = \"$(VERSION)\" %}/" recipe/test/meta.yaml && \
-# update
-	@git add -A && \
+	$(call message,${@})
+	@cd .. && rm -rf gyptis-feedstock && \
+	git clone https://github.com/benvial/gyptis-feedstock && cd gyptis-feedstock  && \
+	git branch v$(VERSION) && git checkout v$(VERSION) && \
+	sed -i "s/sha256: .*/sha256: $(SHA256)/" recipe/meta.yaml && \
+	sed -i "s/number: .*/number: 0/" recipe/meta.yaml && \
+	sed -i "s/{% set version = .*/{% set version = \"$(VERSION)\" %}/" recipe/meta.yaml && \
+	git add . && \
 	git commit -a -m "New version $(VERSION)" && \
-	@git push origin $(BRANCH) && \
-# create pull request
-	git pull-request --no-edit --browse
+	git push origin v$(VERSION) && \
+	# hub pull-request --no-edit --browse
 
 
 
 ## Publish release on pypi and conda-forge
 publish: tag release pypi conda
+	$(call message,${@})
 
 	
 #################################################################################

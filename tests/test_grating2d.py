@@ -90,6 +90,20 @@ def test_grating2d(polarization, degree):
     s.plot_field(nper=3)
     s.plot_geometry(nper=3, c="k")
 
+    ### modal
+
+    s = Grating2D(
+        geom,
+        epsilon,
+        mu,
+        modal=True,
+        propagation_constant=0.6,
+        degree=degree,
+        polarization=polarization,
+    )
+    s.eigensolve(n_eig=6, wavevector_target=6)
+    uns = s.solution["eigenvectors"]
+
 
 @pytest.mark.parametrize("polarization,degree", pytest_params)
 def test_grating2dpec(polarization, degree):

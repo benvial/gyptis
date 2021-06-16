@@ -29,6 +29,7 @@ class Formulation(ABC):
         source=None,
         boundary_conditions={},
         modal=False,
+        degree=1,
     ):
         self.geometry = geometry
         self.coefficients = coefficients
@@ -38,6 +39,7 @@ class Formulation(ABC):
         self.test = TestFunction(self.function_space)
         self.boundary_conditions = boundary_conditions
         self.modal = modal
+        self.degree = degree
 
         self.measure = geometry.measure
         self.dx = self.measure["dx"]
@@ -107,6 +109,7 @@ class Maxwell2D(Formulation):
         source_domains=[],
         reference=None,
         modal=False,
+        degree=1,
     ):
         super().__init__(
             geometry,
@@ -115,6 +118,7 @@ class Maxwell2D(Formulation):
             source=source,
             boundary_conditions=boundary_conditions,
             modal=modal,
+            degree=degree,
         )
 
         self.source_domains = source_domains
@@ -245,10 +249,9 @@ class Maxwell2D(Formulation):
 
 
 class Maxwell2DBands(Maxwell2D):
-    def __init__(self, *args, propagation_vector=(0, 0), degree=1, **kwargs):
+    def __init__(self, *args, propagation_vector=(0, 0), **kwargs):
         super().__init__(*args, **kwargs, modal=True)
         self.propagation_vector = propagation_vector
-        self.degree = degree
 
     @property
     def phasor(self):
@@ -274,8 +277,9 @@ class Maxwell2DBands(Maxwell2D):
 
 
 class Maxwell2DPeriodic(Maxwell2D):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, propagation_constant=0.0, **kwargs):
         super().__init__(*args, **kwargs)
+        self.propagation_constant = propagation_constant
 
         if self.modal:
             self.propagation_vector = np.array([self.propagation_constant, 0])
@@ -287,17 +291,21 @@ class Maxwell2DPeriodic(Maxwell2D):
         self.phasor = phasor(
             self.propagation_vector[0],
             direction=0,
-            degree=self.source.degree,
+            degree=self.degree,
             domain=self.geometry.mesh,
         )
-        self.annex_field = make_stack(
-            self.geometry,
-            self.coefficients,
-            self.source,
-            polarization=self.polarization,
-            source_domains=self.source_domains,
-            degree=self.source.degree,
-            dim=2,
+        self.annex_field = (
+            make_stack(
+                self.geometry,
+                self.coefficients,
+                self.source,
+                polarization=self.polarization,
+                source_domains=self.source_domains,
+                degree=self.degree,
+                dim=2,
+            )
+            if not self.modal
+            else None
         )
 
     @property
@@ -420,7 +428,7 @@ class Maxwell3DPeriodic(Maxwell3D):
             phasor(
                 self.propagation_vector[i],
                 direction=i,
-                degree=self.source.degree,
+                degree=self.degree,
                 domain=self.geometry.mesh,
             )
             for i in range(3)
@@ -431,7 +439,7 @@ class Maxwell3DPeriodic(Maxwell3D):
             self.coefficients,
             self.source,
             source_domains=self.source_domains,
-            degree=self.source.degree,
+            degree=self.degree,
             dim=3,
         )
 

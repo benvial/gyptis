@@ -106,16 +106,19 @@ class Grating2D(_GratingBase, Simulation):
         geometry,
         epsilon,
         mu,
-        source,
+        source=None,
         boundary_conditions={},
         polarization="TM",
+        modal=False,
         degree=1,
         pml_stretch=1 - 1j,
         periodic_map_tol=1e-8,
+        propagation_constant=0.0,
     ):
         assert isinstance(geometry, Layered2D)
-        assert isinstance(source, PlaneWave)
-        assert source.dim == 2
+        if source:
+            assert isinstance(source, PlaneWave)
+            assert source.dim == 2
         self.epsilon = epsilon
         self.mu = mu
         self.degree = degree
@@ -142,9 +145,13 @@ class Grating2D(_GratingBase, Simulation):
         mu_coeff = Coefficient(mu, geometry=geometry, pmls=[pml_top, pml_bottom])
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["substrate", "superstrate", "pml_bottom", "pml_top"]
-        source_domains = [
-            dom for dom in geometry.domains if dom not in no_source_domains
-        ]
+
+        if modal:
+            source_domains = []
+        else:
+            source_domains = [
+                dom for dom in geometry.domains if dom not in no_source_domains
+            ]
 
         formulation = Maxwell2DPeriodic(
             geometry,
@@ -153,10 +160,12 @@ class Grating2D(_GratingBase, Simulation):
             source=source,
             source_domains=source_domains,
             reference="superstrate",
+            modal=modal,
             polarization=polarization,
             boundary_conditions=boundary_conditions,
+            propagation_constant=propagation_constant,
+            degree=degree,
         )
-
         super().__init__(geometry, formulation)
 
     def solve_system(self, again=False):
@@ -448,3 +457,10 @@ class Grating2D(_GratingBase, Simulation):
         )
         os.system(f"rm -f {tmpdir}/animation_tmp_*.png")
         return anim
+
+    def eigensolve(self, *args, **kwargs):
+        sol = super().eigensolve(*args, **kwargs)
+        self.solution["eigenvectors"] = [
+            u * self.formulation.phasor for u in sol["eigenvectors"]
+        ]
+        return self.solution

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="196mm"
+   height="60mm"
+   viewBox="0 0 196 60"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15, custom)"
+   sodipodi:docname="gyptis-name.svg"
+   inkscape:export-filename="/home/bench/dev/gyptis/gyptis/docs/_assets/gyptis-name.png"
+   inkscape:export-xdpi="600"
+   inkscape:export-ydpi="600">
+  <defs
+     id="defs2">
+    <rect
+       x="90.860382"
+       y="37.028122"
+       width="130.50626"
+       height="43.309494"
+       id="rect834" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#ffffff"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="307.73845"
+     inkscape:cy="148.81505"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1080"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-43.580285,-34.485508)">
+    <text
+       xml:space="preserve"
+       id="text832"
+       style="font-size:7.05556px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect834);fill:#333333;fill-opacity:0.996078;"
+       transform="matrix(1.1199974,0,0,1.1199974,9.2393446,4.8315944)"><tspan
+         x="90.861328"
+         y="64.529268"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'Nunito Sans';-inkscape-font-specification:'Nunito Sans, Light';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ffffff;fill-opacity:0.996078">GYPTIS</tspan></tspan></text>
+    <path
+       id="rect854"
+       style="fill:#ffffff;fill-opacity:0.996078;stroke:#9b3600;stroke-width:0"
+       d="M 77.175476,38.18091 66.649507,48.706876 V 80.284781 L 77.175476,90.810749 103.49073,64.49549 95.596769,56.601523 H 82.438118 v 5.262645 h 5.263324 v 5.262644 h -5.263324 -5.262642 v -5.262644 -5.262645 -5.263324 h 5.262642 7.895327 z M 61.386862,53.969521 50.860895,64.49549 61.386862,75.021456 Z" />
+  </g>
+</svg>
