@@ -3,16 +3,17 @@
 # Author: Benjamin Vial
 # License: MIT
 
-from . import dolfin
-from .complex import *
+import copy
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.tri import Triangulation
-import copy
 
+from . import dolfin
+from .complex import *
 
 gyptis_colors = dict(
     red=(210 / 255, 95 / 255, 95 / 255), green=(69 / 255, 149 / 255, 125 / 255)

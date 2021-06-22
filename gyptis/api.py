@@ -31,7 +31,7 @@ from .photonic_crystal import Lattice2D, PhotonicCrystal2D
 from .scattering2d import BoxPML2D, Scatt2D
 from .scattering3d import BoxPML3D, Scatt3D
 from .simulation import Simulation
-from .source import LineSource, PlaneWave, GaussianBeam
+from .source import GaussianBeam, LineSource, PlaneWave
 
 
 def _check_dimension(dim):
