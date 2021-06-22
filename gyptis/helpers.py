@@ -11,6 +11,7 @@ from . import dolfin
 from .complex import project
 
 
+
 def array2function(a, A):
     """Convert a numpy array to a fenics Function.
 

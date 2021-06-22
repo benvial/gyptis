@@ -3,31 +3,42 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import copy
-
+from . import dolfin
+from .complex import *
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.tri import Triangulation
+import copy
 
-from gyptis.complex import *
-
-from . import dolfin
 
 gyptis_colors = dict(
     red=(210 / 255, 95 / 255, 95 / 255), green=(69 / 255, 149 / 255, 125 / 255)
 )
 
-_cmap = LinearSegmentedColormap.from_list(
-    "gyptis", [gyptis_colors["green"], (1, 1, 1), gyptis_colors["red"]], N=100
+plt.register_cmap(
+    cmap=LinearSegmentedColormap.from_list(
+        "gyptis", [gyptis_colors["green"], (1, 1, 1), gyptis_colors["red"]], N=100
+    )
 )
-plt.register_cmap(cmap=_cmap)
-_cmap = LinearSegmentedColormap.from_list(
-    "gyptis_r", [gyptis_colors["red"], (1, 1, 1), gyptis_colors["green"]], N=100
+plt.register_cmap(
+    cmap=LinearSegmentedColormap.from_list(
+        "gyptis_r", [gyptis_colors["red"], (1, 1, 1), gyptis_colors["green"]], N=100
+    )
 )
-plt.register_cmap(cmap=_cmap)
+plt.register_cmap(
+    cmap=LinearSegmentedColormap.from_list(
+        "gyptis_white", [(1, 1, 1), (1, 1, 1), (1, 1, 1)], N=100
+    )
+)
+
+plt.register_cmap(
+    cmap=LinearSegmentedColormap.from_list(
+        "gyptis_black", [(0, 0, 0), (0, 0, 0), (0, 0, 0)], N=100
+    )
+)
 
 
 def get_boundaries(markers, domain=None, shift=(0, 0)):
@@ -126,7 +137,7 @@ def plotcplx(test, ax=None, markers=None, proj_space=None, ref_cbar=False, **kwa
     return P, C
 
 
-def plot(test, ax=None, markers=None, proj_space=None, **kwargs):
+def plot(test, ax=None, markers=None, proj_space=None, colorbar=True, **kwargs):
     proj = proj_space is not None
     if "cmap" not in kwargs:
         kwargs["cmap"] = "inferno"
@@ -136,7 +147,7 @@ def plot(test, ax=None, markers=None, proj_space=None, **kwargs):
         test = project(test, proj_space)
     plt.sca(ax)
     p = dolfin.plot(test, **kwargs)
-    cbar = plt.colorbar(p)
+    cbar = plt.colorbar(p) if colorbar else None
     if markers:
         plot_subdomains(markers)
 

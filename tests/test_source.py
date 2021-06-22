@@ -92,3 +92,9 @@ def test_dipole():
     # dip_ = project(dip.expression, W)
     # test = Complex(-11.263053291794082, 6.217332750825683)
     # assert abs(dip_(0, 0) - test) < 1e-12
+
+
+def test_gaussian_beam():
+    degree = 1
+    mesh = dolfin.UnitSquareMesh(50, 50)
+    gb = GaussianBeam(1, 0.4, 0.2, dim=2, domain=mesh, degree=degree)

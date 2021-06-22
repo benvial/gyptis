@@ -263,6 +263,34 @@ class Dipole(Source):
         return _expression
 
 
+
+class GaussianBeam(Source):
+    def __init__(self, wavelength, angle,waist, dim, Npw=101, amplitude=1, degree=1, domain=None):
+        super().__init__(wavelength, dim, degree=degree, domain=domain)
+        self.angle = angle
+        self.amplitude = amplitude
+        self.Npw = Npw
+        self.waist = waist
+
+    @property
+    def expression(self):
+        if self.dim == 2:
+            _expression = 0
+            for t in np.linspace(-np.pi/2,np.pi/2,self.Npw ): 
+                _expression += plane_wave_2d(
+                    self.wavelength,
+                    self.angle+t,
+                    amplitude=self.amplitude,
+                    degree=self.degree,
+                    domain=self.domain,
+                )* Constant(np.exp(-t**2/self.waist**2))
+        else:
+            raise(NotImplementedError)
+        return _expression
+
+
+
+
 #
 # mesh = dolfin.UnitSquareMesh(50, 50)
 # pw = PlaneWave(0.3, 0*np.pi/2, 2, degree=2)
