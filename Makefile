@@ -210,10 +210,16 @@ less:
 	$(call message,${@})
 	@rm -f docs/_custom/static/css/*.css
 	@cd docs/_custom/static/css/less && \
-	$(LESSC) custom_styles.less  ../custom_styles.css && \
-	$(LESSC) custom_gallery.less  ../custom_gallery.css && \
-	$(LESSC) custom_pygments.less  ../custom_pygments.css && \
-	$(LESSC) custom_notebook.less  ../custom_notebook.css
+	make_css $(LESSC)
+
+## Rebuild css on change
+watch-less:
+	$(call message,${@})
+	while inotifywait -e close_write ./docs/_custom/static/css/less/*.less; do make -s less; done
+
+
+
+
 
 	
 ## Install requirements for building documentation
