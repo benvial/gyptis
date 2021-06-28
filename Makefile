@@ -210,7 +210,7 @@ less:
 	$(call message,${@})
 	@rm -f docs/_custom/static/css/*.css
 	@cd docs/_custom/static/css/less && \
-	 chmod +x make_css && make_css $(LESSC)
+	chmod +x make_css && ./make_css $(LESSC)
 
 ## Rebuild css on change
 watch-less:
