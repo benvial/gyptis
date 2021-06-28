@@ -76,6 +76,8 @@ Thumbs.db
 *.pvtu
 *.vtu
 *.pvd
+*.hdf5
+
 
 # data, tmp and pycache #
 ###################

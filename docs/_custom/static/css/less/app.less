@@ -9,12 +9,18 @@ body {
 
 
 button {
-    color: black;
+    color: @gray-base;
     border-radius: 10px;
-    padding: 10px;
+    padding: 6px 6px 6px 6px;
     width: 100%;
     border: solid @gray-base 2px;
     background-color: @body-bg-darker;
+}
+
+button:hover {
+    color: lighten(@gray-base,10%);
+    border: solid lighten(@gray-base,10%) 2px ;
+    background-color: lighten(@body-bg-darker,2%);
 }
 
 
@@ -79,4 +85,14 @@ input {
     border-color: darken(@brand-primary,20%);
     box-shadow: 0 0 0 5px lighten(@brand-primary,20%);
     outline: none;
+}
+
+
+.homepage {
+    padding: 100px;
+}
+
+
+.appdescription {
+    padding-bottom: 40px;
 }
