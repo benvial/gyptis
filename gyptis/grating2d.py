@@ -212,6 +212,7 @@ class Grating2D(_GratingBase, Simulation):
         eff_annex = dict(substrate=t_annex, superstrate=r_annex)
         r_n, t_n = [], []
         R_n, T_n = [], []
+        self.beta_n = []
         for n in orders_num:
             delta = 1 if n == 0 else 0
             qn = n * 2 * np.pi / self.period
@@ -241,6 +242,8 @@ class Grating2D(_GratingBase, Simulation):
             R_n_ = (r_ * r_.conj) * sigma_r
             sigma_t = beta_n["substrate"] / beta["superstrate"] * nu
             T_n_ = (t_ * t_.conj) * sigma_t
+
+            self.beta_n.append(beta_n)
 
             r_n.append(r_)
             t_n.append(t_)
