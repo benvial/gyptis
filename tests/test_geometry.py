@@ -7,8 +7,7 @@ from math import pi
 
 import pytest
 
-from gyptis import dolfin
-from gyptis.api import BoxPML
+from gyptis import BoxPML, dolfin
 from gyptis.geometry import *
 
 

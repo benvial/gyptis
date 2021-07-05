@@ -4,11 +4,14 @@
 # License: MIT
 
 import tempfile
+from distutils.version import LooseVersion
 
 import meshio
 import numpy as np
+from dolfin import MPI
+from fenics_adjoint import __version__ as _fenics_adjoint_version
 
-from . import dolfin
+from . import ADJOINT, dolfin
 
 
 def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
@@ -44,7 +47,11 @@ def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
         meshio.xdmf.write(f"{data_dir}/{cell_type}.xdmf", meshio_data)
         mesh_data[cell_type] = meshio_data
 
-    dolfin_mesh = dolfin.Mesh()
+    # avoid bug in dolfin-adjoint: https://github.com/dolfin-adjoint/pyadjoint/issues/38
+    if LooseVersion(_fenics_adjoint_version) >= LooseVersion("2019.1.1") and ADJOINT:
+        dolfin_mesh = dolfin.Mesh()
+    else:
+        dolfin_mesh = dolfin.Mesh(MPI.comm_self)
 
     with dolfin.XDMFFile(f"{data_dir}/{base_cell_type}.xdmf") as infile:
         infile.read(dolfin_mesh)

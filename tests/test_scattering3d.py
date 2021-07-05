@@ -22,7 +22,6 @@ plt.ion()
 
 
 def test_scatterring3d(shared_datadir):
-    degree = 1
     ## needed for surface integral in parallel (mpi)
     dolfin.parameters["ghost_mode"] = "shared_facet"
     dolfin.parameters["form_compiler"]["quadrature_degree"] = 2
