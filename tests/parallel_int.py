@@ -7,6 +7,7 @@
 from gyptis import Geometry, dolfin, pi
 
 dolfin.parameters["ghost_mode"] = "shared_vertex"
+dolfin.parameters["ghost_mode"] = "shared_facet"
 
 
 square_size = 1
