@@ -212,6 +212,9 @@ class Scatt3D(_ScatteringBase, Simulation):
 
         super().__init__(geometry, formulation)
 
+        self.Z0 = np.sqrt(mu_0 / epsilon_0)
+        self.S0 = 1 / (2 * self.Z0)
+
     def solve_system(self, again=False):
         E = super().solve_system(again=again, vector_function=False)
         self.solution = {}
@@ -219,11 +222,49 @@ class Scatt3D(_ScatteringBase, Simulation):
         self.solution["total"] = E + self.source.expression
         return E
 
-    def scattering_cross_section(self):
-        raise NotImplementedError
+    def _cross_section_helper(self, return_type="s"):
+        n_out = self.geometry.unit_normal_vector
+        Es = self.solution["diffracted"]
+        omega = self.source.pulsation
+        inv_mu_coeff = self.formulation.mu.invert().as_subdomain()
+        Hs = inv_mu_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Es)
+        Ss = dolfin.Constant(0.5) * cross(Es, Hs.conj).real
 
-    def absorption_cross_section(self):
-        raise NotImplementedError
+        Ei = self.source.expression
+        mu_a = self.formulation.mu.build_annex(
+            domains=self.formulation.source_domains,
+            reference=self.formulation.reference,
+        )
+        inv_mua_coeff = mu_a.invert().as_subdomain()
+        Hi = inv_mua_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Ei)
+        Si = dolfin.Constant(0.5) * cross(Ei, Hi.conj).real
+
+        Se = dolfin.Constant(0.5) * (cross(Ei, Hs.conj) + cross(Es, Hi.conj)).real
+
+        Etot = self.solution["total"]
+        Htot = inv_mu_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Etot)
+        Stot = dolfin.Constant(0.5) * cross(Etot, Htot.conj).real
+
+        if return_type == "s":
+            Ws = assemble(dot(n_out("+"), Ss("+")) * self.dS("calc_bnds"))
+            Sigma_s = Ws / self.S0
+            return Sigma_s
+
+        if return_type == "e":
+            We = -assemble(dot(n_out("+"), Se("+")) * self.dS("calc_bnds"))
+            Sigma_e = We / self.S0
+            return Sigma_e
+
+        if return_type == "a":
+            Wa = -assemble(dot(n_out("+"), Stot("+")) * self.dS("calc_bnds"))
+            Sigma_a = Wa / self.S0
+            return Sigma_a
+
+    def scattering_cross_section(self):
+        return self._cross_section_helper("s")
 
     def extinction_cross_section(self):
-        raise NotImplementedError
+        return self._cross_section_helper("e")
+
+    def absorption_cross_section(self):
+        return self._cross_section_helper("a")

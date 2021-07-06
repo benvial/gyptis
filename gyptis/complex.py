@@ -222,6 +222,9 @@ class Complex(object):
             self.imag.__call__(*args, **kwargs),
         )
 
+    def tocomplex(self):
+        return self.real + 1j * self.imag
+
     @staticmethod
     def polar2cart(module, phase):
         """Polar to cartesian representation.

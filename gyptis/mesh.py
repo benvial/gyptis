@@ -4,15 +4,12 @@
 # License: MIT
 
 import tempfile
-from distutils.version import LooseVersion
 
 import meshio
 import numpy as np
 from dolfin import MPI
-from fenics_adjoint import __version__ as _fenics_adjoint_version
 
 from . import ADJOINT, dolfin
-from .log import *
 
 
 def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
@@ -48,23 +45,9 @@ def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
         meshio.xdmf.write(f"{data_dir}/{cell_type}.xdmf", meshio_data)
         mesh_data[cell_type] = meshio_data
 
-    # avoid bug in dolfin-adjoint: https://github.com/dolfin-adjoint/pyadjoint/issues/38
-    if LooseVersion(_fenics_adjoint_version) < LooseVersion("2019.1.1") and ADJOINT:
-        _msg = f""" WARNING
-        You are running dolfin_adjoint v{_fenics_adjoint_version}.
-        Results might be inaccurate when assembling on interior facets in parallel.
-        Upgrade using `pip install dolfin_adjoint --upgrade`
-        """
-        logging.warning(_msg)
-        dolfin_mesh = dolfin.Mesh()
-        with dolfin.XDMFFile(f"{data_dir}/{base_cell_type}.xdmf") as infile:
-            infile.read(dolfin_mesh)
-    else:
-        dolfin_mesh = dolfin.Mesh(MPI.comm_self)
-        with dolfin.XDMFFile(
-            MPI.comm_self, f"{data_dir}/{base_cell_type}.xdmf"
-        ) as infile:
-            infile.read(dolfin_mesh)
+    dolfin_mesh = dolfin.Mesh(MPI.comm_self)
+    with dolfin.XDMFFile(MPI.comm_self, f"{data_dir}/{base_cell_type}.xdmf") as infile:
+        infile.read(dolfin_mesh)
     markers = {}
 
     dim_map = dict(line=1, triangle=2, tetra=3)
