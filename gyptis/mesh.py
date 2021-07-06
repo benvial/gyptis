@@ -45,8 +45,8 @@ def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
         meshio.xdmf.write(f"{data_dir}/{cell_type}.xdmf", meshio_data)
         mesh_data[cell_type] = meshio_data
 
-    dolfin_mesh = dolfin.Mesh(MPI.comm_self)
-    with dolfin.XDMFFile(MPI.comm_self, f"{data_dir}/{base_cell_type}.xdmf") as infile:
+    dolfin_mesh = dolfin.Mesh()
+    with dolfin.XDMFFile(f"{data_dir}/{base_cell_type}.xdmf") as infile:
         infile.read(dolfin_mesh)
     markers = {}
 
