@@ -224,6 +224,7 @@ class Scatt3D(_ScatteringBase, Simulation):
 
     def _cross_section_helper(self, return_type="s"):
         n_out = self.geometry.unit_normal_vector
+        sgn = -dolfin.dot(n_out("+"), n_out("-"))
         Es = self.solution["diffracted"]
         omega = self.source.pulsation
         inv_mu_coeff = self.formulation.mu.invert().as_subdomain()
@@ -246,17 +247,17 @@ class Scatt3D(_ScatteringBase, Simulation):
         Stot = dolfin.Constant(0.5) * cross(Etot, Htot.conj).real
 
         if return_type == "s":
-            Ws = assemble(dot(n_out("+"), Ss("+")) * self.dS("calc_bnds"))
+            Ws = assemble(sgn * dot(n_out("+"), Ss("+")) * self.dS("calc_bnds"))
             Sigma_s = Ws / self.S0
             return Sigma_s
 
         if return_type == "e":
-            We = -assemble(dot(n_out("+"), Se("+")) * self.dS("calc_bnds"))
+            We = -assemble(sgn * dot(n_out("+"), Se("+")) * self.dS("calc_bnds"))
             Sigma_e = We / self.S0
             return Sigma_e
 
         if return_type == "a":
-            Wa = -assemble(dot(n_out("+"), Stot("+")) * self.dS("calc_bnds"))
+            Wa = -assemble(sgn * dot(n_out("+"), Stot("+")) * self.dS("calc_bnds"))
             Sigma_a = Wa / self.S0
             return Sigma_a
 

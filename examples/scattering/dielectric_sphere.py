@@ -14,10 +14,13 @@ from mie import get_cross_sections_analytical
 from gyptis import BoxPML, PlaneWave, Scattering, c, dolfin, epsilon_0, mu_0
 from gyptis.complex import *
 from gyptis.helpers import mpi_print
-from gyptis.plot import *
 
-plt.ion()
-plt.close("all")
+plot_scs = True
+if plot_scs:
+    from gyptis.plot import *
+
+    plt.ion()
+    plt.close("all")
 rank = MPI.rank(MPI.comm_world)
 
 # eps_sphere = 4
@@ -53,15 +56,26 @@ CAANA_NORMA_MIE = CAANA / S_sphere
 
 CAANA_NORMA_MIE = CEANA_NORMA_MIE - CSANA_NORMA_MIE
 
-if rank == 0:
+if plot_scs and rank == 0:
+    plt.figure(figsize=(4, 3))
     # plt.plot(GAMMA, CS_NORMA_REF, "--", c="#525252", label="Ref")
     plt.plot(Gamma, CSANA_NORMA_MIE, c="#545cc7", label="SCS Mie")
     plt.plot(Gamma, CEANA_NORMA_MIE, c="#54c777", label="SCE Mie")
     plt.plot(Gamma, CAANA_NORMA_MIE, c="#c79c54", label="SCA Mie")
+    arch = np.load("cross_sections_gyptis.npz", allow_pickle=True)
+    Gamma_ref = arch["Gamma"]
+    SCSN = arch["SCSN"].tolist()
+    plt.plot(Gamma_ref, SCSN["scattering"], "o", c="#545cc7", label="SCS gyptis")
+    plt.plot(Gamma_ref, SCSN["extinction"], "o", c="#54c777", label="SCE gyptis")
+    plt.plot(Gamma_ref, SCSN["absorption"], "o", c="#c79c54", label="SCA gyptis")
+    plt.ylim(0)
+
     plt.xlabel(r"circumfenrence/wavelength $k_0 a$")
     plt.ylabel(r"normalized scattering cross section $\sigma_s / S$")
     plt.legend()
     plt.tight_layout()
+
+xsax
 
 
 def build_geometry(pmesh):
@@ -141,11 +155,11 @@ def compute_scs(lambda0, pmesh=2, degree=1):
 
 
 degree = 2
-pmesh = 6
+pmesh = 8
 
 SCSN = []
 P = []
-Gamma = np.linspace(0.5, 3, 30)
+Gamma = np.linspace(0.25, 2, 100)
 
 # Gamma = [0.7]
 
@@ -164,7 +178,8 @@ for gamma in Gamma:
     SCSN["extinction"].append(Sigma_e_norm)
     SCSN["absorption"].append(Sigma_a_norm)
     P.append(gamma)
-    if rank == 0:
+
+    if plot_scs and rank == 0:
         plt.plot(gamma, Sigma_s_norm, "o", c="#545cc7", label="gyptis")
         plt.plot(gamma, Sigma_e_norm, "o", c="#54c777", label="gyptis")
         plt.plot(gamma, Sigma_a_norm, "o", c="#c79c54", label="gyptis")

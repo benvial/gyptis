@@ -12,7 +12,8 @@ from dolfin import MPI
 from . import ADJOINT, dolfin
 
 
-def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
+def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=None):
+    data_dir_xdmf = data_dir_xdmf or tempfile.mkdtemp()
     meshio_mesh = meshio.read(mesh_file)
     base_cell_type = "tetra" if dim == 3 else "triangle"
 
@@ -36,24 +37,25 @@ def read_mesh(mesh_file, data_dir=None, dim=3, subdomains=None):
         cells[base_cell_type] = cells[base_cell_type][mask]
 
     mesh_data = {}
+
     for cell_type, data in zip(cell_types, data_gmsh):
         meshio_data = meshio.Mesh(
             points=points,
             cells={cell_type: cells[cell_type]},
             cell_data={cell_type: [data]},
         )
-        meshio.xdmf.write(f"{data_dir}/{cell_type}.xdmf", meshio_data)
+        meshio.xdmf.write(f"{data_dir_xdmf}/{cell_type}.xdmf", meshio_data)
         mesh_data[cell_type] = meshio_data
 
     dolfin_mesh = dolfin.Mesh()
-    with dolfin.XDMFFile(f"{data_dir}/{base_cell_type}.xdmf") as infile:
+    with dolfin.XDMFFile(f"{data_dir_xdmf}/{base_cell_type}.xdmf") as infile:
         infile.read(dolfin_mesh)
     markers = {}
 
     dim_map = dict(line=1, triangle=2, tetra=3)
     for cell_type in cell_types:
         mvc = dolfin.MeshValueCollection("size_t", dolfin_mesh, dim_map[cell_type])
-        with dolfin.XDMFFile(f"{data_dir}/{cell_type}.xdmf") as infile:
+        with dolfin.XDMFFile(f"{data_dir_xdmf}/{cell_type}.xdmf") as infile:
             infile.read(mvc, cell_type)
         markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
 

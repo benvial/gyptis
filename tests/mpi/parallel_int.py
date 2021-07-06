@@ -2,31 +2,35 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # License: MIT
-
+from dolfin import MPI
 
 from gyptis import Geometry, dolfin, pi
+from gyptis.helpers import mpi_print
 
-dolfin.parameters["ghost_mode"] = "shared_vertex"
+rank = MPI.rank(MPI.comm_world)
+# dolfin.parameters["ghost_mode"] = "shared_vertex"
 dolfin.parameters["ghost_mode"] = "shared_facet"
+# dolfin.parameters["ghost_mode"] = "none"
+import sys
 
-
-square_size = 1
-cyl_size = 0.2
-mesh_size = cyl_size / 6
+meshpar = float(sys.argv[1])
+square_size = 2
+cyl_size = 1
+mesh_size = cyl_size / meshpar
 model = Geometry("Square", dim=2)
 box = model.add_rectangle(
     -square_size / 2, -square_size / 2, 0, square_size, square_size
 )
-# cyl = model.add_rectangle(-cyl_size / 2, -cyl_size / 2, 0, cyl_size, cyl_size)
-cyl = model.add_circle(0, 0, 0, cyl_size)
+cyl = model.add_rectangle(-cyl_size / 2, -cyl_size / 2, 0, cyl_size, cyl_size)
+# cyl = model.add_circle(0, 0, 0, cyl_size)
 cyl, box = model.fragment(cyl, box)
 
 model.add_physical(box, "box")
 model.add_physical(cyl, "cyl")
 
-outer_bnds = model.get_boundaries("box")[:-1]
-cyl_bnds = model.get_boundaries("cyl")
-model.add_physical(outer_bnds, "outer_bnds", dim=1)
+# outer_bnds = model.get_boundaries("box")[:-4]
+cyl_bnds = model.get_boundaries("cyl")[1]
+# model.add_physical(outer_bnds, "outer_bnds", dim=1)
 model.add_physical(cyl_bnds, "cyl_bnds", dim=1)
 model.set_size("box", 1 * mesh_size)
 model.set_size("cyl", 1 * mesh_size)
@@ -59,8 +63,10 @@ n = n_out("+")
 # print(in_surf)
 # assert abs(in_surf - cyl_size**2 *4*pi) < 1e-2
 
-in_surf = dolfin.assemble((n_out("+")[0]) * (n_out("+")[0]) * dS("cyl_bnds"))
-print(in_surf)
+in_surf = dolfin.assemble(abs(n_out("+")[0]) * dS("cyl_bnds"))
+
+
+mpi_print(f" result = {in_surf} (should be 1.0)")
 
 
 #
