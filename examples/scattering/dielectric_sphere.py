@@ -62,20 +62,22 @@ if plot_scs and rank == 0:
     plt.plot(Gamma, CSANA_NORMA_MIE, c="#545cc7", label="SCS Mie")
     plt.plot(Gamma, CEANA_NORMA_MIE, c="#54c777", label="SCE Mie")
     plt.plot(Gamma, CAANA_NORMA_MIE, c="#c79c54", label="SCA Mie")
-    arch = np.load("cross_sections_gyptis.npz", allow_pickle=True)
-    Gamma_ref = arch["Gamma"]
-    SCSN = arch["SCSN"].tolist()
-    plt.plot(Gamma_ref, SCSN["scattering"], "o", c="#545cc7", label="SCS gyptis")
-    plt.plot(Gamma_ref, SCSN["extinction"], "o", c="#54c777", label="SCE gyptis")
-    plt.plot(Gamma_ref, SCSN["absorption"], "o", c="#c79c54", label="SCA gyptis")
+
+    # arch = np.load("cross_sections_gyptis.npz", allow_pickle=True)
+    # Gamma_ref = arch["Gamma"]
+    # SCSN = arch["SCSN"].tolist()
+    # plt.plot(Gamma_ref, SCSN["scattering"], "o", c="#545cc7", label="SCS gyptis")
+    # plt.plot(Gamma_ref, SCSN["extinction"], "o", c="#54c777", label="SCE gyptis")
+    # plt.plot(Gamma_ref, SCSN["absorption"], "o", c="#c79c54", label="SCA gyptis")
+    #
+    #
+    #
     plt.ylim(0)
 
     plt.xlabel(r"circumfenrence/wavelength $k_0 a$")
     plt.ylabel(r"normalized scattering cross section $\sigma_s / S$")
     plt.legend()
     plt.tight_layout()
-
-xsax
 
 
 def build_geometry(pmesh):
@@ -87,15 +89,28 @@ def build_geometry(pmesh):
     pml_width = (lambda0, lambda0, lambda0)
 
     Rcalc = (min(box_size) / 2 + a) / 2
+
+    # Rcalc = 0
     geom = BoxPML(3, box_size=box_size, pml_width=pml_width, Rcalc=Rcalc)
 
     box = geom.box
     sphere = geom.add_sphere(0, 0, 0, a)
-    sphere, sphere_cross_sections, box = geom.fragment(sphere, box)
-
-    geom.add_physical([box, sphere_cross_sections], "box")
+    if Rcalc > 0:
+        sphere, *box = geom.fragment(sphere, box)
+    else:
+        sphere, box = geom.fragment(sphere, box)
+    geom.add_physical(box, "box")
     geom.add_physical(sphere, "sphere")
-    surf = geom.get_boundaries(sphere_cross_sections, physical=False)[0]
+
+    if Rcalc > 0:
+        surfs = geom.get_boundaries("box")[-1]
+        # geom.add_physical(surfs, "calc_bnds",2)
+    else:
+        surfs = geom.get_boundaries("box")[:-1]
+        names = ["-x", "-y", "+z", "+y", "-z", "+x"]
+        for surface, name in zip(surfs, names):
+            geom.add_physical(surface, name, 2)
+
     smin = a / 3
     s = min(lambda0 / pmesh, smin)
 
@@ -105,8 +120,7 @@ def build_geometry(pmesh):
         geom.set_mesh_size({"pml" + coord: smin_pml})
 
     geom.set_size(box, s)
-    geom.set_size(sphere_cross_sections, s)
-    geom.set_size(surf, s, dim=2)
+    geom.set_size(surfs, s, dim=2)
     s = min(lambda0 / (eps_sphere.real ** 0.5 * pmesh_scatt), smin)
     # s =lambda0 / (eps_sphere ** 0.5 * pmesh_scatt)
     geom.set_size(sphere, s)
@@ -154,14 +168,14 @@ def compute_scs(lambda0, pmesh=2, degree=1):
     return Sigma_s, Sigma_e, Sigma_a, scatt
 
 
-degree = 2
-pmesh = 8
+degree = 1
+pmesh = 4
 
 SCSN = []
 P = []
 Gamma = np.linspace(0.25, 2, 100)
 
-# Gamma = [0.7]
+Gamma = [0.3]
 
 
 SCSN = dict(scattering=[], extinction=[], absorption=[])
@@ -178,6 +192,9 @@ for gamma in Gamma:
     SCSN["extinction"].append(Sigma_e_norm)
     SCSN["absorption"].append(Sigma_a_norm)
     P.append(gamma)
+
+    OT = Sigma_e_norm - Sigma_s_norm - Sigma_a_norm
+    mpi_print(f"error optical theorem: {np.abs(OT)}")
 
     if plot_scs and rank == 0:
         plt.plot(gamma, Sigma_s_norm, "o", c="#545cc7", label="gyptis")

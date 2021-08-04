@@ -40,8 +40,8 @@
    :target: https://codeclimate.com/github/benvial/gyptis
    :alt: Code Climate maintainability
 
-.. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4732324-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
- :target: https://doi.org/10.5281/zenodo.4732324
+.. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4938573-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
+ :target: https://doi.org/10.5281/zenodo.4938573
  
 .. image:: https://img.shields.io/badge/license-MIT-blue?color=bb798f&logo=open-access&logoColor=white&style=for-the-badge
  :target: https://gitlab.com/gyptis/docker/-/blob/master/LICENCE.txt
