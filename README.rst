@@ -44,7 +44,7 @@
  :target: https://doi.org/10.5281/zenodo.4938573
  
 .. image:: https://img.shields.io/badge/license-MIT-blue?color=bb798f&logo=open-access&logoColor=white&style=for-the-badge
- :target: https://gitlab.com/gyptis/docker/-/blob/master/LICENCE.txt
+ :target: https://gitlab.com/gyptis/gyptis/-/blob/master/LICENCE.txt
  :alt: license
 
    

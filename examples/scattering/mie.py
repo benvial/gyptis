@@ -3,6 +3,10 @@
 # Author: Benjamin Vial
 # License: MIT
 
+"""
+Mie theory functions
+"""
+
 
 import numpy as np
 import scipy.special as sp
