@@ -353,6 +353,8 @@ sphinx_gallery_conf = {
         "sphinx_gallery": None,
     },
     "reset_modules": (),
+    "filename_pattern": "/plot_",
+    "ignore_pattern": r"^((?!/plot_).)*$",  # ignore files that do not start with plot_
     # "first_notebook_cell": (
     #     "import matplotlib\n" "mpl.style.use('gyptis')\n" "%matplotlib inline"
     # ),
