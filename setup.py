@@ -23,6 +23,7 @@ required = [
     "nlopt",
     "numpy",
     "simpy",
+    "joblib",
 ]
 
 _classifiers = [
