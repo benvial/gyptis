@@ -21,7 +21,7 @@ square_size = 1
 cyl_size = 0.2
 mesh_size = cyl_size / 50
 
-data_dir = None
+# data_dir = None
 data_dir = "/tmp"
 
 
