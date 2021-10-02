@@ -12,6 +12,7 @@ dependencies:
   - scipy
   - simpy
   - matplotlib
+  - joblib
   - pip:
     - gmsh
     - git+https://gitlab.com/gyptis/gyptis.git
