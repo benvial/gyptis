@@ -84,8 +84,8 @@ geom.build()
 # The mesh can be visualized:
 
 plt.figure()
-geom.plot_mesh(lw=1)
-geom.plot_subdomains(lw=2, c="#d76c4a")
+geom.plot_mesh(lw=0.2)
+geom.plot_subdomains(lw=0.5, c=gy.colors["red"])
 plt.axis("off")
 plt.tight_layout()
 plt.show()
