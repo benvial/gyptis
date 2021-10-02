@@ -21,7 +21,6 @@ __all__ = [
 
 from ._meta import _GratingBase, _ScatteringBase
 
-#
 # from . import complex
 from .complex import Complex
 from .geometry import Geometry
@@ -79,9 +78,9 @@ class Layered(Geometry):
     dim : int
         Geometric dimension (either 2 or 3, the default is 3).
     period : float or tuple
-        In 2D, periodicity of the grating :math:`d` along :math:`x` (a float).
+        In 2D, periodicity of the grating :math:`d` along :math:`x` (float).
         In 3D, periodicity of the grating :math:`(d_x,d_y)` along :math:`x`
-        and :math:`y` ( atuple of floats of lenght 2).
+        and :math:`y` (tuple of floats of lenght 2).
     thicknesses : :class:`~collections.OrderedDict`
         Dictionary containing physical names and thicknesses from top to bottom.
         (``thicknesses["phyiscal_name"]=thickness_value``)
@@ -109,7 +108,7 @@ class Layered(Geometry):
 
 
 class Lattice(Geometry):
-    """Lattice(vectors, model_name="Lattice", **kwargs)
+    """Lattice(vectors, **kwargs)
     Unit cell for periodic problems.
 
     Parameters

@@ -6,10 +6,9 @@ API Reference
 
 
 
-
-
 Geometry classes
 """"""""""""""""
+
 .. currentmodule:: gyptis
 
 .. autosummary::
@@ -26,6 +25,7 @@ Geometry classes
 
 Physics classes
 """""""""""""""
+
 .. currentmodule:: gyptis
 
 .. autosummary::
