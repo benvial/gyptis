@@ -12,9 +12,9 @@ from pprint import pprint
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.constants import c
 
-from gyptis import Grating, Layered, PlaneWave
+import gyptis as gy
+from gyptis import c, pi
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Jandieri2015`.
@@ -64,14 +64,14 @@ thicknesses = OrderedDict(
 )
 
 lmin = wavelength / pmesh
-omega = 2 * np.pi * c / (wavelength * 1e-9)
+omega = 2 * pi * c / (wavelength * 1e-9)
 epsAg = epsilon_silver(omega)
 
 nAg = abs(epsAg.real) ** 0.5
 ncore = (eps_core.real) ** 0.5
 nsubstrate = (eps_substrate.real) ** 0.5
 
-geom = Layered(2, period, thicknesses)
+geom = gy.Layered(2, period, thicknesses)
 groove = geom.layers["groove"]
 substrate = geom.layers["substrate"]
 superstrate = geom.layers["superstrate"]
@@ -104,10 +104,10 @@ geom.build(0)
 
 def solve(wavelength):
 
-    pw = PlaneWave(
-        wavelength=wavelength, angle=np.pi / 2, dim=2, domain=geom.mesh, degree=2
+    pw = gy.PlaneWave(
+        wavelength=wavelength, angle=pi / 2, dim=2, domain=geom.mesh, degree=2
     )
-    omega = 2 * np.pi * c / (wavelength * 1e-9)
+    omega = 2 * pi * c / (wavelength * 1e-9)
     epsilon = dict(
         core=eps_core,
         shell=epsilon_silver(omega),
@@ -116,7 +116,7 @@ def solve(wavelength):
         superstrate=1,
     )
     mu = {d: 1 for d in epsilon.keys()}
-    g = Grating(
+    g = gy.Grating(
         geom,
         epsilon,
         mu,

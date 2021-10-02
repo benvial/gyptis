@@ -1,5 +1,4 @@
-:mod:`{{module}}`.{{objname}}
-{{ underline }}==============
+{{ objname | escape | underline}}
 
 .. currentmodule:: {{ module }}
 
@@ -9,5 +8,6 @@
 
 Examples
 ^^^^^^^^
+
 .. minigallery:: {{fullname}}
     

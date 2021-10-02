@@ -43,7 +43,6 @@ dolfin.PETScOptions.set("pc_type", "lu")
 # dolfin.PETScOptions.set('sub_pc_type', 'lu')
 # dolfin.PETScOptions.set('pc_asm_overlap', '10')
 # dolfin.PETScOptions.set('ksp_type', 'gmres')
-
 # dolfin.PETScOptions.set('petsc_prealloc', '100')
 # dolfin.PETScOptions.set('ksp_rtol', '1.e-12')
 # dolfin.PETScOptions.set('ksp_type', 'gmres')
@@ -57,3 +56,6 @@ dolfin.PETScOptions.set("pc_type", "lu")
 # dolfin.set_log_level(1)
 
 from .api import *
+from .complex import *
+from .plot import *
+from .sample import adaptive_sampler

@@ -23,9 +23,6 @@ class Layered3D(Geometry):
         self,
         period=(1.0, 1.0),
         thicknesses=None,
-        model_name="3D grating",
-        mesh_name="mesh.msh",
-        data_dir=None,
         **kwargs,
     ):
         super().__init__(

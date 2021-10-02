@@ -7,7 +7,7 @@
 Quasinormal modes and modal expansion of a nanorod
 ==================================================
 
-Spectral probelm for a triangular rod made of a non-dispersive dielectric in vacuum. 
+Spectral problem for a triangular rod made of a non-dispersive dielectric in vacuum. 
 Reconstruction using a quasinormlal mode expansion applied to the scattering by 
 a plane wave and the computaion of the local density of states.
 
@@ -20,10 +20,15 @@ import dolfin as df
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gyptis import BoxPML, Scattering, c, pi
-from gyptis.helpers import *
-from gyptis.plot import *
-from gyptis.source import *
+import gyptis as gy
+
+# from gyptis import BoxPML, Scattering, c, pi
+# from gyptis.helpers import *
+# from gyptis.plot import *
+# from gyptis.source import *
+import gyptis.data_download as dd
+from gyptis import c, pi
+from gyptis.helpers import array2function, function2array, project_iterative
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Vial2014`.
@@ -40,7 +45,7 @@ eps_rod = 13 - 0.2j
 # Build and mesh the geometry:
 
 
-geom = BoxPML(
+geom = gy.BoxPML(
     dim=2,
     box_size=(lbox, lbox),
     pml_width=(pml_width, pml_width),
@@ -72,7 +77,7 @@ mu = dict(box=1, rod=1)
 ##############################################################################
 # Eigenvalue problem:
 
-s_modal = Scattering(
+s_modal = gy.Scattering(
     geom,
     epsilon,
     mu,
@@ -91,7 +96,12 @@ modes = s_modal.solution["eigenvectors"]
 a = 1
 ev_norma = ev * a / (2 * pi)
 
-benchmark_qnms = np.loadtxt("qnms_triangle.csv", delimiter=",")
+eigenvalues_file = dd.download_example_data(
+    data_file_name="qnms_triangle.csv",
+    example_dir="modal",
+)
+
+benchmark_qnms = np.loadtxt(eigenvalues_file, delimiter=",")
 omega_ref = (benchmark_qnms[:, 0] - 1j * benchmark_qnms[:, 1]) * 1e14
 ev_norma_ref = omega_ref * a * 1e-6 / (2 * pi * c)
 
@@ -134,11 +144,11 @@ i2 = np.argmin(abs(ev_norma - ev_norma_ref_2))
 for i, mode_index in enumerate([i1, i2]):
     v = modes[mode_index]
     ## normalize
-    Kn = assemble(dot(chi * v, v) * form.dx)
+    Kn = gy.assemble(gy.dot(chi * v, v) * form.dx)
     qnm = v / Kn ** 0.5
 
     plt.figure()
-    plot(qnm.real, cmap="RdBu_r", ax=plt.gca())
+    gy.plot(qnm.real, cmap="RdBu_r", ax=plt.gca())
     geom.plot_subdomains()
     plt.axis("off")
     plt.title(rf"mode {i+1}: $\tilde{{\omega}}=$ {ev_norma[mode_index]:.4f}")
@@ -156,10 +166,10 @@ def get_coupling_coeff(scatt, mode_index, pw, Kn=None):
     kn = ev[mode_index]
     k = pw.wavenumber
     if Kn is None:
-        Kn = assemble(dot(chi * vn, vn) * form.dx)
+        Kn = gy.assemble(gy.dot(chi * vn, vn) * form.dx)
     source = form.maxwell(pw.expression, vn, xi - xi_a, chi - chi_a, domain="rod")
-    ss = -source[0] + Constant(k) ** 2 * source[1]
-    Jn = assemble(ss) / Kn
+    ss = -source[0] + gy.Constant(k) ** 2 * source[1]
+    Jn = gy.assemble(ss) / Kn
     Pn = Jn / (k ** 2 - kn ** 2)
     return Pn.real + 1j * Pn.imag
 
@@ -171,14 +181,14 @@ fig, ax = plt.subplots(2, 1, figsize=(5, 4))
 
 for i, mode_index in enumerate([i1, i2]):
     vn = modes[mode_index]
-    Kn = assemble(dot(chi * vn, vn) * form.dx)
+    Kn = gy.assemble(gy.dot(chi * vn, vn) * form.dx)
     coupling = []
     for angle in angles:
         # print(f"θ = {angle*180/pi}°")
         coupling_ = []
         for wavelength in wls:
             # print(f"λ = {wavelength}μm")
-            pw = PlaneWave(
+            pw = gy.PlaneWave(
                 wavelength=wavelength,
                 angle=pi / 2 + angle,
                 dim=2,
@@ -211,10 +221,10 @@ plt.tight_layout()
 
 wavelength = 10.2
 angle = 143 * pi / 180
-pw = PlaneWave(
+pw = gy.PlaneWave(
     wavelength=wavelength, angle=pi / 2 + angle, dim=2, domain=geom.mesh, degree=2
 )
-s_direct = Scattering(
+s_direct = gy.Scattering(
     geom,
     epsilon,
     mu,
@@ -240,14 +250,14 @@ ev_qmem = ev_norma[mode_indexes_rec]
 
 reconstr = 0
 for mode_index in mode_indexes_rec:
-    reconstr += Constant(PNS[mode_index]) * modes[mode_index]
+    reconstr += gy.Constant(PNS[mode_index]) * modes[mode_index]
 
 
 ##############################################################################
 # Vizualize the total field for the direct problem:
 
 fig, ax = plt.subplots(1, 2, figsize=(4.5, 2))
-plotcplx(sf, cmap="RdBu_r", fig=fig, ax=ax)
+gy.plotcplx(sf, cmap="RdBu_r", ax=ax)
 [geom.plot_subdomains(ax=a) for a in ax]
 for a in ax:
     geom.plot_subdomains(ax=a)
@@ -263,7 +273,7 @@ plt.pause(0.1)
 # Vizualize the total field for the quasimodal expansion:
 
 fig, ax = plt.subplots(1, 2, figsize=(4.5, 2))
-plotcplx(reconstr, cmap="RdBu_r", fig=fig, ax=ax)
+gy.plotcplx(reconstr, cmap="RdBu_r", ax=ax)
 [geom.plot_subdomains(ax=a) for a in ax]
 for a in ax:
     geom.plot_subdomains(ax=a)
@@ -279,8 +289,8 @@ plt.pause(0.1)
 ##############################################################################
 # Compute the LDOS
 
-ls = LineSource(wavelength=10.2, position=(0, 0), domain=geom.mesh, degree=2)
-s_direct = Scattering(
+ls = gy.LineSource(wavelength=10.2, position=(0, 0), domain=geom.mesh, degree=2)
+s_direct = gy.Scattering(
     geom,
     epsilon,
     mu,
@@ -290,7 +300,7 @@ s_direct = Scattering(
 )
 
 # LDOS in vaccum
-ldos_vac = 2 * s_direct.source.pulsation / (np.pi * c ** 2) * 0.25
+ldos_vac = 2 * s_direct.source.pulsation / (pi * c ** 2) * 0.25
 
 nx, ny = 21, 21
 X = np.linspace(-lbox / 2, lbox / 2, nx)
@@ -324,23 +334,23 @@ mode_indexes_rec = range(neig)
 ldos_qmem_array = 0
 for mode_index in mode_indexes_rec:
     vn = modes[mode_index]
-    Kn = assemble(dot(chi * vn, vn) * form.dx)
+    Kn = gy.assemble(gy.dot(chi * vn, vn) * form.dx)
     vn = project_iterative(vn, s_modal.formulation.real_function_space)
     vn = function2array(vn.real) + 1j * function2array(vn.imag)
     kn = ev[mode_index]
     ldos_qmem_array += ((vn * vn) / (Kn * (k ** 2 - kn ** 2))).imag
 
 ldos_qmem = array2function(ldos_qmem_array, s_modal.formulation.real_function_space)
-ldos_qmem *= -2 * ls.pulsation / (np.pi * c ** 2)
+ldos_qmem *= -2 * ls.pulsation / (pi * c ** 2)
 Z = -ldos_qmem / ldos_vac
-Za = 2 * ls.pulsation / (np.pi * c ** 2) * ldos_qmem_array / ldos_vac
+Za = 2 * ls.pulsation / (pi * c ** 2) * ldos_qmem_array / ldos_vac
 
 mini = 0.325
 maxi = 2.8  # Za.max()
 nlev = 101
 
 plt.figure()
-p, cb = plot(Z, cmap="Spectral_r", levels=nlev, ax=plt.gca(), vmin=mini, vmax=maxi)
+p, cb = gy.plot(Z, cmap="Spectral_r", levels=nlev, ax=plt.gca(), vmin=mini, vmax=maxi)
 cb.remove()
 geom.plot_subdomains()
 plt.axis("scaled")

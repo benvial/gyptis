@@ -13,7 +13,7 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gyptis import Grating, Layered, PlaneWave
+import gyptis as gy
 
 ##############################################################################
 # We will study a classical benchmark of a dielectric grating
@@ -68,7 +68,7 @@ mesh_param = dict(
 ##############################################################################
 # Let's create the geometry using the :class:`~gyptis.Layered`
 # class:
-geom = Layered(2, period, thicknesses)
+geom = gy.Layered(2, period, thicknesses)
 groove = geom.layers["groove"]
 y0 = geom.y_position["groove"] + thicknesses["groove"] / 2
 rod = geom.add_ellipse(0, y0, 0, ax, ay)
@@ -107,11 +107,11 @@ mu = {d: 1 for d in domains}
 # :math:`\boldsymbol{E} = E_z \boldsymbol{e_z}`) and the ``degree`` of
 # Lagrange finite elements.
 
-angle = (90 - theta0) * np.pi / 180
+angle = (90 - theta0) * gy.pi / 180
 
-pw = PlaneWave(lambda0, angle, dim=2)
+pw = gy.PlaneWave(lambda0, angle, dim=2)
 
-gratingTE = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+gratingTE = gy.Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
 
 gratingTE.N_d_order = 1
 gratingTE.solve()
@@ -131,7 +131,7 @@ print(f"  sum      {T_ref['TM'][1]:.4f}    {effs_TE['B']:.4f}   ")
 ######################################################################
 # We switch to TE polarization
 
-gratingTM = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+gratingTM = gy.Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 gratingTM.solve()
 effs_TM = gratingTM.diffraction_efficiencies(1, orders=True)
 H = gratingTM.solution["total"]

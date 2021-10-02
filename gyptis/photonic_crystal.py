@@ -14,12 +14,10 @@ from .simulation import Simulation
 class Lattice2D(Geometry):
     def __init__(
         self,
-        vectors=((1, 0), (0, 1)),
-        model_name="Lattice",
+        vectors,
         **kwargs,
     ):
         super().__init__(
-            model_name=model_name,
             dim=2,
             **kwargs,
         )

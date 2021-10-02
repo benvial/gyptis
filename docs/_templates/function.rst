@@ -1,5 +1,4 @@
-:mod:`{{module}}`.{{objname}}
-{{ underline }}====================
+{{ objname | escape | underline}}
 
 .. currentmodule:: {{ module }}
 
@@ -7,5 +6,10 @@
 
 .. _sphx_glr_backref_{{fullname}}:
 
+
+
+Examples
+^^^^^^^^
+
 .. minigallery:: {{fullname}}
-   :add-heading:
+   .. :add-heading:

@@ -169,13 +169,13 @@ def compute_scs(lambda0, pmesh=2, degree=1):
 
 
 degree = 1
-pmesh = 4
+pmesh = 10
 
 SCSN = []
 P = []
 Gamma = np.linspace(0.25, 2, 100)
 
-Gamma = [0.3]
+Gamma = [0.3, 0.7, 1, 1.25]
 
 
 SCSN = dict(scattering=[], extinction=[], absorption=[])

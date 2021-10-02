@@ -13,14 +13,12 @@ Calculation of the band diagram of a two-dimensional photonic crystal.
 
 # sphinx_gallery_thumbnail_number = -1
 
-import dolfin as df
+
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.constants import c
 
-from gyptis import Lattice, PhotonicCrystal
-from gyptis.complex import project
-from gyptis.plot import *
+import gyptis as gy
+from gyptis import pi
 
 ##############################################################################
 # Reference results are taken from  :cite:p:`Joannopoulos2008` (Chapter 5 Fig. 2).
@@ -36,7 +34,7 @@ a = 1  # unit cell size
 vectors = (a, 0), (0, a)  # vectors defining the unit cell
 R = 0.2 * a  # inclusion radius
 
-lattice = Lattice(dim=2, vectors=vectors)
+lattice = gy.Lattice(dim=2, vectors=vectors)
 
 ##############################################################################
 # Next, we add a cylinder and compute the boolean fragments
@@ -73,11 +71,11 @@ mu = dict(background=1, inclusion=1)
 # We will compute eigenpairs at the :math:`X` point of the Brillouin zone, *i.e.*
 # the propagation vector is :math:`\mathbf k = (\pi/a,0)`.
 
-phc = PhotonicCrystal(
+phc = gy.PhotonicCrystal(
     lattice,
     epsilon,
     mu,
-    propagation_vector=(np.pi / a, 0),
+    propagation_vector=(pi / a, 0),
     polarization="TE",
     degree=2,
 )
@@ -94,7 +92,7 @@ solution = phc.eigensolve(n_eig=6, wavevector_target=0.5)
 # The results can be accessed through the `phc.solution` attribute
 # (a dictionary).
 
-ev_norma = phc.solution["eigenvalues"].real * a / (2 * np.pi)
+ev_norma = phc.solution["eigenvalues"].real * a / (2 * pi)
 print("Normalized eigenfrequencies")
 print("---------------------------")
 print(ev_norma)
@@ -104,10 +102,10 @@ print(ev_norma)
 
 eig_vects = phc.solution["eigenvectors"]
 for mode, eval in zip(eig_vects, ev_norma):
-    plot(mode.real, cmap="gyptis")
+    gy.plot(mode.real, cmap="gyptis")
     plt.title(fr"$\omega a/2\pi c = {eval:0.3f}$")
     H = phc.formulation.get_dual(mode, 1)
-    dolfin.plot(H.real, cmap="Greys")
+    gy.dolfin.plot(H.real, cmap="Greys")
     lattice.plot_subdomains()
     plt.axis("off")
 
@@ -116,7 +114,7 @@ for mode, eval in zip(eig_vects, ev_norma):
 # We define here the wavevector path:
 
 Nb = 21
-K = np.linspace(0, np.pi / a, Nb)
+K = np.linspace(0, pi / a, Nb)
 bands = np.zeros((3 * Nb - 3, 2))
 bands[:Nb, 0] = K
 bands[Nb : 2 * Nb, 0] = K[-1]
@@ -132,7 +130,7 @@ BD = {}
 for polarization in ["TE", "TM"]:
     ev_band = []
     for kx, ky in bands:
-        phc = PhotonicCrystal(
+        phc = gy.PhotonicCrystal(
             lattice,
             epsilon,
             mu,
@@ -141,7 +139,7 @@ for polarization in ["TE", "TM"]:
             degree=1,
         )
         phc.eigensolve(n_eig=6, wavevector_target=0.1)
-        ev_norma = phc.solution["eigenvalues"].real * a / (2 * np.pi)
+        ev_norma = phc.solution["eigenvalues"].real * a / (2 * pi)
         ev_band.append(ev_norma)
     # append first value since this is the same point
     ev_band.append(ev_band[0])

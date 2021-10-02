@@ -9,14 +9,10 @@ Calculation of the Green's function and LDOS in 2D finite photonic crystals.
 
 # sphinx_gallery_thumbnail_number = 2
 
-import dolfin as df
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.constants import c
 
-from gyptis import BoxPML, Scattering
-from gyptis.complex import project
-from gyptis.source import LineSource
+import gyptis as gy
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Asatryan2001`.
@@ -49,7 +45,7 @@ def plot_rods(ax, rod_positions):
 def create_geometry(wavelength, pml_width, group=False):
     lmin = wavelength / pmesh
 
-    geom = BoxPML(
+    geom = gy.BoxPML(
         dim=2,
         box_size=(16, 16),
         pml_width=(pml_width, pml_width),
@@ -81,7 +77,7 @@ geom = create_geometry(wavelength, pml_width=wavelength, group=True)
 ##############################################################################
 # Define the line excitation and materials
 
-ls = LineSource(wavelength=wavelength, position=(0, 7.3), domain=geom.mesh, degree=2)
+ls = gy.LineSource(wavelength=wavelength, position=(0, 7.3), domain=geom.mesh, degree=2)
 
 epsilon = {d: n_cyl ** 2 for d in geom.domains}
 epsilon["box"] = 1
@@ -90,7 +86,7 @@ mu = {d: 1 for d in geom.domains}
 ##############################################################################
 # Instanciate and solve the scattering problem:
 
-s = Scattering(geom, epsilon, mu, ls, degree=2, polarization="TM")
+s = gy.Scattering(geom, epsilon, mu, ls, degree=2, polarization="TM")
 s.solve()
 G = s.solution["total"]
 
@@ -98,8 +94,8 @@ G = s.solution["total"]
 # Here we project the function to plot on a suitable function space using an
 # iterative solver:
 
-v = df.ln(abs(G)) / df.ln(10)
-vplot = project(
+v = gy.dolfin.ln(abs(G)) / gy.dolfin.ln(10)
+vplot = gy.project(
     v,
     s.formulation.real_function_space,
     solver_type="cg",
@@ -110,7 +106,7 @@ vplot = project(
 # Plot the Green's function:
 
 fig, ax = plt.subplots(figsize=(2.6, 2.2))
-cs = df.plot(vplot, mode="contourf", cmap="Spectral_r", levels=31)
+cs = gy.dolfin.plot(vplot, mode="contourf", cmap="Spectral_r", levels=31)
 plot_rods(ax, rod_positions)
 plt.axis("square")
 plt.xlabel(r"$x/d$")
@@ -144,7 +140,7 @@ Y = np.linspace(-8, 8, 2 * ny - 1)
 LX = np.vstack([np.flipud(ldos[1:, :]), ldos])
 LDOS = np.hstack([np.fliplr(LX[:, 1:]), LX])
 
-v = np.log10(LDOS * np.pi * c ** 2 / (2 * ls.pulsation))
+v = np.log10(LDOS * gy.pi * gy.c ** 2 / (2 * ls.pulsation))
 
 fig, ax = plt.subplots(figsize=(2.6, 2.2))
 cs = plt.contourf(X, Y, v, cmap="Spectral_r", levels=31)

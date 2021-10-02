@@ -37,9 +37,9 @@ import gyptis as package
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "numpydoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     # "sphinx.ext.doctest",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
@@ -338,6 +338,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "matplotlib": ("https://matplotlib.org/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "gyptis": ("https://gyptis.gitlab.io/", None),
 }
 
 

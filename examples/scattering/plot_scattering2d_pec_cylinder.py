@@ -9,8 +9,8 @@ An example of scattering from a perfectly conducting cylinder
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gyptis import BoxPML, Scattering
-from gyptis.source import PlaneWave
+import gyptis as gy
+import gyptis.data_download as dd
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Ruppin2006`.
@@ -20,7 +20,7 @@ degree = 2
 
 R = 1
 kR = np.linspace(0.09, 10, 15)
-wl = 2 * np.pi * R / kR
+wl = 2 * gy.pi * R / kR
 
 scs_gyptis = dict()
 for polarization in ["TM", "TE"]:
@@ -30,7 +30,7 @@ for polarization in ["TM", "TE"]:
         lmin = wavelength / pmesh
         Rcalc = R + 1 * R
         lbox = Rcalc * 2 * 1.1
-        geom = BoxPML(
+        geom = gy.BoxPML(
             dim=2,
             box_size=(lbox, lbox),
             pml_width=(wavelength, wavelength),
@@ -48,7 +48,7 @@ for polarization in ["TM", "TE"]:
         geom.set_size("box", lmin)
         geom.build()
 
-        pw = PlaneWave(
+        pw = gy.PlaneWave(
             wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=degree
         )
 
@@ -56,7 +56,7 @@ for polarization in ["TM", "TE"]:
         epsilon = dict(box=1)
         mu = dict(box=1)
 
-        s = Scattering(
+        s = gy.Scattering(
             geom,
             epsilon,
             mu,
@@ -72,9 +72,11 @@ for polarization in ["TM", "TE"]:
         scsnorm.append(SCS_norma)
     scs_gyptis[polarization] = scsnorm
 
-
 for polarization in ["TM", "TE"]:
-    scs_file = f"scs_pec_{polarization}.csv"
+    scs_file = dd.download_example_data(
+        data_file_name=f"scs_pec_{polarization}.csv",
+        example_dir="scattering",
+    )
     benchmark = np.loadtxt(scs_file, delimiter=",")
     p = plt.plot(
         benchmark[:, 0],

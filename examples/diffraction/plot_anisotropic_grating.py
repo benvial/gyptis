@@ -10,10 +10,10 @@ from collections import OrderedDict
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from gyptis import Grating, Layered, PlaneWave
-from gyptis.plot import *
+import gyptis as gy
 
 ##############################################################################
 # We will study this benchmark and compare with results
@@ -52,7 +52,7 @@ mesh_param = dict(
 )
 
 
-geom = Layered(2, period, thicknesses)
+geom = gy.Layered(2, period, thicknesses)
 groove = geom.layers["groove"]
 substrate = geom.layers["substrate"]
 y0 = geom.y_position["groove"]
@@ -96,8 +96,8 @@ for jangle, angle in enumerate([0, 20, 40]):
 
     angle_degree = (90 - angle) * np.pi / 180
 
-    pw = PlaneWave(lambda0, angle_degree, dim=2)
-    grating_TM = Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+    pw = gy.PlaneWave(lambda0, angle_degree, dim=2)
+    grating_TM = gy.Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
     grating_TM.solve()
     effs_TE = grating_TM.diffraction_efficiencies(2, orders=True)
 
@@ -122,7 +122,7 @@ for jangle, angle in enumerate([0, 20, 40]):
 
     #### TE
 
-    grating_TE = Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
+    grating_TE = gy.Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 
     grating_TE.solve()
     effs_TM = grating_TE.diffraction_efficiencies(2, orders=True)

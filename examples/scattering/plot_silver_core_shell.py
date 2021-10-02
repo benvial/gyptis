@@ -11,10 +11,10 @@ Scattering by a dielectric cylinder coated with silver.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.constants import c
 
-from gyptis import BoxPML, Scattering
-from gyptis.source import PlaneWave
+import gyptis as gy
+import gyptis.data_download as dd
+from gyptis import c, pi
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Jandieri2015`.
@@ -41,7 +41,7 @@ def epsilon_silver(omega):
 wavelength_min = 250
 wavelength_max = 800
 wl = np.linspace(wavelength_min, wavelength_max, 100)
-omega = 2 * np.pi * c / (wl * 1e-9)
+omega = 2 * pi * c / (wl * 1e-9)
 epsAg = epsilon_silver(omega)
 plt.plot(wl, epsAg.real, label="Re", c="#7b6eaf")
 plt.plot(wl, epsAg.imag, label="Im", c="#c63c71")
@@ -63,14 +63,14 @@ def create_geometry(wavelength, pml_width):
     R2 = 30
     Rcalc = 2 * R1
     lmin = wavelength / pmesh
-    omega = 2 * np.pi * c / (wavelength * 1e-9)
+    omega = 2 * pi * c / (wavelength * 1e-9)
     epsAg = epsilon_silver(omega)
 
     nAg = abs(epsAg.real) ** 0.5
     ncore = abs(eps_core.real) ** 0.5
 
     lbox = Rcalc * 2 * 1.1
-    geom = BoxPML(
+    geom = gy.BoxPML(
         dim=2,
         box_size=(lbox, lbox),
         pml_width=(pml_width, pml_width),
@@ -100,8 +100,8 @@ geom = create_geometry(wavelength, pml_width=wavelength)
 ##############################################################################
 # Define the incident plane wave and materials
 
-pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
-omega = 2 * np.pi * c / (wavelength * 1e-9)
+pw = gy.PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
+omega = 2 * pi * c / (wavelength * 1e-9)
 epsilon = dict(box=1, core=eps_core, shell=epsilon_silver(omega))
 mu = dict(box=1, core=1, shell=1)
 
@@ -109,7 +109,7 @@ mu = dict(box=1, core=1, shell=1)
 ##############################################################################
 # Scattering problem
 
-s = Scattering(
+s = gy.Scattering(
     geom,
     epsilon,
     mu,
@@ -139,15 +139,13 @@ assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1
 # Compute spectra using adaptive sampling. The function needs to return a scalar
 # (which will be monitored by tha sampler) as its first output.
 
-from gyptis.sample import adaptive_sampler
-
 
 def cs_vs_wl(wavelength):
     geom = create_geometry(wavelength, pml_width=wavelength)
-    pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
-    omega = 2 * np.pi * c / (wavelength * 1e-9)
+    pw = gy.PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
+    omega = 2 * pi * c / (wavelength * 1e-9)
     epsilon = dict(box=1, core=2, shell=epsilon_silver(omega))
-    s = Scattering(
+    s = gy.Scattering(
         geom,
         epsilon,
         mu,
@@ -161,7 +159,7 @@ def cs_vs_wl(wavelength):
 
 
 wl = np.linspace(wavelength_min, wavelength_max, 30)
-wla, out = adaptive_sampler(cs_vs_wl, wl)
+wla, out = gy.adaptive_sampler(cs_vs_wl, wl)
 cs = [_[1] for _ in out]
 scs = np.array([d["scattering"] for d in cs])
 acs = np.array([d["absorption"] for d in cs])
@@ -172,8 +170,19 @@ ecs = np.array([d["extinction"] for d in cs])
 # Plot and comparison with benchmark
 
 
-benchmark_scs = np.loadtxt("scs_r2_30nm.csv", delimiter=",")
-benchmark_acs = np.loadtxt("acs_r2_30nm.csv", delimiter=",")
+scs_file = dd.download_example_data(
+    data_file_name="scs_r2_30nm.csv",
+    example_dir="scattering",
+)
+
+acs_file = dd.download_example_data(
+    data_file_name="acs_r2_30nm.csv",
+    example_dir="scattering",
+)
+
+
+benchmark_scs = np.loadtxt(scs_file, delimiter=",")
+benchmark_acs = np.loadtxt(acs_file, delimiter=",")
 plt.figure()
 plt.plot(
     benchmark_scs[:, 0],
