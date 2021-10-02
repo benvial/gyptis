@@ -24,11 +24,9 @@ class BoxPML2D(Geometry):
         box_center=(0, 0),
         pml_width=(0.2, 0.2),
         Rcalc=0,
-        model_name="2D box with PMLs",
         **kwargs,
     ):
         super().__init__(
-            model_name=model_name,
             dim=2,
             **kwargs,
         )

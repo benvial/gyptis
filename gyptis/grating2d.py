@@ -26,15 +26,9 @@ class Layered2D(Geometry):
         self,
         period=1,
         thicknesses=OrderedDict(),
-        model_name="2D grating",
-        mesh_name="mesh.msh",
-        data_dir=None,
         **kwargs,
     ):
         super().__init__(
-            model_name=model_name,
-            mesh_name=mesh_name,
-            data_dir=data_dir,
             dim=2,
             **kwargs,
         )
