@@ -5,6 +5,7 @@ meshio
 gmsh
 h5py
 nlopt
+joblib
 # the packages below are installed by fenics on conda
 numpy
 sympy
