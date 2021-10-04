@@ -7,7 +7,6 @@ Example of a dielectric diffraction grating.
 """
 # sphinx_gallery_thumbnail_number = 2
 
-
 from collections import OrderedDict
 
 import matplotlib.pyplot as plt

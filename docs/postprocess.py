@@ -66,7 +66,7 @@ def process_html(fn, lines):
         )
 
         line = line.replace(
-            "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks/auto_examples/",
+            "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks/examples/",
             "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks/",
         )
         line = line.replace("binder_badge_logo1.svg", "binder_badge_logo.svg")

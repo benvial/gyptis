@@ -28,7 +28,7 @@ It relies on Gmsh_ for geometry definition and meshing
 and FEniCS_ for solving Maxwell's equations.
 
 For a more practical introduction, check the 
-:ref:`tutorials with worked examples <sphx_glr_auto_examples>`.
+:ref:`tutorials with worked examples <sphx_glr_examples>`.
 
 A pdf version of this documentation is available to 
 download `here <https://gyptis.gitlab.io/_downloads/gyptis.pdf>`_.

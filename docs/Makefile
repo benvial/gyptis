@@ -56,7 +56,7 @@ help:
 ## Cleanup documentation
 clean:
 	@rm -rf $(BUILDDIR)/*
-	@rm -rf auto_examples/
+	@rm -rf examples/
 	@rm -rf auto_mayavi_examples/
 	@rm -rf tutorials/
 	@rm -rf gen_modules/
@@ -68,8 +68,8 @@ postpro-html:
 	@python postprocess.py html _build/html/*.html
 	@python postprocess.py html _build/html/generated/*.html
 	@python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
-	@python postprocess.py html $(wildcard $(BUILDDIR)/html/auto_examples/**/*.html)
-	@python postprocess.py html $(BUILDDIR)/html/auto_examples/*.html
+	@python postprocess.py html $(wildcard $(BUILDDIR)/html/examples/**/*.html)
+	@python postprocess.py html $(BUILDDIR)/html/examples/*.html
 	@cp -r _assets $(BUILDDIR)/html
 	@cp -r _assets $(BUILDDIR)/html/_static
 	# cat $(BUILDDIR)/html/_static/css/custom_gallery.css >> $(BUILDDIR)/html/_static/gallery.css

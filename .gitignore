@@ -85,7 +85,7 @@ tmp/
 __pycache__/
 _build/
 gen_modules/
-auto_examples/
+docs/examples/
 .pytest_cache/
 .hypothesis/
 .coverage

@@ -163,7 +163,7 @@ Documentation and examples
 --------------------------
 
 See the `documentation website <https://gyptis.gitlab.io>`_. 
-A good starting point is to look at `examples of application <https://gyptis.gitlab.io/auto_examples/index.html>`_ 
+A good starting point is to look at `examples of application <https://gyptis.gitlab.io/examples/index.html>`_ 
 for typical problems encountered in photonics.
 
 

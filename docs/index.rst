@@ -10,4 +10,4 @@
    :hidden:
 
    reference
-   auto_examples/index
+   examples/index
