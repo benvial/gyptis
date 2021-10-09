@@ -21,11 +21,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import gyptis as gy
-
-# from gyptis import BoxPML, Scattering, c, pi
-# from gyptis.helpers import *
-# from gyptis.plot import *
-# from gyptis.source import *
 import gyptis.data_download as dd
 from gyptis import c, pi
 from gyptis.helpers import array2function, function2array, project_iterative
