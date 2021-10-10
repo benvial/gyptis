@@ -9,8 +9,8 @@ from scipy.optimize import OptimizeResult, minimize
 
 from . import dolfin as df
 from .complex import *
-from .helpers import *
 from .materials import tensor_const
+from .utils.helpers import *
 
 
 def simp(a, s_min=1, s_max=2, p=1, complex=True):

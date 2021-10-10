@@ -119,56 +119,39 @@ def process_html(fn, lines):
             "../../_images/binder_badge_logo.svg",
             new_binder_badge,
         )
-        # line = re.sub('<code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code(.*?)</span> <span class="pre">plot_scattering2d_pec_cylinder.py</span></code></a></p>$',"",line,flags=re.DOTALL)
-
         first_tag = '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code'
         second_tag = "</span></code></a></p>"
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
 
-        if reg != "":
-            line = re.sub(reg, "", line, flags=re.DOTALL)
-            line = line.replace(
-                first_tag,
-                '<i class="icondld icon-python"></i>'
-                + '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">script',
-            )
+        line = re.sub(reg, "", line, flags=re.DOTALL)
+        line = line.replace(
+            first_tag,
+            '<i class="icondld icon-python"></i>'
+            + '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">script',
+        )
 
         first_tag = '<span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook'
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
-        if reg != "":
-            line = re.sub(reg, "", line, flags=re.DOTALL)
-            line = line.replace(
-                first_tag, '<i class="icondld icon-jupyter"></i>' + first_tag
-            )
+        line = re.sub(reg, "", line, flags=re.DOTALL)
+        # if '<i class="icondld icon-jupyter"></i>' in line:
+        line = line.replace(
+            first_tag, '<i class="icondld icon-jupyter"></i>' + first_tag
+        )
 
         first_tag = '<span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code'
         second_tag = "</span></code></a></p>"
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
-
-        if reg != "":
-            line = re.sub(reg, "", line, flags=re.DOTALL)
-            line = line.replace(
-                first_tag, '<i class="icondld icon-python"></i>' + first_tag
-            )
+        line = re.sub(reg, "", line, flags=re.DOTALL)
+        line = line.replace(
+            first_tag, '<i class="icondld icon-python"></i>' + first_tag
+        )
 
         first_tag = '<span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Jupyter</span> <span class="pre">notebooks'
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
-        if reg != "":
-            line = re.sub(reg, "", line, flags=re.DOTALL)
-            line = line.replace(
-                first_tag, '<i class="icondld icon-jupyter"></i>' + first_tag
-            )
-        # sphinx_dl_foot.append(line)
-        #
-        #
-        # first_tag = '<div class="sphx-glr-footer class sphx-glr-footer-example docutils container"'
-        # second_tag = "</div>"
-        # reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
-        # line = re.sub(reg, "", line, flags=re.DOTALL)
-        # line = line.replace(
-        #     first_tag, 'xsxsxsxsx'
-        # )
-        #
+        line = re.sub(reg, "", line, flags=re.DOTALL)
+        line = line.replace(
+            first_tag, '<i class="icondld icon-jupyter"></i>' + first_tag
+        )
 
         new_lines.append(line)
     return new_lines

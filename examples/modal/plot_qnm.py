@@ -23,7 +23,7 @@ import numpy as np
 import gyptis as gy
 import gyptis.data_download as dd
 from gyptis import c, pi
-from gyptis.helpers import array2function, function2array, project_iterative
+from gyptis.utils.helpers import array2function, function2array, project_iterative
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Vial2014`.

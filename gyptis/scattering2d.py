@@ -8,13 +8,13 @@ import glob
 import os
 
 from . import ADJOINT, dolfin
-from ._meta import _ScatteringBase
 from .complex import *
 from .formulation import Maxwell2D
 from .geometry import *
 from .materials import *
 from .simulation import Simulation
 from .source import *
+from .utils._meta import _ScatteringBase
 
 
 class BoxPML2D(Geometry):

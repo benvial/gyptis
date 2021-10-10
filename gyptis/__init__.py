@@ -15,6 +15,8 @@ from .__about__ import (
 
 __doc__ = __description__
 
+# from .utils import *
+
 from math import e, pi
 
 from scipy.constants import c, epsilon_0, mu_0
@@ -58,4 +60,4 @@ dolfin.PETScOptions.set("pc_type", "lu")
 from .api import *
 from .complex import *
 from .plot import *
-from .sample import adaptive_sampler
+from .utils.sample import adaptive_sampler

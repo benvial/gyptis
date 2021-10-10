@@ -7,7 +7,7 @@ import numpy as np
 
 from . import dolfin
 from .complex import Complex, Function, assemble
-from .helpers import array2function
+from .utils.helpers import array2function
 
 
 class Simulation:

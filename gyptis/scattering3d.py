@@ -5,13 +5,13 @@
 
 
 from . import dolfin
-from ._meta import _ScatteringBase
 from .complex import *
 from .formulation import Maxwell3D
 from .geometry import *
 from .materials import *
 from .simulation import Simulation
 from .source import *
+from .utils._meta import _ScatteringBase
 
 
 class BoxPML3D(Geometry):

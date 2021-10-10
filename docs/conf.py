@@ -145,7 +145,12 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_custom/static"]
 
 
+def env_get_outdated(app, env, added, changed, removed):
+    return ["index"]
+
+
 def setup(app):
+    app.connect("env-get-outdated", env_get_outdated)
     # app.add_css_file("css/theme.css")
     app.add_css_file("css/custom_styles.css")
     app.add_css_file("css/custom_gallery.css")
@@ -362,8 +367,13 @@ sphinx_gallery_conf = {
     # "image_scrapers": ("matplotlib", PNGScraper()),
     # Modules for which function level galleries are created.
     "doc_module": package.__name__,
+    "thumbnail_size": (800, 800),
     "default_thumb_file": "./_assets/gyptis.png",
     "show_memory": True,
+    "first_notebook_cell": (
+        "# This file is part of gyptis\n" "# License: MIT\n" "%matplotlib notebook"
+    ),
+    "last_notebook_cell": ("import gyptis.utils.jupyter\n" "%gyptis_version_table"),
     "binder": {
         "org": "gyptis",
         "repo": "gyptis.gitlab.io",

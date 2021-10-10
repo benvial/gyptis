@@ -8,14 +8,14 @@ from collections import OrderedDict
 from scipy.constants import c, epsilon_0, mu_0
 
 from . import dolfin
-from ._meta import _GratingBase
 from .bc import BiPeriodicBoundary3D
 from .complex import *
 from .formulation import Maxwell3DPeriodic
 from .geometry import *
-from .helpers import _translation_matrix
 from .materials import PML, Coefficient
 from .simulation import Simulation
+from .utils._meta import _GratingBase
+from .utils.helpers import _translation_matrix
 
 
 class Layered3D(Geometry):

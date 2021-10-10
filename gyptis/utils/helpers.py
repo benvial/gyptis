@@ -7,8 +7,8 @@ import sys
 
 import numpy as np
 
-from . import dolfin
-from .complex import project
+from .. import dolfin
+from ..complex import project
 
 
 def array2function(a, A):

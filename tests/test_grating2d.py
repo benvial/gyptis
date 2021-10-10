@@ -12,9 +12,9 @@ from scipy.spatial.transform import Rotation
 from gyptis import Grating, Layered
 from gyptis.geometry import *
 from gyptis.grating2d import Grating2D, Layered2D, OrderedDict
-from gyptis.helpers import list_time
 from gyptis.plot import *
 from gyptis.source import *
+from gyptis.utils.helpers import list_time
 
 pytest_params = [("TM", 1), ("TE", 1), ("TM", 2), ("TE", 2)]
 

@@ -64,15 +64,16 @@ clean:
 
 ## Postprocess html doc
 postpro-html:
-	# @echo $(wildcard $(BUILDDIR)/html/**/*.html)
+	@echo "Postprocessing html files."
 	@python postprocess.py html _build/html/*.html
 	@python postprocess.py html _build/html/generated/*.html
 	@python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
 	@python postprocess.py html $(wildcard $(BUILDDIR)/html/examples/**/*.html)
 	@python postprocess.py html $(BUILDDIR)/html/examples/*.html
+	@python caroussel.py
 	@cp -r _assets $(BUILDDIR)/html
 	@cp -r _assets $(BUILDDIR)/html/_static
-	# cat $(BUILDDIR)/html/_static/css/custom_gallery.css >> $(BUILDDIR)/html/_static/gallery.css
+	@echo "Done html postprocessing."
 
 
 html-noplot: export SPHX_GLR_THEME = $(theme)

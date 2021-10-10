@@ -6,7 +6,7 @@
 
 import pytest
 
-from gyptis.parallel import parloop
+from gyptis.utils.parallel import parloop
 
 
 def f(x, y, a=1, b="b"):

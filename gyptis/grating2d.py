@@ -10,15 +10,15 @@ import os
 from collections import OrderedDict
 
 from . import ADJOINT, dolfin
-from ._meta import _GratingBase
 from .bc import PeriodicBoundary2DX
 from .complex import *
 from .formulation import Maxwell2DPeriodic
 from .geometry import *
-from .helpers import _translation_matrix
 from .materials import *
 from .simulation import Simulation
 from .source import *
+from .utils._meta import _GratingBase
+from .utils.helpers import _translation_matrix
 
 
 class Layered2D(Geometry):

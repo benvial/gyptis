@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from gyptis.helpers import *
+from gyptis.utils.helpers import *
 
 
 def test_all():

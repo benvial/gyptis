@@ -15,9 +15,9 @@ from scipy.constants import epsilon_0, mu_0
 from . import dolfin
 from .bc import *
 from .complex import *
-from .helpers import project_iterative
 from .source import PlaneWave
 from .stack import make_stack
+from .utils.helpers import project_iterative
 
 
 class Formulation(ABC):

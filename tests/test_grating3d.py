@@ -9,8 +9,8 @@ import numpy as np
 
 from gyptis import dolfin
 from gyptis.grating3d import Grating3D, Layered3D, OrderedDict
-from gyptis.helpers import list_time
 from gyptis.source import PlaneWave
+from gyptis.utils.helpers import list_time
 
 
 def test_grating3d(degree=1):

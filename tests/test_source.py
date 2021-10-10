@@ -8,8 +8,8 @@ import pytest
 
 from gyptis import dolfin
 from gyptis.complex import assemble, div, dot, grad, project
-from gyptis.helpers import function2array, get_coordinates
 from gyptis.source import *
+from gyptis.utils.helpers import function2array, get_coordinates
 
 
 def test_pw_2d():

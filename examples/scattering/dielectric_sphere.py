@@ -13,7 +13,7 @@ from mie import get_cross_sections_analytical
 
 from gyptis import BoxPML, PlaneWave, Scattering, c, dolfin, epsilon_0, mu_0
 from gyptis.complex import *
-from gyptis.helpers import mpi_print
+from gyptis.utils.helpers import mpi_print
 
 plot_scs = True
 if plot_scs:
@@ -230,7 +230,7 @@ if rank == 0:
 #
 #
 #
-# from gyptis.helpers import project_iterative
+# from gyptis.utils.helpers import project_iterative
 # u = scatt.solution["total"]
 # V = scatt.formulation.real_function_space
 #

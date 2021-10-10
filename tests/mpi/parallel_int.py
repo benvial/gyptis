@@ -5,7 +5,7 @@
 from dolfin import MPI
 
 from gyptis import Geometry, dolfin, pi
-from gyptis.helpers import mpi_print
+from gyptis.utils.helpers import mpi_print
 
 rank = MPI.rank(MPI.comm_world)
 # dolfin.parameters["ghost_mode"] = "shared_vertex"

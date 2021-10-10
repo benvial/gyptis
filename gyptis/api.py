@@ -19,8 +19,6 @@ __all__ = [
     "Geometry",
 ]
 
-from ._meta import _GratingBase, _ScatteringBase
-
 # from . import complex
 from .complex import Complex
 from .geometry import Geometry
@@ -31,6 +29,7 @@ from .scattering2d import BoxPML2D, Scatt2D
 from .scattering3d import BoxPML3D, Scatt3D
 from .simulation import Simulation
 from .source import GaussianBeam, LineSource, PlaneWave
+from .utils._meta import _GratingBase, _ScatteringBase
 
 
 def _check_dimension(dim):

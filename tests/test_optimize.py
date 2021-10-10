@@ -8,9 +8,9 @@ import pytest
 from test_geometry import geom2D
 
 from gyptis import dolfin as df
-from gyptis.helpers import array2function, rot_matrix_2d
 from gyptis.optimize import *
 from gyptis.plot import *
+from gyptis.utils.helpers import array2function, rot_matrix_2d
 
 np.random.seed(123456)
 

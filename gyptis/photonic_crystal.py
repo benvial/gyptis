@@ -6,9 +6,9 @@
 from .bc import BiPeriodic2D
 from .formulation import Maxwell2DBands
 from .geometry import *
-from .helpers import _translation_matrix
 from .materials import *
 from .simulation import Simulation
+from .utils.helpers import _translation_matrix
 
 
 class Lattice2D(Geometry):

@@ -49,7 +49,7 @@ thicknesses = OrderedDict(
 
 ##############################################################################
 # Here we set the mesh refinement parameters, in order to be able to have
-# ``parmesh`` cells per wavelength of the field inide each media
+# ``parmesh`` cells per wavelength of the field inside each subdomain
 
 pmesh = 10
 pmesh_rod = pmesh * 2
