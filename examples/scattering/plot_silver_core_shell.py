@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import gyptis as gy
-import gyptis.data_download as dd
+import gyptis.utils.data_download as dd
 from gyptis import c, pi
 
 ##############################################################################

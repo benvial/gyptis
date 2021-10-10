@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import gyptis as gy
-import gyptis.data_download as dd
+import gyptis.utils.data_download as dd
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Ruppin2006`.
