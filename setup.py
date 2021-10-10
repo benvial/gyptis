@@ -24,6 +24,8 @@ required = [
     "numpy",
     "simpy",
     "joblib",
+    "psutil",
+    "ipython",
 ]
 
 _classifiers = [
