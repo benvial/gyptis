@@ -10,4 +10,4 @@ fc-cache -f -v && fc-list | grep "NunitoSans"
 rm -rf NunitoSans
 
 # # execute all notebooks to avoid JIT
-conda activate /srv/conda/envs/notebook && find $directory -type f -name "*.ipynb" -exec jupyter nbconvert --clear-output --execute "{}" \;
+# conda activate /srv/conda/envs/notebook && find $directory -type f -name "*.ipynb" -exec jupyter nbconvert --clear-output --execute "{}" \;
