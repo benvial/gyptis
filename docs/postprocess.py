@@ -43,15 +43,14 @@ def main():
         f.write("".join(lines))
         f.close()
 
-        pp_dllinks
         try:
             if mode == "html":
-                pp_dllinks(fn)
+                postpro_download_links(fn)
         finally:
             pass
 
 
-def pp_dllinks(fn):
+def postpro_download_links(fn):
     sgfoot = None
     with open(fn, "r") as file:
         soup = BeautifulSoup(file, "html.parser")
@@ -119,39 +118,41 @@ def process_html(fn, lines):
             "../../_images/binder_badge_logo.svg",
             new_binder_badge,
         )
+
+        icon_python = '<i class="icondld icon-python"></i>'
+        icon_jupyter = '<i class="icondld icon-jupyter"></i>'
+
         first_tag = '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code'
         second_tag = "</span></code></a></p>"
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
 
         line = re.sub(reg, "", line, flags=re.DOTALL)
-        line = line.replace(
-            first_tag,
-            '<i class="icondld icon-python"></i>'
-            + '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">script',
-        )
+        if icon_python not in line:
+            line = line.replace(
+                first_tag,
+                icon_python
+                + '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">script',
+            )
 
         first_tag = '<span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook'
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
         line = re.sub(reg, "", line, flags=re.DOTALL)
-        # if '<i class="icondld icon-jupyter"></i>' in line:
-        line = line.replace(
-            first_tag, '<i class="icondld icon-jupyter"></i>' + first_tag
-        )
+        # if icon_jupyter in line:
+        if icon_jupyter not in line:
+            line = line.replace(first_tag, icon_jupyter + first_tag)
 
         first_tag = '<span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code'
         second_tag = "</span></code></a></p>"
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
         line = re.sub(reg, "", line, flags=re.DOTALL)
-        line = line.replace(
-            first_tag, '<i class="icondld icon-python"></i>' + first_tag
-        )
+        if icon_python not in line:
+            line = line.replace(first_tag, icon_python + first_tag)
 
         first_tag = '<span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Jupyter</span> <span class="pre">notebooks'
         reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
         line = re.sub(reg, "", line, flags=re.DOTALL)
-        line = line.replace(
-            first_tag, '<i class="icondld icon-jupyter"></i>' + first_tag
-        )
+        if icon_jupyter not in line:
+            line = line.replace(first_tag, icon_jupyter + first_tag)
 
         new_lines.append(line)
     return new_lines

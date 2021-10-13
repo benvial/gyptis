@@ -1,16 +1,22 @@
 @import "variables.less";
 
-#ipython_notebook img{                                                                                        
-    display:block; 
-    background: url("https://gitlab.com/gyptis/gyptis/-/raw/master/docs/_assets/gyptis-name.png") no-repeat;
+
+
+
+#ipython_notebook img {
+    display: block;
+    background: url("https://gitlab.com/gyptis/gyptis/-/raw/master/docs/_assets/gyptis-name.svg") no-repeat;
+        background-size: auto;
     background-size: contain;
-    width: 100px;
-    height: 30px;
-    padding-left: 100px;
+    width: 150px;
+    height: 55px;
+    padding-left: 200px;
     padding-right: 50px;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
+
+
 
 div#notebook {
  font-family: @font-family-sans-serif;
@@ -287,7 +293,7 @@ div#ipython-main-app.container {
  margin-left: auto;
 }
 .container {
- width: 66% !important;
+ min-width: 90% !important;
  margin-right: auto;
  margin-left: auto;
 }
@@ -912,6 +918,7 @@ div.cell {
  border: none;
  border-top-right-radius: 2px;
  border-top-left-radius: 2px;
+ margin-top: 12px;
 }
 div.cell.selected,div.cell.text_cell.selected {
  background: @body-bg-darker;
@@ -947,7 +954,7 @@ div.cell.selected,div.cell.text_cell.selected {
     height: 100%;
     /* calc(100% - 3px); */
     content: '';
-    background: #678D67;
+    background: @gray-darker;
 }
 
 div.cell.selected:before, div.cell.selected.jupyter-soft-selected:before,
@@ -2117,5 +2124,29 @@ div#preloader { position: fixed;
 }
 
 #jupyter-resource-usage-display {
-    padding-top: 10px;
+    padding-top: 10px !important;
+}
+
+#maintoolbar-container {
+    width: 100% !important;
+    margin-bottom: 16px;
+}
+
+
+span.save_widget {
+    height: 30px;
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: baseline;
+    width: 50%;
+    flex: 1;
+}
+
+#visit-repo-link {
+    margin-top: 8px;
+}
+
+#copy-binder-link {
+    margin-top: 8px;
 }
