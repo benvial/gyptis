@@ -46,7 +46,7 @@ class Simulation:
         self.matrix = assemble(self.formulation.lhs)
         return self.matrix
 
-    def assemble_rhs(self):
+    def assemble_rhs(self, custom_rhs=None):
         """Assemble the right hand side of the weak formulation.
 
         Returns
@@ -55,7 +55,10 @@ class Simulation:
             Assembled vector.
 
         """
-        self.formulation.build_rhs()
+        if custom_rhs is not None:
+            self.formulation._set_rhs(custom_rhs)
+        else:
+            self.formulation.build_rhs()
         self.vector = assemble(self.formulation.rhs)
         return self.vector
 

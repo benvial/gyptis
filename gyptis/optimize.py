@@ -3,7 +3,7 @@
 # Author: Benjamin Vial
 # License: MIT
 
-
+import nlopt
 import numpy as np
 from scipy.optimize import OptimizeResult, minimize
 
@@ -192,3 +192,81 @@ def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
     # a1 = comm.bcast(a1, root=0)
     ctrl = array2function(a, source_space)
     return ctrl
+
+
+class TopologyOptimizer:
+    def __init__(
+        self,
+        fun,
+        x0,
+        rfilt=0,
+        threshold=(4, 8),
+        maxiter=20,
+        stopval=None,
+        callback=None,
+        args=None,
+        verbose=True,
+    ):
+        self.fun = fun
+        self.x0 = x0
+        self.nvar = len(x0)
+        self.threshold = threshold
+        self.rfilt = rfilt
+        self.maxiter = maxiter
+        self.stopval = stopval
+        self.callback = callback
+        self.args = args or []
+        self.verbose = verbose
+
+    def min_function(self):
+        f = self.fun(x)
+
+    def minimize(self):
+        if self.verbose:
+            print("#################################################")
+            print(f"Topology optimization with {self.nvar} variables")
+            print("#################################################")
+            print("")
+        x0 = self.x0
+        for iopt in range(*self.threshold):
+            if self.verbose:
+                print(f"global iteration {iopt}")
+                print("---------------------------------------------")
+            proj_level = iopt
+            args = list(self.args)
+            # args[1] = proj_level
+            # args = tuple(args)
+
+            def fun_nlopt(x, gradn):
+                y, dy = self.fun(
+                    x,
+                    proj_level=proj_level,
+                    rfilt=self.rfilt,
+                    reset=True,
+                    gradient=True,
+                )
+                gradn[:] = dy
+                if self.callback is not None:
+                    self.callback(x, y, dy, *args)
+                return y
+
+            lb = np.zeros(self.nvar, dtype=float)
+            ub = np.ones(self.nvar, dtype=float)
+
+            opt = nlopt.opt(nlopt.LD_MMA, self.nvar)
+            opt.set_lower_bounds(lb)
+            opt.set_upper_bounds(ub)
+
+            # opt.set_ftol_rel(1e-16)
+            # opt.set_xtol_rel(1e-16)
+            if self.stopval is not None:
+                opt.set_stopval(self.stopval)
+            if self.maxiter is not None:
+                opt.set_maxeval(self.maxiter)
+
+            # opt.set_min_objective(fun_nlopt)
+            opt.set_max_objective(fun_nlopt)
+            xopt = opt.optimize(x0)
+            fopt = opt.last_optimum_value()
+            x0 = xopt
+        return xopt, fopt

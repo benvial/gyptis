@@ -68,6 +68,10 @@ class Formulation(ABC):
             self.rhs = dummy_form.real + dummy_form.imag
         return self.rhs
 
+    def _set_rhs(self, custom_rhs):
+        self.rhs = custom_rhs
+        return self.rhs
+
     @abstractmethod
     def weak(self):
         """Weak formulation"""
