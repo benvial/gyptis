@@ -35,6 +35,15 @@ def projection(a, beta=1, nu=0.5):
     )
 
 
+def projection_gradient(a, beta=1, nu=0.5):
+    """Projection operator gradient dproj/da."""
+    return (
+        beta
+        * (1 - (tanh(beta * (a - nu))) ** 2)
+        / (tanh(beta * nu) + tanh(beta * (1 - nu)))
+    )
+
+
 class Filter:
     def __init__(self, rfilt=0, function_space=None, order=1, solver=None):
         self.rfilt = rfilt
@@ -200,7 +209,7 @@ class TopologyOptimizer:
         fun,
         x0,
         rfilt=0,
-        threshold=(4, 8),
+        threshold=(0, 8),
         maxiter=20,
         stopval=None,
         callback=None,
@@ -269,4 +278,7 @@ class TopologyOptimizer:
             xopt = opt.optimize(x0)
             fopt = opt.last_optimum_value()
             x0 = xopt
+        self.opt = opt
+        self.xopt = xopt
+        self.fopt = fopt
         return xopt, fopt
