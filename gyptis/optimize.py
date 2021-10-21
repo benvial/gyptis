@@ -226,6 +226,7 @@ class TopologyOptimizer:
         self.callback = callback
         self.args = args or []
         self.verbose = verbose
+        self.callback_output = []
 
     def min_function(self):
         f = self.fun(x)
@@ -237,7 +238,9 @@ class TopologyOptimizer:
             print("#################################################")
             print("")
         x0 = self.x0
+
         for iopt in range(*self.threshold):
+            self._cbout = []
             if self.verbose:
                 print(f"global iteration {iopt}")
                 print("---------------------------------------------")
@@ -255,8 +258,10 @@ class TopologyOptimizer:
                     gradient=True,
                 )
                 gradn[:] = dy
+                cbout = []
                 if self.callback is not None:
-                    self.callback(x, y, dy, *args)
+                    out = self.callback(x, y, dy, *args)
+                    self._cbout.append(out)
                 return y
 
             lb = np.zeros(self.nvar, dtype=float)
@@ -277,7 +282,9 @@ class TopologyOptimizer:
             opt.set_max_objective(fun_nlopt)
             xopt = opt.optimize(x0)
             fopt = opt.last_optimum_value()
+            self.callback_output.append(self._cbout)
             x0 = xopt
+
         self.opt = opt
         self.xopt = xopt
         self.fopt = fopt
