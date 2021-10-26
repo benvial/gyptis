@@ -42,6 +42,18 @@ plt.register_cmap(
 )
 
 
+def pause(interval):
+    backend = plt.rcParams["backend"]
+    if backend in matplotlib.rcsetup.interactive_bk:
+        figManager = matplotlib._pylab_helpers.Gcf.get_active()
+        if figManager is not None:
+            canvas = figManager.canvas
+            if canvas.figure.stale:
+                canvas.draw()
+            canvas.start_event_loop(interval)
+            return
+
+
 def get_boundaries(markers, domain=None, shift=(0, 0)):
 
     data = markers.array()

@@ -45,14 +45,16 @@ def projection_gradient(a, beta=1, nu=0.5):
 
 
 class Filter:
-    def __init__(self, rfilt=0, function_space=None, order=1, solver=None):
+    def __init__(self, rfilt=0, function_space=None, order=1, solver=None, mesh=None):
         self.rfilt = rfilt
+        self._rfilt_scaled = self.rfilt / (2 * 3 ** 0.5)
         self.solver = solver
         self.order = order
+        self._mesh = mesh
         self._function_space = function_space
 
     def weak(self, a):
-        self.mesh = a.function_space().mesh()
+        self.mesh = a.function_space().mesh() if self._mesh is None else self._mesh
         self.dim = self.mesh.ufl_domain().geometric_dimension()
         self.function_space = self._function_space or df.FunctionSpace(
             self.mesh, "CG", self.order
@@ -61,14 +63,17 @@ class Filter:
         vf = df.TestFunction(self.function_space)
         if hasattr(self.rfilt, "shape"):
             if np.shape(self.rfilt) in [(2, 2), (3, 3)]:
-                self._rfilt = tensor_const(self.rfilt, dim=self.dim, real=True)
+                self._rfilt_scaled = tensor_const(
+                    self._rfilt_scaled, dim=self.dim, real=True
+                )
             else:
                 raise ValueError("Wrong shape for rfilt")
         else:
-            self._rfilt = df.Constant(self.rfilt)
+            self._rfilt_scaled = df.Constant(self._rfilt_scaled)
 
         lhs = (
-            df.inner(self._rfilt * df.grad(af), self._rfilt * df.grad(vf)) * df.dx
+            df.inner(self._rfilt_scaled * df.grad(af), self._rfilt_scaled * df.grad(vf))
+            * df.dx
             + df.inner(af, vf) * df.dx
         )
         rhs = df.inner(a, vf) * df.dx
@@ -80,16 +85,16 @@ class Filter:
         else:
             lhs, rhs = self.weak(a)
             af = df.Function(self.function_space, name="Filtered density")
-            vector = df.assemble(rhs)
+            self.vector = df.assemble(rhs)
             if self.solver == None:
-                matrix = df.assemble(lhs)
-                self.solver = df.KrylovSolver(matrix, "cg", "jacobi")
-            self.solver.solve(af.vector(), vector)
+                self.matrix = df.assemble(lhs)
+                self.solver = df.KrylovSolver(self.matrix, "cg", "jacobi")
+            self.solver.solve(af.vector(), self.vector)
             return af
 
 
-def filtering(a, rfilt=0, function_space=None, order=1):
-    filter = Filter(rfilt, function_space, order)
+def filtering(a, rfilt=0, function_space=None, order=1, solver=None, mesh=None):
+    filter = Filter(rfilt, function_space, order, solver, mesh)
     return filter.apply(a)
 
 
@@ -256,7 +261,9 @@ class TopologyOptimizer:
                     rfilt=self.rfilt,
                     reset=True,
                     gradient=True,
+                    *args,
                 )
+                print(args)
                 gradn[:] = dy
                 cbout = []
                 if self.callback is not None:
