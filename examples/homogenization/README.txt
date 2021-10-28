@@ -1,0 +1,4 @@
+Homogenization
+--------------
+
+Calculating effective permittivity.

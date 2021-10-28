@@ -14,6 +14,7 @@ from matplotlib.tri import Triangulation
 
 from . import dolfin
 from .complex import *
+from .utils.helpers import project_iterative
 
 colors = dict(
     red=(210 / 255, 95 / 255, 95 / 255), green=(69 / 255, 149 / 255, 125 / 255)
@@ -121,50 +122,49 @@ def plot_subdomains(markers, **kwargs):
     return plot_boundaries(markers, **kwargs)
 
 
-def plotcplx(test, ax=None, markers=None, proj_space=None, ref_cbar=False, **kwargs):
-    if ax is None:
-        fig, ax = plt.subplots(1, 2)
-
+def plot_real(fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **kwargs):
+    proj = proj_space is not None
     if "cmap" not in kwargs:
         kwargs["cmap"] = "RdBu_r"
-    proj = proj_space is not None
-
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
     if proj:
-        test = project(test, proj_space)
+        fplot = project_iterative(fplot, proj_space)
+    plt.sca(ax)
+    p = dolfin.plot(fplot, **kwargs)
+    cbar = plt.colorbar(p) if colorbar else None
+    kwargs.pop("cmap")
+    if geometry:
+        geometry.plot_subdomains(**kwargs)
+    return p, cbar
+
+
+def plot_complex(
+    fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **kwargs
+):
+    proj = proj_space is not None
+    if ax is None:
+        fig, ax = plt.subplots(1, 2)
     P, C = [], []
-    for a, t in zip(ax, [test.real, test.imag]):
-        plt.sca(a)
-        p = dolfin.plot(t, **kwargs)
-        cbar = plt.colorbar(p)
-        if markers:
-            plot_subdomains(markers, **kwargs)
-        if ref_cbar:
-            v = test.real.vector().get_local()
-            mn, mx = min(v), max(v)
-            md = 0.5 * (mx + mn)
-            cbar.set_ticks([mn, md, mx])
-            lab = [f"{m:.2e}" for m in [mn, md, mx]]
-            cbar.set_ticklabels(lab)
+    for a, f in zip(ax, [fplot.real, fplot.imag]):
+        p, cbar = plot_real(
+            f,
+            ax=a,
+            geometry=geometry,
+            proj_space=proj_space,
+            colorbar=colorbar,
+            **kwargs,
+        )
         P.append(p)
         C.append(cbar)
     return P, C
 
 
-def plot(test, ax=None, markers=None, proj_space=None, colorbar=True, **kwargs):
-    proj = proj_space is not None
-    if "cmap" not in kwargs:
-        kwargs["cmap"] = "inferno"
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-    if proj:
-        test = project(test, proj_space)
-    plt.sca(ax)
-    p = dolfin.plot(test, **kwargs)
-    cbar = plt.colorbar(p) if colorbar else None
-    if markers:
-        plot_subdomains(markers)
-
-    return p, cbar
+def plot(fplot, **kwargs):
+    if iscomplex(fplot):
+        return plot_complex(fplot, **kwargs)
+    else:
+        return plot_real(fplot, **kwargs)
 
 
 def pause(interval):

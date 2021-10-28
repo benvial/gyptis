@@ -8,7 +8,8 @@ import copy
 
 import numpy as np
 
-from gyptis.complex import *
+from .complex import *
+from .plot import plot
 
 
 class PML(object):
@@ -489,8 +490,6 @@ class Coefficient:
 
     def plot(self, component=None, **kwargs):
 
-        from gyptis.plot import plot, plotcplx
-
         proj_space = dolfin.FunctionSpace(self.geometry.mesh_object["mesh"], "DG", 0)
         eps_subdomain = self.as_subdomain()
         eps_plot = (
@@ -498,8 +497,7 @@ class Coefficient:
             if component is None
             else eps_subdomain[component[0]][component[1]]
         )
-        pltfunction = plotcplx if iscomplex(eps_plot) else plot
-        return pltfunction(eps_plot, proj_space=proj_space, **kwargs)
+        return plot(eps_plot, proj_space=proj_space, **kwargs)
 
     def invert(self):
         new = copy.copy(self)

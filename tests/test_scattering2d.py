@@ -87,23 +87,6 @@ def test_scatt2d_ls(degree, polarization):
     s.assemble_rhs()
     u1 = s.solve_system(again=True)
     list_time()
-    # tot1 = gf.expression + u1
-
-    # P = dolfin.FunctionSpace(mesh, "CG", degree)
-    # plotcplx(project(tot, P))
-    # plotcplx(project(tot1, P))
-
-    #
-    # x = np.linspace(-wavelength, wavelength, 3)
-    # y = np.linspace(-wavelength, wavelength, 3)
-    #
-    #
-    # ldos = s.local_density_of_states(x, y)
-    #
-    # plt.figure()
-    # plt.imshow(ldos)
-    # plt.axis("scaled")
-    # plt.tight_layout()
 
     s.plot_field()
     s.animate_field(n=2, filename="animation.gif")

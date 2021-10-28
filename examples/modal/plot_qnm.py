@@ -7,8 +7,8 @@
 Quasinormal modes and modal expansion of a nanorod
 ==================================================
 
-Spectral problem for a triangular rod made of a non-dispersive dielectric in vacuum. 
-Reconstruction using a quasinormlal mode expansion applied to the scattering by 
+Spectral problem for a triangular rod made of a non-dispersive dielectric in vacuum.
+Reconstruction using a quasinormlal mode expansion applied to the scattering by
 a plane wave and the computaion of the local density of states.
 
 """
@@ -252,10 +252,8 @@ for mode_index in mode_indexes_rec:
 # Vizualize the total field for the direct problem:
 
 fig, ax = plt.subplots(1, 2, figsize=(4.5, 2))
-gy.plotcplx(sf, cmap="RdBu_r", ax=ax)
-[geom.plot_subdomains(ax=a) for a in ax]
+gy.plot(sf, cmap="RdBu_r", ax=ax, geometry=geom)
 for a in ax:
-    geom.plot_subdomains(ax=a)
     a.set_axis_off()
 ax[0].set_title(r"Re $E_z$")
 ax[1].set_title(r"Im $E_z$")
@@ -268,10 +266,8 @@ plt.pause(0.1)
 # Vizualize the total field for the quasimodal expansion:
 
 fig, ax = plt.subplots(1, 2, figsize=(4.5, 2))
-gy.plotcplx(reconstr, cmap="RdBu_r", ax=ax)
-[geom.plot_subdomains(ax=a) for a in ax]
+gy.plot(reconstr, cmap="RdBu_r", ax=ax, geometry=geom)
 for a in ax:
-    geom.plot_subdomains(ax=a)
     a.set_axis_off()
 ax[0].set_title(r"Re $E_z$")
 ax[1].set_title(r"Im $E_z$")

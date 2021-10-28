@@ -11,7 +11,7 @@ from .utils.helpers import array2function
 
 
 class Simulation:
-    def __init__(self, geometry, formulation=None):
+    def __init__(self, geometry, formulation=None, direct=True):
         self.geometry = geometry
         self.formulation = formulation
         self.coefficients = formulation.coefficients
@@ -23,6 +23,7 @@ class Simulation:
         self.dx = formulation.dx
         self.ds = formulation.ds
         self.dS = formulation.dS
+        self.direct = direct
 
     @property
     def source(self):
@@ -107,8 +108,11 @@ class Simulation:
             u = dolfin.Function(self.function_space)
 
         if not again:
-            self.solver = dolfin.LUSolver(self.matrix, "mumps")
-
+            if self.direct:
+                self.solver = dolfin.LUSolver(self.matrix, "mumps")
+            else:
+                # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
+                self.solver = dolfin.KrylovSolver(self.matrix)
         self.solver.solve(u.vector(), self.vector)
         solution = Complex(*u.split())
         return solution

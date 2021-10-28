@@ -17,6 +17,7 @@ __all__ = [
     "BoxPML",
     "Layered",
     "Geometry",
+    "Homogenization2D",
 ]
 
 # from . import complex
@@ -24,6 +25,7 @@ from .complex import Complex
 from .geometry import Geometry
 from .grating2d import Grating2D, Layered2D
 from .grating3d import Grating3D, Layered3D
+from .homogenization import Homogenization2D
 from .photonic_crystal import Lattice2D, PhotonicCrystal2D
 from .scattering2d import BoxPML2D, Scatt2D
 from .scattering3d import BoxPML3D, Scatt3D
