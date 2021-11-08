@@ -12,7 +12,7 @@ import gyptis
 from gyptis import BoxPML, Scattering
 from gyptis.plot import *
 from gyptis.scattering2d import *
-from gyptis.utils.helpers import list_time
+from gyptis.utils import list_time
 
 plt.ion()
 

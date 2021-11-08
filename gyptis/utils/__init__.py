@@ -6,7 +6,9 @@
 
 from IPython import get_ipython
 
+from .helpers import *
 from .jupyter import VersionTable
+from .time import *
 
 _IP = get_ipython()
 if _IP is not None:

@@ -8,7 +8,7 @@ import time
 
 from gyptis import BoxPML, Scattering
 from gyptis.source import PlaneWave
-from gyptis.utils.helpers import list_time
+from gyptis.utils import list_time
 
 
 def test_simple(pmesh=10):

@@ -65,10 +65,6 @@ def function2array(f):
     return f.vector().get_local()
 
 
-def list_time():
-    return dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
-
-
 def get_coordinates(A):
     n = A.dim()
     d = A.mesh().geometry().dim()
