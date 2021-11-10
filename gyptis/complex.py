@@ -5,7 +5,7 @@
 
 """
 Support for complex finite element forms.
-This module provides a :class:`Complex` class and overrides some ``dolfin`` functions 
+This module provides a :class:`Complex` class and overrides some ``dolfin`` functions
 to easily deal with complex problems by spliting real and imaginary parts.
 """
 
@@ -334,3 +334,4 @@ TrialFunction = _complexify_vector(dolfin.TrialFunction)
 TestFunction = _complexify_vector(dolfin.TestFunction)
 TrialFunctions = _complexify_vector(dolfin.TrialFunctions)
 TestFunctions = _complexify_vector(dolfin.TestFunctions)
+j = Complex(0, 1)
