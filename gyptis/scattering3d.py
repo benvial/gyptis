@@ -146,6 +146,10 @@ class BoxPML3D(Geometry):
         self._translate(pml, t)
         return pml
 
+    def set_pml_mesh_size(self, s):
+        for pml in self.pml_physical:
+            self.set_mesh_size({pml: s})
+
 
 class Scatt3D(_ScatteringBase, Simulation):
     def __init__(

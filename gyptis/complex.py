@@ -315,6 +315,18 @@ def phase_shift(phase, **kargs):
     return Complex(phasor_re, phasor_im)
 
 
+def vector(vect):
+    vsr = [v.real for v in vect]
+    vsi = [v.imag for v in vect]
+    return Complex(dolfin.as_vector(vsr), dolfin.as_vector(vsi))
+
+
+def tensor(tens):
+    tsr = [[t.real for t in _t] for _t in tens]
+    tsi = [[t.imag for t in _t] for _t in tens]
+    return Complex(dolfin.as_tensor(tsr), dolfin.as_tensor(tsi))
+
+
 interpolate = _complexify_linear(dolfin.interpolate)
 assemble = _complexify_linear(dolfin.assemble)
 grad = _complexify_linear(dolfin.grad)
