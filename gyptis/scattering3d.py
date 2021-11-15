@@ -224,7 +224,7 @@ class Scatt3D(_ScatteringBase, Simulation):
         self.solution["total"] = E + self.source.expression
         return E
 
-    def _cross_section_helper(self, return_type="s"):
+    def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
         n_out = self.geometry.unit_normal_vector
 
         Es = self.solution["diffracted"]
@@ -248,7 +248,6 @@ class Scatt3D(_ScatteringBase, Simulation):
         Htot = inv_mu_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Etot)
         Stot = dolfin.Constant(0.5) * cross(Etot, Htot.conj).real
 
-        names = "calc_bnds"
         #
         # names = ["-x", "-y","+z", "+y","-z", "+x" ]
         # normals = {}
@@ -260,7 +259,7 @@ class Scatt3D(_ScatteringBase, Simulation):
         # normals["-z"] = dolfin.Constant((0,0,-1))
 
         if return_type == "s":
-            Ws = assemble(dot(n_out("+"), Ss("+")) * self.dS(names))
+            Ws = assemble(dot(n_out("+"), Ss("+")) * self.dS(boundaries))
             # Ws = 0
             # for name in  names:
             #     Ws += assemble(dot(normals[name], Ss("+")) * self.dS(name))
@@ -268,12 +267,12 @@ class Scatt3D(_ScatteringBase, Simulation):
             return Sigma_s
 
         if return_type == "e":
-            We = -assemble(dot(n_out("+"), Se("+")) * self.dS(names))
+            We = -assemble(dot(n_out("+"), Se("+")) * self.dS(boundaries))
             Sigma_e = We / self.S0
             return Sigma_e
 
         if return_type == "a":
-            Wa = -assemble(dot(n_out("+"), Stot("+")) * self.dS(names))
+            Wa = -assemble(dot(n_out("+"), Stot("+")) * self.dS(boundaries))
             Sigma_a = Wa / self.S0
             return Sigma_a
 
@@ -285,3 +284,7 @@ class Scatt3D(_ScatteringBase, Simulation):
 
     def absorption_cross_section(self):
         return self._cross_section_helper("a")
+
+
+#
+# def _compute_T_matrix(p):
