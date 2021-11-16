@@ -363,24 +363,52 @@ class Maxwell3D(Formulation):
         epsilon = self.epsilon.as_subdomain()
         inv_mu = self.mu.invert().as_subdomain()
 
-        epsilon_a = self.epsilon.build_annex(
-            domains=self.source_domains, reference=self.reference
-        ).as_subdomain()
-        inv_mu_a = (
-            self.mu.invert()
-            .build_annex(domains=self.source_domains, reference=self.reference)
-            .as_subdomain()
-        )
-        form = self.maxwell(u, v, epsilon, inv_mu)
-        if self.source_domains != []:
-            form += self.maxwell(
-                u1,
-                v,
-                epsilon - epsilon_a,
-                inv_mu - inv_mu_a,
-                domain=self.source_domains,
-            )
+        epsilon_dict = self.epsilon.as_property()
+        inv_mu_dict = self.mu.invert().as_property()
 
+        dom_func, dom_no_func = _find_domains_function((self.epsilon, self.mu))
+        source_dom_func, source_dom_no_func = _find_domains_function(
+            (self.epsilon, self.mu), self.source_domains
+        )
+
+        form = self.maxwell(u, v, epsilon, inv_mu, domain=dom_no_func)
+
+        for dom in dom_func:
+            form += self.maxwell(u, v, epsilon_dict[dom], inv_mu_dict[dom], domain=dom)
+
+        if self.source_domains != []:
+            epsilon_a = self.epsilon.build_annex(
+                domains=self.source_domains, reference=self.reference
+            ).as_subdomain()
+            inv_mu_a = (
+                self.mu.invert()
+                .build_annex(domains=self.source_domains, reference=self.reference)
+                .as_subdomain()
+            )
+            epsilon_a_dict = self.epsilon.build_annex(
+                domains=self.source_domains, reference=self.reference
+            ).as_property()
+            inv_mu_a_dict = (
+                self.mu.invert()
+                .build_annex(domains=self.source_domains, reference=self.reference)
+                .as_property()
+            )
+            if source_dom_no_func != []:
+                form += self.maxwell(
+                    u1,
+                    v,
+                    epsilon - epsilon_a,
+                    inv_mu - inv_mu_a,
+                    domain=source_dom_no_func,
+                )
+            for dom in source_dom_func:
+                form += self.maxwell(
+                    u1,
+                    v,
+                    epsilon_dict[dom] - epsilon_a_dict[dom],
+                    inv_mu_dict[dom] - inv_mu_a_dict[dom],
+                    domain=dom,
+                )
         # for bnd in self.pec_boundaries:
         #     normal = self.geometry.unit_normal_vector
         #     form -= dot(xi * (grad(u1) * v), normal) * self.ds(bnd)
