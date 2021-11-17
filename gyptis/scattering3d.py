@@ -295,7 +295,7 @@ class Scatt3D(_ScatteringBase, Simulation):
     def extinction_cross_section(self, parallel=False):
         return self._cross_section_helper("e", parallel=parallel)
 
-    def absorption_cross_section(self):
+    def absorption_cross_section(self, parallel=False):
         return self._cross_section_helper("a", parallel=parallel)
 
 
