@@ -163,10 +163,11 @@ class Scatt3D(_ScatteringBase, Simulation):
         modal=False,
         degree=1,
         pml_stretch=1 - 1j,
+        element="N1curl",
     ):
         assert isinstance(geometry, BoxPML3D)
         assert source.dim == 3
-        function_space = ComplexFunctionSpace(geometry.mesh, "N1curl", degree)
+        function_space = ComplexFunctionSpace(geometry.mesh, element, degree)
         pmls = []
         pml_names = []
         for direction in ["x", "y", "z", "xy", "yz", "xz", "xyz"]:
