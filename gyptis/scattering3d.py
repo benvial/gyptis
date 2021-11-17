@@ -234,7 +234,7 @@ class Scatt3D(_ScatteringBase, Simulation):
         if parallel:
             Rcalc = self.geometry.Rcalc
             n_out = dolfin.Expression(
-                (f"x[0]/{Rcalc}", f"x[1]/{Rcalc}", f"x[2]/{Rcalc}"),
+                (f"-x[0]/{Rcalc}", f"-x[1]/{Rcalc}", f"-x[2]/{Rcalc}"),
                 degree=2,
             )
         else:
