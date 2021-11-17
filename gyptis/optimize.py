@@ -173,10 +173,8 @@ def scipy_minimize(
 def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
     markers = geometry.markers
     domains = geometry.domains
-    a = df.Function(source_space)
+    a0 = df.Function(source_space)
     mdes = markers.where_equal(domains[subdomain])
-    a = function2array(a)
-    # a[mdes]
     b = function2array(
         project(
             x,
@@ -185,27 +183,21 @@ def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
             preconditioner_type="jacobi",
         )
     )
+    a = function2array(a0)
     comm = df.MPI.comm_world
     b = comm.gather(b, root=0)
+    a = comm.gather(a, root=0)
     mdes = comm.gather(mdes, root=0)
     if df.MPI.rank(comm) == 0:
         mdes = np.hstack(mdes)
         b = np.hstack(b)
+        a = np.hstack(a)
+        mdes1 = [int(i) for i in mdes]
+        a[mdes1] = b
+        sys.stdout.flush()
     else:
-        mdes = None
-        b = None
-    mdes = comm.bcast(mdes, root=0)
-    b = comm.bcast(b, root=0)
-    a[mdes] = b
-    # comm = df.MPI.comm_world
-    # a = comm.gather(a, root=0)
-    # if df.MPI.rank(comm) == 0:
-    #     a1 = np.hstack(a)
-    # else:
-    #     a1=None
-    # a1 = comm.bcast(a1, root=0)
-    ctrl = array2function(a, source_space)
-    return ctrl
+        a = None
+    return array2function(a, source_space)
 
 
 class TopologyOptimizer:

@@ -91,6 +91,7 @@ class Geometry(object):
         dim=3,
         gmsh_args=None,
         finalize=True,
+        verbose=0,
         options={},
     ):
         self.model_name = model_name
@@ -104,6 +105,8 @@ class Geometry(object):
         self.mesh = {}
         self.markers = {}
         self.options = options
+        self.verbose = verbose
+        self.comm = dolfin.MPI.comm_world
 
         for object_name in dir(occ):
             if (
@@ -133,10 +136,8 @@ class Geometry(object):
             gmsh.initialize(self.gmsh_args)
         else:
             gmsh.initialize()
-        #
 
-        # parallel meshing, this will use OMP_NUM_THREADS
-        gmsh_options.set("General.Verbosity", 0)
+        gmsh_options.set("General.Verbosity", self.verbose)
         for k, v in options.items():
             gmsh_options.set(k, v)
 
@@ -424,7 +425,7 @@ class Geometry(object):
     def msh_file(self):
         return f"{self.data_dir}/{self.mesh_name}"
 
-    def build(
+    def _build_serial(
         self,
         interactive=False,
         generate_mesh=True,
@@ -450,9 +451,61 @@ class Geometry(object):
             gmsh.finalize()
         return self.mesh_object
 
+    def build(
+        self,
+        interactive=False,
+        generate_mesh=True,
+        write_mesh=True,
+        read_info=True,
+        read_mesh=True,
+        finalize=True,
+        check_subdomains=True,
+    ):
+        if self.comm.size == 1:
+            return self._build_serial(
+                interactive=interactive,
+                generate_mesh=generate_mesh,
+                write_mesh=write_mesh,
+                read_info=read_info,
+                read_mesh=read_mesh,
+                finalize=finalize,
+                check_subdomains=check_subdomains,
+            )
+        else:
+            if self.comm.rank == 0:
+                self._build_serial(
+                    interactive=interactive,
+                    generate_mesh=generate_mesh,
+                    write_mesh=write_mesh,
+                    read_info=False,
+                    read_mesh=False,
+                    finalize=finalize,
+                    check_subdomains=check_subdomains,
+                )
+                tmp = self.data_dir
+            else:
+                tmp = None
+            tmp = self.comm.bcast(tmp, root=0)
+            self.data_dir = tmp
+            self.mesh_object = self.read_mesh_file()
+            self.read_mesh_info()
+
+            return self.mesh_object
+
     def read_mesh_file(self, subdomains=None):
+        if subdomains is not None:
+            if isinstance(subdomains, str):
+                subdomains = [subdomains]
+            key = "volumes" if self.dim == 3 else "surfaces"
+            subdomains_num = [self.subdomains[key][s] for s in subdomains]
+        else:
+            subdomains_num = subdomains
+
         return read_mesh(
-            self.msh_file, data_dir=self.data_dir, dim=self.dim, subdomains=subdomains
+            self.msh_file,
+            data_dir=self.data_dir,
+            dim=self.dim,
+            subdomains=subdomains_num,
         )
 
     def extract_sub_mesh(self, subdomains):

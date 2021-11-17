@@ -21,6 +21,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
     physicals = meshio_mesh.cell_data_dict["gmsh:physical"]
 
     cell_types, data_gmsh = zip(*physicals.items())
+    data_gmsh = list(data_gmsh)
     cells = {ct: [] for ct in cell_types}
 
     for cell_type in cell_types:
@@ -29,11 +30,12 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
                 cells[cell_type].append(cell.data)
         cells[cell_type] = np.vstack(cells[cell_type])
 
+    icell = np.where(np.array(cell_types) == base_cell_type)[0][0]
     if subdomains is not None:
         doms = subdomains if hasattr(subdomains, "__len__") else list([subdomains])
-        mask = np.hstack([np.where(data_gmsh[0] == i) for i in doms])[0]
-        data_gmsh_ = data_gmsh[0][mask]
-        data_gmsh = (data_gmsh_,)
+        mask = np.hstack([np.where(data_gmsh[icell] == i) for i in doms])[0]
+        data_gmsh_ = data_gmsh[icell][mask]
+        data_gmsh[icell] = data_gmsh_
         cells[base_cell_type] = cells[base_cell_type][mask]
 
     mesh_data = {}
@@ -48,17 +50,26 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
         mesh_data[cell_type] = meshio_data
 
     dolfin_mesh = dolfin.Mesh()
-    with dolfin.XDMFFile(f"{data_dir_xdmf}/{base_cell_type}.xdmf") as infile:
+    with dolfin.XDMFFile(
+        dolfin_mesh.mpi_comm(), f"{data_dir_xdmf}/{base_cell_type}.xdmf"
+    ) as infile:
         infile.read(dolfin_mesh)
-    markers = {}
 
+    markers = {}
     dim_map = dict(line=1, triangle=2, tetra=3)
+    if subdomains is not None:
+        cell_types = [base_cell_type]
     for cell_type in cell_types:
         mvc = dolfin.MeshValueCollection("size_t", dolfin_mesh, dim_map[cell_type])
-        with dolfin.XDMFFile(f"{data_dir_xdmf}/{cell_type}.xdmf") as infile:
-            infile.read(mvc, cell_type)
-        markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
+        try:
+            with dolfin.XDMFFile(
+                dolfin_mesh.mpi_comm(), f"{data_dir_xdmf}/{cell_type}.xdmf"
+            ) as infile:
+                infile.read(mvc, cell_type)
+        except:
+            pass
 
+        markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
     return dict(mesh=dolfin_mesh, markers=markers)
 
 
@@ -67,7 +78,6 @@ class MarkedMesh(object):
         self.data_dir = data_dir
         self.geometric_dimension = geometric_dimension
         self.filename = filename
-
         data_dir = data_dir or tempfile.mkdtemp()
         dic = read_mesh(filename, dim=geometric_dimension, data_dir=data_dir)
         self.mesh = dic["mesh"]
