@@ -83,4 +83,3 @@ def test_phc(degree, polarization):
     mode, eval = eig_vects[4], ev_norma[4]
     fplot = project(mode.real, phc.formulation.real_function_space)
     dolfin.plot(fplot, cmap="RdBu_r")
-    plt.title(fr"$\omega a/2\pi c = {eval.real:0.3f}+{eval.imag:0.3f}j$")

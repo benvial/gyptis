@@ -30,6 +30,7 @@ class BoxPML3D(Geometry):
         self.box_size = box_size
         self.box_center = box_center
         self.pml_width = pml_width
+        self.Rcalc = Rcalc
 
         box = self._addbox_center(self.box_size)
         T = np.array(self.pml_width) / 2 + np.array(self.box_size) / 2
@@ -225,8 +226,19 @@ class Scatt3D(_ScatteringBase, Simulation):
         self.solution["total"] = E + self.source.expression
         return E
 
-    def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
-        n_out = self.geometry.unit_normal_vector
+    def _cross_section_helper(
+        self, return_type="s", boundaries="calc_bnds", parallel=False
+    ):
+
+        ### normal vector is messing up in parallel so workaround here:
+        if parallel:
+            Rcalc = self.geometry.Rcalc
+            n_out = dolfin.Expression(
+                (f"x[0]/{Rcalc}", f"x[1]/{Rcalc}", f"x[2]/{Rcalc}"),
+                degree=2,
+            )
+        else:
+            n_out = self.geometry.unit_normal_vector
 
         Es = self.solution["diffracted"]
         omega = self.source.pulsation
@@ -277,14 +289,14 @@ class Scatt3D(_ScatteringBase, Simulation):
             Sigma_a = Wa / self.S0
             return Sigma_a
 
-    def scattering_cross_section(self):
-        return self._cross_section_helper("s")
+    def scattering_cross_section(self, parallel=False):
+        return self._cross_section_helper("s", parallel=parallel)
 
-    def extinction_cross_section(self):
-        return self._cross_section_helper("e")
+    def extinction_cross_section(self, parallel=False):
+        return self._cross_section_helper("e", parallel=parallel)
 
     def absorption_cross_section(self):
-        return self._cross_section_helper("a")
+        return self._cross_section_helper("a", parallel=parallel)
 
 
 #

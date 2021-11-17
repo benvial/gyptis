@@ -14,8 +14,6 @@ from gyptis.plot import *
 from gyptis.scattering2d import *
 from gyptis.utils import list_time
 
-plt.ion()
-
 polarization = "TM"
 degree = 2
 wavelength = 0.3
@@ -52,7 +50,6 @@ def test_scatt2d_pw(degree, polarization):
     u = s.solve()
     list_time()
     print(assemble(u * s.formulation.dx))
-    plt.ion()
     if gyptis.ADJOINT:
         eps_max, eps_min = 3, 1
         Actrl = dolfin.FunctionSpace(mesh, "DG", 0)

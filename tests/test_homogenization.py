@@ -44,13 +44,3 @@ def test_hom(degree, polarization):
         EPS.append(eps_eff)
 
     assert np.allclose(*EPS)
-
-
-# plt.ion()
-# fig,ax=plt.subplots(1,2,figsize=(5,2))
-# plot(hom.solution["x"].real,geometry=lattice,ax=ax[0])
-# plot(hom.solution["y"].real,geometry=lattice,ax=ax[1])
-# [a.set_axis_off()for a in ax]
-# ax[0].set_title("$V_x$")
-# ax[1].set_title("$V_y$")
-# plt.tight_layout()

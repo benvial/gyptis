@@ -10,15 +10,14 @@ https://www.osapublishing.org/josaa/fulltext.cfm?uri=josaa-35-1-163&id=380136
 """
 
 
+import numpy as np
 import pytest
-from scipy.constants import c, epsilon_0, mu_0
 
-from gyptis import dolfin
+from gyptis import c, dolfin, epsilon_0, mu_0
+from gyptis.complex import *
 from gyptis.plot import *
 from gyptis.scattering3d import BoxPML3D, Scatt3D
 from gyptis.source import PlaneWave
-
-plt.ion()
 
 
 def test_scatterring3d(shared_datadir):
@@ -36,11 +35,6 @@ def test_scatterring3d(shared_datadir):
     pmesh_scatt = 1 * pmesh
 
     eps_sphere = 4
-
-    # plt.ion()
-    plt.close("all")
-
-    plt.plot(benchmark[:, 0], benchmark[:, 1], "k")
 
     SCSN = []
     Gamma = np.linspace(0.1, 5, 100)
@@ -153,5 +147,3 @@ def test_scatterring3d(shared_datadir):
         Sigma_s_norm = Sigma_s / S_sphere
         print(Sigma_s_norm)
         SCSN.append(Sigma_s_norm)
-
-        plt.plot(gamma, Sigma_s_norm, "or")

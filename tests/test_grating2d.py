@@ -75,17 +75,11 @@ def test_grating2d(polarization, degree):
     u = s.solve()
     list_time()
 
-    plt.ion()
     effs = s.diffraction_efficiencies(1, orders=True, subdomain_absorption=True)
     print(effs)
 
     if degree == 2:
         assert abs(effs["B"] - 1) < tol_balance, "Unsatified energy balance"
-
-    plt.ion()
-    # s.plot_geometry(c="k")
-
-    plt.clf()
 
     s.plot_field(nper=3)
     s.plot_geometry(nper=3, c="k")

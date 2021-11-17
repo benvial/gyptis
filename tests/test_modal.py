@@ -3,10 +3,10 @@
 # Author: Benjamin Vial
 # License: MIT
 
+import numpy as np
 import pytest
-from scipy.constants import c
 
-from gyptis import BoxPML, Scattering
+from gyptis import BoxPML, Scattering, c
 from gyptis.plot import *
 
 wavelength = 14
@@ -54,19 +54,13 @@ def test_phc(degree, polarization):
     eig_vects = solution["eigenvectors"]
     KNs = np.array(KNs)
 
-    plt.close("all")
-    plt.figure()
-    plt.plot(KNs.real, KNs.imag, "o")
     for mode, eval in zip(eig_vects, KNs):
         if eval.imag < 0:
             Q = -eval.real / eval.imag * 0.5
             kre = eval.real
             f = kre * c / (2 * np.pi) * 1e-6
             if Q > 1.5:
-                print(f)
-                print(Q)
                 plot(mode.real, cmap="RdBu_r")
-                plt.title(fr"$f = {f:0.3f}\,$THz, $Q={Q:0.1f}$")
                 H = s.formulation.get_dual(mode, 1)
                 Vvect = dolfin.VectorFunctionSpace(geom.mesh, "CG", 2)
                 H = project(
@@ -77,5 +71,3 @@ def test_phc(degree, polarization):
                 )
                 dolfin.plot(H.real, cmap="Greys")
                 geom.plot_subdomains()
-                plt.xlim(-geom.box_size[0] / 2, geom.box_size[0] / 2)
-                plt.ylim(-geom.box_size[1] / 2, geom.box_size[1] / 2)

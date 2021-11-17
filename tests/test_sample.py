@@ -3,20 +3,13 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 from gyptis.utils.sample import adaptive_sampler
 
-plt.close("all")
-# plt.ion()
-
 
 def test_sampler():
-    # if __name__ == "__main__":
-    # np.random.seed(123456)
-
     Npoles = 100
     poles = np.random.rand(Npoles) + 1j * np.random.rand(Npoles)
     res = np.random.rand(Npoles) + 1j * np.random.rand(Npoles)
@@ -43,11 +36,6 @@ def test_sampler():
     t0 = f(z0)
 
     print(f"number of points: {len(z)}")
-    plt.figure()
-    plt.plot(z0, t0, "o")
-    plt.plot(z, t)
-    plt.plot(zref, tref, "--")
-    #
     # xsa
     print("------------")
 
@@ -62,8 +50,3 @@ def test_sampler():
     t0 = f(z0)
 
     print(f"number of points: {len(z)}")
-    plt.figure()
-    plt.plot(z0, t0[0], "o")
-    plt.plot(z0, t0[1], "s")
-    plt.plot(z, t[:, 0])
-    plt.plot(z, t[:, 1])
