@@ -80,7 +80,7 @@ def _convert_name(name):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
-class Geometry(object):
+class Geometry:
     """Base class for geometry models."""
 
     def __init__(
@@ -107,6 +107,8 @@ class Geometry(object):
         self.options = options
         self.verbose = verbose
         self.comm = dolfin.MPI.comm_world
+
+        self.pml_physical = []
 
         for object_name in dir(occ):
             if (
@@ -526,3 +528,7 @@ class Geometry(object):
         from .plot import plot_subdomains
 
         return plot_subdomains(self.markers, **kwargs)
+
+    def set_pml_mesh_size(self, s):
+        for pml in self.pml_physical:
+            self.set_mesh_size({pml: s})

@@ -65,7 +65,7 @@ def test_grating2d(polarization, degree):
 
     theta0 = 10
 
-    angle = np.pi / 2 - theta0 * np.pi / 180
+    angle = theta0 * np.pi / 180
 
     pw = PlaneWave(
         wavelength=wavelength, angle=angle, dim=2, domain=geom.mesh, degree=degree
@@ -142,7 +142,7 @@ def test_grating2dpec(polarization, degree):
 
     geom.build()
 
-    angle = np.pi / 2 - theta0 * np.pi / 180
+    angle = theta0 * np.pi / 180
 
     pw = PlaneWave(
         wavelength=wavelength, angle=angle, dim=2, domain=geom.mesh, degree=degree

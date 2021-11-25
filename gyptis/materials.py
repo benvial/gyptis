@@ -5,6 +5,7 @@
 
 
 import copy
+import os
 
 import numpy as np
 
@@ -12,7 +13,7 @@ from .complex import *
 from .plot import plot
 
 
-class PML(object):
+class PML:
     def __init__(
         self,
         direction="x",
@@ -81,7 +82,6 @@ class _SubdomainPy(dolfin.UserExpression):
 
 class _SubdomainCpp(dolfin.CompiledExpression):
     def __init__(self, markers, subdomains, mapping, **kwargs):
-        import os
 
         here = os.path.dirname(os.path.realpath(__file__))
         with open(os.path.join(here, "subdomain.cpp")) as f:
@@ -188,13 +188,13 @@ def _dic2list(dic):
     return o
 
 
-class SubdomainScalarReal(object):
+class SubdomainScalarReal:
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         ClassReturn = _SubdomainCpp if cpp else _SubdomainPy
         return ClassReturn(markers, subdomains, mapping, **kwargs)
 
 
-class SubdomainScalarComplex(object):
+class SubdomainScalarComplex:
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         mapping_re, mapping_im = _separate_mapping_parts(mapping)
         re = SubdomainScalarReal(markers, subdomains, mapping_re, cpp=cpp, **kwargs)
@@ -202,7 +202,7 @@ class SubdomainScalarComplex(object):
         return Complex(re, im)
 
 
-class SubdomainTensorReal(object):
+class SubdomainTensorReal:
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         mapping_tensor = _make_tensor(mapping)
         mapping_list = _dic2list(mapping_tensor)
@@ -213,7 +213,7 @@ class SubdomainTensorReal(object):
         return dolfin.as_tensor(q)
 
 
-class SubdomainTensorComplex(object):
+class SubdomainTensorComplex:
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         mapping_tensor = _make_tensor(mapping)
         d = _dic2list(mapping_tensor)
@@ -230,7 +230,7 @@ class SubdomainTensorComplex(object):
         return Complex(Tre, Tim)
 
 
-class Subdomain(object):
+class Subdomain:
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         iterable = any([isiter(v) for v in mapping.values()])
         flatvals = _flatten_list(mapping.values())
@@ -430,6 +430,8 @@ class Coefficient:
         self.pmls = pmls
         self.dim = dim
         self.degree = degree
+        cell_type = "triangle" if dim == 2 else "tetrahedron"
+        self.element = None  # dolfin.FiniteElement("DG", cell_type, self.degree)
         if geometry:
             if self.dim == 2:
                 markers_key, mapping_key = "triangle", "surfaces"
@@ -471,7 +473,12 @@ class Coefficient:
 
     def as_subdomain(self, **kwargs):
         return Subdomain(
-            self.markers, self.mapping, self.dict, degree=self.degree, **kwargs
+            self.markers,
+            self.mapping,
+            self.dict,
+            degree=self.degree,
+            element=self.element,
+            **kwargs,
         )
 
     def as_property(self, dim=None, **kwargs):

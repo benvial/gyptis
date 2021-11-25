@@ -53,7 +53,8 @@ plt.tight_layout()
 ##############################################################################
 # Now we create the geometry and mesh
 
-pmesh = 15
+pmesh = 23
+degree = 2
 wavelength = 452
 eps_core = 2
 
@@ -100,7 +101,9 @@ geom = create_geometry(wavelength, pml_width=wavelength)
 ##############################################################################
 # Define the incident plane wave and materials
 
-pw = gy.PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
+pw = gy.PlaneWave(
+    wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=degree
+)
 omega = 2 * pi * c / (wavelength * 1e-9)
 epsilon = dict(box=1, core=eps_core, shell=epsilon_silver(omega))
 mu = dict(box=1, core=1, shell=1)
@@ -114,7 +117,7 @@ s = gy.Scattering(
     epsilon,
     mu,
     pw,
-    degree=2,
+    degree=degree,
     polarization="TE",
 )
 s.solve()
@@ -123,7 +126,6 @@ geom_lines = geom.plot_subdomains()
 plt.xlabel(r"$x$ (nm)")
 plt.ylabel(r"$y$ (nm)")
 plt.tight_layout()
-
 
 ##############################################################################
 # Compute cross sections and check energy conservation (optical theorem)
@@ -179,7 +181,6 @@ acs_file = dd.download_example_data(
     data_file_name="acs_r2_30nm.csv",
     example_dir="scattering",
 )
-
 
 benchmark_scs = np.loadtxt(scs_file, delimiter=",")
 benchmark_acs = np.loadtxt(acs_file, delimiter=",")

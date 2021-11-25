@@ -134,9 +134,14 @@ class Grating2D(_GratingBase, Simulation):
             applied_domain="pml_bottom",
         )
         epsilon_coeff = Coefficient(
-            epsilon, geometry=geometry, pmls=[pml_top, pml_bottom]
+            epsilon,
+            geometry=geometry,
+            pmls=[pml_top, pml_bottom],
+            degree=degree,
         )
-        mu_coeff = Coefficient(mu, geometry=geometry, pmls=[pml_top, pml_bottom])
+        mu_coeff = Coefficient(
+            mu, geometry=geometry, pmls=[pml_top, pml_bottom], degree=degree
+        )
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["substrate", "superstrate", "pml_bottom", "pml_top"]
 
@@ -279,7 +284,7 @@ class Grating2D(_GratingBase, Simulation):
             else (epsilon_0, mu_0)
         )
 
-        P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.sin(self.source.angle) * self.period
+        P0 = 0.5 * np.sqrt(chi_0 / xi_0) * np.cos(self.source.angle) * self.period
 
         Qchi = {}
         Qxi = {}

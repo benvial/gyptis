@@ -114,7 +114,7 @@ def test_grating3d(degree=1):
 
     pw = PlaneWave(
         wavelength=lambda0,
-        angle=(np.pi / 2, 0, 0),
+        angle=(0, 0, 0),
         dim=3,
         domain=geom.mesh,
         degree=degree,

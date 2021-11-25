@@ -88,6 +88,12 @@ class BoxPML2D(Geometry):
 
         self.fragment(self.box, self.pmls)
 
+        self.pml_physical = [
+            "pmlx",
+            "pmly",
+            "pmlxy",
+        ]
+
         if Rcalc > 0:
             cyl_calc = self.add_circle(*self.box_center, 0, Rcalc)
             box, cyl_calc = self.fragment(box, cyl_calc)
@@ -185,8 +191,8 @@ class Scatt2D(_ScatteringBase, Simulation):
         n = self.geometry.unit_normal_vector
         Ws = assemble(dot(n, Sscatt)("+") * self.dS("calc_bnds"))
         S0 = self.time_average_incident_poynting_vector_norm
-        SCS = abs(Ws / S0)
-        return SCS
+        SCS = Ws / S0
+        return SCS if SCS > 0 else -SCS
 
     def absorption_cross_section(self):
         utot = self.solution["total"]
@@ -200,8 +206,8 @@ class Scatt2D(_ScatteringBase, Simulation):
         n = self.geometry.unit_normal_vector
         Wa = -assemble(dot(n, Stot)("+") * self.dS("calc_bnds"))
         S0 = self.time_average_incident_poynting_vector_norm
-        ACS = abs(Wa / S0)
-        return ACS
+        ACS = Wa / S0
+        return ACS if ACS > 0 else -ACS
 
     def extinction_cross_section(self):
         ui = self.source.expression
@@ -220,8 +226,8 @@ class Scatt2D(_ScatteringBase, Simulation):
         n = self.geometry.unit_normal_vector
         We = -assemble(dot(n, Se)("+") * self.dS("calc_bnds"))
         S0 = self.time_average_incident_poynting_vector_norm
-        ECS = abs(We / S0)
-        return ECS
+        ECS = We / S0
+        return ECS if ECS > 0 else -ECS
 
     def local_density_of_states(self, x, y):
         """Compute the local density of state.

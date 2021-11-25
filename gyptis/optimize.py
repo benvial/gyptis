@@ -5,12 +5,13 @@
 
 import nlopt
 import numpy as np
-from scipy.optimize import OptimizeResult, minimize
 
 from . import dolfin as df
 from .complex import *
 from .materials import tensor_const
-from .utils.helpers import *
+from .utils.helpers import array2function, function2array, project_iterative
+
+df.parameters["allow_extrapolation"] = True
 
 
 def simp(a, s_min=1, s_max=2, p=1, complex=True):
@@ -98,76 +99,14 @@ def filtering(a, rfilt=0, function_space=None, order=1, solver=None, mesh=None):
     return filter.apply(a)
 
 
-def derivative(f, x, ctrl_space=None, array=True):
+def derivative(f, x, ctrl_space=None, array=False):
     dfdx = df.compute_gradient(f, df.Control(x))
     if ctrl_space is not None:
-        dfdx = project(
-            dfdx,
-            ctrl_space,
-            solver_type="cg",
-            preconditioner_type="jacobi",
-        )
+        dfdx = project_iterative(dfdx, ctrl_space)
     if array:
         return function2array(dfdx)
     else:
         return dfdx
-
-
-class OptimFunction:
-    def __init__(self, fun, stop_val=None, normalization=1):
-        self.fun_in = fun
-        self.fun_value = None
-        self.stop_val = stop_val
-        self.normalization = normalization
-
-    def fun(self, x, *args, **kwargs):
-        if self.fun_value is not None:
-            if self.stop_val is not None:
-                if self.fun_value < self.stop_val:
-                    raise ValueError(
-                        f"Minimum value {self.stop_val} reached, current objective function = {self.fun_value}"
-                    )
-        obj, grad = self.fun_in(x, *args, **kwargs)
-        obj /= self.normalization
-        grad /= self.normalization
-        self.fun_value = obj
-        self.x = x
-        return obj, grad
-
-
-def scipy_minimize(
-    f,
-    x,
-    bounds,
-    maxiter=50,
-    maxfun=100,
-    tol=1e-6,
-    args=(),
-    stop_val=None,
-    normalization=1,
-):
-
-    optfun = OptimFunction(fun=f, stop_val=stop_val, normalization=normalization)
-    opt = OptimizeResult()
-    opt.x = x
-    opt.fun = None
-    try:
-        opt = minimize(
-            optfun.fun,
-            x,
-            tol=tol,
-            args=args,
-            method="L-BFGS-B",
-            jac=True,
-            bounds=bounds,
-            options={"maxiter": maxiter, "maxfun": maxfun},
-        )
-    except Exception as e:
-        print(e)
-        opt.x = optfun.x
-        opt.fun = optfun.fun_value
-
-    return opt
 
 
 def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
@@ -175,14 +114,7 @@ def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
     domains = geometry.domains
     a0 = df.Function(source_space)
     mdes = markers.where_equal(domains[subdomain])
-    b = function2array(
-        project(
-            x,
-            target_space,
-            solver_type="cg",
-            preconditioner_type="jacobi",
-        )
-    )
+    b = function2array(project_iterative(x, target_space))
     a = function2array(a0)
     comm = df.MPI.comm_world
     b = comm.gather(b, root=0)
@@ -204,8 +136,12 @@ class TopologyOptimizer:
     def __init__(
         self,
         fun,
-        x0,
+        geometry,
+        design="design",
+        eps_bounds=(1, 3),
+        p=1,
         rfilt=0,
+        filtering_type="density",
         threshold=(0, 8),
         maxiter=20,
         stopval=None,
@@ -214,52 +150,129 @@ class TopologyOptimizer:
         verbose=True,
     ):
         self.fun = fun
-        self.x0 = x0
-        self.nvar = len(x0)
+        self.design = design
         self.threshold = threshold
         self.rfilt = rfilt
+        self.filtering_type = filtering_type
         self.maxiter = maxiter
         self.stopval = stopval
         self.callback = callback
         self.args = args or []
         self.verbose = verbose
         self.callback_output = []
+        self.eps_min, self.eps_max = eps_bounds
+        self.p = p
+        self.geometry = geometry
+        self.mesh = self.geometry.mesh
+        self.submesh = self.geometry.extract_sub_mesh(self.design)
+        # self.submesh = df.SubMesh(self.mesh, self.geometry.markers, self.geometry.domains["design"])
 
-    def min_function(self):
-        f = self.fun(x)
+        self.fs_ctrl = df.FunctionSpace(self.mesh, "DG", 0)
+        self.fs_sub = df.FunctionSpace(self.submesh, "DG", 0)
+        self.nvar = self.fs_sub.dim()
 
-    def minimize(self):
+        self.filter = Filter(self.rfilt, order=1)
+
+    def _topopt_wrapper(
+        self,
+        objfun,
+        Asub,
+        Actrl,
+        eps_design_min,
+        eps_design_max,
+        p=1,
+        filter=None,
+        filtering_type="density",
+        proj_level=None,
+        reset=True,
+        grad=True,
+        *args,
+    ):
+        def wrapper(x):
+            proj = proj_level is not None
+            filt = filter is not None
+            if reset:
+                df.set_working_tape(df.Tape())
+            density = array2function(x, Asub)
+            self.density = density
+            filter.solver = None
+            if filtering_type == "sensitivity":
+                density_f = density
+            else:
+                density_f = filter.apply(density) if filt else density
+
+            # ctrl = df.interpolate(density_f, Actrl)
+            ctrl = project_iterative(density_f, Actrl)
+            density_fp = (
+                projection(ctrl, beta=df.Constant(2 ** proj_level))
+                if proj
+                else density_f
+            )
+            epsilon_design = simp(
+                density_fp,
+                Constant(eps_design_min),
+                Constant(eps_design_max),
+                df.Constant(p),
+            )
+            objective = objfun(epsilon_design, *args)
+
+            self.objective = objective
+
+            if grad:
+                dobjective_dx = derivative(objective, ctrl)
+                if filt:
+                    if filtering_type == "sensitivity":
+                        f = project_iterative(density * dobjective_dx, Asub)
+                        dfdd = filter.apply(f)
+                        dobjective_dx = dfdd / (density + 1e-3)
+                dobjective_dx = project_iterative(dobjective_dx, Asub)
+                dobjective_dx = function2array(dobjective_dx)
+                self.dobjective_dx = dobjective_dx
+                return objective, dobjective_dx
+            else:
+                return objective, None
+
+        return wrapper
+
+    def minimize(self, x0):
+        self.x0 = x0
         if self.verbose:
             print("#################################################")
             print(f"Topology optimization with {self.nvar} variables")
             print("#################################################")
             print("")
-        x0 = self.x0
 
         for iopt in range(*self.threshold):
+            self.proj_level = iopt
+
+            wrapper = self._topopt_wrapper(
+                self.fun,
+                self.fs_sub,
+                self.fs_ctrl,
+                self.eps_min,
+                self.eps_max,
+                self.p,
+                self.filter,
+                self.filtering_type,
+                self.proj_level,
+                reset=True,
+                grad=True,
+                *self.args,
+            )
+
             self._cbout = []
             if self.verbose:
                 print(f"global iteration {iopt}")
                 print("---------------------------------------------")
-            proj_level = iopt
-            args = list(self.args)
-            # args[1] = proj_level
-            # args = tuple(args)
 
             def fun_nlopt(x, gradn):
-                y, dy = self.fun(
-                    x,
-                    proj_level=proj_level,
-                    rfilt=self.rfilt,
-                    reset=True,
-                    gradient=True,
-                    *args,
-                )
-                print(args)
+                y, dy = wrapper(x)
+                if self.verbose:
+                    print(f"objective = {y}")
                 gradn[:] = dy
                 cbout = []
                 if self.callback is not None:
-                    out = self.callback(x, y, dy, *args)
+                    out = self.callback(self)
                     self._cbout.append(out)
                 return y
 
@@ -269,7 +282,6 @@ class TopologyOptimizer:
             opt = nlopt.opt(nlopt.LD_MMA, self.nvar)
             opt.set_lower_bounds(lb)
             opt.set_upper_bounds(ub)
-
             # opt.set_ftol_rel(1e-16)
             # opt.set_xtol_rel(1e-16)
             if self.stopval is not None:
@@ -277,11 +289,11 @@ class TopologyOptimizer:
             if self.maxiter is not None:
                 opt.set_maxeval(self.maxiter)
 
-            # opt.set_min_objective(fun_nlopt)
-            opt.set_max_objective(fun_nlopt)
+            opt.set_min_objective(fun_nlopt)
             xopt = opt.optimize(x0)
             fopt = opt.last_optimum_value()
-            self.callback_output.append(self._cbout)
+            if self.callback is not None:
+                self.callback_output.append(self._cbout)
             x0 = xopt
 
         self.opt = opt

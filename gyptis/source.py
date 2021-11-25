@@ -36,7 +36,7 @@ def _expression2complex_2d(expr, **kwargs):
 
 def plane_wave_2d(wavelength, theta, amplitude=1, degree=1, domain=None):
     k0 = 2 * np.pi / wavelength
-    K = k0 * np.array((np.cos(theta), np.sin(theta)))
+    K = k0 * np.array((-np.sin(theta), -np.cos(theta)))
     K_ = _vector(sp.symbols("kx, ky, 0", real=True))
     expr = amplitude * sp.exp(1j * K_.dot(_X))
     return _expression2complex_2d(expr, kx=K[0], ky=K[1], degree=degree, domain=domain)
@@ -51,9 +51,9 @@ def plane_wave_3d(wavelength, theta, phi, psi, amplitude=1, degree=1, domain=Non
     k0 = 2 * np.pi / wavelength
     K = k0 * np.array(
         (
-            np.sin(theta) * np.cos(phi),
-            np.sin(theta) * np.sin(phi),
-            np.cos(theta),
+            -np.sin(theta) * np.cos(phi),
+            -np.sin(theta) * np.sin(phi),
+            -np.cos(theta),
         )
     )
     K_ = _vector(sp.symbols("kx, ky, kz", real=True))
@@ -295,43 +295,3 @@ class GaussianBeam(Source):
         else:
             raise (NotImplementedError)
         return _expression
-
-
-#
-# mesh = dolfin.UnitSquareMesh(50, 50)
-# pw = PlaneWave(0.3, 0*np.pi/2, 2, degree=2)
-#
-# # pw = plane_wave_2d(0.1, 0, degree=2)
-#
-# from gyptis.plot import *
-#
-# plt.ion()
-#
-# W = dolfin.FunctionSpace(mesh,"CG",2)
-#
-# Wc = ComplexFunctionSpace(mesh,"CG",2)
-#
-# # pwexp = project(pw.expression.real, W)
-# # pwexp = project(pw.expression, W)
-#
-# plt.close("all")
-# plt.figure()
-# cb = dolfin.plot(pw.expression.real, mesh=mesh)
-# cb = dolfin.plot(pw.gradient[0].real, mesh=mesh)
-# plt.colorbar(cb)
-#
-#
-# plt.figure()
-# pw.wavelength=0.1
-# pw.angle=0.2
-# cb = dolfin.plot(pw.expression.real, mesh=mesh)
-# cb = dolfin.plot(pw.gradient[0].real, mesh=mesh)
-# plt.colorbar(cb)
-#
-# #
-# # cdsc
-# # plt.clf()
-# #
-# # cb = dolfin.plot(pw.gradient[0].real, mesh=mesh)
-# # plt.colorbar(cb)
-# # # dolfin.plot(pw.gradient[0].imag, mesh=mesh)

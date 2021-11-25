@@ -37,7 +37,6 @@ for polarization in ["TM", "TE"]:
             Rcalc=Rcalc,
         )
         box = geom.box
-
         cyl = geom.add_circle(0, 0, 0, R)
         box = geom.cut(box, cyl)
         geom.add_physical(box, "box")

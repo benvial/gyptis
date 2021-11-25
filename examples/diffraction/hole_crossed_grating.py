@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-2D Dielectric Grating
-=====================
+3D Checkerboard Grating
+=======================
 
-Example of a dielectric diffraction grating.
+Example of a dielectric bi-periodic diffraction grating.
 """
 # sphinx_gallery_thumbnail_number = 2
 
@@ -14,24 +14,25 @@ import numpy as np
 
 import gyptis as gy
 
+gy.dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
+# gy.dolfin.parameters["ghost_mode"] = "shared_facet"
+gy.dolfin.set_log_level(7)
+
 ##############################################################################
-# We will study a classical benchmark of a dielectric grating
-# and compare with results given in :cite:p:`PopovGratingBook`.
+# Structure is the same as in :cite:p:`Demesy2010`.
 #
 # The units of lengths are in nanometers here, and we first define some
 # geometrical and optical parameters:
 
-period = 800  # period of the grating
-ax, ay = 300, 200  # semi axes of the elliptical rods along x and y
-n_rod = 1.4  # refractive index of the rods
 
-##############################################################################
-# The grating is illuminated from the top by a plane wave of wavelength
-# ``lambda0`` and angle ``theta0`` with respect to the normal to the
-# interface (the :math:`y` axis)
-
-lambda0 = 600
-theta0 = 20  # in degrees
+lambda0 = 0.5
+dx = dy = 1  # 5 * lambda0 * 2 ** 0.5 / 4  # periods of the grating
+h = 0.05
+theta0 = 0
+phi0 = 0
+psi0 = gy.pi / 4
+eps_diel = 2.25
+eps_layer = 0.8125 - 5.2500j
 
 ##############################################################################
 # The thicknesses of the different layers are specified with an
@@ -40,9 +41,9 @@ theta0 = 20  # in degrees
 thicknesses = OrderedDict(
     {
         "pml_bottom": lambda0,
-        "substrate": lambda0,
-        "groove": 2 * ay * 1.5,
-        "superstrate": lambda0,
+        "substrate": lambda0 / 1,
+        "groove": 1 * h,
+        "superstrate": lambda0 / 1,
         "pml_top": lambda0,
     }
 )
@@ -51,75 +52,117 @@ thicknesses = OrderedDict(
 # Here we set the mesh refinement parameters, in order to be able to have
 # ``parmesh`` cells per wavelength of the field inside each subdomain
 
-pmesh = 10
-pmesh_rod = pmesh * 2
+degree = 2
+pmesh = 3
+pmesh_hole = pmesh * 1
 mesh_param = dict(
     {
-        "pml_bottom": 0.7 * pmesh,
-        "substrate": pmesh,
-        "groove": pmesh,
-        "rod": pmesh_rod * n_rod,
+        "pml_bottom": 1 * pmesh * eps_diel ** 0.5,
+        "substrate": pmesh * eps_diel ** 0.5,
+        "groove": pmesh * abs(eps_layer) ** 0.5,
+        "hole": pmesh_hole,
         "superstrate": pmesh,
-        "pml_top": 0.7 * pmesh,
+        "pml_top": 1 * pmesh,
     }
 )
 
 ##############################################################################
 # Let's create the geometry using the :class:`~gyptis.Layered`
 # class:
-geom = gy.Layered(2, period, thicknesses)
+geom = gy.Layered(3, (dx, dy), thicknesses)
+z0 = geom.z_position["groove"]  # + h/10
+# l_pillar = 0.9 * dx * 2 ** 0.5 / 2
+R_hole = 0.25
+
+hole = geom.add_cylinder(0, 0, z0, 0, 0, h, R_hole)
+
+# pillar = geom.add_box(-l_pillar / 2, -l_pillar / 2, z0, l_pillar, l_pillar, h)
+# geom.rotate(pillar, (0, 0, 0), (0, 0, 1), np.pi / 4)
 groove = geom.layers["groove"]
-y0 = geom.y_position["groove"] + thicknesses["groove"] / 2
-rod = geom.add_ellipse(0, y0, 0, ax, ay)
-rod, groove = geom.fragment(groove, rod)
-geom.add_physical(rod, "rod")
+sub = geom.layers["substrate"]
+sup = geom.layers["superstrate"]
+sub, sup, hole, groove = geom.fragment([sub, sup, groove], hole)
+geom.add_physical(hole, "hole")
 geom.add_physical(groove, "groove")
+geom.add_physical(sub, "substrate")
+geom.add_physical(sup, "superstrate")
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 geom.set_mesh_size(mesh_size)
-geom.build()
-
-
-######################################################################
-# The mesh can be visualized:
-
-plt.figure()
-geom.plot_mesh(lw=0.2)
-geom.plot_subdomains(lw=0.5, c=gy.colors["red"])
-plt.axis("off")
-plt.tight_layout()
-plt.show()
-
+# geom.remove_all_duplicates()
+geom.build(interactive=0)
+# geom.build(interactive=1)
 
 ######################################################################
 # Set the permittivity and permeabilities for the various domains
 # using a dictionary:
 
-domains = geom.subdomains["surfaces"]
-epsilon = {d: 1 for d in domains}
-epsilon["rod"] = n_rod ** 2
-mu = {d: 1 for d in domains}
+epsilon = {d: 1 for d in geom.domains}
+mu = {d: 1 for d in geom.domains}
+epsilon["groove"] = eps_layer
+# epsilon["groove"] = eps_diel
+epsilon["hole"] = 1
+epsilon["substrate"] = eps_diel
 
 ######################################################################
 # Now we can create an instance of the simulation class
-# :class:`~gyptis.Grating`, where we specify the
-# Transverse Electric polarization case (electric field out of plane
-# :math:`\boldsymbol{E} = E_z \boldsymbol{e_z}`) and the ``degree`` of
-# Lagrange finite elements.
+# :class:`~gyptis.Grating`,
 
-angle = theta0 * gy.pi / 180
+pw = gy.PlaneWave(lambda0, (theta0, phi0, psi0), dim=3, degree=degree)
+grating = gy.Grating(geom, epsilon, mu, source=pw, degree=degree, periodic_map_tol=1e-8)
 
-pw = gy.PlaneWave(lambda0, angle, dim=2)
+# pp = gy.utils.project_iterative(pw.expression,grating.formulation.real_function_space)
+# gy.dolfin.File("test.pvd") << pp.real
 
-gratingTE = gy.Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
+# us = grating.formulation.annex_field["as_subdomain"]["stack"]
+# pp = gy.utils.project_iterative(us,grating.formulation.real_function_space)
+#
+# gy.dolfin.File("test.pvd") << pp.real
+#
+# import os
+# os.system("paraview test.pvd")
+# xsx
 
-gratingTE.N_d_order = 1
-gratingTE.solve()
-effs_TE = gratingTE.diffraction_efficiencies(1, orders=True)
-E = gratingTE.solution["total"]
+grating.solve()
+effs = grating.diffraction_efficiencies(2, orders=True)
+print(effs)
+
+
+xssx
+
+E = grating.solution["total"]
+# E = grating.solution["diffracted"]
+# E = grating.solution["periodic"]
+# E = grating.formulation.annex_field["as_subdomain"]["stack"]
+
+pp = gy.utils.project_iterative(E, grating.formulation.real_function_space)
+
+# Vplot  =  gy.dolfin.FunctionSpace(geom.mesh,"CG",degree)
+#
+# E = grating.formulation.phasor
+# pp = gy.utils.project_iterative(E, Vplot)
+
+gy.dolfin.File("test.pvd") << pp.real
+
+import os
+
+os.system("paraview test.pvd")
+
+
+xs
 
 ### reference
 T_ref = dict(TM=[0.2070, 1.0001], TE=[0.8187, 1.0001])
 
+T = 0.04308
+T = 0.12860
+T = 0.06196
+T = 0.12860
+T = 0.17486
+T = 0.12860
+T = 0.06196
+T = 0.12860
+T = 0.04308
+fmm = {}
 
 print("Transmission coefficient")
 print(" order      ref       calc")

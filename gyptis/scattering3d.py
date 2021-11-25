@@ -5,6 +5,7 @@
 
 
 from . import dolfin
+from . import spharm as sh
 from .complex import *
 from .formulation import Maxwell3D
 from .geometry import *
@@ -147,10 +148,6 @@ class BoxPML3D(Geometry):
         self._translate(pml, t)
         return pml
 
-    def set_pml_mesh_size(self, s):
-        for pml in self.pml_physical:
-            self.set_mesh_size({pml: s})
-
 
 class Scatt3D(_ScatteringBase, Simulation):
     def __init__(
@@ -218,6 +215,7 @@ class Scatt3D(_ScatteringBase, Simulation):
 
         self.Z0 = np.sqrt(mu_0 / epsilon_0)
         self.S0 = 1 / (2 * self.Z0)
+        self.degree = degree
 
     def solve_system(self, again=False):
         E = super().solve_system(again=again, vector_function=False)
@@ -235,7 +233,7 @@ class Scatt3D(_ScatteringBase, Simulation):
             Rcalc = self.geometry.Rcalc
             n_out = dolfin.Expression(
                 (f"-x[0]/{Rcalc}", f"-x[1]/{Rcalc}", f"-x[2]/{Rcalc}"),
-                degree=2,
+                degree=self.degree,
             )
         else:
             n_out = self.geometry.unit_normal_vector
@@ -298,6 +296,151 @@ class Scatt3D(_ScatteringBase, Simulation):
     def absorption_cross_section(self, parallel=False):
         return self._cross_section_helper("a", parallel=parallel)
 
+    def get_T_matrix_coeff(
+        self,
+        p0,
+        p1,
+        source_type,
+        coeff_type,
+        solve_again=False,
+        degree_source=None,
+        component="transverse",
+        boundary="calc_bnds",
+    ):
+        if coeff_type not in ["E", "H", "both"]:
+            raise ValueError("coeff_type must be E, H or both")
+        if component not in ["normal", "transverse"]:
+            raise ValueError("component must be either normal or transverse")
+        degree_source = degree_source or self.degree
+        Rcalc = self.geometry.Rcalc
+        wavelength = self.source.wavelength
+        n0, m0 = sh.p2nm(p0)
+        n1, m1 = sh.p2nm(p1)
+        mesh = self.geometry.mesh
+        if source_type == "N":
+            source = sh.SphericalN(
+                wavelength,
+                n0,
+                m0,
+                domain=mesh,
+                degree=degree_source,
+            )
+        else:
+            source = sh.SphericalM(
+                wavelength,
+                n0,
+                m0,
+                domain=mesh,
+                degree=degree_source,
+            )
 
-#
-# def _compute_T_matrix(p):
+        self.source = source
+
+        if not solve_again:
+            self.solve()
+        else:
+            self.assemble_rhs()
+            self.solve_system(again=solve_again)
+
+        Escat = self.solution["diffracted"]
+        k = source.wavenumber
+
+        def _postpro_coeff_e():
+            if component == "normal":
+                # normal components
+                Y = sh.SphericalY(
+                    wavelength,
+                    n1,
+                    m1,
+                    domain=mesh,
+                    degree=degree_source,
+                )
+                integrand = dot(Escat, Y.expression.conj)
+                I = assemble(
+                    0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
+                ) / (Rcalc ** 2)
+                coeff = (
+                    I * k * Rcalc / (sh.sph_hn2(n1, k * Rcalc) * (n1 * (n1 + 1)) ** 0.5)
+                )
+            else:
+                # transverse components
+                Z = sh.SphericalZ(
+                    wavelength,
+                    n1,
+                    m1,
+                    domain=mesh,
+                    degree=degree_source,
+                )
+                integrand = dot(Escat, Z.expression.conj)
+                I = assemble(
+                    0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
+                ) / (Rcalc ** 2)
+                xsi_prime = sh.rb_hn2(n1 - 1, k * Rcalc) - n1 * sh.sph_hn2(
+                    n1, k * Rcalc
+                )
+                coeff = I * k * Rcalc / xsi_prime
+            return coeff
+
+        def _postpro_coeff_h():
+            X = sh.SphericalX(
+                wavelength,
+                n1,
+                m1,
+                domain=mesh,
+                degree=degree_source,
+            )
+            integrand = dot(Escat, X.expression.conj)
+            I = (
+                assemble(
+                    0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
+                )
+                / Rcalc ** 2
+            )
+            coeff = I / (sh.sph_hn2(n1, k * Rcalc))
+            return coeff
+
+        if coeff_type == "E":
+            return _postpro_coeff_e()
+        elif coeff_type == "H":
+            return _postpro_coeff_h()
+        elif coeff_type == "both":
+            return _postpro_coeff_e(), _postpro_coeff_h()
+
+    def get_T_matrix(
+        self,
+        p_max,
+        degree_source=None,
+        component="transverse",
+        boundary="calc_bnds",
+    ):
+
+        T11 = np.zeros((p_max, p_max)).tolist()
+        T21 = np.zeros((p_max, p_max)).tolist()
+        T12 = np.zeros((p_max, p_max)).tolist()
+        T22 = np.zeros((p_max, p_max)).tolist()
+
+        solve_again = False
+        for p0 in range(1, p_max + 1):
+            for p1 in range(1, p_max + 1):
+                for source_type in ["M", "N"]:
+                    fe, fh = self.get_T_matrix_coeff(
+                        p0,
+                        p1,
+                        source_type,
+                        coeff_type="both",
+                        solve_again=solve_again,
+                        degree_source=degree_source,
+                        component=component,
+                        boundary=boundary,
+                    )
+                    solve_again = True
+
+                    if source_type == "M":
+                        T11[p0 - 1][p1 - 1] = fh
+                        T21[p0 - 1][p1 - 1] = fe
+                    else:
+                        T12[p0 - 1][p1 - 1] = fh
+                        T22[p0 - 1][p1 - 1] = fe
+
+        Tmatrix = [[T11, T12], [T21, T22]]
+        return Tmatrix

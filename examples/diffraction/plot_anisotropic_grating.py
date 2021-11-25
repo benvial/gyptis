@@ -27,8 +27,10 @@ period = 600
 
 width_bottom, width_top = 500, 300
 height = 600
+eps_sub = 2.25
+eps_rod = np.array([[2.592, 0.251, 0], [0.251, 2.592, 0], [0, 0, 2.829]])
 
-pmesh = 6
+pmesh = 10
 
 thicknesses = OrderedDict(
     {
@@ -42,12 +44,12 @@ thicknesses = OrderedDict(
 
 mesh_param = dict(
     {
-        "pml_bottom": 0.7 * pmesh,
-        "substrate": pmesh * 2.25 ** 0.5,
+        "pml_bottom": pmesh * eps_sub ** 0.5,
+        "substrate": pmesh * eps_sub ** 0.5,
         "groove": pmesh,
-        "rod": pmesh * 2.59 ** 0.5,
+        "rod": pmesh * np.max(eps_rod) ** 0.5,
         "superstrate": pmesh,
-        "pml_top": 0.7 * pmesh,
+        "pml_top": pmesh,
     }
 )
 
@@ -88,23 +90,23 @@ domains = [k for k in all_domains.keys() if k not in ["pml_bottom", "pml_top"]]
 epsilon = {d: 1 for d in domains}
 mu = {d: 1 for d in domains}
 
-epsilon["substrate"] = 2.25
-epsilon["rod"] = np.array([[2.592, 0.251, 0], [0.251, 2.592, 0], [0, 0, 2.829]])
+epsilon["substrate"] = eps_sub
+epsilon["rod"] = eps_rod
 
 
-for jangle, angle in enumerate([0, 20, 40]):
+for jangle, angle in enumerate([0, -20, -40]):
 
-    angle_degree = (90 - angle) * np.pi / 180
+    angle_degree = angle * np.pi / 180
 
     pw = gy.PlaneWave(lambda0, angle_degree, dim=2)
     grating_TM = gy.Grating(geom, epsilon, mu, source=pw, polarization="TM", degree=2)
     grating_TM.solve()
-    effs_TE = grating_TM.diffraction_efficiencies(2, orders=True)
+    effs_TM = grating_TM.diffraction_efficiencies(2, orders=True)
 
     print(f"angle = {angle}, TM polarization")
     print("--------------------------------")
-    print("R: ", effs_TE["R"])
-    print("T: ", effs_TE["T"])
+    print("R: ", effs_TM["R"])
+    print("T: ", effs_TM["T"])
 
     ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
     d = grating_TM.period
@@ -125,13 +127,13 @@ for jangle, angle in enumerate([0, 20, 40]):
     grating_TE = gy.Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 
     grating_TE.solve()
-    effs_TM = grating_TE.diffraction_efficiencies(2, orders=True)
+    effs_TE = grating_TE.diffraction_efficiencies(2, orders=True)
 
     H = grating_TE.solution["total"]
     print(f"angle = {angle}, TE polarization")
     print("--------------------------------")
-    print("R: ", effs_TM["R"])
-    print("T: ", effs_TM["T"])
+    print("R: ", effs_TE["R"])
+    print("T: ", effs_TE["T"])
 
     vmin_TE, vmax_TE = -2.5, 2.5
     plt.sca(ax[jangle][1])

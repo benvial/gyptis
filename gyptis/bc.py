@@ -116,50 +116,37 @@ class PeriodicBoundary2DX(dolfin.SubDomain):
 
 
 class BiPeriodicBoundary3D(dolfin.SubDomain):
-    def __init__(self, period, **kwargs):
+    def __init__(self, period, eps=dolfin.DOLFIN_EPS, map_tol=1e-10):
         self.period = period
-        super().__init__(**kwargs)
+        self.eps = eps
+        self.map_tol = map_tol
+        super().__init__(map_tol=map_tol)
+
+    def near(self, x, y):
+        return dolfin.near(x, y, eps=self.eps)
+
+    def on_it(self, x, i, s="-"):
+        s = -1 if s == "-" else 1
+        return self.near(x[i], s * self.period[i] / 2)
 
     def inside(self, x, on_boundary):
-        return bool(
-            (
-                dolfin.near(x[0], -self.period[0] / 2)
-                or dolfin.near(x[1], -self.period[1] / 2)
-            )
-            and (
-                not (
-                    (
-                        dolfin.near(x[0], -self.period[0] / 2)
-                        and dolfin.near(x[1], self.period[1] / 2)
-                    )
-                    or (
-                        dolfin.near(x[0], self.period[0] / 2)
-                        and dolfin.near(x[1], -self.period[1] / 2)
-                    )
-                )
-            )
-            and on_boundary
-        )
+        if on_boundary:
+            if self.on_it(x, 0, "-") and not self.on_it(x, 1, "+"):
+                return True
+            if self.on_it(x, 1, "-") and not self.on_it(x, 0, "+"):
+                return True
+            return False
 
     def map(self, x, y):
-        if dolfin.near(x[0], self.period[0] / 2) and dolfin.near(
-            x[1], self.period[1] / 2
-        ):
+        if self.on_it(x, 0, "+"):
             y[0] = x[0] - self.period[0]
-            y[1] = x[1] - self.period[1]
-            y[2] = x[2]
-        elif dolfin.near(x[0], self.period[0] / 2):
-            y[0] = x[0] - self.period[0]
-            y[1] = x[1]
-            y[2] = x[2]
-        elif dolfin.near(x[1], self.period[1] / 2):
-            y[0] = x[0]
-            y[1] = x[1] - self.period[1]
-            y[2] = x[2]
         else:
-            y[0] = -1000  # -self.period[0]*2.
-            y[1] = -1000  # -self.period[1]*2.
-            y[2] = -1000  # 0.
+            y[0] = x[0]
+        if self.on_it(x, 1, "+"):
+            y[1] = x[1] - self.period[1]
+        else:
+            y[1] = x[1]
+        y[2] = x[2]
 
 
 def prepare_boundary_conditions(bc_dict):

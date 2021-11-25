@@ -26,9 +26,9 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
     thicknesses = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
 
     #
-    alpha0 = k0 * np.sin(theta0) * np.cos(phi0)
-    beta0 = k0 * np.sin(theta0) * np.sin(phi0)
-    gamma0 = k0 * np.cos(theta0)
+    alpha0 = -k0 * np.sin(theta0) * np.cos(phi0)
+    beta0 = -k0 * np.sin(theta0) * np.sin(phi0)
+    gamma0 = -k0 * np.cos(theta0)
     Ex0 = np.cos(psi0) * np.cos(theta0) * np.cos(phi0) - np.sin(psi0) * np.sin(phi0)
     Ey0 = np.cos(psi0) * np.cos(theta0) * np.sin(phi0) + np.sin(psi0) * np.cos(phi0)
     Ez0 = -np.cos(psi0) * np.sin(theta0)
@@ -213,7 +213,7 @@ def make_stack(
         stack_output = get_coeffs_stack(
             config,
             plane_wave.wavelength,
-            pi / 2 - plane_wave.angle,
+            plane_wave.angle,
             0,
             _psi,
         )
@@ -266,7 +266,7 @@ def make_stack(
         stack_output = get_coeffs_stack(
             config,
             plane_wave.wavelength,
-            pi / 2 - plane_wave.angle[0],
+            plane_wave.angle[0],
             plane_wave.angle[1],
             plane_wave.angle[2],
         )

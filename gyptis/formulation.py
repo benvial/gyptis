@@ -290,7 +290,7 @@ class Maxwell2DPeriodic(Maxwell2D):
 
         else:
             self.propagation_vector = self.source.wavenumber * np.array(
-                [np.cos(self.source.angle), np.sin(self.source.angle)]
+                [-np.sin(self.source.angle), -np.cos(self.source.angle)]
             )
         self.phasor = phasor(
             self.propagation_vector[0],
@@ -451,9 +451,9 @@ class Maxwell3DPeriodic(Maxwell3D):
         super().__init__(*args, **kwargs)
         k0 = self.source.wavenumber
         theta0, phi0 = self.source.angle[0:2]
-        alpha0 = k0 * np.cos(theta0) * np.cos(phi0)
-        beta0 = k0 * np.cos(theta0) * np.sin(phi0)
-        gamma0 = k0 * np.sin(theta0)
+        alpha0 = -k0 * np.sin(theta0) * np.cos(phi0)
+        beta0 = -k0 * np.sin(theta0) * np.sin(phi0)
+        gamma0 = -k0 * np.cos(theta0)
         self.propagation_vector = np.array([alpha0, beta0, gamma0])
 
         self.phasor_vect = [

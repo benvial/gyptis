@@ -78,7 +78,7 @@ domains = [k for k in thicknesses.keys() if k not in ["pml_bottom", "pml_top"]]
 epsilon = {d: 1 for d in domains}
 mu = {d: 1 for d in domains}
 
-angle = (90 - theta0) * np.pi / 180
+angle = theta0 * np.pi / 180
 pw = gy.PlaneWave(lambda0, angle, dim=2)
 
 gratingTM = gy.Grating(

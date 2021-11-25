@@ -73,7 +73,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
     return dict(mesh=dolfin_mesh, markers=markers)
 
 
-class MarkedMesh(object):
+class MarkedMesh:
     def __init__(self, filename, geometric_dimension=3, data_dir=None):
         self.data_dir = data_dir
         self.geometric_dimension = geometric_dimension

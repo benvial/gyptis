@@ -22,7 +22,7 @@ def test_pw_2d():
     uarray = function2array(uproj.real) + 1j * function2array(uproj.imag)
     x, y = get_coordinates(W).T
     k0 = 2 * np.pi / lambda0
-    kdotx = k0 * (np.cos(theta) * x + np.sin(theta) * y)
+    kdotx = -k0 * (np.sin(theta) * x + np.cos(theta) * y)
     test = np.exp(1j * kdotx)
     err = abs(test - uarray) ** 2
     assert np.all(err < 1e-16)
@@ -41,9 +41,9 @@ def test_pw_3d():
     x, y, z = get_coordinates(W).T
     k0 = 2 * np.pi / lambda0
 
-    kx = k0 * np.sin(theta) * np.cos(phi)
-    ky = k0 * np.sin(theta) * np.sin(phi)
-    kz = k0 * np.cos(theta)
+    kx = -k0 * np.sin(theta) * np.cos(phi)
+    ky = -k0 * np.sin(theta) * np.sin(phi)
+    kz = -k0 * np.cos(theta)
 
     cx = np.cos(psi) * np.cos(theta) * np.cos(phi) - np.sin(psi) * np.sin(phi)
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)

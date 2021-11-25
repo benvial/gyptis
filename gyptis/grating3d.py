@@ -131,6 +131,7 @@ class Grating3D(_GratingBase, Simulation):
         degree=1,
         pml_stretch=1 - 1j,
         periodic_map_tol=1e-8,
+        eps_bc=1e-8,
     ):
         assert isinstance(geometry, Layered3D)
         assert source.dim == 3
@@ -140,9 +141,11 @@ class Grating3D(_GratingBase, Simulation):
         self.mu = mu
         self.degree = degree
         self.periodic_map_tol = periodic_map_tol
+        self.eps_bc = eps_bc
         self.periodic_bcs = BiPeriodicBoundary3D(
             self.period,
             map_tol=self.periodic_map_tol,
+            eps=self.eps_bc,
         )
         function_space = ComplexFunctionSpace(
             geometry.mesh, "N1curl", degree, constrained_domain=self.periodic_bcs
@@ -323,7 +326,7 @@ class Grating3D(_GratingBase, Simulation):
             self.period[0]
             * self.period[1]
             * (epsilon_0 / mu_0) ** 0.5
-            * (np.sin(self.source.angle[0]))
+            * (np.cos(self.source.angle[0]))
             / 2
         )
         doms_no_pml = [

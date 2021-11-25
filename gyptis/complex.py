@@ -84,7 +84,7 @@ def _complexify_vector_alt(func):
     return wrapper
 
 
-class Complex(object):
+class Complex:
     """A complex object.
 
     Parameters
@@ -255,6 +255,9 @@ class Complex(object):
         """
         return self.__abs__(), self.__angle__()
 
+    def to_complex(self):
+        return self.real + 1j * self.imag
+
 
 def iscomplex(z):
     """Checks if object is complex.
@@ -347,3 +350,18 @@ TestFunction = _complexify_vector(dolfin.TestFunction)
 TrialFunctions = _complexify_vector(dolfin.TrialFunctions)
 TestFunctions = _complexify_vector(dolfin.TestFunctions)
 j = Complex(0, 1)
+
+
+def _traverse(a):
+    if not isinstance(a, list):
+        yield a
+    else:
+        for e in a:
+            yield from _traverse(e)
+
+
+def to_array(a):
+    l = []
+    for e in _traverse(a):
+        l.append(e.to_complex())
+    return np.array(l).reshape(np.array(a).shape[:-1])
