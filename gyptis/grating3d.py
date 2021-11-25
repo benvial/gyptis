@@ -15,7 +15,6 @@ from .geometry import *
 from .materials import PML, Coefficient
 from .simulation import Simulation
 from .utils._meta import _GratingBase
-from .utils.helpers import _translation_matrix
 
 
 class Layered3D(Geometry):
@@ -42,8 +41,8 @@ class Layered3D(Geometry):
 
         self.periodic_tol = 1e-6
 
-        self.translation_x = _translation_matrix([self.period[0], 0, 0])
-        self.translation_y = _translation_matrix([0, self.period[1], 0])
+        self.translation_x = self._translation_matrix([self.period[0], 0, 0])
+        self.translation_y = self._translation_matrix([0, self.period[1], 0])
 
         self.total_thickness = sum(self.thicknesses.values())
         dx, dy = self.period

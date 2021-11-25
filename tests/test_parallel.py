@@ -6,7 +6,7 @@
 
 import pytest
 
-from gyptis.utils.parallel import parloop
+from gyptis.utils.parallel import *
 
 
 def f(x, y, a=1, b="b"):
@@ -26,3 +26,7 @@ def test_para():
     y = [f(_, 9) for _ in x]
     ypar = fpar(x, 9)
     assert ypar == y
+
+
+def test_mpi_print():
+    mpi_print("Hello world!")

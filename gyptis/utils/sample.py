@@ -3,10 +3,38 @@
 # Author: Benjamin Vial
 # License: MIT
 
+__all__ = ["adaptive_sampler"]
+
+
+from functools import wraps
+
 import numpy as np
 
 
-def adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
+def adaptive_sampler(max_bend=10, max_z_rel=1e-3, max_df=0.05):
+    def deco_adaptive_sampler(func):
+        """
+        Decorate a function for adaptive sampling.
+        """
+
+        @wraps(func)
+        def my_func(*args, **kwargs):
+            other_args = args[1:]
+            z0 = args[0]
+
+            def f(z):
+                return func(z, *other_args, **kwargs)
+
+            return _adaptive_sampler(
+                f, z0, max_bend=max_bend, max_z_rel=max_z_rel, max_df=max_df
+            )
+
+        return my_func
+
+    return deco_adaptive_sampler
+
+
+def _adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
 
     z0 = np.sort(z0)
     zmin = min(z0)

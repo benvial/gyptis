@@ -3,7 +3,16 @@
 # Author: Benjamin Vial
 # License: MIT
 
-import sys
+
+__all__ = [
+    "array2function",
+    "function2array",
+    "project_iterative",
+    "get_coordinates",
+    "rot_matrix_2d",
+    "tanh",
+]
+
 
 import numpy as np
 
@@ -65,6 +74,15 @@ def function2array(f):
     return f.vector().get_local()
 
 
+def project_iterative(applied_function, function_space):
+    return project(
+        applied_function,
+        function_space,
+        solver_type="cg",
+        preconditioner_type="jacobi",
+    )
+
+
 def get_coordinates(A):
     n = A.dim()
     d = A.mesh().geometry().dim()
@@ -73,76 +91,9 @@ def get_coordinates(A):
     return dof_coordinates
 
 
-def mpi_print(*args, **kwargs):
-    if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
-        print(*args, **kwargs)
-        sys.stdout.flush()
-
-
-def matfmt(m, ndigit=4, extra_space=0, cplx=False):
-    def printim(y):
-        return f"{sgn(float(y))}{abs(float(y))}j"
-
-    def sgn(u):
-        if np.sign(u) == -1:
-            return "-"
-        else:
-            return "+"
-
-    dim = len(m[0])
-
-    pad = " " * extra_space
-
-    if cplx:
-        m = [[_.real, _.imag] for _ in np.ravel(m)]
-
-    a = [f"%.{ndigit}f" % elem for elem in np.ravel(m)]
-
-    if dim == 3:
-        if cplx:
-            b = f"""[{a[0]}{printim(a[1])} {a[2]}{printim(a[3])} 
-            {a[4]}{printim(a[5])}] \n{pad}[{a[6]}{printim(a[7])} 
-            {a[8]}{printim(a[9])} {a[10]}{printim(a[11])}] 
-            \n{pad}[{a[12]}{printim(a[13])} {a[14]}{printim(a[15])} 
-            {a[16]}{printim(a[17])}]
-            """
-
-        else:
-            b = f"""[{a[0]} {a[1]} {a[2]}] \n{pad}[{a[3]} {a[4]} {a[5]}]
-             \n{pad}[{a[6]} {a[7]} {a[8]}]
-             """
-    else:
-        if cplx:
-            b = f"""[{a[0]}{printim(a[1])} {a[2]}{printim(a[3])}] 
-            \n{pad}[{a[4]}{printim(a[5])} {a[6]}{printim(a[7])}]
-            """
-        else:
-            b = f"[{a[0]} {a[1]}] \n{pad}[{a[2]} {a[3]}]"
-    return b
-
-
-def matprint(*args, **kwargs):
-    mpi_print(matfmt(*args, **kwargs))
-
-
 def rot_matrix_2d(t):
     return np.array([[np.sin(t), -np.cos(t), 0], [np.cos(t), np.sin(t), 0], [0, 0, 1]])
 
 
 def tanh(x):
     return (dolfin.exp(2 * x) - 1) / (dolfin.exp(2 * x) + 1)
-
-
-def _translation_matrix(t):
-    M = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
-    M[3], M[7], M[11] = t
-    return M
-
-
-def project_iterative(applied_function, function_space):
-    return project(
-        applied_function,
-        function_space,
-        solver_type="cg",
-        preconditioner_type="jacobi",
-    )

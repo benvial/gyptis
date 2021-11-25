@@ -9,7 +9,7 @@ import numpy as np
 from . import dolfin as df
 from .complex import *
 from .materials import tensor_const
-from .utils.helpers import array2function, function2array, project_iterative
+from .utils import array2function, function2array, project_iterative, tanh
 
 df.parameters["allow_extrapolation"] = True
 
@@ -23,10 +23,6 @@ def simp(a, s_min=1, s_max=2, p=1, complex=True):
         )
     else:
         return s_min + (s_max - s_min) * a ** p
-
-
-def tanh(x):
-    return (df.exp(2 * x) - 1) / (df.exp(2 * x) + 1)
 
 
 def projection(a, beta=1, nu=0.5):

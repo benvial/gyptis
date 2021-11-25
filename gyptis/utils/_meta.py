@@ -52,7 +52,7 @@ class _ScatteringBase(ABC):
         """
         pass
 
-    def get_cross_sections(self):
+    def get_cross_sections(self, **kwargs):
         """Compute cross sections.
 
         Returns
@@ -63,9 +63,9 @@ class _ScatteringBase(ABC):
 
         """
 
-        scs = self.scattering_cross_section()
-        acs = self.absorption_cross_section()
-        ecs = self.extinction_cross_section()
+        scs = self.scattering_cross_section(**kwargs)
+        acs = self.absorption_cross_section(**kwargs)
+        ecs = self.extinction_cross_section(**kwargs)
         return dict(scattering=scs, absorption=acs, extinction=ecs)
 
 

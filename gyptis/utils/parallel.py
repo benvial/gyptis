@@ -3,10 +3,19 @@
 # Author: Benjamin Vial
 # License: MIT
 
+
+__all__ = [
+    "parloop",
+    "mpi_print",
+]
+
+
+import sys
 from functools import wraps
 
-import numpy as np
 from joblib import Parallel, delayed
+
+from .. import dolfin
 
 
 def parloop(n_jobs=1):
@@ -25,3 +34,9 @@ def parloop(n_jobs=1):
         return my_func
 
     return deco_parloop
+
+
+def mpi_print(*args, **kwargs):
+    if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
+        print(*args, **kwargs)
+        sys.stdout.flush()

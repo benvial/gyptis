@@ -78,6 +78,7 @@ s_modal = gy.Scattering(
     mu,
     polarization="TM",
     modal=True,
+    degree=2,
 )
 
 s_modal.eigensolve(neig, wavevector_target=0.4)
@@ -104,7 +105,7 @@ fig, axcp = plt.subplots()
 plt.plot(ev_norma_ref.real, ev_norma_ref.imag, "ok", label="ref.")
 plt.plot(ev_norma.real, ev_norma.imag, "+r", label="gyptis")
 plt.xlabel(rf"Re $\tilde{{\omega}}$")
-plt.xlabel(rf"Im $\tilde{{\omega}}$")
+plt.ylabel(rf"Im $\tilde{{\omega}}$")
 plt.legend()
 plt.tight_layout()
 

@@ -15,6 +15,7 @@ import numpy as np
 import gyptis as gy
 import gyptis.utils.data_download as dd
 from gyptis import c, pi
+from gyptis.utils import adaptive_sampler
 
 ##############################################################################
 # Reference results are taken from :cite:p:`Jandieri2015`.
@@ -139,9 +140,10 @@ assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1
 
 ##############################################################################
 # Compute spectra using adaptive sampling. The function needs to return a scalar
-# (which will be monitored by tha sampler) as its first output.
+# (which will be monitored by the sampler) as its first output.
 
 
+@adaptive_sampler()
 def cs_vs_wl(wavelength):
     geom = create_geometry(wavelength, pml_width=wavelength)
     pw = gy.PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
@@ -161,16 +163,14 @@ def cs_vs_wl(wavelength):
 
 
 wl = np.linspace(wavelength_min, wavelength_max, 30)
-wla, out = gy.adaptive_sampler(cs_vs_wl, wl)
+wla, out = cs_vs_wl(wl)
 cs = [_[1] for _ in out]
 scs = np.array([d["scattering"] for d in cs])
 acs = np.array([d["absorption"] for d in cs])
 ecs = np.array([d["extinction"] for d in cs])
 
-
 ##############################################################################
 # Plot and comparison with benchmark
-
 
 scs_file = dd.download_example_data(
     data_file_name="scs_r2_30nm.csv",
@@ -184,6 +184,8 @@ acs_file = dd.download_example_data(
 
 benchmark_scs = np.loadtxt(scs_file, delimiter=",")
 benchmark_acs = np.loadtxt(acs_file, delimiter=",")
+
+
 plt.figure()
 plt.plot(
     benchmark_scs[:, 0],

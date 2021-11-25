@@ -8,7 +8,6 @@ from .formulation import Maxwell2DBands
 from .geometry import *
 from .materials import *
 from .simulation import Simulation
-from .utils.helpers import _translation_matrix
 
 
 class Lattice2D(Geometry):
@@ -45,9 +44,9 @@ class Lattice2D(Geometry):
 
     @property
     def translation(self):
-        return _translation_matrix([*self.vectors[0], 0]), _translation_matrix(
-            [*self.vectors[1], 0]
-        )
+        return self._translation_matrix(
+            [*self.vectors[0], 0]
+        ), self._translation_matrix([*self.vectors[1], 0])
 
     def get_periodic_bnds(self):
 

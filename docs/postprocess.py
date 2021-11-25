@@ -95,8 +95,11 @@ def process_html(fn, lines):
             "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks/examples/",
             "https://mybinder.org/v2/gl/gyptis%2Fgyptis.gitlab.io/doc?filepath=notebooks/",
         )
-        line = line.replace("binder_badge_logo1.svg", "binder_badge_logo.svg")
-        line = line.replace("binder_badge_logo2.svg", "binder_badge_logo.svg")
+
+        first_tag = "binder_badge_logo"
+        second_tag = ".svg"
+        reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
+        line = re.sub(reg, "", line, flags=re.DOTALL)
 
         line = line.replace(
             'binder" src="../../_images/binder_badge_logo.svg" width="150px"',

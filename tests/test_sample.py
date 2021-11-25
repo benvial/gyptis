@@ -6,11 +6,15 @@
 import numpy as np
 import pytest
 
-from gyptis.utils.sample import adaptive_sampler
+from gyptis.utils.sample import _adaptive_sampler, adaptive_sampler
+
+np.random.seed(13)
 
 
 def test_sampler():
+
     Npoles = 100
+
     poles = np.random.rand(Npoles) + 1j * np.random.rand(Npoles)
     res = np.random.rand(Npoles) + 1j * np.random.rand(Npoles)
 
@@ -32,21 +36,28 @@ def test_sampler():
     z0 = np.linspace(zmin, zmax, n0)
     # t0 = f(z0)
 
-    z, t = adaptive_sampler(f, z0)
+    z, t = _adaptive_sampler(f, z0)
     t0 = f(z0)
 
     print(f"number of points: {len(z)}")
-    # xsa
     print("------------")
 
-    def f(z):
-        t = 0
-        for p, r in zip(poles, res):
-            t += r / (z - p)
-        Q = np.abs(t) ** 2
-        return Q / Npoles ** 2, z ** 2
+    def f1(z):
+        return f(z), z ** 2
 
-    z, t = adaptive_sampler(f, z0)
+    z, t = _adaptive_sampler(f1, z0)
     t0 = f(z0)
+    assert len(z) == len(t)
 
     print(f"number of points: {len(z)}")
+
+    @adaptive_sampler()
+    def f2(z, a, b="test"):
+        print(a)
+        print(b)
+        return f1(z)
+
+    z1, t1 = f2(z0, 10, b="hello")
+    assert len(z1) == len(t1)
+    assert np.allclose(z1, z)
+    assert np.allclose(t1, t)

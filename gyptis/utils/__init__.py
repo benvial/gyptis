@@ -8,6 +8,9 @@ from IPython import get_ipython
 
 from .helpers import *
 from .jupyter import VersionTable
+from .log import *
+from .parallel import *
+from .sample import *
 from .time import *
 
 _IP = get_ipython()

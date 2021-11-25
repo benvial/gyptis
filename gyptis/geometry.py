@@ -188,6 +188,28 @@ class Geometry:
         dim = dim or self.dim
         return _dimtag(id, dim=dim)
 
+    def _translation_matrix(self, t):
+        M = [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ]
+        M[3], M[7], M[11] = t
+        return M
+
     # def add_circle(self,x, y, z, ax, ay,**kwargs):
     #     ell = self._gmsh_add_ellipse(x, y, z, ax, ay,**kwargs)
     #     ell = self.add_curve_loop([ell])

@@ -18,7 +18,6 @@ from .materials import *
 from .simulation import Simulation
 from .source import *
 from .utils._meta import _GratingBase
-from .utils.helpers import _translation_matrix
 
 
 class Layered2D(Geometry):
@@ -61,7 +60,7 @@ class Layered2D(Geometry):
 
     @property
     def translation_x(self):
-        return _translation_matrix([self.period, 0, 0])
+        return self._translation_matrix([self.period, 0, 0])
 
     def make_layer(self, y_position, thickness):
         box = self.add_rectangle(

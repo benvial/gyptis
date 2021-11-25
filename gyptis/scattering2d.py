@@ -33,6 +33,7 @@ class BoxPML2D(Geometry):
         self.box_size = box_size
         self.box_center = box_center
         self.pml_width = pml_width
+        self.Rcalc = Rcalc
 
         def _addrect_center(rect_size):
             corner = -np.array(rect_size) / 2
@@ -179,55 +180,48 @@ class Scatt2D(_ScatteringBase, Simulation):
         S0 = 1 / (2 * Z0) if self.formulation.polarization == "TM" else 0.5 * Z0
         return S0
 
-    def scattering_cross_section(self):
+    def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
         uscatt = self.solution["diffracted"]
         vscatt = self.formulation.get_dual(uscatt)
-        re = as_vector([vscatt[1].real, -vscatt[0].real])
-        im = as_vector([vscatt[1].imag, -vscatt[0].imag])
-        EcrossHstar = uscatt * Complex(re, -im)
-        Sscatt = (Constant(0.5) * EcrossHstar).real
-        sign = -1 if self.formulation.polarization == "TM" else +1
-        Sscatt *= sign
-        n = self.geometry.unit_normal_vector
-        Ws = assemble(dot(n, Sscatt)("+") * self.dS("calc_bnds"))
-        S0 = self.time_average_incident_poynting_vector_norm
-        SCS = Ws / S0
-        return SCS if SCS > 0 else -SCS
-
-    def absorption_cross_section(self):
         utot = self.solution["total"]
         vtot = self.formulation.get_dual(utot)
-        re = as_vector([vtot[1].real, -vtot[0].real])
-        im = as_vector([vtot[1].imag, -vtot[0].imag])
-        EcrossHstar = utot * Complex(re, -im)
-        Stot = (Constant(0.5) * EcrossHstar).real
-        sign = -1 if self.formulation.polarization == "TM" else +1
-        Stot *= sign
-        n = self.geometry.unit_normal_vector
-        Wa = -assemble(dot(n, Stot)("+") * self.dS("calc_bnds"))
-        S0 = self.time_average_incident_poynting_vector_norm
-        ACS = Wa / S0
-        return ACS if ACS > 0 else -ACS
-
-    def extinction_cross_section(self):
         ui = self.source.expression
         vi = self.formulation.get_dual(ui)
-        uscatt = self.solution["diffracted"]
-        vscatt = self.formulation.get_dual(uscatt)
-        re = as_vector([vi[1].real, -vi[0].real])
-        im = as_vector([vi[1].imag, -vi[0].imag])
-        EcrossHstar = uscatt * Complex(re, -im)
-        re = as_vector([vscatt[1].real, -vscatt[0].real])
-        im = as_vector([vscatt[1].imag, -vscatt[0].imag])
-        EcrossHstar += ui * Complex(re, -im)
-        Se = (Constant(0.5) * EcrossHstar).real
-        sign = -1 if self.formulation.polarization == "TM" else +1
-        Se *= sign
-        n = self.geometry.unit_normal_vector
-        We = -assemble(dot(n, Se)("+") * self.dS("calc_bnds"))
-        S0 = self.time_average_incident_poynting_vector_norm
-        ECS = We / S0
-        return ECS if ECS > 0 else -ECS
+
+        parallel = dolfin.MPI.comm_world.size > 1
+
+        ### normal vector is messing up in parallel so workaround here:
+        if parallel:
+            n_out = dolfin.Expression(
+                (f"x[0]/Rcalc", f"x[1]/Rcalc"),
+                degree=self.degree,
+                Rcalc=self.geometry.Rcalc,
+            )
+        else:
+            n_out = self.geometry.unit_normal_vector
+
+        dcalc = self.dS(boundaries)
+
+        if return_type == "s":
+            Sscatt = _get_power_dens(uscatt, vscatt)
+            W = assemble(dot(n_out, Sscatt)("+") * dcalc)
+        elif return_type == "a":
+            Stot = _get_power_dens(utot, vtot)
+            W = assemble(dot(n_out, Stot)("+") * dcalc)
+        else:
+            Se = _get_power_dens(uscatt, vi) + _get_power_dens(ui, vscatt)
+            W = assemble(dot(n_out, Se)("+") * dcalc)
+        out = W / self.time_average_incident_poynting_vector_norm
+        return out if out > 0 else -out
+
+    def scattering_cross_section(self, **kwargs):
+        return self._cross_section_helper("s", **kwargs)
+
+    def extinction_cross_section(self, **kwargs):
+        return self._cross_section_helper("e", **kwargs)
+
+    def absorption_cross_section(self, **kwargs):
+        return self._cross_section_helper("a", **kwargs)
 
     def local_density_of_states(self, x, y):
         """Compute the local density of state.
@@ -264,6 +258,9 @@ class Scatt2D(_ScatteringBase, Simulation):
             evalpoint = evalpoint[0], eps
         ldos = -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
         return ldos
+
+    def check_optical_theorem(cs, rtol=1e-12):
+        np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=rtol)
 
     def plot_field(
         self,
@@ -353,3 +350,10 @@ class Scatt2D(_ScatteringBase, Simulation):
         )
         os.system(f"rm -f {tmpdir}/animation_tmp_*.png")
         return anim
+
+
+def _get_power_dens(u, v):
+    re = as_vector([v[1].real, -v[0].real])
+    im = as_vector([v[1].imag, -v[0].imag])
+    EcrossHstar = u * Complex(re, -im)
+    return (Constant(0.5) * EcrossHstar).real

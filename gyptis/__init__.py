@@ -33,7 +33,11 @@ if os.environ.get("GYPTIS_ADJOINT") is not None:
 else:
     ADJOINT = False
 
+
+from dolfin import MPI
+
 dolfin.parameters["reorder_dofs_serial"] = False
+dolfin.parameters["ghost_mode"] = "shared_facet"
 dolfin.PETScOptions.set("petsc_prealloc", "200")
 dolfin.PETScOptions.set("ksp_type", "preonly")
 dolfin.PETScOptions.set("pc_type", "lu")
@@ -51,9 +55,8 @@ dolfin.PETScOptions.set("pc_type", "lu")
 # dolfin.PETScOptions.set('mat_mumps_icntl_35', 2)
 # dolfin.PETScOptions.set('mat_mumps_icntl_36', 1)
 # dolfin.PETScOptions.set('mat_mumps_icntl_24', 1)
-# dolfin.set_log_level(1)
+# dolfin.set_log_level(10000000)
 
 from .api import *
 from .complex import *
 from .plot import *
-from .utils.sample import adaptive_sampler

@@ -224,10 +224,9 @@ class Scatt3D(_ScatteringBase, Simulation):
         self.solution["total"] = E + self.source.expression
         return E
 
-    def _cross_section_helper(
-        self, return_type="s", boundaries="calc_bnds", parallel=False
-    ):
+    def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
 
+        parallel = dolfin.MPI.comm_world.size > 1
         ### normal vector is messing up in parallel so workaround here:
         if parallel:
             Rcalc = self.geometry.Rcalc
@@ -252,28 +251,14 @@ class Scatt3D(_ScatteringBase, Simulation):
         inv_mua_coeff = mu_a.invert().as_subdomain()
         Hi = inv_mua_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Ei)
         Si = dolfin.Constant(0.5) * cross(Ei, Hi.conj).real
-
         Se = dolfin.Constant(0.5) * (cross(Ei, Hs.conj) + cross(Es, Hi.conj)).real
 
         Etot = self.solution["total"]
         Htot = inv_mu_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Etot)
         Stot = dolfin.Constant(0.5) * cross(Etot, Htot.conj).real
 
-        #
-        # names = ["-x", "-y","+z", "+y","-z", "+x" ]
-        # normals = {}
-        # normals["+x"] = dolfin.Constant((1,0,0))
-        # normals["-x"] = dolfin.Constant((-1,0,0))
-        # normals["+y"] = dolfin.Constant((0,1,0))
-        # normals["-y"] = dolfin.Constant((0,-1,0))
-        # normals["+z"] = dolfin.Constant((0,0,1))
-        # normals["-z"] = dolfin.Constant((0,0,-1))
-
         if return_type == "s":
             Ws = assemble(dot(n_out("+"), Ss("+")) * self.dS(boundaries))
-            # Ws = 0
-            # for name in  names:
-            #     Ws += assemble(dot(normals[name], Ss("+")) * self.dS(name))
             Sigma_s = Ws / self.S0
             return Sigma_s
 
@@ -287,14 +272,14 @@ class Scatt3D(_ScatteringBase, Simulation):
             Sigma_a = Wa / self.S0
             return Sigma_a
 
-    def scattering_cross_section(self, parallel=False):
-        return self._cross_section_helper("s", parallel=parallel)
+    def scattering_cross_section(self, **kwargs):
+        return self._cross_section_helper("s", **kwargs)
 
-    def extinction_cross_section(self, parallel=False):
-        return self._cross_section_helper("e", parallel=parallel)
+    def extinction_cross_section(self, **kwargs):
+        return self._cross_section_helper("e", **kwargs)
 
-    def absorption_cross_section(self, parallel=False):
-        return self._cross_section_helper("a", parallel=parallel)
+    def absorption_cross_section(self, **kwargs):
+        return self._cross_section_helper("a", **kwargs)
 
     def get_T_matrix_coeff(
         self,
