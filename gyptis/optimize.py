@@ -265,7 +265,14 @@ class TopologyOptimizer:
                 y, dy = wrapper(x)
                 if self.verbose:
                     print(f"objective = {y}")
-                gradn[:] = dy
+
+                comm = df.MPI.comm_world
+                rank= df.MPI.rank(comm)
+                dy=comm.gather(dy, root=0)
+                if rank == 0:
+                    dy1 = np.hstack(dy)
+                    gradn[:] = dy1
+                # comm.Bcast(dy1, root=0)
                 cbout = []
                 if self.callback is not None:
                     out = self.callback(self)
