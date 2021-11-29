@@ -267,8 +267,8 @@ class TopologyOptimizer:
                     print(f"objective = {y}")
 
                 comm = df.MPI.comm_world
-                rank= df.MPI.rank(comm)
-                dy=comm.gather(dy, root=0)
+                rank = df.MPI.rank(comm)
+                dy = comm.gather(dy, root=0)
                 if rank == 0:
                     dy1 = np.hstack(dy)
                     gradn[:] = dy1
