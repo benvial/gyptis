@@ -70,7 +70,7 @@ class BoxPML(Geometry):
 
 
 class Layered(Geometry):
-    """Parameters(dim, period, thicknesses, **kwargs)
+    """Layered(dim, period, thicknesses, **kwargs)
     Layered media for diffraction problems, defining the periodic unit cell
     for mono or bi periodic gratings.
 

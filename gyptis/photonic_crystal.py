@@ -44,9 +44,10 @@ class Lattice2D(Geometry):
 
     @property
     def translation(self):
-        return self._translation_matrix(
-            [*self.vectors[0], 0]
-        ), self._translation_matrix([*self.vectors[1], 0])
+        return (
+            self._translation_matrix([*self.vectors[0], 0]),
+            self._translation_matrix([*self.vectors[1], 0]),
+        )
 
     def get_periodic_bnds(self):
 

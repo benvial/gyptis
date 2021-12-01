@@ -20,14 +20,14 @@ from .. import dolfin
 from ..complex import project
 
 
-def array2function(a, A):
+def array2function(values, function_space):
     """Convert a numpy array to a fenics Function.
 
     Parameters
     ----------
-    a : numpy array
+    values : numpy array
         The array to convert.
-    A : FunctionSpace
+    function_space : FunctionSpace
         The function space to interpolate on.
 
     Returns
@@ -37,23 +37,13 @@ def array2function(a, A):
 
     """
 
-    u = dolfin.Function(A)
-    dofmap = A.dofmap()
-    x = A.tabulate_dof_coordinates().reshape((-1, 2))
-    first_dof, last_dof = dofmap.ownership_range()
-    unowned = dofmap.local_to_global_unowned()
-    # dofs = [dofmap.local_to_global_index(dof) not in unowned for dof in range(last_dof-first_dof)]
-
-    u.vector().set_local(a[first_dof:last_dof])
-    # u.vector().set_local(a)
-
-    # print("len(array2function)", len(a))
-    # print("first last ", (first_dof, last_dof))
-    # print("len(sub array)", len(a[first_dof:last_dof]))
-
+    u = dolfin.Function(function_space)
+    dofmap = function_space.dofmap()
+    order = dofmap.tabulate_local_to_global_dofs()
+    sub_array = values[order]
+    u.vector().set_local(sub_array)
     dolfin.as_backend_type(u.vector()).update_ghost_values()
     u.vector().apply("insert")
-
     return u
 
 

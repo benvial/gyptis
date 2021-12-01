@@ -1,6 +1,8 @@
-import os
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Author: Benjamin Vial
+# License: MIT
 
-import dolfin
 
 from .__about__ import (
     __author__,
@@ -16,8 +18,10 @@ from .__about__ import (
 __doc__ = __description__
 
 
+import os
 from math import e, pi
 
+import dolfin
 from scipy.constants import c, epsilon_0, mu_0
 
 if os.environ.get("GYPTIS_ADJOINT") is not None:
@@ -60,3 +64,8 @@ dolfin.PETScOptions.set("pc_type", "lu")
 from .api import *
 from .complex import *
 from .plot import *
+from .utils import logger, set_log_level
+
+# logger.warning("Welcome to gyptis!")
+# logger.info("Welcome to gyptis!")
+# logger.debug("Welcome to gyptis!")

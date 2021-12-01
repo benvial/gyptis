@@ -17,5 +17,10 @@ dependencies:
   - ipython
   - pip:
     - gmsh
+    - loguru
     - git+https://gitlab.com/gyptis/gyptis.git
     # - gyptis
+
+
+
+# mamba install fenics dolfin-adjoint nlopt meshio  numpy scipy simpy matplotlib joblib psutil ipython

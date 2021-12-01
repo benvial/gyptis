@@ -9,7 +9,7 @@ import numpy as np
 from . import dolfin as df
 from .complex import *
 from .materials import tensor_const
-from .utils import array2function, function2array, project_iterative, tanh
+from .utils import array2function, function2array, mpi_print, project_iterative, tanh
 
 df.parameters["allow_extrapolation"] = True
 
@@ -42,19 +42,28 @@ def projection_gradient(a, beta=1, nu=0.5):
 
 
 class Filter:
-    def __init__(self, rfilt=0, function_space=None, order=1, solver=None, mesh=None):
+    def __init__(
+        self,
+        rfilt=0,
+        function_space=None,
+        degree=1,
+        solver=None,
+        mesh=None,
+        output_function_space=None,
+    ):
         self.rfilt = rfilt
         self._rfilt_scaled = self.rfilt / (2 * 3 ** 0.5)
         self.solver = solver
-        self.order = order
+        self.degree = degree
         self._mesh = mesh
         self._function_space = function_space
+        self.output_function_space = output_function_space
 
     def weak(self, a):
         self.mesh = a.function_space().mesh() if self._mesh is None else self._mesh
         self.dim = self.mesh.ufl_domain().geometric_dimension()
         self.function_space = self._function_space or df.FunctionSpace(
-            self.mesh, "CG", self.order
+            self.mesh, "CG", self.degree
         )
         af = df.TrialFunction(self.function_space)
         vf = df.TestFunction(self.function_space)
@@ -87,11 +96,15 @@ class Filter:
                 self.matrix = df.assemble(lhs)
                 self.solver = df.KrylovSolver(self.matrix, "cg", "jacobi")
             self.solver.solve(af.vector(), self.vector)
-            return af
+            self.solution = af
+            if self.output_function_space is not None:
+                return project_iterative(af, self.output_function_space)
+            else:
+                return af
 
 
-def filtering(a, rfilt=0, function_space=None, order=1, solver=None, mesh=None):
-    filter = Filter(rfilt, function_space, order, solver, mesh)
+def filtering(a, rfilt=0, function_space=None, degree=1, solver=None, mesh=None):
+    filter = Filter(rfilt, function_space, degree, solver, mesh)
     return filter.apply(a)
 
 
@@ -122,9 +135,10 @@ def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
         a = np.hstack(a)
         mdes1 = [int(i) for i in mdes]
         a[mdes1] = b
-        sys.stdout.flush()
+        # sys.stdout.flush()
     else:
         a = None
+    a = comm.bcast(a, root=0)
     return array2function(a, source_space)
 
 
@@ -160,14 +174,14 @@ class TopologyOptimizer:
         self.p = p
         self.geometry = geometry
         self.mesh = self.geometry.mesh
-        self.submesh = self.geometry.extract_sub_mesh(self.design)
+        self.submesh_plt = self.geometry.extract_sub_mesh(self.design)
+        self.submesh = self.mesh
         # self.submesh = df.SubMesh(self.mesh, self.geometry.markers, self.geometry.domains["design"])
 
         self.fs_ctrl = df.FunctionSpace(self.mesh, "DG", 0)
         self.fs_sub = df.FunctionSpace(self.submesh, "DG", 0)
         self.nvar = self.fs_sub.dim()
-
-        self.filter = Filter(self.rfilt, order=1)
+        self.filter = Filter(self.rfilt, degree=1, output_function_space=self.fs_sub)
 
     def _topopt_wrapper(
         self,
@@ -197,8 +211,10 @@ class TopologyOptimizer:
             else:
                 density_f = filter.apply(density) if filt else density
 
-            # ctrl = df.interpolate(density_f, Actrl)
-            ctrl = project_iterative(density_f, Actrl)
+            # density_f = transfer_sub_mesh(density_f, self.geometry, Actrl, Asub, self.design)
+
+            ctrl = df.interpolate(density_f, Actrl)
+            # ctrl = project_iterative(density_f, Actrl)
             density_fp = (
                 projection(ctrl, beta=df.Constant(2 ** proj_level))
                 if proj
@@ -233,15 +249,15 @@ class TopologyOptimizer:
     def minimize(self, x0):
         self.x0 = x0
         if self.verbose:
-            print("#################################################")
-            print(f"Topology optimization with {self.nvar} variables")
-            print("#################################################")
-            print("")
+            mpi_print("#################################################")
+            mpi_print(f"Topology optimization with {self.nvar} variables")
+            mpi_print("#################################################")
+            mpi_print("")
 
         for iopt in range(*self.threshold):
             self.proj_level = iopt
 
-            wrapper = self._topopt_wrapper(
+            self.wrapper = self._topopt_wrapper(
                 self.fun,
                 self.fs_sub,
                 self.fs_ctrl,
@@ -258,21 +274,25 @@ class TopologyOptimizer:
 
             self._cbout = []
             if self.verbose:
-                print(f"global iteration {iopt}")
-                print("---------------------------------------------")
+                mpi_print(f"global iteration {iopt}")
+                mpi_print("---------------------------------------------")
 
-            def fun_nlopt(x, gradn):
-                y, dy = wrapper(x)
-                if self.verbose:
-                    print(f"objective = {y}")
-
+            def _get_gradient(dy):
                 comm = df.MPI.comm_world
                 rank = df.MPI.rank(comm)
-                dy = comm.gather(dy, root=0)
+                dyall = comm.gather(dy, root=0)
                 if rank == 0:
-                    dy1 = np.hstack(dy)
-                    gradn[:] = dy1
-                # comm.Bcast(dy1, root=0)
+                    dy = np.hstack(dyall)
+                else:
+                    dy = np.empty(self.nvar)
+                comm.Bcast(dy, root=0)
+                return dy
+
+            def fun_nlopt(x, gradn):
+                y, dy = self.wrapper(x)
+                if self.verbose:
+                    mpi_print(f"objective = {y}")
+                gradn[:] = _get_gradient(dy)
                 cbout = []
                 if self.callback is not None:
                     out = self.callback(self)

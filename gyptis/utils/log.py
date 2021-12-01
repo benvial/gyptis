@@ -3,16 +3,22 @@
 # Author: Benjamin Vial
 # License: MIT
 
-__all__ = ["format_matrix"]
+__all__ = ["format_matrix", "logger", "set_log_level"]
 
 
 import logging
+import sys
 
-from ufl import get_logger
+from loguru import logger
 
-logging.basicConfig(encoding="utf-8", level=logging.CRITICAL)
-ll = get_logger()
-ll.setLevel(level=logging.CRITICAL)
+from .. import dolfin
+
+
+def set_log_level(level):
+    global logger
+    logger.remove()
+    format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> -- <level>{message}</level>"
+    logger.add(sys.stderr, format=format, level=level, colorize=True)
 
 
 def format_matrix(m, ndigit=4, extra_space=0, cplx=False):
@@ -55,3 +61,7 @@ def format_matrix(m, ndigit=4, extra_space=0, cplx=False):
         else:
             b = f"[{a[0]} {a[1]}] \n{pad}[{a[2]} {a[3]}]"
     return b
+
+
+set_log_level(logging.INFO)
+dolfin.set_log_level(logging.INFO)

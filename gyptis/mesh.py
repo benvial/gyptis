@@ -3,11 +3,11 @@
 # Author: Benjamin Vial
 # License: MIT
 
+import os
 import tempfile
 
 import meshio
 import numpy as np
-from dolfin import MPI
 
 from . import ADJOINT, dolfin
 
@@ -83,3 +83,20 @@ class MarkedMesh:
         self.mesh = dic["mesh"]
         self.markers = dic["markers"]
         self.dimension = self.mesh.geometric_dimension()
+
+
+def run_submesh(geom, subdomain, outpath=None):
+    outpath = outpath or os.path.join(tempfile.mkdtemp(), "submesh.xdmf")
+    fname = os.path.join(os.path.dirname(__file__), "_submesh.py")
+    meshname = os.path.join(geom.data_dir, geom.mesh_name)
+    domnum = geom.domains[subdomain]
+    dim = geom.dim
+    os.system(f"mpirun -n 1 python {fname} {meshname} {domnum} {dim} {outpath}")
+    return outpath
+
+
+def read_xdmf_mesh(outpath):
+    dolfin_mesh = dolfin.Mesh()
+    with dolfin.XDMFFile(dolfin_mesh.mpi_comm(), outpath) as infile:
+        infile.read(dolfin_mesh)
+    return dolfin_mesh

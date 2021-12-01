@@ -14,6 +14,7 @@ from .geometry import *
 from .materials import *
 from .simulation import Simulation
 from .source import *
+from .utils import project_iterative
 from .utils._meta import _ScatteringBase
 
 
@@ -123,11 +124,13 @@ class Scatt2D(_ScatteringBase, Simulation):
         modal=False,
         degree=1,
         pml_stretch=1 - 1j,
+        element="CG",
     ):
         assert isinstance(geometry, BoxPML2D)
         if source is not None:
             assert source.dim == 2
-        function_space = ComplexFunctionSpace(geometry.mesh, "CG", degree)
+        self.element = element
+        function_space = ComplexFunctionSpace(geometry.mesh, self.element, degree)
         pmlx = PML(
             "x", stretch=pml_stretch, matched_domain="box", applied_domain="pmlx"
         )
@@ -288,11 +291,9 @@ class Scatt2D(_ScatteringBase, Simulation):
         f = u * phase_shift(phase, degree=self.degree)
 
         fplot = _check_plot_type(type, f)
-        fplot = project(
+        fplot = project_iterative(
             fplot,
             self.formulation.real_function_space,
-            solver_type="cg",
-            preconditioner_type="jacobi",
         )
         pp = dolfin.plot(fplot, **kwargs)
 

@@ -26,6 +26,7 @@ required = [
     "joblib",
     "psutil",
     "ipython",
+    "loguru",
 ]
 
 _classifiers = [

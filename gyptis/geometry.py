@@ -20,7 +20,7 @@ import numpy as np
 
 from . import dolfin
 from .measure import Measure
-from .mesh import read_mesh
+from .mesh import read_mesh, read_xdmf_mesh, run_submesh
 
 _geometry_module = sys.modules[__name__]
 
@@ -532,8 +532,22 @@ class Geometry:
             subdomains=subdomains_num,
         )
 
+    # def extract_sub_mesh(self, subdomains):
+    #     return self.read_mesh_file(subdomains=subdomains)["mesh"]
+
     def extract_sub_mesh(self, subdomains):
-        return self.read_mesh_file(subdomains=subdomains)["mesh"]
+        key = "volumes" if self.dim == 3 else "surfaces"
+        subdomains_num = self.subdomains[key][subdomains]
+        if self.comm.size == 1:
+            return dolfin.SubMesh(self.mesh, self.markers, subdomains_num)
+        else:
+            if self.comm.rank == 0:
+                outpath = run_submesh(self, "design", outpath=None)
+            else:
+                outpath = None
+            outpath = self.comm.bcast(outpath, root=0)
+            submesh = read_xdmf_mesh(outpath)
+            return submesh
 
     def generate_mesh(self, generate=True, write=True, read=True):
         if generate:
