@@ -15,9 +15,9 @@ dependencies:
   - joblib
   - psutil
   - ipython
+  - loguru
   - pip:
     - gmsh
-    - loguru
     - git+https://gitlab.com/gyptis/gyptis.git
     # - gyptis
 
