@@ -284,6 +284,20 @@ class Geometry:
         else:
             return tags
 
+    def intersect(self, id1, id2, dim1=None, dim2=None, sync=True, map=False, **kwargs):
+        dim1 = dim1 if dim1 else self.dim
+        dim2 = dim2 if dim2 else self.dim
+        a1 = self.dimtag(id1, dim1)
+        a2 = self.dimtag(id2, dim2)
+        dimtags, mapping = occ.intersect(a1, a2, **kwargs)
+        if sync:
+            occ.synchronize()
+        tags = [_[1] for _ in dimtags]
+        if map:
+            return tags, mapping
+        else:
+            return tags
+
     def cut(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = dim1 if dim1 else self.dim
         dim2 = dim2 if dim2 else self.dim
@@ -568,3 +582,27 @@ class Geometry:
     def set_pml_mesh_size(self, s):
         for pml in self.pml_physical:
             self.set_mesh_size({pml: s})
+
+
+def _is_on_plane(P, A, B, C, eps=dolfin.DOLFIN_EPS):
+    Ax, Ay, Az = A
+    Bx, By, Bz = B
+    Cx, Cy, Cz = C
+
+    a = (By - Ay) * (Cz - Az) - (Cy - Ay) * (Bz - Az)
+    b = (Bz - Az) * (Cx - Ax) - (Cz - Az) * (Bx - Ax)
+    c = (Bx - Ax) * (Cy - Ay) - (Cx - Ax) * (By - Ay)
+    d = -(a * Ax + b * Ay + c * Az)
+
+    return dolfin.near(a * P[0] + b * P[1] + c * P[2] + d, 0, eps=eps)
+
+
+def _is_on_line(p, p1, p2, eps=dolfin.DOLFIN_EPS):
+    x, y = p
+    x1, y1 = p1
+    x2, y2 = p2
+    return dolfin.near((y - y1) * (x2 - x1), (y2 - y1) * (x - x1), eps=eps)
+
+
+def _is_on_line3D(p, p1, p2, eps=dolfin.DOLFIN_EPS):
+    return _is_on_plane(p, p1, p2, p2, eps=eps)

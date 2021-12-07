@@ -4,25 +4,16 @@
 # License: MIT
 
 
-from .__about__ import (
-    __author__,
-    __author_email__,
-    __copyright__,
-    __description__,
-    __license__,
-    __status__,
-    __version__,
-    __website__,
-)
-
-__doc__ = __description__
-
-
 import os
 from math import e, pi
 
 import dolfin
 from scipy.constants import c, epsilon_0, mu_0
+
+from .__about__ import __author__, __description__, __version__
+
+# __doc__ = __description__
+
 
 if os.environ.get("GYPTIS_ADJOINT") is not None:
     import dolfin_adjoint

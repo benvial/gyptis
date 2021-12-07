@@ -5,42 +5,8 @@
 
 import pytest
 
-from gyptis.photonic_crystal import *
+from gyptis.phc2d import *
 from gyptis.plot import *
-
-# dy = 0.5 * 2 ** 0.5
-# v = (1, 0), (dy, dy)
-# v = (1, 0), (0, 1)
-# R = 0.3
-#
-# lattice = Lattice2D(v)
-#
-# circ = lattice.add_circle(0, 0, 0, R)
-# circ_0, circ1, cell = lattice.fragment(circ, lattice.cell)
-# lattice.remove([(2, circ1)], recursive=True)
-#
-# circ = lattice.add_circle(v[1][0], v[1][1], 0, R)
-# circ1, circ_1, cell = lattice.fragment(circ, cell)
-# lattice.remove([(2, circ1)], recursive=True)
-#
-# circ = lattice.add_circle(v[0][0], v[0][1], 0, R)
-# circ1, circ_2, cell = lattice.fragment(circ, cell)
-# lattice.remove([(2, circ1)], recursive=True)
-#
-# circ = lattice.add_circle(v[0][0] + v[1][0], v[1][1], 0, R)
-# circ1, circ_3, cell = lattice.fragment(circ, cell)
-# lattice.remove([(2, circ1)], recursive=True)
-#
-# lattice.add_physical(cell, "background")
-# lattice.add_physical([circ_0, circ_1, circ_2, circ_3], "inclusion")
-#
-# print(lattice.get_periodic_bnds())
-# # l.set_mesh_size({"background": 0.1, "inclusion": 0.03})
-# lattice.set_size("background", 0.1)
-# lattice.set_size("inclusion", 0.1)
-#
-# lattice.build()
-
 
 a = 1
 v = (a, 0), (0, a)

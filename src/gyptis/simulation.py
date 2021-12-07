@@ -6,7 +6,7 @@
 import numpy as np
 
 from . import dolfin
-from .complex import Complex, Function, assemble
+from .complex import Complex, Function, assemble, dot, vector
 from .utils.helpers import array2function
 
 
@@ -134,10 +134,16 @@ class Simulation:
     def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, **kwargs):
 
         wf = self.formulation.weak
-        # A = assemble(wf[0])
-        # B = assemble(wf[1])
+        if self.formulation.dim == 1:
+            dummy_vector = (
+                dolfin.Constant(0) * self.formulation.test * self.formulation.dx
+            )
+        else:
+            dummy_vector = (
+                dot(dolfin.Constant((0, 0, 0)), self.formulation.test)
+                * self.formulation.dx
+            )
 
-        dummy_vector = dolfin.Constant(0) * self.formulation.test * self.formulation.dx
         dv = dummy_vector.real + dummy_vector.imag
 
         # Assemble matrices
@@ -146,6 +152,8 @@ class Simulation:
         b = dolfin.PETScVector()
 
         bcs = self.formulation.build_boundary_conditions()
+
+        # [bc.zero(B) for bc in bcs]
 
         dolfin.assemble_system(wf[0], dv, bcs, A_tensor=A, b_tensor=b)
         dolfin.assemble_system(wf[1], dv, bcs, A_tensor=B, b_tensor=b)
@@ -187,7 +195,20 @@ class Simulation:
             ev_re, ev_im, rx, cx = eigensolver.get_eigenpair(j)
             eig_vec_re = array2function(rx, self.formulation.function_space)
             eig_vec_im = array2function(cx, self.formulation.function_space)
-            eig_vec = Complex(*eig_vec_re) + 1j * Complex(*eig_vec_im)
+
+            if self.formulation.dim == 1:
+                eig_vec = Complex(*eig_vec_re) + 1j * Complex(*eig_vec_im)
+            else:
+
+                eig_vec_re_re = [eig_vec_re[i] for i in range(3)]
+                eig_vec_re_im = [eig_vec_re[i] for i in range(3, 6)]
+                eig_vec_im_re = [eig_vec_im[i] for i in range(3)]
+                eig_vec_im_im = [eig_vec_im[i] for i in range(3, 6)]
+
+                re = Complex(eig_vec_re_re, eig_vec_re_im)
+                im = Complex(eig_vec_im_re, eig_vec_im_im)
+                eig_vec = vector(re) + 1j * vector(im)
+
             # eig_vec = Complex(eig_vec_re[0],eig_vec_im[1])
             ev = ev_re + 1j * ev_im
             kn = (ev) ** 0.5

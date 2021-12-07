@@ -11,6 +11,8 @@ import numpy as np
 
 import gyptis as gy
 
+np.set_printoptions(precision=4, suppress=True)
+
 ##############################################################################
 # Results are compared with :cite:p:`PopovGratingBook`.
 

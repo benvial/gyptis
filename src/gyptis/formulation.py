@@ -30,6 +30,7 @@ class Formulation(ABC):
         boundary_conditions={},
         modal=False,
         degree=1,
+        dim=1,
     ):
         self.geometry = geometry
         self.coefficients = coefficients
@@ -40,6 +41,7 @@ class Formulation(ABC):
         self.boundary_conditions = boundary_conditions
         self.modal = modal
         self.degree = degree
+        self.dim = dim  # 1: scalar problem, 3: vectorial
 
         self.measure = geometry.measure
         self.dx = self.measure["dx"]
@@ -340,6 +342,8 @@ class Maxwell3D(Formulation):
         boundary_conditions={},
         source_domains=[],
         reference=None,
+        modal=False,
+        degree=1,
     ):
         super().__init__(
             geometry,
@@ -347,6 +351,9 @@ class Maxwell3D(Formulation):
             function_space,
             source=source,
             boundary_conditions=boundary_conditions,
+            modal=modal,
+            degree=degree,
+            dim=3,
         )
 
         self.source_domains = source_domains
@@ -355,9 +362,15 @@ class Maxwell3D(Formulation):
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
     def maxwell(self, u, v, epsilon, inv_mu, domain="everywhere"):
-        k0 = Constant(self.source.wavenumber)
-        form = -inner(inv_mu * curl(u), curl(v)) + k0 ** 2 * inner(epsilon * u, v)
-        return form * self.dx(domain)
+
+        form = []
+        form.append(-inner(inv_mu * curl(u), curl(v)))
+        form.append(inner(epsilon * u, v))
+        if self.modal:
+            return [form[0] * self.dx(domain), -form[1] * self.dx(domain)]
+        else:
+            k0 = Constant(self.source.wavenumber)
+            return (form[0] + k0 ** 2 * form[1]) * self.dx(domain)
 
     def _weak(self, u, v, u1):
         epsilon = self.epsilon.as_subdomain()
@@ -370,11 +383,18 @@ class Maxwell3D(Formulation):
         source_dom_func, source_dom_no_func = _find_domains_function(
             (self.epsilon, self.mu), self.source_domains
         )
-
         form = self.maxwell(u, v, epsilon, inv_mu, domain=dom_no_func)
 
         for dom in dom_func:
-            form += self.maxwell(u, v, epsilon_dict[dom], inv_mu_dict[dom], domain=dom)
+            if self.modal:
+                form_dom_func = self.maxwell(
+                    u, v, xi_dict[dom], chi_dict[dom], domain=dom
+                )
+                form = [form[i] + form_dom_func[i] for i in range(2)]
+            else:
+                form += self.maxwell(
+                    u, v, epsilon_dict[dom], inv_mu_dict[dom], domain=dom
+                )
 
         if self.source_domains != []:
             epsilon_a = self.epsilon.build_annex(
@@ -409,10 +429,10 @@ class Maxwell3D(Formulation):
                     inv_mu_dict[dom] - inv_mu_a_dict[dom],
                     domain=dom,
                 )
-        # for bnd in self.pec_boundaries:
-        #     normal = self.geometry.unit_normal_vector
-        #     form -= dot(xi * (grad(u1) * v), normal) * self.ds(bnd)
-        weak = form.real + form.imag
+        if self.modal:
+            weak = [f.real + f.imag for f in form]
+        else:
+            weak = form.real + form.imag
         return weak
 
     @property
@@ -569,3 +589,32 @@ class TwoScale2D(Formulation):
         applied_function = Constant(0)
         self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
+
+
+class Maxwell3DBands(Maxwell3D):
+    def __init__(self, *args, propagation_vector=(0, 0, 0), **kwargs):
+        super().__init__(*args, **kwargs, modal=True)
+        self.propagation_vector = propagation_vector
+
+    @property
+    def phasor_vect(self):
+
+        return [
+            phasor(
+                self.propagation_vector[i],
+                direction=i,
+                degree=self.degree,
+                domain=self.geometry.mesh,
+            )
+            for i in range(3)
+        ]
+
+    @property
+    def phasor(self):
+        return self.phasor_vect[0] * self.phasor_vect[1] * self.phasor_vect[2]
+
+    @property
+    def weak(self):
+        u = self.trial * self.phasor
+        v = self.test * self.phasor.conj
+        return super()._weak(u, v, Constant((0, 0, 0)))

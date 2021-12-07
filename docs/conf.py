@@ -24,6 +24,9 @@ import sys
 from datetime import date
 
 import sphinx_gallery
+from pybtex.plugin import register_plugin
+from pybtex.style.formatting.unsrt import Style as UnsrtStyle
+from pybtex.style.labels import BaseLabelStyle
 
 import gyptis as package
 
@@ -53,9 +56,24 @@ extensions = [
     # 'sphinx_issues',
 ]
 
+
+# a simple label style which uses the bibtex keys for labels
+class MatchLabelStyle(BaseLabelStyle):
+    def format_labels(self, sorted_entries):
+        for entry in sorted_entries:
+            yield entry.key
+
+
+class GyptisStyle(UnsrtStyle):
+
+    default_label_style = MatchLabelStyle
+
+
+register_plugin("pybtex.style.formatting", "gyptisstyle", GyptisStyle)
+
 bibtex_bibfiles = ["_custom/latex/biblio.bib"]
-# bibtex_default_style = "unsrtalpha"
-# bibtex_reference_style = "label"
+bibtex_default_style = "gyptisstyle"
+bibtex_reference_style = "label"
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
@@ -85,7 +103,6 @@ master_doc = "index"
 
 # General information about the project.
 project = package.__name__
-# copyright = package.__copyright__
 author = package.__author__
 copyright = "{}, {}".format(date.today().year, author)
 

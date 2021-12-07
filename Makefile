@@ -264,9 +264,9 @@ cleantest:
 test: cleantest
 	$(call message,${@})
 	@export MPLBACKEND=agg && unset GYPTIS_ADJOINT && pytest ./tests \
-	--cov=./$(PROJECT_NAME) --cov-report term --durations=0 $(TEST_ARGS) 
+	--cov=./src/$(PROJECT_NAME) --cov-report term --durations=0 $(TEST_ARGS) 
 	@export MPLBACKEND=agg && GYPTIS_ADJOINT=1 pytest ./tests \
-	--cov=./$(PROJECT_NAME) --cov-append --cov-report term \
+	--cov=./src/$(PROJECT_NAME) --cov-append --cov-report term \
 	--cov-report html --cov-report xml --durations=0 $(TEST_ARGS)
 
 ## Run the test suite (parallel)

@@ -112,7 +112,7 @@ class PhotonicCrystal2D(Simulation):
     ):
         assert isinstance(geometry, Lattice2D)
 
-        self.periodic_bcs = BiPeriodic2D(geometry.vectors)
+        self.periodic_bcs = BiPeriodic2D(geometry)
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )

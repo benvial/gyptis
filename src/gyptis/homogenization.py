@@ -7,7 +7,7 @@ from .bc import BiPeriodic2D
 from .formulation import TwoScale2D
 from .geometry import *
 from .materials import *
-from .photonic_crystal import Lattice2D
+from .phc2d import Lattice2D
 from .simulation import Simulation
 
 
@@ -25,7 +25,7 @@ class Homogenization2D(Simulation):
     ):
         assert isinstance(geometry, Lattice2D)
 
-        self.periodic_bcs = BiPeriodic2D(geometry.vectors)
+        self.periodic_bcs = BiPeriodic2D(geometry)
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )
