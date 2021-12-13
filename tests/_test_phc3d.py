@@ -6,76 +6,25 @@
 import pytest
 
 from gyptis import dolfin
-from gyptis.photonic_crystal3d import *
+from gyptis.phc3d import *
 from gyptis.plot import *
 
 dolfin.set_log_level(10)
+dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
+dolfin.parameters["ghost_mode"] = "shared_facet"
 
 a = 1
 v = (a, 0, 0), (0, a, 0), (0, 0, a)
 # v = (a,0, 0), (0, a,0), (1.2*a,1.5*a,a*0.7)
 # v = (0.21*a,0.24*a,a*0.3), (0.3*a,0.1*a,a*0.1), (0.2*a,0.4*a,a*0.12)
-# R = 0.25 * a
-# n_eig = 6
-#
-# lattice = Lattice3D(v)
-# sphere = lattice.add_sphere(a / 2, a / 2, a / 2, R)
-# sphere, cell = lattice.fragment(sphere, lattice.cell)
-# lattice.add_physical(cell, "background")
-# lattice.add_physical(sphere, "inclusion")
-# periodic_id = lattice.get_periodic_bnds()
-#
-# for k,v in periodic_id.items():
-#     lattice.add_physical(v, k,2)
-#
-# lattice.set_size("background", 0.1)
-# lattice.set_size("inclusion", 0.1)
-#
-# lattice.build()
-
-
-a = 1
-v = (a, 0, 0), (0, a, 0), (0, 0, a)
-R = 0.325 * a
+R = 0.25 * a
 n_eig = 6
 
 lattice = Lattice3D(v)
-cell = lattice.cell
-spheres = []
-i = 0
-for p in lattice.vertices:
-    sphere = lattice.add_sphere(*p, R)
-    *sphere, cell = lattice.fragment(sphere, cell)
-    j = 1 if i == 0 else 0
-    lattice.remove(lattice.dimtag(sphere[j]), recursive=1)
-    k = 0 if i == 0 else 1
-    spheres.append(sphere[k])
-    i += 1
-
-face_centers = [
-    (0, a / 2, a / 2),
-    (a / 2, 0, a / 2),
-    (a / 2, a / 2, 0),
-    (a, a / 2, a / 2),
-    (a / 2, a, a / 2),
-    (a / 2, a / 2, a),
-]
-i = 0
-for p in face_centers[:]:
-    sphere = lattice.add_sphere(*p, R)
-    *sphere, cell = lattice.fragment(sphere, cell)
-    j = 1 if i < 3 else 0
-    lattice.remove(lattice.dimtag(sphere[j]), recursive=1)
-    k = 0 if i < 3 else 1
-    spheres.append(sphere[k])
-    i += 1
-# print(spheres)
-lattice.add_physical(spheres, "inclusion")
+sphere = lattice.add_sphere(a / 2, a / 2, a / 2, R)
+sphere, cell = lattice.fragment(sphere, lattice.cell)
 lattice.add_physical(cell, "background")
-
-lattice.build(1, 1, 1, 1, 1, periodic=False)
-# lattice.build(1, 0, 0, 0, 0, periodic=False)
-xs
+lattice.add_physical(sphere, "inclusion")
 periodic_id = lattice.get_periodic_bnds()
 
 for k, v in periodic_id.items():
@@ -84,7 +33,60 @@ for k, v in periodic_id.items():
 lattice.set_size("background", 0.1)
 lattice.set_size("inclusion", 0.1)
 
-lattice.build(1)
+lattice.build()
+
+#
+# a = 1
+# v = (a, 0, 0), (0, a, 0), (0, 0, a)
+# R = 0.325 * a
+# n_eig = 6
+#
+# lattice = Lattice3D(v)
+# cell = lattice.cell
+# spheres = []
+# i = 0
+# for p in lattice.vertices:
+#     sphere = lattice.add_sphere(*p, R)
+#     *sphere, cell = lattice.fragment(sphere, cell)
+#     j = 1 if i == 0 else 0
+#     lattice.remove(lattice.dimtag(sphere[j]), recursive=1)
+#     k = 0 if i == 0 else 1
+#     spheres.append(sphere[k])
+#     i += 1
+#
+# face_centers = [
+#     (0, a / 2, a / 2),
+#     (a / 2, 0, a / 2),
+#     (a / 2, a / 2, 0),
+#     (a, a / 2, a / 2),
+#     (a / 2, a, a / 2),
+#     (a / 2, a / 2, a),
+# ]
+# i = 0
+# for p in face_centers[:]:
+#     sphere = lattice.add_sphere(*p, R)
+#     *sphere, cell = lattice.fragment(sphere, cell)
+#     j = 1 if i < 3 else 0
+#     lattice.remove(lattice.dimtag(sphere[j]), recursive=1)
+#     k = 0 if i < 3 else 1
+#     spheres.append(sphere[k])
+#     i += 1
+# # print(spheres)
+# lattice.add_physical(spheres, "inclusion")
+# lattice.add_physical(cell, "background")
+
+# lattice.build(1, 1, 1, 1, 1, periodic=False)
+# lattice.build(1, 0, 0, 0, 0, periodic=False)
+#
+# periodic_id = lattice.get_periodic_bnds()
+#
+# for k, v in periodic_id.items():
+#     lattice.add_physical(v, k, 2)
+#
+# lattice.set_size("background", 0.1)
+# lattice.set_size("inclusion", 0.1)
+#
+# lattice.build(1)
 
 
 bcs = {}
@@ -102,10 +104,10 @@ phc = PhotonicCrystal3D(
     epsilon,
     mu,
     propagation_vector=(0, 0, 0),
-    degree=1,
+    degree=2,
     boundary_conditions=bcs,
 )
-phc.eigensolve(n_eig=12, wavevector_target=6)
+phc.eigensolve(n_eig=12, wavevector_target=1)
 ev_norma = np.array(phc.solution["eigenvalues"]) * a / (np.pi)
 ev = np.array(phc.solution["eigenvalues"])
 

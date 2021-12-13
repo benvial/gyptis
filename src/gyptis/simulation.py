@@ -177,7 +177,6 @@ class Simulation:
         # dolfin.PETScOptions.set("eps_target", "0.00001")
         # dolfin.PETScOptions.set("eps_mpd", "600")
         # dolfin.PETScOptions.set("eps_nev", "400")
-
         eigensolver.parameters.update(kwargs)
         eigensolver.solve(2 * n_eig)
 
