@@ -174,9 +174,9 @@ class Periodic3D(dolfin.SubDomain):
         ison1 = _is_on_plane(x, *self.planes[2], eps=self.eps)  ## -1
         ison2 = _is_on_plane(x, *self.planes[0], eps=self.eps)  ## -2
 
-        ison_slave0 = _is_on_line3D(x, self.vertices[0], self.vertices[1], eps=self.eps)
-        ison_slave1 = _is_on_line3D(x, self.vertices[0], self.vertices[3], eps=self.eps)
-        ison_slave2 = _is_on_line3D(x, self.vertices[0], self.vertices[4], eps=self.eps)
+        ison_slave0 = _is_on_line3D(x, self.planes[4], self.planes[2], eps=self.eps)
+        ison_slave1 = _is_on_line3D(x, self.planes[4], self.planes[0], eps=self.eps)
+        ison_slave2 = _is_on_line3D(x, self.planes[2], self.planes[0], eps=self.eps)
 
         return bool(
             (ison0 or ison1 or ison2)

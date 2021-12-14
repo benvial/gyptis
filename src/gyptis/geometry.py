@@ -605,4 +605,4 @@ def _is_on_line(p, p1, p2, eps=dolfin.DOLFIN_EPS):
 
 
 def _is_on_line3D(p, p1, p2, eps=dolfin.DOLFIN_EPS):
-    return _is_on_plane(p, p1, p2, p2, eps=eps)
+    return _is_on_plane(p, *p1, eps=eps) and _is_on_plane(p, *p2, eps=eps)

@@ -14,7 +14,7 @@ import gyptis as gy
 np.set_printoptions(precision=4, suppress=True)
 
 ##############################################################################
-# Results are compared with :cite:p:`PopovGratingBook`.
+# Results are compared with :cite:p:`Guenneau2007`.
 
 a = 1  # lattice constant
 Rx = 0.3 * a  # ellipse semi-axis x
@@ -49,7 +49,6 @@ hom = gy.Homogenization2D(
     lattice,
     epsilon,
     mu,
-    polarization="TE",
     degree=2,
 )
 
@@ -67,8 +66,8 @@ print(eps_eff)
 # Let's visualize the potentials solutions of the two cell problems
 
 fig, ax = plt.subplots(1, 2, figsize=(5, 2))
-gy.plot(hom.solution["x"].real, geometry=lattice, ax=ax[0])
-gy.plot(hom.solution["y"].real, geometry=lattice, ax=ax[1])
+gy.plot(hom.solution["epsilon"]["x"].real, geometry=lattice, ax=ax[0])
+gy.plot(hom.solution["epsilon"]["y"].real, geometry=lattice, ax=ax[1])
 [a.set_axis_off() for a in ax]
 ax[0].set_title("$V_x$")
 ax[1].set_title("$V_y$")

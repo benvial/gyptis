@@ -19,7 +19,6 @@ class Homogenization2D(Simulation):
         epsilon,
         mu,
         boundary_conditions={},
-        polarization="TM",
         degree=1,
         direction="x",
         direct=True,
@@ -36,40 +35,35 @@ class Homogenization2D(Simulation):
         mu_coeff = Coefficient(mu, geometry, degree=degree)
 
         coefficients = epsilon_coeff, mu_coeff
-
-        self.formulation = TwoScale2D(
+        self.formulations = dict(epsilon={}, mu={})
+        self.formulation = TwoScale3D(
             geometry,
             coefficients,
             function_space,
             degree=degree,
-            polarization=polarization,
             boundary_conditions=boundary_conditions,
             direction=direction,
+            case="epsilon",
         )
-
-        self.formulation_x = TwoScale2D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            polarization=polarization,
-            boundary_conditions=boundary_conditions,
-            direction="x",
-        )
-
-        self.formulation_y = TwoScale2D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            polarization=polarization,
-            boundary_conditions=boundary_conditions,
-            direction="y",
-        )
-
+        for case in ["epsilon", "mu"]:
+            for direction in ["x", "y"]:
+                form = TwoScale2D(
+                    geometry,
+                    coefficients,
+                    function_space,
+                    degree=degree,
+                    boundary_conditions=boundary_conditions,
+                    direction=direction,
+                    case=case,
+                )
+                self.formulations[case][direction] = form
         super().__init__(geometry, self.formulation, direct=direct)
-        self.degree = degree
+        self.formulation = self.formulations["epsilon"]["x"]
+        super().__init__(geometry, self.formulation, direct=direct)
+        self.solution = dict(epsilon={}, mu={})
+        self.direct = direct
         self.direction = direction
+        self.degree = degree
         self.cell_volume = np.cross(*geometry.vectors)
 
     def solve_system(self, again=False):
@@ -77,6 +71,16 @@ class Homogenization2D(Simulation):
 
     def unit_cell_mean(self, f):
         return 1 / self.cell_volume * assemble(f * self.dx)
+
+    def solve_param(self, case):
+        self.formulation = self.formulations[case]["x"]
+        super().__init__(self.geometry, self.formulation, direct=self.direct)
+        phi_x = self.solve()
+        self.formulations[case]["y"].build_rhs()
+        self.vector = assemble(self.formulations[case]["y"].rhs)
+        phi_y = self.solve_system(again=True)
+        self.solution[case] = dict(x=phi_x, y=phi_y)
+        return self.solution
 
     def solve_all(self):
         phi_x = self.solve()
@@ -86,38 +90,45 @@ class Homogenization2D(Simulation):
         self.solution = dict(x=phi_x, y=phi_y)
         return self.solution
 
-    def _get_effective_coeff(self, polarization):
-        if self.formulation.polarization == "TE":
-            self.solve_all()
-            xi = self.formulation.xi.as_subdomain()
-            if xi.real.ufl_shape == (2, 2):
-                xi_mean = []
-                for i in range(2):
-                    a = [self.unit_cell_mean(x) for x in xi[i]]
-                    a = [_.real + 1j * _.imag for _ in a]
-                    xi_mean.append(a)
-                xi_mean = np.array(xi_mean)
-            else:
-                xi_mean = self.unit_cell_mean(xi)
-                xi_mean = xi_mean.real + 1j * xi_mean.imag
-                xi_mean *= np.eye(2)
-            A = []
-            for phi in self.solution.values():
-                integrand = xi * grad(phi)
-                a = [self.unit_cell_mean(g) for g in integrand]
+    def _get_effective_coeff(self, case):
+        self.solve_param(case)
+        xi = self.formulation.xi.as_subdomain()
+        if xi.real.ufl_shape == (2, 2):
+            xi_mean = []
+            for i in range(2):
+                a = [self.unit_cell_mean(x) for x in xi[i]]
                 a = [_.real + 1j * _.imag for _ in a]
-                A.append(a)
-            xi_eff = xi_mean + np.array(A)
-            return xi_eff.T / np.linalg.det(xi_eff)
+                xi_mean.append(a)
+            xi_mean = np.array(xi_mean)
         else:
-            chi = self.formulation.chi.as_subdomain()
-            return self.unit_cell_mean(chi)
+            xi_mean = self.unit_cell_mean(xi)
+            xi_mean = xi_mean.real + 1j * xi_mean.imag
+            xi_mean *= np.eye(2)
+        A = []
+        for phi in self.solution[case].values():
+            integrand = xi * grad(phi)
+            a = [self.unit_cell_mean(g) for g in integrand]
+            a = [_.real + 1j * _.imag for _ in a]
+            A.append(a)
+        xi_eff = xi_mean + np.array(A)
+        param_eff_inplane = xi_eff.T / np.linalg.det(xi_eff)
+        param_eff = np.zeros((3, 3), complex)
+        param_eff[:2, :2] = param_eff_inplane
+        i = 0 if case == "epsilon" else 1
+        coeff = self.formulation.coefficients[i].as_subdomain()
+        if coeff.real.ufl_shape == (3, 3):
+            coeffzz = coeff[2][2]
+        else:
+            coeffzz = coeff
+        czz = self.unit_cell_mean(coeffzz)
+        param_eff[2, 2] = czz.real + 1j * czz.imag
+        return param_eff
 
     def get_effective_permittivity(self):
-        return self._get_effective_coeff("TE")
+        return self._get_effective_coeff("epsilon")
 
     def get_effective_permeability(self):
-        return self._get_effective_coeff("TM")
+        return self._get_effective_coeff("mu")
 
 
 class Homogenization3D(Simulation):
@@ -132,20 +143,19 @@ class Homogenization3D(Simulation):
         direct=True,
     ):
         assert isinstance(geometry, Lattice3D)
-        assert np.all([m == 1 for m in mu.values()]), "mu must be unity"
 
+        self.geometry = geometry
         self.periodic_bcs = Periodic3D(geometry)
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )
-
         epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
         mu = {k: m + 1e-16j for k, m in mu.items()}
         epsilon_coeff = Coefficient(epsilon, geometry, degree=degree, dim=3)
         mu_coeff = Coefficient(mu, geometry, degree=degree, dim=3)
 
         coefficients = epsilon_coeff, mu_coeff
-
+        self.formulations = dict(epsilon={}, mu={})
         self.formulation = TwoScale3D(
             geometry,
             coefficients,
@@ -155,37 +165,24 @@ class Homogenization3D(Simulation):
             direction=direction,
             case="epsilon",
         )
+        for case in ["epsilon", "mu"]:
+            for direction in ["x", "y", "z"]:
+                form = TwoScale3D(
+                    geometry,
+                    coefficients,
+                    function_space,
+                    degree=degree,
+                    boundary_conditions=boundary_conditions,
+                    direction=direction,
+                    case=case,
+                )
+                self.formulations[case][direction] = form
 
-        self.formulation_x = TwoScale3D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            boundary_conditions=boundary_conditions,
-            direction="x",
-            case="epsilon",
-        )
-
-        self.formulation_y = TwoScale3D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            boundary_conditions=boundary_conditions,
-            direction="y",
-            case="epsilon",
-        )
-        self.formulation_z = TwoScale3D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            boundary_conditions=boundary_conditions,
-            direction="z",
-            case="epsilon",
-        )
+        self.formulation = self.formulations["epsilon"]["x"]
         super().__init__(geometry, self.formulation, direct=direct)
         self.degree = degree
+        self.solution = dict(epsilon={}, mu={})
+        self.direct = direct
         self.direction = direction
         self.cell_volume = np.dot(
             np.cross(geometry.vectors[0], geometry.vectors[1]), geometry.vectors[2]
@@ -197,38 +194,45 @@ class Homogenization3D(Simulation):
     def unit_cell_mean(self, f):
         return 1 / self.cell_volume * assemble(f * self.dx)
 
-    def solve_all(self):
+    def solve_param(self, case):
+        self.formulation = self.formulations[case]["x"]
+        super().__init__(self.geometry, self.formulation, direct=self.direct)
         phi_x = self.solve()
-        self.formulation_y.build_rhs()
-        self.vector = assemble(self.formulation_y.rhs)
+        self.formulations[case]["y"].build_rhs()
+        self.vector = assemble(self.formulations[case]["y"].rhs)
         phi_y = self.solve_system(again=True)
-        self.formulation_z.build_rhs()
-        self.vector = assemble(self.formulation_z.rhs)
+        self.formulations[case]["z"].build_rhs()
+        self.vector = assemble(self.formulations[case]["z"].rhs)
         phi_z = self.solve_system(again=True)
-        self.solution = dict(x=phi_x, y=phi_y, z=phi_z)
+        self.solution[case] = dict(x=phi_x, y=phi_y, z=phi_z)
         return self.solution
 
-    def get_effective_permittivity(self):
-        self.solve_all()
-        epsilon = self.formulation.epsilon.as_subdomain()
-        if epsilon.real.ufl_shape == (3, 3):
-            epsilon_mean = []
+    def _get_effective_param(self, case):
+        self.solve_param(case)
+        coeff = self.formulation.epsilon if case == "epsilon" else self.formulation.mu
+        param = coeff.as_subdomain()
+        if param.real.ufl_shape == (3, 3):
+            param_mean = []
             for i in range(3):
-                a = [self.unit_cell_mean(x) for x in epsilon[i]]
+                a = [self.unit_cell_mean(x) for x in param[i]]
                 a = [_.real + 1j * _.imag for _ in a]
-                epsilon_mean.append(a)
-            epsilon_mean = np.array(epsilon_mean)
+                param_mean.append(a)
+            param_mean = np.array(param_mean)
         else:
-            epsilon_mean = self.unit_cell_mean(epsilon)
-            epsilon_mean = epsilon_mean.real + 1j * epsilon_mean.imag
-            epsilon_mean *= np.eye(3)
+            param_mean = self.unit_cell_mean(param)
+            param_mean = param_mean.real + 1j * param_mean.imag
+            param_mean *= np.eye(3)
         A = []
-        for phi in self.solution.values():
-            integrand = -epsilon * grad(phi)
+        for phi in self.solution[case].values():
+            integrand = param * grad(phi)
             a = [self.unit_cell_mean(g) for g in integrand]
             a = [_.real + 1j * _.imag for _ in a]
             A.append(a)
-        print(A)
-        print(epsilon_mean)
-        epsilon_eff = epsilon_mean - np.array(A)
-        return epsilon_eff
+        param_eff = param_mean - np.array(A)
+        return param_eff
+
+    def get_effective_permittivity(self):
+        return self._get_effective_param("epsilon")
+
+    def get_effective_permeability(self):
+        return self._get_effective_param("mu")

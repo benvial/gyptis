@@ -25,7 +25,6 @@ class Lattice3D(Geometry):
 
         self.periodic_tol = periodic_tol
         self.vectors = vectors
-
         v = self.vectors
         self.vertices = [
             (0, 0, 0),
@@ -111,9 +110,7 @@ class Lattice3D(Geometry):
         )
 
     def get_periodic_bnds(self):
-
         verts = self.vertices
-
         # get all boundaries
         bnds = self.get_entities(2)
         maps = []
@@ -138,7 +135,6 @@ class Lattice3D(Geometry):
                     wheres.append(b)
             maps.append(wheres)
         s = {}
-        # print(maps)
         s["-0"] = [m[-1] for m in maps[4]]
         s["+0"] = [m[-1] for m in maps[5]]
         s["-1"] = [m[-1] for m in maps[2]]

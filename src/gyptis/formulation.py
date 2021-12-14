@@ -508,6 +508,35 @@ class Maxwell3DPeriodic(Maxwell3D):
         return self._boundary_conditions
 
 
+class Maxwell3DBands(Maxwell3D):
+    def __init__(self, *args, propagation_vector=(0, 0, 0), **kwargs):
+        super().__init__(*args, **kwargs, modal=True)
+        self.propagation_vector = propagation_vector
+
+    @property
+    def phasor_vect(self):
+
+        return [
+            phasor(
+                self.propagation_vector[i],
+                direction=i,
+                degree=self.degree,
+                domain=self.geometry.mesh,
+            )
+            for i in range(3)
+        ]
+
+    @property
+    def phasor(self):
+        return self.phasor_vect[0] * self.phasor_vect[1] * self.phasor_vect[2]
+
+    @property
+    def weak(self):
+        u = self.trial * self.phasor
+        v = self.test * self.phasor.conj
+        return super()._weak(u, v, Constant((0, 0, 0)))
+
+
 class TwoScale2D(Formulation):
     def __init__(
         self,
@@ -515,9 +544,9 @@ class TwoScale2D(Formulation):
         coefficients,
         function_space,
         boundary_conditions={},
-        polarization="TE",
         degree=1,
         direction="x",
+        case="epsilon",
     ):
         super().__init__(
             geometry,
@@ -528,10 +557,10 @@ class TwoScale2D(Formulation):
         )
 
         self.epsilon, self.mu = self.coefficients
-        self.polarization = polarization
         self.direction = direction
+        self.case = case
 
-        if self.polarization == "TM":
+        if self.case == "mu":
             self.xi = self.mu.to_xi()
             self.chi = self.epsilon.to_chi()
         else:
@@ -569,7 +598,7 @@ class TwoScale2D(Formulation):
         return self._weak(u, v)
 
     def build_pec_boundary_conditions(self, applied_function):
-        if self.polarization == "TM" and self.pec_boundaries != []:
+        if self.case == "epsilon" and self.pec_boundaries != []:
             ## FIXME: project is slow, avoid it.
             applied_function = project_iterative(
                 applied_function, self.real_function_space
@@ -589,35 +618,6 @@ class TwoScale2D(Formulation):
         applied_function = Constant(0)
         self._boundary_conditions = self.build_pec_boundary_conditions(applied_function)
         return self._boundary_conditions
-
-
-class Maxwell3DBands(Maxwell3D):
-    def __init__(self, *args, propagation_vector=(0, 0, 0), **kwargs):
-        super().__init__(*args, **kwargs, modal=True)
-        self.propagation_vector = propagation_vector
-
-    @property
-    def phasor_vect(self):
-
-        return [
-            phasor(
-                self.propagation_vector[i],
-                direction=i,
-                degree=self.degree,
-                domain=self.geometry.mesh,
-            )
-            for i in range(3)
-        ]
-
-    @property
-    def phasor(self):
-        return self.phasor_vect[0] * self.phasor_vect[1] * self.phasor_vect[2]
-
-    @property
-    def weak(self):
-        u = self.trial * self.phasor
-        v = self.test * self.phasor.conj
-        return super()._weak(u, v, Constant((0, 0, 0)))
 
 
 class TwoScale3D(Formulation):

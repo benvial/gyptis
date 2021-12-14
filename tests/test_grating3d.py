@@ -3,21 +3,21 @@
 # Author: Benjamin Vial
 # License: MIT
 
+from collections import OrderedDict
 from pprint import pprint
 
 import numpy as np
 
-from gyptis import dolfin
-from gyptis.grating3d import Grating3D, Layered3D, OrderedDict
-from gyptis.source import PlaneWave
+from gyptis import Grating, Layered, PlaneWave, dolfin
 from gyptis.utils import list_time
 
 
-def test_grating3d(degree=1):
+def test_grating3d(degree=2):
     dolfin.parameters["form_compiler"]["quadrature_degree"] = 2
 
-    ##  ---------- incident wave ----------
     p = 1000
+
+    ##  ---------- incident wave ----------
 
     lambda0 = p * 3
     theta0 = 0 * np.pi / 180
@@ -40,7 +40,7 @@ def test_grating3d(degree=1):
     )
 
     ##  ---------- mesh ----------
-    parmesh = 4
+    parmesh = 5
 
     parmesh_hole = parmesh * 1
 
@@ -51,8 +51,8 @@ def test_grating3d(degree=1):
         {
             "pml_bottom": parmesh_pml,
             "substrate": parmesh,
-            "groove": parmesh_groove * 2,
-            "hole": parmesh_hole * 2,
+            "groove": parmesh_groove,
+            "hole": parmesh_hole,
             "superstrate": parmesh,
             "pml_top": parmesh_pml,
         }
@@ -80,7 +80,7 @@ def test_grating3d(degree=1):
         ).real
 
     ##  ---------- build geometry ----------
-    geom = Layered3D(period, thicknesses, finalize=False)
+    geom = Layered(3, period, thicknesses, finalize=False)
 
     groove = geom.layers["groove"]
     substrate = geom.layers["substrate"]
@@ -120,7 +120,7 @@ def test_grating3d(degree=1):
         degree=degree,
     )
     bcs = {}
-    s = Grating3D(
+    s = Grating(
         geom,
         epsilon,
         mu,
@@ -135,14 +135,14 @@ def test_grating3d(degree=1):
     print("  >> computing diffraction efficiencies")
     print("---------------------------------------")
 
-    effs = s.diffraction_efficiencies(2, subdomain_absorption=True, orders=True)
+    effs = s.diffraction_efficiencies(1, subdomain_absorption=True, orders=True)
     # effs = s.diffraction_efficiencies(2, subdomain_absorption=False, orders=True)
     pprint(effs)
     R = np.sum(effs["R"])
     T = np.sum(effs["T"])
     Q = sum([q for t in effs["Q"].values() for q in t.values()])
-    print("ΣR = ", R)
-    print("ΣT = ", T)
-    print("ΣQ = ", Q)
+    print("sum R = ", R)
+    print("sum T = ", T)
+    print("sum Q = ", Q)
     print("B  = ", effs["B"])
     list_time()

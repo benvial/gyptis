@@ -11,7 +11,7 @@ a = 1
 v = (a, 0), (0, a)
 R1 = 0.3 * a
 R2 = 0.4 * a
-lmin = 0.05
+lmin = 0.1
 
 lattice = Lattice2D(v)
 circ = lattice.add_ellipse(a / 2, a / 2, 0, R1, R2)
@@ -24,23 +24,29 @@ lattice.build()
 
 
 @pytest.mark.parametrize(
-    "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
+    "degree,epsincl,muincl",
+    [(1, 4 - 3j, 1), (2, 4 - 3j, 1), (1, 4 - 3j, 3 - 0.1j), (2, 4 - 3j, 3 - 0.1j)],
 )
-def test_hom(degree, polarization):
+def test_hom(degree, epsincl, muincl):
     EPS = []
-    for eps_incl in [4 - 3j, (4 - 3j) * np.eye(3)]:
+    MU = []
+    for eps_inclusion, mu_inclusion in zip(
+        [epsincl, epsincl * np.eye(3)], [muincl, muincl * np.eye(3)]
+    ):
 
-        epsilon = dict(background=1.25, inclusion=eps_incl)
-        mu = dict(background=1, inclusion=1)
+        epsilon = dict(background=1.25, inclusion=eps_inclusion)
+        mu = dict(background=1, inclusion=mu_inclusion)
 
         hom = Homogenization2D(
             lattice,
             epsilon,
             mu,
-            polarization=polarization,
             degree=degree,
         )
         eps_eff = hom.get_effective_permittivity()
         EPS.append(eps_eff)
+        mu_eff = hom.get_effective_permeability()
+        MU.append(mu_eff)
 
     assert np.allclose(*EPS)
+    assert np.allclose(*MU)
