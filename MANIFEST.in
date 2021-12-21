@@ -1,4 +1,4 @@
-recursive-include src/gyptis *.cpp
+recursive-include src *.cpp
 include README.rst
 include CHANGELOG.rst
 include LICENCE.txt
