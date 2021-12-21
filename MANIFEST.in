@@ -1,5 +1,5 @@
 recursive-include src *.cpp
 include README.rst
 include CHANGELOG.rst
-include LICENCE.txt
+include LICENSE.txt
 recursive-include examples *.csv
