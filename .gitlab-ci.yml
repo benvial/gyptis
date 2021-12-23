@@ -1,5 +1,5 @@
 
-image: gyptis/gyptis:latest
+image: gyptis/gyptis:dev
 
 
 include:
