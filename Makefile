@@ -221,7 +221,7 @@ watch-less:
 ## Install requirements for building documentation
 doc-req:
 	$(call message,${@})
-	@cd docs && pip install -r requirements.txt && npm install lessc
+	@cd docs && pip install -r requirements.txt && conda install nodejs && npm install lessc
 
 
 ## Build html documentation (only updated examples)
