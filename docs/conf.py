@@ -376,6 +376,8 @@ sphinx_gallery_conf = {
         "sphinx_gallery": None,
     },
     "reset_modules": (),
+    # "pypandoc": True,
+    # "pypandoc": {"extra_args": ["-C","--bibliography=_custom/latex/biblio.bib"], "filters": []},
     # "filename_pattern": "plot_homogenization\.py",
     "filename_pattern": "/plot_",
     "ignore_pattern": r"^((?!/plot_).)*$",  # ignore files that do not start with plot_
