@@ -723,10 +723,11 @@ a.copybtn {
 }
 
 .homepage-description {
-  padding-top: 60px;
+  padding-top: 20px;
   font-size: 110%;
   color: @gray;
   font-style: italic;
+  margin-bottom: 40px;
 }
 
 .homepage-subtitle {
@@ -853,18 +854,34 @@ dt:target, span.highlighted {
     background-color: #ffe8b1;
 }
 .carousel-caption > h5 {
-    font-size: 150%;
+    font-size: 160%;
     color: white !important;
 }
 .carousel-caption > p {
     color: white !important;
 }
-.carousel-caption.d-none.d-md-block {
-    background: #252a3382;
-    padding: 10px;
-}
+
 .carousel {
     position: relative;
     background: #eee;
     padding: 20px;
 }
+
+.carousel-caption.d-none.d-md-block {
+    background: #252a3382;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    width: 100%;
+    right: 0px;
+    left: 0px;
+    bottom: 0px;
+    padding-bottom: 40px !important;
+    height: 100%;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+.carousel-indicators {
+    bottom: 2%;
+  }
