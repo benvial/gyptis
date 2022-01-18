@@ -155,6 +155,8 @@ class TopologyOptimizer:
         threshold=(0, 8),
         maxiter=20,
         stopval=None,
+        ftol_rel=None,
+        xtol_rel=None,
         callback=None,
         args=None,
         verbose=True,
@@ -166,6 +168,8 @@ class TopologyOptimizer:
         self.filtering_type = filtering_type
         self.maxiter = maxiter
         self.stopval = stopval
+        self.ftol_rel = ftol_rel
+        self.xtol_rel = xtol_rel
         self.callback = callback
         self.args = args or []
         self.verbose = verbose
@@ -307,6 +311,10 @@ class TopologyOptimizer:
             opt.set_upper_bounds(ub)
             # opt.set_ftol_rel(1e-16)
             # opt.set_xtol_rel(1e-16)
+            if self.ftol_rel is not None:
+                opt.set_ftol_rel(self.ftol_rel)
+            if self.xtol_rel is not None:
+                opt.set_xtol_rel(self.xtol_rel)
             if self.stopval is not None:
                 opt.set_stopval(self.stopval)
             if self.maxiter is not None:

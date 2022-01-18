@@ -36,15 +36,6 @@ class Homogenization2D(Simulation):
 
         coefficients = epsilon_coeff, mu_coeff
         self.formulations = dict(epsilon={}, mu={})
-        self.formulation = TwoScale3D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            boundary_conditions=boundary_conditions,
-            direction=direction,
-            case="epsilon",
-        )
         for case in ["epsilon", "mu"]:
             for direction in ["x", "y"]:
                 form = TwoScale2D(
@@ -57,7 +48,6 @@ class Homogenization2D(Simulation):
                     case=case,
                 )
                 self.formulations[case][direction] = form
-        super().__init__(geometry, self.formulation, direct=direct)
         self.formulation = self.formulations["epsilon"]["x"]
         super().__init__(geometry, self.formulation, direct=direct)
         self.solution = dict(epsilon={}, mu={})
@@ -156,15 +146,6 @@ class Homogenization3D(Simulation):
 
         coefficients = epsilon_coeff, mu_coeff
         self.formulations = dict(epsilon={}, mu={})
-        self.formulation = TwoScale3D(
-            geometry,
-            coefficients,
-            function_space,
-            degree=degree,
-            boundary_conditions=boundary_conditions,
-            direction=direction,
-            case="epsilon",
-        )
         for case in ["epsilon", "mu"]:
             for direction in ["x", "y", "z"]:
                 form = TwoScale3D(

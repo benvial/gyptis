@@ -40,7 +40,7 @@ class Lattice2D(Geometry):
         cl = self.add_curve_loop(l)
         ps = self.add_plane_surface([cl])
         self.cell = ps
-        self.add_physical(self.cell, "cell")
+        # self.add_physical(self.cell, "cell")
 
     @property
     def translation(self):
