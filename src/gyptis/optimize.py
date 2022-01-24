@@ -180,12 +180,20 @@ class TopologyOptimizer:
         self.mesh = self.geometry.mesh
         self.submesh_plt = self.geometry.extract_sub_mesh(self.design)
         self.submesh = self.mesh
-        # self.submesh = df.SubMesh(self.mesh, self.geometry.markers, self.geometry.domains["design"])
+        # self.submesh = df.SubMesh(self.mesh, self.geometry.markers, self.geometry.domains[self.design])
 
         self.fs_ctrl = df.FunctionSpace(self.mesh, "DG", 0)
         self.fs_sub = df.FunctionSpace(self.submesh, "DG", 0)
         self.nvar = self.fs_sub.dim()
         self.filter = Filter(self.rfilt, degree=1, output_function_space=self.fs_sub)
+
+    def design_fun(self, density_fp):
+        return simp(
+            density_fp,
+            Constant(self.eps_min),
+            Constant(self.eps_max),
+            df.Constant(self.p),
+        )
 
     def _topopt_wrapper(
         self,
@@ -211,26 +219,21 @@ class TopologyOptimizer:
             self.density = density
             filter.solver = None
             if filtering_type == "sensitivity":
-                density_f = density
+                self.density_f = density
             else:
-                density_f = filter.apply(density) if filt else density
+                self.density_f = filter.apply(density) if filt else density
 
             # density_f = transfer_sub_mesh(density_f, self.geometry, Actrl, Asub, self.design)
 
-            ctrl = df.interpolate(density_f, Actrl)
+            ctrl = df.interpolate(self.density_f, Actrl)
             # ctrl = project_iterative(density_f, Actrl)
-            density_fp = (
+            self.density_fp = (
                 projection(ctrl, beta=df.Constant(2 ** proj_level))
                 if proj
-                else density_f
+                else self.density_f
             )
-            epsilon_design = simp(
-                density_fp,
-                Constant(eps_design_min),
-                Constant(eps_design_max),
-                df.Constant(p),
-            )
-            objective = objfun(epsilon_design, *args)
+            self.epsilon_design = self.design_fun(self.density_fp)
+            objective = objfun(self.epsilon_design, *args)
 
             self.objective = objective
 
