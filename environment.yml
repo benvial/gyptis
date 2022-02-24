@@ -2,7 +2,7 @@ name: gyptis
 channels:
   - conda-forge
 dependencies:
-  - python>=3.6
+  - python<3.10
   - pip
   - fenics
   - dolfin-adjoint
@@ -19,8 +19,3 @@ dependencies:
   - pip:
     - gmsh
     - git+https://gitlab.com/gyptis/gyptis.git
-    # - gyptis
-
-
-
-# mamba install fenics dolfin-adjoint nlopt meshio  numpy scipy simpy matplotlib joblib psutil ipython
