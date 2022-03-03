@@ -556,7 +556,7 @@ class Geometry:
             return dolfin.SubMesh(self.mesh, self.markers, subdomains_num)
         else:
             if self.comm.rank == 0:
-                outpath = run_submesh(self, "design", outpath=None)
+                outpath = run_submesh(self, subdomains, outpath=None)
             else:
                 outpath = None
             outpath = self.comm.bcast(outpath, root=0)

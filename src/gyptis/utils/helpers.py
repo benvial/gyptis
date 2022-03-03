@@ -37,17 +37,62 @@ def array2function(values, function_space):
 
     """
 
+    # print(len(values))
+
     u = dolfin.Function(function_space)
     dofmap = function_space.dofmap()
-    order = dofmap.tabulate_local_to_global_dofs()
-    sub_array = values[order]
+    # order = dofmap.tabulate_local_to_global_dofs()
+
+    dofmap = function_space.dofmap()
+    my_first, my_last = dofmap.ownership_range()
+    sub_array = values[my_first:my_last]  # [order]
+    # print("order", len(order))
     u.vector().set_local(sub_array)
     dolfin.as_backend_type(u.vector()).update_ghost_values()
+    # dolfin.as_backend_type(u.vector()).vec().ghostUpdate()
+    # u.vector().apply("")
     u.vector().apply("insert")
     return u
 
 
-def function2array(f):
+#
+# def array2function(values, function_space):
+#     u = dolfin.Function(function_space)
+#     u.set_allow_extrapolation(True)
+#     u.vector().apply("insert")
+#     u.vector().set_local(values)
+#     dolfin.as_backend_type(u.vector()).update_ghost_values()
+#     u.vector().apply("insert")
+#     return u
+#
+#
+#
+# def array2function(values, function_space):
+#     V = function_space
+#     u = dolfin.Function(function_space)
+#     vec = u.vector()
+#     mesh = function_space.mesh
+#
+#     dofmap = V.dofmap()
+#     my_first, my_last = dofmap.ownership_range()                # global
+#
+#     # # 'Handle' API change of tabulate coordinates
+#     # if df.dolfin_version().split('.')[1] == '7':
+#     #     x = V.tabulate_dof_coordinates().reshape((-1, 2))
+#     # else:
+#     # x = V.dofmap().tabulate_all_coordinates(mesh)
+#     #
+#     x = V.tabulate_dof_coordinates().reshape((-1, 2))
+#
+#     unowned = dofmap.local_to_global_unowned()
+#     dofs = [dofmap.local_to_global_index(dof) not in unowned for dof in range(my_last-my_first)]
+#     x = x[dofs]
+#     vec.set_local(values)
+#     vec.apply('insert')
+#     return u
+
+
+def function2array(f, space=None):
     """Convert a fenics Function to a numpy array.
 
     Parameters
@@ -61,7 +106,13 @@ def function2array(f):
         The converted function.
 
     """
-    return f.vector().get_local()
+    values = f.vector().get_local()
+    function_space = f.function_space()
+    dofmap = function_space.dofmap()
+    my_first, my_last = dofmap.ownership_range()
+    sub_array = values  # [my_first:my_last]
+
+    return sub_array
 
 
 def project_iterative(applied_function, function_space):

@@ -108,10 +108,21 @@ def filtering(a, rfilt=0, function_space=None, degree=1, solver=None, mesh=None)
     return filter.apply(a)
 
 
+def transfer_function(fromFunc, Vto):
+    toFunc = df.Function(Vto)
+    fromFunc.set_allow_extrapolation(True)
+    A = df.PETScDMCollection.create_transfer_matrix(
+        fromFunc.ufl_function_space(), toFunc.ufl_function_space()
+    )
+    toFunc.vector()[:] = A * fromFunc.vector()
+
+    return toFunc
+
+
 def derivative(f, x, ctrl_space=None, array=False):
     dfdx = df.compute_gradient(f, df.Control(x))
     if ctrl_space is not None:
-        dfdx = project_iterative(dfdx, ctrl_space)
+        dfdx = transfer_function(dfdx, ctrl_space)
     if array:
         return function2array(dfdx)
     else:
@@ -179,7 +190,8 @@ class TopologyOptimizer:
         self.geometry = geometry
         self.mesh = self.geometry.mesh
         self.submesh_plt = self.geometry.extract_sub_mesh(self.design)
-        self.submesh = self.mesh
+        self.submesh = self.submesh_plt
+        # self.submesh = self.mesh
         # self.submesh = df.SubMesh(self.mesh, self.geometry.markers, self.geometry.domains[self.design])
 
         self.fs_ctrl = df.FunctionSpace(self.mesh, "DG", 0)
@@ -225,8 +237,9 @@ class TopologyOptimizer:
 
             # density_f = transfer_sub_mesh(density_f, self.geometry, Actrl, Asub, self.design)
 
-            ctrl = df.interpolate(self.density_f, Actrl)
-            # ctrl = project_iterative(density_f, Actrl)
+            ctrl = transfer_function(self.density_f, Actrl)
+            # ctrl = df.interpolate(self.density_f, Actrl)
+            # ctrl = project_iterative(self.density_f, Actrl)
             self.density_fp = (
                 projection(ctrl, beta=df.Constant(2 ** proj_level))
                 if proj
@@ -287,19 +300,30 @@ class TopologyOptimizer:
             def _get_gradient(dy):
                 comm = df.MPI.comm_world
                 rank = df.MPI.rank(comm)
+
+                print(f"rank {rank} dy.shape", dy.shape)
                 dyall = comm.gather(dy, root=0)
+
                 if rank == 0:
                     dy = np.hstack(dyall)
+                    # print(f"rank {rank} dy.shape",dy.shape)
                 else:
                     dy = np.empty(self.nvar)
+                    # print(f"rank {rank} dy.shape",dy.shape)
                 comm.Bcast(dy, root=0)
+
                 return dy
 
             def fun_nlopt(x, gradn):
+                print("gradn.shape", gradn.shape)
                 y, dy = self.wrapper(x)
+                # print("dy.shape",dy.shape)
                 if self.verbose:
                     mpi_print(f"objective = {y}")
+                # dy = (function2array(array2function(dy,self.fs_sub)))
+                # print("dy.shape",dy.shape)
                 gradn[:] = _get_gradient(dy)
+                # _get_gradient(dy)
                 cbout = []
                 if self.callback is not None:
                     out = self.callback(self)
