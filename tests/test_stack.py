@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 import pytest
 
-from gyptis.stack import *
+from gyptis.sources.stack import *
 
 
 def test_stack():

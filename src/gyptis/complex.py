@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 """
 Support for complex finite element forms.
@@ -15,7 +17,6 @@ import numpy as np
 import ufl
 
 from . import dolfin
-from .bc import DirichletBC as __DirichletBC__
 
 
 def _complexcheck(func):

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 import os
 
@@ -10,8 +12,8 @@ import pytest
 
 import gyptis
 from gyptis import BoxPML, Scattering
+from gyptis.models.scattering2d import *
 from gyptis.plot import *
-from gyptis.scattering2d import *
 from gyptis.utils import list_time
 
 polarization = "TM"

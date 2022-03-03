@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 import os
 import tempfile
@@ -9,7 +11,7 @@ import tempfile
 import meshio
 import numpy as np
 
-from . import ADJOINT, dolfin
+from .. import ADJOINT, dolfin
 
 
 def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=None):

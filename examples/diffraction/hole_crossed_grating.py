@@ -1,4 +1,9 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author: Benjamin Vial
+# This file is part of gyptis
+# License: MIT
+# See the documentation at gyptis.gitlab.io
 """
 3D Checkerboard Grating
 =======================
@@ -6,6 +11,7 @@
 Example of a dielectric bi-periodic diffraction grating.
 """
 # sphinx_gallery_thumbnail_number = 2
+
 
 from collections import OrderedDict
 

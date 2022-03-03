@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 __all__ = [
@@ -20,17 +22,10 @@ __all__ = [
 ]
 
 
-from .geometry import Geometry
-from .grating2d import Grating2D, Layered2D
-from .grating3d import Grating3D, Layered3D
-from .homogenization import Homogenization2D
-from .phc2d import Lattice2D, PhotonicCrystal2D
-from .phc3d import Lattice3D, PhotonicCrystal3D
-from .scattering2d import BoxPML2D, Scatt2D
-from .scattering3d import BoxPML3D, Scatt3D
-from .simulation import Simulation
-from .source import GaussianBeam, LineSource, PlaneWave
-from .utils._meta import _GratingBase, _ScatteringBase
+from .geometry import *
+from .models import *
+from .models.metaclasses import _GratingBase, _ScatteringBase
+from .sources import *
 
 
 def _check_dimension(dim):

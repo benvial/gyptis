@@ -1,13 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
+
+import glob
+import os
 
 import numpy as np
+from scipy.constants import c, epsilon_0, mu_0
 
-from . import dolfin
-from .complex import Complex, Function, assemble, dot, vector
-from .utils.helpers import array2function
+from .. import ADJOINT, dolfin
+from ..bc import *
+from ..complex import *
+from ..formulations import *
+from ..geometry import *
+from ..materials import *
+from ..sources import *
+from ..utils import project_iterative
+from ..utils.helpers import array2function
 
 
 class Simulation:

@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 """
@@ -15,9 +17,9 @@ import pytest
 
 from gyptis import c, dolfin, epsilon_0, mu_0
 from gyptis.complex import *
+from gyptis.models.scattering3d import BoxPML3D, Scatt3D
 from gyptis.plot import *
-from gyptis.scattering3d import BoxPML3D, Scatt3D
-from gyptis.source import PlaneWave
+from gyptis.sources import PlaneWave
 
 
 def test_scatterring3d(shared_datadir):

@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 from . import dolfin
-from .geometry import _is_on_line, _is_on_line3D, _is_on_plane
+from .geometry import *
 
 
 def prepare_boundary_conditions(bc_dict):
@@ -61,8 +63,8 @@ class BiPeriodic2D(dolfin.SubDomain):
         self.vertices = geometry.vertices
 
     def inside(self, x, on_boundary):
-        on_bottom = _is_on_line(x, self.vertices[0], self.vertices[1])
-        on_left = _is_on_line(x, self.vertices[3], self.vertices[0])
+        on_bottom = is_on_line(x, self.vertices[0], self.vertices[1])
+        on_left = is_on_line(x, self.vertices[3], self.vertices[0])
 
         on_vert_0 = dolfin.near(x[0], self.vertices[0][0]) and dolfin.near(
             x[1], self.vertices[0][1]
@@ -78,8 +80,8 @@ class BiPeriodic2D(dolfin.SubDomain):
     def map(self, x, y):
         verts = self.vertices.copy()
         verts.append(self.vertices[0])
-        on_right = _is_on_line(x, self.vertices[1], self.vertices[2])
-        on_top = _is_on_line(x, self.vertices[2], self.vertices[3])
+        on_right = is_on_line(x, self.vertices[1], self.vertices[2])
+        on_top = is_on_line(x, self.vertices[2], self.vertices[3])
         # if on_right and on_top:
         #     y[0] = x[0] - self.vectors[0][0]
         #     y[1] = x[1] - self.vectors[1][1]
@@ -170,13 +172,13 @@ class Periodic3D(dolfin.SubDomain):
     # Left boundary is "target domain" G
     def inside(self, x, on_boundary):
         v = self.vectors
-        ison0 = _is_on_plane(x, *self.planes[4], eps=self.eps)  ## -0
-        ison1 = _is_on_plane(x, *self.planes[2], eps=self.eps)  ## -1
-        ison2 = _is_on_plane(x, *self.planes[0], eps=self.eps)  ## -2
+        ison0 = is_on_plane(x, *self.planes[4], eps=self.eps)  ## -0
+        ison1 = is_on_plane(x, *self.planes[2], eps=self.eps)  ## -1
+        ison2 = is_on_plane(x, *self.planes[0], eps=self.eps)  ## -2
 
-        ison_slave0 = _is_on_line3D(x, self.planes[4], self.planes[2], eps=self.eps)
-        ison_slave1 = _is_on_line3D(x, self.planes[4], self.planes[0], eps=self.eps)
-        ison_slave2 = _is_on_line3D(x, self.planes[2], self.planes[0], eps=self.eps)
+        ison_slave0 = is_on_line3D(x, self.planes[4], self.planes[2], eps=self.eps)
+        ison_slave1 = is_on_line3D(x, self.planes[4], self.planes[0], eps=self.eps)
+        ison_slave2 = is_on_line3D(x, self.planes[2], self.planes[0], eps=self.eps)
 
         return bool(
             (ison0 or ison1 or ison2)
@@ -193,9 +195,9 @@ class Periodic3D(dolfin.SubDomain):
                 y[i] = x[i]
             return y
 
-        ison0 = _is_on_plane(x, *self.planes[5], self.map_tol)  ## -0
-        ison1 = _is_on_plane(x, *self.planes[3], self.map_tol)  ## -1
-        ison2 = _is_on_plane(x, *self.planes[1], self.map_tol)  ## -2
+        ison0 = is_on_plane(x, *self.planes[5], self.map_tol)  ## -0
+        ison1 = is_on_plane(x, *self.planes[3], self.map_tol)  ## -1
+        ison2 = is_on_plane(x, *self.planes[1], self.map_tol)  ## -2
         #### define mapping for a single point in the box, such that 3 mappings are required
         if ison0 and ison1 and ison2:
             y = set_coord(x - v[0] - v[1] - v[2], y)

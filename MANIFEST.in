@@ -1,5 +1,0 @@
-recursive-include src *.cpp
-include README.rst
-include CHANGELOG.rst
-include LICENSE.txt
-recursive-include examples *.csv

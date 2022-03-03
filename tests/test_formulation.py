@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 from collections import OrderedDict
 
 from gyptis.api import BoxPML
 from gyptis.complex import ComplexFunctionSpace
-from gyptis.formulation import *
+from gyptis.formulations import *
 from gyptis.geometry import *
 from gyptis.materials import *
-from gyptis.source import PlaneWave
+from gyptis.sources import PlaneWave
 
 
 def test_maxwell2d():
@@ -112,75 +114,74 @@ def test_maxwell2d():
     maxwell.build_boundary_conditions()
 
 
-lambda0, period = 1, 1
+def test_maxwell2d_periodic():
 
+    lambda0, period = 1, 1
 
-from gyptis.grating2d import Layered2D, OrderedDict
+    from gyptis.models.grating2d import Layered2D, OrderedDict
+    from gyptis.sources.stack import make_stack
 
-thicknesses = OrderedDict(
-    {
-        "pml_bottom": lambda0,
-        "substrate": lambda0,
-        "groove": lambda0,
-        "superstrate": lambda0,
-        "pml_top": lambda0,
-    }
-)
+    thicknesses = OrderedDict(
+        {
+            "pml_bottom": lambda0,
+            "substrate": lambda0,
+            "groove": lambda0,
+            "superstrate": lambda0,
+            "pml_top": lambda0,
+        }
+    )
 
-degree = 1
-geom = Layered2D(period, thicknesses)
-geom.build()
-epsilon = dict(
-    {
-        "substrate": 3,
-        "groove": 1,
-        "superstrate": 1,
-    }
-)
-mu = dict(
-    {
-        "substrate": 1,
-        "groove": 1,
-        "superstrate": 1,
-    }
-)
-stretch = 1 - 1j
-pml_top = PML(
-    "y", stretch=stretch, matched_domain="superstrate", applied_domain="pml_top"
-)
-pml_bottom = PML(
-    "y", stretch=stretch, matched_domain="substrate", applied_domain="pml_bottom"
-)
-epsilon_coeff = Coefficient(epsilon, geometry=geom, pmls=[pml_top, pml_bottom])
-mu_coeff = Coefficient(mu, geometry=geom, pmls=[pml_top, pml_bottom])
-coefficients = epsilon_coeff, mu_coeff
-function_space = ComplexFunctionSpace(geom.mesh, "CG", degree)
-pw = PlaneWave(
-    wavelength=lambda0, angle=np.pi / 4, dim=2, domain=geom.mesh, degree=degree
-)
+    degree = 1
+    geom = Layered2D(period, thicknesses)
+    geom.build()
+    epsilon = dict(
+        {
+            "substrate": 3,
+            "groove": 1,
+            "superstrate": 1,
+        }
+    )
+    mu = dict(
+        {
+            "substrate": 1,
+            "groove": 1,
+            "superstrate": 1,
+        }
+    )
+    stretch = 1 - 1j
+    pml_top = PML(
+        "y", stretch=stretch, matched_domain="superstrate", applied_domain="pml_top"
+    )
+    pml_bottom = PML(
+        "y", stretch=stretch, matched_domain="substrate", applied_domain="pml_bottom"
+    )
+    epsilon_coeff = Coefficient(epsilon, geometry=geom, pmls=[pml_top, pml_bottom])
+    mu_coeff = Coefficient(mu, geometry=geom, pmls=[pml_top, pml_bottom])
+    coefficients = epsilon_coeff, mu_coeff
+    function_space = ComplexFunctionSpace(geom.mesh, "CG", degree)
+    pw = PlaneWave(
+        wavelength=lambda0, angle=np.pi / 4, dim=2, domain=geom.mesh, degree=degree
+    )
 
-from gyptis.stack import make_stack
+    out = make_stack(
+        geom,
+        coefficients,
+        pw,
+        polarization="TM",
+        source_domains=["groove"],
+        degree=1,
+        dim=2,
+    )
+    bcs = {}
+    maxwell_per2d = Maxwell2DPeriodic(
+        geom,
+        coefficients,
+        function_space,
+        source=pw,
+        boundary_conditions=bcs,
+        source_domains=["groove"],
+        reference="superstrate",
+    )
 
-out = make_stack(
-    geom,
-    coefficients,
-    pw,
-    polarization="TM",
-    source_domains=["groove"],
-    degree=1,
-    dim=2,
-)
-bcs = {}
-maxwell_per2d = Maxwell2DPeriodic(
-    geom,
-    coefficients,
-    function_space,
-    source=pw,
-    boundary_conditions=bcs,
-    source_domains=["groove"],
-    reference="superstrate",
-)
-
-maxwell_per2d.build_lhs()
-
-maxwell_per2d.build_rhs()
+    maxwell_per2d.build_lhs()
+    maxwell_per2d.build_rhs()

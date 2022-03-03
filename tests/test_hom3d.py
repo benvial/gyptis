@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 import os
 
 import pytest
 
-import gyptis as gy
-from gyptis import dolfin
-from gyptis.homogenization import *
+from gyptis.models import *
 
 dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 # dolfin.set_log_level(0)

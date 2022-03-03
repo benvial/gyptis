@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 """
@@ -13,21 +15,21 @@ import numbers
 import re
 import sys
 import tempfile
+from collections import OrderedDict
 from functools import wraps
 
 import gmsh
 import numpy as np
 
-from . import dolfin
-from .measure import Measure
-from .mesh import read_mesh, read_xdmf_mesh, run_submesh
+from .. import dolfin
+from ..measure import Measure
+from ..mesh import *
+from ..plot import *
 
 _geometry_module = sys.modules[__name__]
-
 geo = gmsh.model.geo
 occ = gmsh.model.occ
 setnum = gmsh.option.setNumber
-
 gmsh_options = gmsh.option
 
 
@@ -575,8 +577,6 @@ class Geometry:
         return dolfin.plot(self.mesh, **kwargs)
 
     def plot_subdomains(self, **kwargs):
-        from .plot import plot_subdomains
-
         return plot_subdomains(self.markers, **kwargs)
 
     def set_pml_mesh_size(self, s):
@@ -584,7 +584,7 @@ class Geometry:
             self.set_mesh_size({pml: s})
 
 
-def _is_on_plane(P, A, B, C, eps=dolfin.DOLFIN_EPS):
+def is_on_plane(P, A, B, C, eps=dolfin.DOLFIN_EPS):
     Ax, Ay, Az = A
     Bx, By, Bz = B
     Cx, Cy, Cz = C
@@ -597,12 +597,12 @@ def _is_on_plane(P, A, B, C, eps=dolfin.DOLFIN_EPS):
     return dolfin.near(a * P[0] + b * P[1] + c * P[2] + d, 0, eps=eps)
 
 
-def _is_on_line(p, p1, p2, eps=dolfin.DOLFIN_EPS):
+def is_on_line(p, p1, p2, eps=dolfin.DOLFIN_EPS):
     x, y = p
     x1, y1 = p1
     x2, y2 = p2
     return dolfin.near((y - y1) * (x2 - x1), (y2 - y1) * (x - x1), eps=eps)
 
 
-def _is_on_line3D(p, p1, p2, eps=dolfin.DOLFIN_EPS):
-    return _is_on_plane(p, *p1, eps=eps) and _is_on_plane(p, *p2, eps=eps)
+def is_on_line3D(p, p1, p2, eps=dolfin.DOLFIN_EPS):
+    return is_on_plane(p, *p1, eps=eps) and is_on_plane(p, *p2, eps=eps)

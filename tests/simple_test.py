@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 import time
 
 from gyptis import BoxPML, Scattering
-from gyptis.source import PlaneWave
+from gyptis.sources import PlaneWave
 from gyptis.utils import list_time
 
 

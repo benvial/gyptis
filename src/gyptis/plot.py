@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
-__all__ = ["colors", "pause", "plot", "plot_subdomains"]
+# __all__ = ["colors", "pause", "plot", "plot_subdomains"]
 
 import copy
 
@@ -12,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dolfin.common.plotting import mesh2triang
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.transforms import Affine2D
 from matplotlib.tri import Triangulation
 
 from . import dolfin
@@ -169,7 +172,7 @@ def pause(interval):
             return
 
 
-def _check_plot_type(plottype, f):
+def check_plot_type(plottype, f):
     if plottype == "real":
         fplot = f.real
     elif plottype == "imag":

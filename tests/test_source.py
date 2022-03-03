@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 import pytest
 
 from gyptis import dolfin
 from gyptis.complex import assemble, div, dot, grad, project
-from gyptis.source import *
+from gyptis.sources import *
 from gyptis.utils.helpers import function2array, get_coordinates
 
 

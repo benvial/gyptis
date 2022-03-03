@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
-from .bc import Periodic3D
-from .formulation import Maxwell3DBands
 from .geometry import *
-from .geometry import _is_on_plane
-from .materials import *
-from .simulation import Simulation
 
 
 class Lattice3D(Geometry):
@@ -128,7 +125,7 @@ class Lattice3D(Geometry):
                 B = []
                 for p in qb:
                     P = gmsh.model.getValue(2, b[-1], p)
-                    belongs = _is_on_plane(P, *pl, eps=self.periodic_tol)
+                    belongs = is_on_plane(P, *pl, eps=self.periodic_tol)
                     B.append(belongs)
                 alls = np.all(B)
                 if alls:
@@ -170,47 +167,3 @@ class CubicLattice(Lattice3D):
             vectors,
             **kwargs,
         )
-
-
-class PhotonicCrystal3D(Simulation):
-    def __init__(
-        self,
-        geometry,
-        epsilon,
-        mu,
-        propagation_vector=(0, 0, 0),
-        boundary_conditions={},
-        degree=1,
-    ):
-        assert isinstance(geometry, Lattice3D)
-
-        self.periodic_bcs = Periodic3D(geometry)
-        function_space = ComplexFunctionSpace(
-            geometry.mesh, "N1curl", degree, constrained_domain=self.periodic_bcs
-        )
-        epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
-        mu = {k: m + 1e-16j for k, m in mu.items()}
-        epsilon_coeff = Coefficient(epsilon, geometry, degree=degree, dim=3)
-        mu_coeff = Coefficient(mu, geometry, degree=degree, dim=3)
-
-        coefficients = epsilon_coeff, mu_coeff
-        formulation = Maxwell3DBands(
-            geometry,
-            coefficients,
-            function_space,
-            propagation_vector=propagation_vector,
-            degree=degree,
-            boundary_conditions=boundary_conditions,
-        )
-
-        super().__init__(geometry, formulation)
-
-        self.degree = degree
-        self.propagation_vector = propagation_vector
-
-    def eigensolve(self, *args, **kwargs):
-        sol = super().eigensolve(*args, **kwargs)
-        self.solution["eigenvectors"] = [
-            u * self.formulation.phasor for u in sol["eigenvectors"]
-        ]
-        return self.solution

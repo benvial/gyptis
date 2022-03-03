@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 from pprint import pprint
@@ -11,9 +13,9 @@ from scipy.spatial.transform import Rotation
 
 from gyptis import Grating, Layered
 from gyptis.geometry import *
-from gyptis.grating2d import Grating2D, Layered2D, OrderedDict
+from gyptis.models.grating2d import Grating2D, Layered2D, OrderedDict
 from gyptis.plot import *
-from gyptis.source import *
+from gyptis.sources import *
 from gyptis.utils import list_time
 
 pytest_params = [("TM", 1), ("TE", 1), ("TM", 2), ("TE", 2)]

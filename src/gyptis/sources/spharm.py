@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 
 """
@@ -15,9 +17,9 @@ J. Opt. Soc. Am. A, JOSAA 35, 1401–1409 (2018)
 
 import scipy.special as sp
 
-from . import dolfin as df
-from . import pi
-from .complex import Complex, Constant, j, vector
+from .. import dolfin as df
+from .. import pi
+from ..complex import Complex, Constant, j, vector
 from .source import Source
 
 

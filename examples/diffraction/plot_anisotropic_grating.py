@@ -1,10 +1,16 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Author: Benjamin Vial
+# This file is part of gyptis
+# License: MIT
+# See the documentation at gyptis.gitlab.io
 """
 2D Anisotropic Grating
 =======================
 
 Example of diffraction grating with trapezoidal ridges made from an anisotropic material.
 """
+
 
 from collections import OrderedDict
 

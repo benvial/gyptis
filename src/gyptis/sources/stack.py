@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
+# See the documentation at gyptis.gitlab.io
 
 from collections import OrderedDict
 
@@ -9,9 +11,100 @@ import numpy as np
 from numpy.linalg import inv
 from scipy.constants import c, epsilon_0, mu_0
 
-from .complex import Complex
-from .materials import Subdomain, complex_vector
-from .source import field_stack_2D, field_stack_3D
+from ..materials import Subdomain, complex_vector
+from .source import *
+
+
+def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
+    alpha0_re, alpha0_im, beta0_re, beta0_im = sp.symbols(
+        "alpha0_re,alpha0_im,beta0_re,beta0_im", real=True
+    )
+    alpha0 = alpha0_re + 1j * alpha0_im
+    beta0 = beta0_re + 1j * beta0_im
+    Kplus = vector((alpha0, beta0, 0))
+    Kminus = vector((alpha0, -beta0, 0))
+    deltaY = vector((0, sp.symbols("yshift", real=True), 0))
+    pw = lambda K: sp.exp(1j * K.dot(X - deltaY))
+    phi_plus_re, phi_plus_im = sp.symbols("phi_plus_re,phi_plus_im", real=True)
+    phi_minus_re, phi_minus_im = sp.symbols("phi_minus_re,phi_minus_im", real=True)
+    phi_plus = phi_plus_re + 1j * phi_plus_im
+    phi_minus = phi_minus_re + 1j * phi_minus_im
+    field = phi_plus * pw(Kplus) + phi_minus * pw(Kminus)
+
+    expr = expression2complex_2d(
+        field,
+        alpha0_re=alpha.real,
+        alpha0_im=alpha.imag,
+        beta0_re=beta.real,
+        beta0_im=beta.imag,
+        phi_plus_re=phi[0].real,
+        phi_plus_im=phi[0].imag,
+        phi_minus_re=phi[1].real,
+        phi_minus_im=phi[1].imag,
+        yshift=yshift,
+        degree=degree,
+        domain=domain,
+    )
+    return expr
+
+
+def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
+    alpha0_re, alpha0_im, beta0_re, beta0_im, gamma0_re, gamma0_im = sp.symbols(
+        "alpha0_re, alpha0_im, beta0_re, beta0_im, gamma0_re, gamma0_im", real=True
+    )
+    alpha0 = alpha0_re + 1j * alpha0_im
+    beta0 = beta0_re + 1j * beta0_im
+    gamma0 = gamma0_re + 1j * gamma0_im
+    Kplus = vector((alpha0, beta0, gamma0))
+    Kminus = vector((alpha0, beta0, -gamma0))
+    deltaZ = vector((0, 0, sp.symbols("zshift", real=True)))
+    pw = lambda K: sp.exp(1j * K.dot(X - deltaZ))
+    fields = []
+    for comp in ["x", "y", "z"]:
+        phi_plus_re, phi_plus_im = sp.symbols(
+            f"phi_plus_{comp}_re,phi_plus_{comp}_im", real=True
+        )
+        phi_minus_re, phi_minus_im = sp.symbols(
+            f"phi_minus_{comp}_re,phi_minus_{comp}_im", real=True
+        )
+        phi_plus = phi_plus_re + 1j * phi_plus_im
+        phi_minus = phi_minus_re + 1j * phi_minus_im
+        field = phi_plus * pw(Kplus) + phi_minus * pw(Kminus)
+        fields.append(field)
+    code = [[sp.printing.ccode(p) for p in f.as_real_imag()] for f in fields]
+    code = np.ravel(code).tolist()
+    expr = [
+        dolfin.Expression(
+            c,
+            alpha0_re=alpha.real,
+            alpha0_im=alpha.imag,
+            beta0_re=beta.real,
+            beta0_im=beta.imag,
+            gamma0_re=gamma.real,
+            gamma0_im=gamma.imag,
+            phi_plus_x_re=phi[0].real,
+            phi_plus_x_im=phi[0].imag,
+            phi_minus_x_re=phi[1].real,
+            phi_minus_x_im=phi[1].imag,
+            phi_plus_y_re=phi[2].real,
+            phi_plus_y_im=phi[2].imag,
+            phi_minus_y_re=phi[3].real,
+            phi_minus_y_im=phi[3].imag,
+            phi_plus_z_re=phi[4].real,
+            phi_plus_z_im=phi[4].imag,
+            phi_minus_z_re=phi[5].real,
+            phi_minus_z_im=phi[5].imag,
+            zshift=zshift,
+            degree=degree,
+            domain=domain,
+        )
+        for c in code
+    ]
+
+    return Complex(
+        as_tensor([expr[0], expr[2], expr[4]]), as_tensor([expr[1], expr[3], expr[5]])
+    )
+
 
 pi = np.pi
 

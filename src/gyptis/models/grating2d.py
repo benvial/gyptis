@@ -1,96 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
+# This file is part of gyptis
 # License: MIT
-
-__all__ = ["Layered2D", "Grating2D", "OrderedDict"]
-
-import glob
-import os
-from collections import OrderedDict
-
-from . import ADJOINT, dolfin
-from .bc import PeriodicBoundary2DX
-from .complex import *
-from .formulation import Maxwell2DPeriodic
-from .geometry import *
-from .materials import *
-from .simulation import Simulation
-from .source import *
-from .utils._meta import _GratingBase
+# See the documentation at gyptis.gitlab.io
 
 
-class Layered2D(Geometry):
-    def __init__(
-        self,
-        period=1,
-        thicknesses=OrderedDict(),
-        **kwargs,
-    ):
-        super().__init__(
-            dim=2,
-            **kwargs,
-        )
-        self.period = period
-        # assert isinstance(self.thicknesses == OrderedDict)
-        self.thicknesses = thicknesses
-
-        self.layers = list(thicknesses.keys())
-
-        self.total_thickness = sum(self.thicknesses.values())
-
-        self.y0 = -sum(list(self.thicknesses.values())[:2])
-        self.layers = {}
-        self.y_position = {}
-        y0 = self.y0
-        self._phys_groups = []
-        for id, thickness in self.thicknesses.items():
-            layer = self.make_layer(y0, thickness)
-            self.layers[id] = layer
-            self.y_position[id] = y0
-            self.add_physical(layer, id)
-            self._phys_groups.append(layer)
-            y0 += thickness
-
-        self.remove_all_duplicates()
-        self.synchronize()
-
-        for sub, num in self.subdomains["surfaces"].items():
-            self.add_physical(num, sub)
-
-    @property
-    def translation_x(self):
-        return self._translation_matrix([self.period, 0, 0])
-
-    def make_layer(self, y_position, thickness):
-        box = self.add_rectangle(
-            -self.period / 2, y_position, 0, self.period, thickness
-        )
-        return box
-
-    def build(self, *args, **kwargs):
-
-        s = self.get_periodic_bnds(self.y0, self.total_thickness)
-        periodic_id = {}
-        for k, v in s.items():
-            periodic_id[k] = [S[-1] for S in v]
-        gmsh.model.mesh.setPeriodic(
-            1, periodic_id["+x"], periodic_id["-x"], self.translation_x
-        )
-        super().build(*args, **kwargs)
-
-    def get_periodic_bnds(self, y_position, thickness, eps=1e-3):
-        s = {}
-
-        pmin = -self.period / 2 - eps, -eps + y_position, -eps
-        pmax = -self.period / 2 + eps, y_position + thickness + eps, eps
-        s["-x"] = gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 1)
-
-        pmin = +self.period / 2 - eps, -eps + y_position, -eps
-        pmax = +self.period / 2 + eps, y_position + thickness + eps, eps
-        s["+x"] = gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 1)
-
-        return s
+from ..plot import *
+from .metaclasses import _GratingBase
+from .simulation import *
 
 
 class Grating2D(_GratingBase, Simulation):
@@ -330,7 +248,6 @@ class Grating2D(_GratingBase, Simulation):
         return Q, Qdomains
 
     def plot_geometry(self, nper=1, ax=None, c="k", **kwargs):
-        from .plot import plot_subdomains, plt
 
         if ax == None:
             ax = plt.gca()
@@ -378,10 +295,6 @@ class Grating2D(_GratingBase, Simulation):
         **kwargs,
     ):
 
-        from matplotlib.transforms import Affine2D
-
-        from .plot import _check_plot_type, plt
-
         u = self.solution[field]
         if ax == None:
             ax = plt.gca()
@@ -393,7 +306,7 @@ class Grating2D(_GratingBase, Simulation):
             alpha = self.formulation.propagation_vector[0]
             t = Affine2D().translate(i * self.period, 0)
             f = u * phase_shift(i * alpha * self.period + phase, degree=self.degree)
-            fplot = _check_plot_type(type, f)
+            fplot = check_plot_type(type, f)
             # if ADJOINT:
             fplot = project(
                 fplot,
@@ -430,7 +343,7 @@ class Grating2D(_GratingBase, Simulation):
 
         from PIL import Image
 
-        from .plot import plt
+        from ..plot import plt
 
         anim = []
         tmpdir = tempfile.mkdtemp()

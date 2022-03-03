@@ -99,6 +99,11 @@ testenv:
 	source activate $(PROJECT_NAME); \
 	$(PYTHON_INTERPRETER) dev/testenv.py
 
+
+## Install Python package locally
+install:
+	@pip install -e .
+
 ## Install Python dependencies
 req:
 	$(call message,${@})
@@ -120,11 +125,7 @@ cleandoc:
 	@cd docs && make -s clean
 
 ## Clean project
-clean: cleantest cleangen cleanreport
-	$(call message,${@})
-
-## Clean all project
-clean-all: cleandoc clean
+clean: cleantest cleangen cleanreport cleandoc
 	$(call message,${@})
 
 ## Lint using flake8
@@ -185,7 +186,7 @@ repo:
 
 
 ## Clean, reformat and push to gitlab
-save: clean style gl
+save: style gl
 	$(call message,${@})
 	
 
@@ -200,10 +201,14 @@ gl-noci:
 	
 
 ## Clean, reformat and push to gitlab (skipping continuous integration)
-save-noci: clean style gl-noci
+save-noci: style gl-noci
 	$(call message,${@})
 	
 
+## Update header
+header:
+	$(call message,${@})
+	@cd dev && python update_header.py
 
 ## Make documentation css
 less:
@@ -283,7 +288,7 @@ covdoc:
 	
 
 ## Tag and push tags
-tag: clean style
+tag: style
 	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@echo "Version v$(VERSION)"
