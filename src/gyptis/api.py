@@ -15,6 +15,7 @@ __all__ = [
     "PlaneWave",
     "LineSource",
     "GaussianBeam",
+    "Dipole",
     "BoxPML",
     "Layered",
     "Geometry",

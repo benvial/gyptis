@@ -6,9 +6,9 @@
 # See the documentation at gyptis.gitlab.io
 
 
-from .dipole import Dipole
-from .gaussian import GaussianBeam
-from .ls import LineSource
+from .dipole import *
+from .gaussian import *
+from .ls import *
 from .pw import *
 from .source import *
 from .spharm import *

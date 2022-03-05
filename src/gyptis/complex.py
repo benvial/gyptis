@@ -319,6 +319,12 @@ def phase_shift(phase, **kargs):
     return Complex(phasor_re, phasor_im)
 
 
+def phase_shift_constant(phase):
+    phasor_re = dolfin.cos(phase)
+    phasor_im = dolfin.sin(phase)
+    return Complex(phasor_re, phasor_im)
+
+
 def vector(vect):
     vsr = [v.real for v in vect]
     vsi = [v.imag for v in vect]

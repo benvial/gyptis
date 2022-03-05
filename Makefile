@@ -229,6 +229,11 @@ doc-req:
 	@cd docs && pip install -r requirements.txt && conda install nodejs && npm install lessc
 
 
+## Build html documentation for development and styling
+doc-fast: less
+	$(call message,${@})
+	@cd docs && make -s html-noplot
+
 ## Build html documentation (only updated examples)
 doc: less
 	$(call message,${@})
@@ -328,7 +333,7 @@ checksum:
 ## Update conda-forge package
 conda: checksum
 	$(call message,${@})
-	@cd .. && rm -rf gyptis-feedstock && \
+	cd .. && rm -rf gyptis-feedstock && \
 	git clone https://github.com/benvial/gyptis-feedstock && cd gyptis-feedstock  && \
 	git branch v$(VERSION) && git checkout v$(VERSION) && \
 	sed -i "s/sha256: .*/sha256: $(SHA256)/" recipe/meta.yaml && \
@@ -336,7 +341,7 @@ conda: checksum
 	sed -i "s/{% set version = .*/{% set version = \"$(VERSION)\" %}/" recipe/meta.yaml && \
 	git add . && \
 	git commit -a -m "New version $(VERSION)" && \
-	git push origin v$(VERSION) && \
+	git push origin v$(VERSION) && echo done
 	# hub pull-request --no-edit --browse
 
 

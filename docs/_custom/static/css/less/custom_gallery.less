@@ -228,3 +228,64 @@ div.sphx-glr-download-link-note.admonition.note {
 .sphx-glr-thumbcontainer a.internal:hover {
     text-decoration: none;
 }
+
+.sphx-glr-thumbcontainer[tooltip]:hover::before {
+  border-color: @gray-base transparent !important;
+  opacity: 0.8;
+  bottom: 82% !important;
+  left: 76.5% !important;
+  visibility: hidden;
+}
+
+
+.sphx-glr-thumbcontainer a.internal {
+  font-size: 85%;
+}
+
+.sphx-glr-thumbcontainer {
+  background: #fff0 !important;
+  border: solid #82828259 1px !important;
+  border-radius: 0px !important;
+  width: 44%;
+}
+
+.sphx-glr-thumbcontainer img {
+  display: block;
+  max-height: 100% !important;
+  max-width: 100% !important;
+}
+
+.sphx-glr-thumbcontainer a.internal {
+  // padding: 12px !important !important;
+  // position: relative !important;
+  // display: block !important;
+}
+
+.caption-text > .reference.internal {
+    color: #868585 !important;
+    padding-top: 32px !important;
+    font-style: oblique;
+    font-size: 90%;
+    font-weight: 700;
+    text-transform: uppercase;
+
+}
+.sphx-glr-thumbcontainer[tooltip]:hover::after {
+  background: @gray-base !important;
+  opacity: 0.8;
+  border-radius: 0px !important;
+  padding-top: 5% !important;
+  position: absolute !important;
+  width: 94% !important;
+  height: 20% !important;
+  bottom: 3% !important;
+  left: 3% !important;
+  text-align: center !important;
+  font-style: oblique;
+font-size: inherit;
+}
+
+
+.sphx-glr-thumbcontainer img {
+  padding-top: 32px;
+}

@@ -118,7 +118,7 @@ with open(fn, "r") as file:
 
 nl = []
 for line in lines:
-    line = line.replace('<img alt="image-landing" src="_assets/landing.png"/>', car)
+    line = line.replace("__CAROUSSEL_PACEHOLDER__", car)
     nl.append(line)
 with open(fn, "w") as file:
     file.write("".join(nl))

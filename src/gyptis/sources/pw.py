@@ -9,15 +9,17 @@
 from .source import *
 
 
-def plane_wave_2d(wavelength, theta, amplitude=1, degree=1, domain=None):
+def plane_wave_2d(wavelength, theta, phase=0, amplitude=1, degree=1, domain=None):
     k0 = 2 * np.pi / wavelength
     K = k0 * np.array((-np.sin(theta), -np.cos(theta)))
     K_ = vector(sp.symbols("kx, ky, 0", real=True))
-    expr = amplitude * sp.exp(1j * K_.dot(X))
+    expr = amplitude * sp.exp(1j * (K_.dot(X) + phase))
     return expression2complex_2d(expr, kx=K[0], ky=K[1], degree=degree, domain=domain)
 
 
-def plane_wave_3d(wavelength, theta, phi, psi, amplitude=1, degree=1, domain=None):
+def plane_wave_3d(
+    wavelength, theta, phi, psi, phase=(0, 0, 0), amplitude=1, degree=1, domain=None
+):
 
     cx = np.cos(psi) * np.cos(theta) * np.cos(phi) - np.sin(psi) * np.sin(phi)
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)
@@ -32,8 +34,9 @@ def plane_wave_3d(wavelength, theta, phi, psi, amplitude=1, degree=1, domain=Non
         )
     )
     K_ = vector(sp.symbols("kx, ky, kz", real=True))
+    phase_ = vector(phase)
 
-    Propp = amplitude * sp.exp(1j * K_.dot(X))
+    Propp = amplitude * sp.exp(1j * (K_.dot(X) + phase_))
 
     code = [sp.printing.ccode(p) for p in Propp.as_real_imag()]
     prop = dolfin.Expression(
@@ -44,10 +47,18 @@ def plane_wave_3d(wavelength, theta, phi, psi, amplitude=1, degree=1, domain=Non
 
 
 class PlaneWave(Source):
-    def __init__(self, wavelength, angle, dim, amplitude=1, degree=1, domain=None):
-        super().__init__(wavelength, dim, degree=degree, domain=domain)
+    def __init__(
+        self, wavelength, angle, dim=2, phase=0, amplitude=1, degree=1, domain=None
+    ):
+        super().__init__(
+            wavelength,
+            dim,
+            phase=phase,
+            amplitude=amplitude,
+            degree=degree,
+            domain=domain,
+        )
         self.angle = angle
-        self.amplitude = amplitude
 
     @property
     def expression(self):
@@ -55,6 +66,7 @@ class PlaneWave(Source):
             _expression = plane_wave_2d(
                 self.wavelength,
                 self.angle,
+                phase=self.phase,
                 amplitude=self.amplitude,
                 degree=self.degree,
                 domain=self.domain,
@@ -63,6 +75,7 @@ class PlaneWave(Source):
             _expression = plane_wave_3d(
                 self.wavelength,
                 *self.angle,
+                phase=self.phase,
                 amplitude=self.amplitude,
                 degree=self.degree,
                 domain=self.domain,

@@ -31,3 +31,16 @@ Added
 - element argument for Scatt3D
 - workaround for 3d normal vector in parallel for calculating cross sections
 - homogenization (two scale convergence)
+
+
+[0.1.0] - 2021-03-28
+~~~~~~~~~~~~~~~~~~~~~
+
+
+Added
+=======
+
+- first prototype of models
+- tests
+- ci
+- docs

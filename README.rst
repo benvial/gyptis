@@ -106,6 +106,10 @@ and then activate it with
   conda activate gyptis
   
 
+See the `github repository <https://github.com/conda-forge/gyptis-feedstock/>`_ 
+where development happens for conda-forge.
+  
+
 Pipy
 ~~~~
 
@@ -155,6 +159,17 @@ To run the image, use
 
   docker run -it gyptis/gyptis:latest
   
+  
+  
+  From source
+  ~~~~~~~~~~~~
+
+  .. code-block:: bash
+
+    git clone https://gitlab.com/gyptis/gyptis.git
+    cd gyptis && pip install -e .
+    
+    
   
 .. inclusion-marker-install-end
 

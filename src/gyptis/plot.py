@@ -153,11 +153,9 @@ def plot_complex(
     return P, C
 
 
-def plot(fplot, **kwargs):
-    if iscomplex(fplot):
-        return plot_complex(fplot, **kwargs)
-    else:
-        return plot_real(fplot, **kwargs)
+def plot(fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **kwargs):
+    returnfunc = plot_complex if iscomplex(fplot) else plot_real
+    return returnfunc(fplot, ax, geometry, proj_space, colorbar, **kwargs)
 
 
 def pause(interval):

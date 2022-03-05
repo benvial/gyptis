@@ -82,9 +82,15 @@ def process_html(fn, lines):
         line = line.replace("\*args", "*args")
         line = line.replace("\*\*kwargs", "**kwargs")
         line = line.replace("col-md-3", "col-md-2")
+
         line = line.replace(
-            "<title> &#8212;",
-            f"<title> {package.__name__}: {package.__description__} &#8212;",
+            "<title> &#8212; __WEBPAGE_TITLE_PLACEHOLDER__</title>",
+            f"<title>Gyptis: {package.__description__}</title>",
+        )
+
+        line = line.replace(
+            "&#8212; __WEBPAGE_TITLE_PLACEHOLDER__",
+            f"| Gyptis: {package.__description__}",
         )
 
         line = line.replace(". URL: ", ".")

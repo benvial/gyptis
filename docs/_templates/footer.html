@@ -20,8 +20,10 @@
       <div class="col-md-6">
 
         <div class="footer-copyright">
-          {{project}} v{{version}}.
-          {% trans copyright=copyright|e %}&copy;{{ copyright }}{% endtrans %}
+          
+          <img src={{ pathto('_assets/gyptis-name-white.svg', 1) }} alt="gyptis">
+          <p>v{{version}} | 
+          {% trans copyright=copyright|e %}&copy;{{ copyright }}{% endtrans %}</p>
         </div>
       </div>
 

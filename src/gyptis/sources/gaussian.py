@@ -6,38 +6,63 @@
 # See the documentation at gyptis.gitlab.io
 
 
-from .source import *
+from .pw import *
 
 
 class GaussianBeam(Source):
     def __init__(
-        self, wavelength, angle, waist, dim, Npw=101, amplitude=1, degree=1, domain=None
+        self,
+        wavelength,
+        angle,
+        waist,
+        position=(0, 0),
+        dim=2,
+        Npw=101,
+        phase=0,
+        amplitude=1,
+        degree=1,
+        domain=None,
     ):
-        super().__init__(wavelength, dim, degree=degree, domain=domain)
+        if dim == 3:
+            raise NotImplementedError("GaussianBeam not implemented in 3D")
+        super().__init__(
+            wavelength,
+            dim=dim,
+            phase=phase,
+            amplitude=amplitude,
+            degree=degree,
+            domain=domain,
+        )
         self.angle = angle
-        self.amplitude = amplitude
-        self.Npw = Npw
         self.waist = waist
+        self.position = position
+        self.Npw = Npw
 
     @property
     def expression(self):
-        if self.dim == 2:
-            _expression = Constant(0)
-            for t in np.linspace(-np.pi / 2, np.pi / 2, self.Npw):
-                _expression += (
-                    plane_wave_2d(
-                        self.wavelength,
-                        self.angle + t,
-                        amplitude=self.amplitude,
-                        degree=self.degree,
-                        domain=self.domain,
-                    )
-                    * Constant(
-                        np.exp(-(t ** 2) * 4 * (np.pi / 2) ** 2 * self.waist ** 2)
-                    )
+        _expression = Constant(0)
+        for t in np.linspace(-np.pi / 2, np.pi / 2, self.Npw):
+            angle_i = self.angle + t
+            K = self.wavenumber * np.array((-np.sin(angle_i), -np.cos(angle_i)))
+            position = np.array(self.position)
+            phase_pos = -np.dot(K, position)
+            term = plane_wave_2d(
+                self.wavelength,
+                angle_i,
+                phase=self.phase,
+                amplitude=self.amplitude,
+                degree=self.degree,
+                domain=self.domain,
+            ) * Constant(
+                np.exp(
+                    -(t ** 2)
+                    * 4
+                    * (np.pi / 2) ** 2
+                    * (self.waist / self.wavelength) ** 2
                 )
-            dk = np.pi / (self.Npw - 1)
-            _expression *= Constant(dk)
-        else:
-            raise (NotImplementedError)
+            )
+            term *= phase_shift_constant(ConstantRe(phase_pos))
+            _expression += term
+        dk = np.pi / (self.Npw - 1)
+        _expression *= Constant(dk)
         return _expression

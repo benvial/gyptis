@@ -11,20 +11,20 @@
 
     <div class="row align-items-center">
 
-      <div class="col-md-6">
+      <div class="col-md-6 vcenter homepage-head">
         <h1 class="homepage-title">{{project}}</h1>
         <h2 class="homepage-subtitle">{{description}}</h2>
 
         <div class="homepage-description">
-          Build complex geometries and numerical models easily with the 
-          versatility provided by the Python ecosystem. 
+          Build complex geometries and numerical models easily with the
+          versatility provided by the Python ecosystem.
         </div>
 
 
       </div>
-      <div class="col-md-6">
+      <div class="col-md-6 vcenter">
 
-        <img src="_assets/landing.png" alt="image-landing">
+        <!-- <img src="_assets/landing.png" alt="image-landing"> -->
 
       </div>
     </div>
@@ -34,16 +34,22 @@
 <section class="button-banner">
   <div class="container">
     <div class="row align-items-center button-banner-col">
-      <div class="col-md-6">
+      <div class="col-md-6  vcenter">
         <p class="button">
           <a type="button" class="btn btn-round" href="reference.html">
+            <svg>
+              <rect x="0" y="0" fill="none" width="100%" height="100%" />
+            </svg>
             Read the doc
           </a>
         </p>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-6  vcenter">
         <p class="button">
           <a type="button" class="btn btn-round" href="examples/index.html">
+            <svg>
+              <rect x="0" y="0" fill="none" width="100%" height="100%" />
+            </svg>
             Browse examples
           </a>
         </p>
@@ -55,6 +61,7 @@
 <section class="features-banner">
   <div class="container">
 
+
     <div class="row">
       <div class="col-md-6 vcenter">
         <div class="media">
@@ -62,7 +69,8 @@
             <img src="_assets/gmsh.svg" alt="mesh">
           </span>
           <div class="media-body">
-            <h4 class="media-heading">Constructive solid geometry and high quality meshing with the most popular open-source mesh generator Gmsh.</h4>
+            <h4 class="media-heading">Constructive solid geometry and high
+              quality meshing with the most popular open-source mesh generator Gmsh.</h4>
 
           </div>
         </div>
@@ -73,28 +81,101 @@
             <img src="_assets/fenics.svg" alt="fenics">
           </span>
           <div class="media-body">
-            <h4 class="media-heading">Solve Maxwell's equations with the powerful Finite element library FeniCS.</h4>
+            <h4 class="media-heading">Solve Maxwell's equations with the powerful
+              Finite element library FeniCS.</h4>
 
           </div>
         </div>
       </div>
 
+    </div>
+
+  </div>
+</section>
+
+
+
+<section class="models-banner">
+  <div class="container">
+
+
+    <div class="row">
+      <div class="col-md-12 vcenter text-center models-list">
+        <h2>Features</h2>
+        <ul>
+        <li>Scattering models in 2D and 3D with computation of cross sections and LDOS</li>
+        <li>Grating models in 2D and 3D with computation of diffraction efficiencies and absorption</li>
+        <li>Modal anaysis for non dspersive materials</li>
+        <li>Two scale convergence homogenization of metamaterials in 2D and 3D</li>
+        <li>Band diagrams of photonic crystals in 2D</li>
+        <li>Parallelization using MPI with domain decompostion</li>
+        <li>Parametric studies with embarassingly parallel loops</li>
+        <li>Spectrum sampler utility</li>
+        <li>Automatic differentiation for inverse design</li>
+          
+        </ul>
+        
+      </div>
 
     </div>
 
+  </div>
+</section>
 
 
 
-    <!-- <div class="row">
-      <div class="col-md-6">
-        Install with docker
+
+<section class="example-install-section">
+
+  <div class="container-fluid">
+
+    <div class="row align-items-center">
+
+      <div class="col-md-6 p-0 caroussel-container">
+        __CAROUSSEL_PACEHOLDER__
       </div>
-      <div class="col-md-6">
-          <div class="col-md-6">
-            Install with pip
+
+      <div class="col-md-5 offset-md-1 install-container pl-5 pr-5">
+        <h2>Install gyptis</h2>
+        
+        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=condaforge&logoColor=d25f5f"/>
+        <span><h4>conda</h4></span>
+        <div class="highlight-bash notranslate install-homepage">
+          <div class="highlight">
+<pre><span></span>conda install gyptis -c conda-forge</pre>
           </div>
+        </div>
+
+        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=pypy&logoColor=d25f5f"/>
+        <span><h4>pypi</h4></span>
+        <div class="highlight-bash notranslate install-homepage">
+        <div class="highlight">
+<pre><span></span>pip install gyptis</pre>
+          </div>
+        </div>
+        
+        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=docker&logoColor=d25f5f"/>
+        <span><h4>docker</h4></span>
+        <div class="highlight-bash notranslate install-homepage">
+          <div class="highlight">
+<pre><span></span>curl -s https://gyptis.gitlab.io/get <span class="p">|</span> bash
+gyptis run</pre>
+          </div>
+        </div>
+            
+        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=git&logoColor=d25f5f"/>
+        <span><h4>from source</h4></span>
+        <div class="highlight-bash notranslate install-homepage">
+          <div class="highlight">
+<pre><span></span>git clone https://gitlab.com/gyptis/gyptis.git
+cd gyptis && pip install -e .</pre>
+          </div>
+        </div>
+
+
       </div>
-    </div> -->
+
+    </div>
   </div>
 </section>
 
