@@ -34,15 +34,17 @@ def plane_wave_3d(
         )
     )
     K_ = vector(sp.symbols("kx, ky, kz", real=True))
-    phase_ = vector(phase)
 
-    Propp = amplitude * sp.exp(1j * (K_.dot(X) + phase_))
+    phase_shifts = [np.exp((phis)) for phis in phase]
+    Propp = amplitude * sp.exp(1j * (K_.dot(X)))
 
     code = [sp.printing.ccode(p) for p in Propp.as_real_imag()]
     prop = dolfin.Expression(
         code, kx=K[0], ky=K[1], kz=K[2], degree=degree, domain=domain
     )
-    C = dolfin.as_tensor([cx, cy, cz])
+    C = dolfin.as_tensor(
+        [cx * phase_shifts[0], cy * phase_shifts[1], cz * phase_shifts[2]]
+    )
     return Complex(prop[0] * C, prop[1] * C)
 
 
@@ -50,6 +52,8 @@ class PlaneWave(Source):
     def __init__(
         self, wavelength, angle, dim=2, phase=0, amplitude=1, degree=1, domain=None
     ):
+        if dim == 3 and np.isscalar(phase):
+            phase = (phase, phase, phase)
         super().__init__(
             wavelength,
             dim,
