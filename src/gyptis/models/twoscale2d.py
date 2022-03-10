@@ -58,14 +58,17 @@ class Homogenization2D(Simulation):
     def unit_cell_mean(self, f):
         return 1 / self.cell_volume * assemble(f * self.dx)
 
-    def solve_param(self, case):
+    def solve_param(self, case, scalar=False):
         self.formulation = self.formulations[case]["x"]
         super().__init__(self.geometry, self.formulation, direct=self.direct)
         phi_x = self.solve()
-        self.formulations[case]["y"].build_rhs()
-        self.vector = assemble(self.formulations[case]["y"].rhs)
-        phi_y = self.solve_system(again=True)
-        self.solution[case] = dict(x=phi_x, y=phi_y)
+        if not scalar:
+            self.formulations[case]["y"].build_rhs()
+            self.vector = assemble(self.formulations[case]["y"].rhs)
+            phi_y = self.solve_system(again=True)
+            self.solution[case] = dict(x=phi_x, y=phi_y)
+        else:
+            self.solution[case] = dict(x=phi_x)
         return self.solution
 
     def solve_all(self):
@@ -76,10 +79,12 @@ class Homogenization2D(Simulation):
         self.solution = dict(x=phi_x, y=phi_y)
         return self.solution
 
-    def _get_effective_coeff(self, case):
-        self.solve_param(case)
+    def _get_effective_coeff(self, case, scalar=False):
+        self.solve_param(case, scalar=scalar)
         xi = self.formulation.xi.as_subdomain()
         if xi.real.ufl_shape == (2, 2):
+            if scalar:
+                raise ValueError("scalar cannot be used with anisotropic materials")
             xi_mean = []
             for i in range(2):
                 a = [self.unit_cell_mean(x) for x in xi[i]]
@@ -89,15 +94,26 @@ class Homogenization2D(Simulation):
         else:
             xi_mean = self.unit_cell_mean(xi)
             xi_mean = xi_mean.real + 1j * xi_mean.imag
-            xi_mean *= np.eye(2)
-        A = []
-        for phi in self.solution[case].values():
+            if not scalar:
+                xi_mean *= np.eye(2)
+        if not scalar:
+            A = []
+            for phi in self.solution[case].values():
+                integrand = xi * grad(phi)
+                a = [self.unit_cell_mean(g) for g in integrand]
+                a = [_.real + 1j * _.imag for _ in a]
+                A.append(a)
+            xi_eff = xi_mean + np.array(A)
+            param_eff_inplane = xi_eff.T / np.linalg.det(xi_eff)
+
+        else:
+            phi = self.solution[case]["x"]
             integrand = xi * grad(phi)
-            a = [self.unit_cell_mean(g) for g in integrand]
-            a = [_.real + 1j * _.imag for _ in a]
-            A.append(a)
-        xi_eff = xi_mean + np.array(A)
-        param_eff_inplane = xi_eff.T / np.linalg.det(xi_eff)
+            a = self.unit_cell_mean(integrand[0])
+            a = a.real + 1j * a.imag
+            xi_eff = xi_mean + a
+            param_eff_inplane = np.eye(2) / xi_eff
+
         param_eff = np.zeros((3, 3), complex)
         param_eff[:2, :2] = param_eff_inplane
         i = 0 if case == "epsilon" else 1
@@ -110,8 +126,8 @@ class Homogenization2D(Simulation):
         param_eff[2, 2] = czz.real + 1j * czz.imag
         return param_eff
 
-    def get_effective_permittivity(self):
-        return self._get_effective_coeff("epsilon")
+    def get_effective_permittivity(self, scalar=False):
+        return self._get_effective_coeff("epsilon", scalar)
 
-    def get_effective_permeability(self):
-        return self._get_effective_coeff("mu")
+    def get_effective_permeability(self, scalar=False):
+        return self._get_effective_coeff("mu", scalar)

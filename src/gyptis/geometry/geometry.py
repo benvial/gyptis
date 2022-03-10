@@ -240,6 +240,9 @@ class Geometry:
             else:
                 return self._gmsh_add_ellipse(x, y, z, ax, ay, **kwargs)
 
+    def add_square(self, x, y, z, dx, **kwargs):
+        return self.add_rectangle(x, y, z, dx, dx, **kwargs)
+
     def add_spline(self, points, mesh_size=0.0, surface=True, **kwargs):
         """Adds a spline.
 

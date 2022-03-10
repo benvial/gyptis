@@ -149,7 +149,13 @@ class Grating2D(_GratingBase, Simulation):
                     / self.period
                 )
 
-                ph_pos = np.exp(-s * 1j * beta_n[d] * self.geometry.y_position[d])
+                # ph_pos = np.exp(-s * 1j * beta_n[d] * self.geometry.y_position[d])
+
+                ph_pos = np.exp(
+                    -1j * beta_n[d] * self.geometry.y_position["superstrate"]
+                )
+                ph_pos = 1 if d == "superstrate" else ph_pos
+
                 eff[d] = (
                     delta * eff_annex[d] + Jn[d] / self.geometry.thicknesses[d]
                 ) * ph_pos

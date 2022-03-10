@@ -7,6 +7,7 @@
 
 from .grating2d import *
 from .grating3d import *
+from .hc2d import *
 from .phc2d import *
 from .phc3d import *
 from .scattering2d import *

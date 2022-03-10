@@ -642,7 +642,7 @@ ul.search li {
   height: auto;
   top: 0;
   height: unset;
-  min-height: 90vh;
+  // min-height: 90vh;
 }
 
 .form-control:focus {
@@ -1080,10 +1080,11 @@ section.models-banner {
 }
 
 .models-list {
-  font-size: 130%;
+  font-size: 110%;
   color: white;
-  font-variant: all-petite-caps;
   font-weight: 300;
+  text-transform: uppercase;
+  padding: 0px;
 }
 
 .models-list h2 {
@@ -1094,5 +1095,30 @@ section.models-banner {
 }
 .models-list  li {
   list-style: none;
-  margin: 1rem 1rem;
+  margin: 1.8rem 0rem;
+}
+
+.models-list  ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+div.d-none.d-xl-block.col-xl-2.bd-toc {
+  padding-top: 60px;
+}
+
+
+@media only screen and (max-width: 1200px) {
+  div.d-none.d-xl-block.col-xl-2.bd-toc {
+    height: unset;
+    padding-bottom: 50px;
+    padding-top: unset;
+  }
+  div.d-none.d-xl-block.col-xl-2.bd-toc > div.toc-item {
+    display: none !important;
+  }
+}
+.btn.focus, .btn:focus {
+  outline: 0;
+  box-shadow: unset !important;
 }

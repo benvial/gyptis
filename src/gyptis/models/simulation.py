@@ -143,7 +143,7 @@ class Simulation:
         self.apply_boundary_conditions()
         return self.solve_system()
 
-    def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, **kwargs):
+    def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, half=True, **kwargs):
 
         wf = self.formulation.weak
         if self.formulation.dim == 1:
@@ -225,11 +225,12 @@ class Simulation:
             kn = (ev) ** 0.5
             KNs.append(kn)
             UNs.append(eig_vec)
-
+        KNs = np.array(KNs)
         # HACK: We get the complex conjugates as well so compute twice
         # as much eigenvalues and return only half
-        KNs = np.array(KNs)[::2]
-        UNs = UNs[::2]
+        if half:
+            KNs = KNs[::2]
+            UNs = UNs[::2]
 
         self.solution["eigenvalues"] = KNs
         self.solution["eigenvectors"] = UNs
