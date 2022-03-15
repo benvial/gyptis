@@ -53,8 +53,8 @@ class Homogenization2D(Simulation):
         self.direct = direct
         self.direction = direction
         self.degree = degree
-        # self.cell_volume = np.cross(*geometry.vectors)
-        self.cell_volume = assemble(1 * geometry.measure["dx"])
+        self.cell_volume = np.cross(*geometry.vectors)
+        # self.cell_volume = assemble(1 * geometry.measure["dx"])
 
     def solve_system(self, again=False):
         return super().solve_system(again=again, vector_function=False)

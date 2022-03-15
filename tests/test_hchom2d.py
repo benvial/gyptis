@@ -27,7 +27,7 @@ def test_hchom2d():
     inclusion = gy.Geometry(dim=2)
     incl = inclusion.add_square(a / 2, a / 2, 0, a)
     inclusion.add_physical(incl, "inclusion")
-    bnds = inclusion.get_boundaries(incl)
+    bnds = inclusion.get_boundaries("inclusion")
     inclusion.add_physical(bnds, "inclusion_bnds", dim=1)
     inclusion.set_size("inclusion", lmin)
     inclusion.build()
@@ -55,6 +55,7 @@ def test_hchom2d():
         lattice, inclusion, epsilon, mu, degree=2
     )
     eps_eff = hom.get_effective_permittivity(scalar=True)
+    print(eps_eff)
     assert np.abs(eps_eff[0][0] - 1.73) < 1e-3
     neigs = 40
     wavevector_target = 0.1
