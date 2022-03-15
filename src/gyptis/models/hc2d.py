@@ -52,6 +52,7 @@ class HighContrastHomogenization2D(Simulation):
         direction="x",
         direct=True,
         inclusion_boundaries="inclusion_bnds",
+        boundary_conditions=None,
     ):
 
         assert isinstance(background, Lattice2D)
@@ -77,11 +78,13 @@ class HighContrastHomogenization2D(Simulation):
             self.background, self.epsilon_background, self.mu_background
         )
 
+        boundary_conditions = boundary_conditions or {inclusion_boundaries: "PEC"}
+
         self.epb = _EigenProblemInclusion2D(
             self.inclusion,
             self.epsilon_inclusion,
             self.mu_inclusion,
-            boundary_conditions={inclusion_boundaries: "PEC"},
+            boundary_conditions=boundary_conditions,
             degree=degree,
         )
 

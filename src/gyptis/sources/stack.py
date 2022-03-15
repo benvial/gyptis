@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import numpy as np
 from numpy.linalg import inv
-from scipy.constants import c, epsilon_0, mu_0
+from scipy.constants import c, epsilon_0, mu_0, pi
 
 from ..materials import Subdomain, complex_vector
 from .source import *
@@ -106,19 +106,10 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
     )
 
 
-pi = np.pi
-
-
-def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
-
+def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
     k0 = 2 * pi / lambda0
     omega = k0 * c
 
-    eps = [d["epsilon"] for d in config.values()]
-    mu = [d["mu"] for d in config.values()]
-    thicknesses = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
-
-    #
     alpha0 = -k0 * np.sin(theta0) * np.cos(phi0)
     beta0 = -k0 * np.sin(theta0) * np.sin(phi0)
     gamma0 = -k0 * np.cos(theta0)
@@ -271,6 +262,18 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
     efficiencies = dict(R=R, T=T, Q=Q)
 
     return phi, propagation_constants, efficiencies
+
+
+def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
+    eps = [d["epsilon"] for d in config.values()]
+    mu = [d["mu"] for d in config.values()]
+    thicknesses = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
+    return solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0)
+
+
+def get_stack_efficiencies(thicknesses, epsilon, mu, lambda0, angles):
+    out = solve(thicknesses, epsilon, mu, lambda0, *angles)
+    return out[-1]
 
 
 def make_stack(

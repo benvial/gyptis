@@ -18,10 +18,13 @@ class Homogenization2D(Simulation):
         degree=1,
         direction="x",
         direct=True,
+        periodic=True,
+        domain="everywhere",
     ):
-        assert isinstance(geometry, Lattice2D)
+        # assert isinstance(geometry, Lattice2D)
 
-        self.periodic_bcs = BiPeriodic2D(geometry)
+        self.domain = domain
+        self.periodic_bcs = BiPeriodic2D(geometry) if periodic else None
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )
@@ -50,13 +53,14 @@ class Homogenization2D(Simulation):
         self.direct = direct
         self.direction = direction
         self.degree = degree
-        self.cell_volume = np.cross(*geometry.vectors)
+        # self.cell_volume = np.cross(*geometry.vectors)
+        self.cell_volume = assemble(1 * geometry.measure["dx"])
 
     def solve_system(self, again=False):
         return super().solve_system(again=again, vector_function=False)
 
     def unit_cell_mean(self, f):
-        return 1 / self.cell_volume * assemble(f * self.dx)
+        return 1 / self.cell_volume * assemble(f * self.dx(self.domain))
 
     def solve_param(self, case, scalar=False):
         self.formulation = self.formulations[case]["x"]
