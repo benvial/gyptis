@@ -45,7 +45,7 @@ test:
   script:
     - source ~/.bashrc
     - pip install -e .
-    - make dev
+    - make test-req
     - make test
     - coverage xml
   artifacts:

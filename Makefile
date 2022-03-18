@@ -270,6 +270,13 @@ cleantest:
 	$(call message,${@})
 	@rm -rf .coverage* htmlcov coverage.xml
 
+
+## Install requirements for testing
+test-req:
+	$(call message,${@})
+	@cd tests && pip install --upgrade -r requirements.txt
+
+
 ## Run the test suite
 test: cleantest
 	$(call message,${@})

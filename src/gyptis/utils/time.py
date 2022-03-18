@@ -15,7 +15,8 @@ from .. import dolfin
 
 
 def list_time():
-    return dolfin.list_timings(dolfin.TimingClear.clear, [dolfin.TimingType.wall])
+    cols = [dolfin.TimingType.wall, dolfin.TimingType.system, dolfin.TimingType.user]
+    return dolfin.list_timings(dolfin.TimingClear.clear, cols)
 
 
 def tic():

@@ -212,6 +212,10 @@ class SphericalHarmonic(SphericalSource):
         self.phm = self.phasor(self.m)
         self.components = {}
 
+    @property
+    def expression(self):
+        return self.transfo_matrix * self.expression_spherical
+
 
 class SphericalX(SphericalHarmonic):
     def __init__(self, *args, **kwargs):
@@ -220,7 +224,6 @@ class SphericalX(SphericalHarmonic):
         self.components["theta"] = j * u(self.cos_theta, self.n, self.m) * self.phm
         self.components["phi"] = -s(self.cos_theta, self.n, self.m) * self.phm
         self.expression_spherical = vector(self.components.values())
-        self.expression = self.transfo_matrix * self.expression_spherical
 
 
 class SphericalY(SphericalHarmonic):
@@ -230,7 +233,6 @@ class SphericalY(SphericalHarmonic):
         self.components["theta"] = Constant(0)
         self.components["phi"] = Constant(0)
         self.expression_spherical = vector(self.components.values())
-        self.expression = self.transfo_matrix * self.expression_spherical
 
 
 class SphericalZ(SphericalHarmonic):
@@ -240,7 +242,6 @@ class SphericalZ(SphericalHarmonic):
         self.components["theta"] = s(self.cos_theta, self.n, self.m) * self.phm
         self.components["phi"] = j * u(self.cos_theta, self.n, self.m) * self.phm
         self.expression_spherical = vector(self.components.values())
-        self.expression = self.transfo_matrix * self.expression_spherical
 
 
 class SphericalM(SphericalHarmonic):
@@ -250,7 +251,6 @@ class SphericalM(SphericalHarmonic):
         jn = sph_bessel_J(self.n, k * self.r)
         Xnm = SphericalX(*args, **kwargs)
         self.expression_spherical = jn * Xnm.expression_spherical
-        self.expression = self.transfo_matrix * self.expression_spherical
 
 
 class SphericalN(SphericalHarmonic):
@@ -266,4 +266,3 @@ class SphericalN(SphericalHarmonic):
         self.expression_spherical = (
             (self.n * (self.n + 1)) ** 0.5 * jn * Ynm + psin_prime * Znm
         ) / (k * self.r)
-        self.expression = self.transfo_matrix * self.expression_spherical
