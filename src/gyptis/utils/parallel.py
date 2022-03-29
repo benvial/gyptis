@@ -20,7 +20,7 @@ from joblib import Parallel, delayed
 from .. import dolfin
 
 
-def parloop(n_jobs=1):
+def parloop(n_jobs=1, prefer=None):
     def deco_parloop(func):
         """
         Decorate a function to parallelize.
@@ -29,7 +29,7 @@ def parloop(n_jobs=1):
         @wraps(func)
         def my_func(*args, **kwargs):
             other_args = args[1:]
-            return Parallel(n_jobs=n_jobs)(
+            return Parallel(n_jobs=n_jobs, prefer=prefer)(
                 delayed(func)(x, *other_args, **kwargs) for x in args[0]
             )
 
