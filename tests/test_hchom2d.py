@@ -15,7 +15,7 @@ def test_hchom2d():
     d = 1
     v = (d, 0), (0, d)
     a = d / 2
-    lmin = a / 30
+    lmin = a / 50
 
     lattice = gy.Lattice(dim=2, vectors=v)
     incl = lattice.add_square(a / 2, a / 2, 0, a)
