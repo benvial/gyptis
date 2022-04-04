@@ -66,34 +66,32 @@ class BiPeriodic2D(dolfin.SubDomain):
         on_bottom = is_on_line(x, self.vertices[0], self.vertices[1])
         on_left = is_on_line(x, self.vertices[3], self.vertices[0])
 
-        on_vert_0 = dolfin.near(x[0], self.vertices[0][0]) and dolfin.near(
-            x[1], self.vertices[0][1]
+        on_vert_1 = dolfin.near(x[0], self.vertices[1][0]) and dolfin.near(
+            x[1], self.vertices[1][1]
         )
         on_vert_3 = dolfin.near(x[0], self.vertices[3][0]) and dolfin.near(
             x[1], self.vertices[3][1]
         )
-
         return bool(
-            (on_bottom or on_left) and (not (on_vert_0 or on_vert_3)) and on_boundary
+            (on_bottom or on_left) and (not (on_vert_1 or on_vert_3)) and on_boundary
         )
 
     def map(self, x, y):
-        verts = self.vertices.copy()
-        verts.append(self.vertices[0])
         on_right = is_on_line(x, self.vertices[1], self.vertices[2])
         on_top = is_on_line(x, self.vertices[2], self.vertices[3])
-        # if on_right and on_top:
-        #     y[0] = x[0] - self.vectors[0][0]
-        #     y[1] = x[1] - self.vectors[1][1]
-        if on_right:
+
+        if on_right and on_top:
+            y[0] = x[0] - self.vectors[0][0] - self.vectors[1][0]
+            y[1] = x[1] - self.vectors[0][1] - self.vectors[1][1]
+        elif on_right:
             y[0] = x[0] - self.vectors[0][0]
             y[1] = x[1] - self.vectors[0][1]
         elif on_top:
             y[0] = x[0] - self.vectors[1][0]
             y[1] = x[1] - self.vectors[1][1]
         else:
-            y[0] = -1000
-            y[1] = -1000
+            y[0] = -10000
+            y[1] = -10000
 
 
 class PeriodicBoundary2DX(dolfin.SubDomain):
