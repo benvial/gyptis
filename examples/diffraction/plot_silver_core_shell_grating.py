@@ -37,10 +37,10 @@ def epsilon_silver(omega):
     delta_eps = 0.76
     epsilon = (
         eps_inf
-        - omega_D ** 2 / (omega * (omega + 1j * gamma_D))
+        - omega_D**2 / (omega * (omega + 1j * gamma_D))
         - delta_eps
-        * Omega_L ** 2
-        / ((omega ** 2 - Omega_L ** 2) + 1j * Gamma_L * omega)
+        * Omega_L**2
+        / ((omega**2 - Omega_L**2) + 1j * Gamma_L * omega)
     )
     return np.conj(epsilon)
 
@@ -161,14 +161,14 @@ for ax, wavelength in zip(axes, [316, 452]):
     [layers_lines[i].remove() for i in range(6)]
     ax.set_axis_off()
     ax.annotate(
-        fr"$\lambda_0={wavelength}$ nm",
+        rf"$\lambda_0={wavelength}$ nm",
         (0.6, 0.2),
         c="w",
         xycoords="axes fraction",
         weight="medium",
     )
     ax.annotate(
-        fr"$\Lambda={period}$ nm",
+        rf"$\Lambda={period}$ nm",
         (0.6, 0.1),
         c="w",
         xycoords="axes fraction",

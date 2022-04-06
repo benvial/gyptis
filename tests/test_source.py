@@ -67,7 +67,7 @@ def test_gf_2d():
     lambda0, xs, ys = 0.3, -0.1, -0.1
     GF = green_function_2d(lambda0, xs, ys, degree=degree, domain=mesh)
     k0 = 2 * np.pi / lambda0
-    Helm = dot(grad(GF), grad(GF)) + k0 ** 2 * GF * GF
+    Helm = dot(grad(GF), grad(GF)) + k0**2 * GF * GF
     test = abs(assemble(Helm * dolfin.dx))
     assert test < 5e-3
 
@@ -78,7 +78,7 @@ def test_gf_2d():
     lambda0, xs, ys = 0.3, -0.1, -0.1
     GF = green_function_2d(lambda0, xs, ys, degree=degree, domain=mesh)
     k0 = 2 * np.pi / lambda0
-    Helm = dot(grad(GF), grad(GF)) + k0 ** 2 * GF * GF
+    Helm = dot(grad(GF), grad(GF)) + k0**2 * GF * GF
     test = abs(assemble(Helm * dolfin.dx))
     print(test)
     assert test < 5e-3

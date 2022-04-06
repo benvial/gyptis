@@ -29,7 +29,7 @@ geom.add_physical(box, "box")
 geom.add_physical(cyl, "cyl")
 [geom.set_size(pml, lmin) for pml in geom.pmls]
 geom.set_size("box", lmin)
-geom.set_size("cyl", lmin / eps_cyl ** 0.5)
+geom.set_size("cyl", lmin / eps_cyl**0.5)
 geom.build()
 
 epsilon = dict(box=1, cyl=eps_cyl)

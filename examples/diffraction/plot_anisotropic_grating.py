@@ -50,8 +50,8 @@ thicknesses = OrderedDict(
 
 mesh_param = dict(
     {
-        "pml_bottom": pmesh * eps_sub ** 0.5,
-        "substrate": pmesh * eps_sub ** 0.5,
+        "pml_bottom": pmesh * eps_sub**0.5,
+        "substrate": pmesh * eps_sub**0.5,
         "groove": pmesh,
         "rod": pmesh * np.max(eps_rod) ** 0.5,
         "superstrate": pmesh,
@@ -151,8 +151,8 @@ for jangle, angle in enumerate([0, -20, -40]):
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
 
-    ax[jangle][0].set_title(fr"$\theta = {angle}\degree$")
-    ax[jangle][1].set_title(fr"$\theta = {angle}\degree$")
+    ax[jangle][0].set_title(rf"$\theta = {angle}\degree$")
+    ax[jangle][1].set_title(rf"$\theta = {angle}\degree$")
 
 
 divider = make_axes_locatable(ax[0, 0])

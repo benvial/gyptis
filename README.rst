@@ -1,53 +1,72 @@
 
 
-.. image:: https://img.shields.io/badge/dynamic/json.svg?label=release&url=https://gitlab.com/gyptis/gyptis/-/jobs/artifacts/master/file/badges.json?job=badge&query=release_tag&color=d25f5f&labelColor=dedede&style=for-the-badge&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgd2lkdGg9IjQwbW0iCiAgIGhlaWdodD0iNDBtbSIKICAgdmlld0JveD0iMCAwIDQwIDQwIgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmc4IgogICBpbmtzY2FwZTp2ZXJzaW9uPSIxLjAuMiAoZTg2Yzg3MDg3OSwgMjAyMS0wMS0xNSwgY3VzdG9tKSIKICAgc29kaXBvZGk6ZG9jbmFtZT0iZ3lwdGlzLnN2ZyIKICAgaW5rc2NhcGU6ZXhwb3J0LWZpbGVuYW1lPSIvaG9tZS9iZW5jaC9kZXYvZ3lwdGlzL2d5cHRpcy9kb2NzL19hc3NldHMvZ3lwdGlzLnBuZyIKICAgaW5rc2NhcGU6ZXhwb3J0LXhkcGk9IjYwMCIKICAgaW5rc2NhcGU6ZXhwb3J0LXlkcGk9IjYwMCI+CiAgPGRlZnMKICAgICBpZD0iZGVmczIiIC8+CiAgPHNvZGlwb2RpOm5hbWVkdmlldwogICAgIGlkPSJiYXNlIgogICAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgICBib3JkZXJjb2xvcj0iIzY2NjY2NiIKICAgICBib3JkZXJvcGFjaXR5PSIxLjAiCiAgICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAuMCIKICAgICBpbmtzY2FwZTpwYWdlc2hhZG93PSIyIgogICAgIGlua3NjYXBlOnpvb209IjQuMDQ1MDY3MSIKICAgICBpbmtzY2FwZTpjeD0iNDkuODM1Nzc4IgogICAgIGlua3NjYXBlOmN5PSI5OS4yMjIzNDIiCiAgICAgaW5rc2NhcGU6ZG9jdW1lbnQtdW5pdHM9Im1tIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9ImxheWVyMSIKICAgICBpbmtzY2FwZTpkb2N1bWVudC1yb3RhdGlvbj0iMCIKICAgICBzaG93Z3JpZD0iZmFsc2UiCiAgICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIxOTIwIgogICAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEwODAiCiAgICAgaW5rc2NhcGU6d2luZG93LXg9IjAiCiAgICAgaW5rc2NhcGU6d2luZG93LXk9IjAiCiAgICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIgLz4KICA8bWV0YWRhdGEKICAgICBpZD0ibWV0YWRhdGE1Ij4KICAgIDxyZGY6UkRGPgogICAgICA8Y2M6V29yawogICAgICAgICByZGY6YWJvdXQ9IiI+CiAgICAgICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICAgICAgPGRjOnR5cGUKICAgICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPgogICAgICAgIDxkYzp0aXRsZT48L2RjOnRpdGxlPgogICAgICA8L2NjOldvcms+CiAgICA8L3JkZjpSREY+CiAgPC9tZXRhZGF0YT4KICA8ZwogICAgIGlua3NjYXBlOmxhYmVsPSJMYXllciAxIgogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyMSIKICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNDMuNTgwMjg1LC0zNC40ODU1MDgpIj4KICAgIDxwYXRoCiAgICAgICBpZD0icmVjdDg1NCIKICAgICAgIHN0eWxlPSJmaWxsOiNkMzVmNWY7ZmlsbC1vcGFjaXR5OjAuOTk2MDc4O3N0cm9rZTojOWIzNjAwO3N0cm9rZS13aWR0aDowIgogICAgICAgZD0iTSA3NS41ODk4NDQsMCA0NS4zNTM1MTYsMzAuMjM2MzI4IFYgMTIwLjk0NTMxIEwgNzUuNTg5ODQ0LDE1MS4xODE2NCAxNTEuMTgxNjQsNzUuNTg5ODQ0IDEyOC41MDU4Niw1Mi45MTQwNjIgSCA5MC43MDcwMzEgViA2OC4wMzEyNSBIIDEwNS44MjYxNyBWIDgzLjE0ODQzOCBIIDkwLjcwNzAzMSA3NS41ODk4NDQgViA2OC4wMzEyNSA1Mi45MTQwNjIgMzcuNzk0OTIyIEggOTAuNzA3MDMxIDExMy4zODY3MiBaIE0gMzAuMjM2MzI4LDQ1LjM1MzUxNiAwLDc1LjU4OTg0NCAzMC4yMzYzMjgsMTA1LjgyNjE3IFoiCiAgICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjI2NDU4MzMzLDAsMCwwLjI2NDU4MzMzLDQzLjU4MDI4NSwzNC40ODU1MDgpIiAvPgogIDwvZz4KPC9zdmc+Cg==
+.. |release_badge| image:: https://img.shields.io/badge/dynamic/json.svg?label=release&url=https://gitlab.com/gyptis/gyptis/-/jobs/artifacts/master/file/badges.json?job=badge&query=release_tag&color=d25f5f&labelColor=dedede&style=for-the-badge&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgd2lkdGg9IjQwbW0iCiAgIGhlaWdodD0iNDBtbSIKICAgdmlld0JveD0iMCAwIDQwIDQwIgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmc4IgogICBpbmtzY2FwZTp2ZXJzaW9uPSIxLjAuMiAoZTg2Yzg3MDg3OSwgMjAyMS0wMS0xNSwgY3VzdG9tKSIKICAgc29kaXBvZGk6ZG9jbmFtZT0iZ3lwdGlzLnN2ZyIKICAgaW5rc2NhcGU6ZXhwb3J0LWZpbGVuYW1lPSIvaG9tZS9iZW5jaC9kZXYvZ3lwdGlzL2d5cHRpcy9kb2NzL19hc3NldHMvZ3lwdGlzLnBuZyIKICAgaW5rc2NhcGU6ZXhwb3J0LXhkcGk9IjYwMCIKICAgaW5rc2NhcGU6ZXhwb3J0LXlkcGk9IjYwMCI+CiAgPGRlZnMKICAgICBpZD0iZGVmczIiIC8+CiAgPHNvZGlwb2RpOm5hbWVkdmlldwogICAgIGlkPSJiYXNlIgogICAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgICBib3JkZXJjb2xvcj0iIzY2NjY2NiIKICAgICBib3JkZXJvcGFjaXR5PSIxLjAiCiAgICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAuMCIKICAgICBpbmtzY2FwZTpwYWdlc2hhZG93PSIyIgogICAgIGlua3NjYXBlOnpvb209IjQuMDQ1MDY3MSIKICAgICBpbmtzY2FwZTpjeD0iNDkuODM1Nzc4IgogICAgIGlua3NjYXBlOmN5PSI5OS4yMjIzNDIiCiAgICAgaW5rc2NhcGU6ZG9jdW1lbnQtdW5pdHM9Im1tIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9ImxheWVyMSIKICAgICBpbmtzY2FwZTpkb2N1bWVudC1yb3RhdGlvbj0iMCIKICAgICBzaG93Z3JpZD0iZmFsc2UiCiAgICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIxOTIwIgogICAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEwODAiCiAgICAgaW5rc2NhcGU6d2luZG93LXg9IjAiCiAgICAgaW5rc2NhcGU6d2luZG93LXk9IjAiCiAgICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIgLz4KICA8bWV0YWRhdGEKICAgICBpZD0ibWV0YWRhdGE1Ij4KICAgIDxyZGY6UkRGPgogICAgICA8Y2M6V29yawogICAgICAgICByZGY6YWJvdXQ9IiI+CiAgICAgICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICAgICAgPGRjOnR5cGUKICAgICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPgogICAgICAgIDxkYzp0aXRsZT48L2RjOnRpdGxlPgogICAgICA8L2NjOldvcms+CiAgICA8L3JkZjpSREY+CiAgPC9tZXRhZGF0YT4KICA8ZwogICAgIGlua3NjYXBlOmxhYmVsPSJMYXllciAxIgogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyMSIKICAgICB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNDMuNTgwMjg1LC0zNC40ODU1MDgpIj4KICAgIDxwYXRoCiAgICAgICBpZD0icmVjdDg1NCIKICAgICAgIHN0eWxlPSJmaWxsOiNkMzVmNWY7ZmlsbC1vcGFjaXR5OjAuOTk2MDc4O3N0cm9rZTojOWIzNjAwO3N0cm9rZS13aWR0aDowIgogICAgICAgZD0iTSA3NS41ODk4NDQsMCA0NS4zNTM1MTYsMzAuMjM2MzI4IFYgMTIwLjk0NTMxIEwgNzUuNTg5ODQ0LDE1MS4xODE2NCAxNTEuMTgxNjQsNzUuNTg5ODQ0IDEyOC41MDU4Niw1Mi45MTQwNjIgSCA5MC43MDcwMzEgViA2OC4wMzEyNSBIIDEwNS44MjYxNyBWIDgzLjE0ODQzOCBIIDkwLjcwNzAzMSA3NS41ODk4NDQgViA2OC4wMzEyNSA1Mi45MTQwNjIgMzcuNzk0OTIyIEggOTAuNzA3MDMxIDExMy4zODY3MiBaIE0gMzAuMjM2MzI4LDQ1LjM1MzUxNiAwLDc1LjU4OTg0NCAzMC4yMzYzMjgsMTA1LjgyNjE3IFoiCiAgICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjI2NDU4MzMzLDAsMCwwLjI2NDU4MzMzLDQzLjU4MDI4NSwzNC40ODU1MDgpIiAvPgogIDwvZz4KPC9zdmc+Cg==
   :target: https://gitlab.com/gyptis/gyptis/-/releases
   :alt: Release
 
-.. image:: https://img.shields.io/gitlab/pipeline/gyptis/gyptis/master?logo=gitlab&labelColor=dedede&logoColor=ffffff&style=for-the-badge
+.. |GL_CI| image:: https://img.shields.io/gitlab/pipeline/gyptis/gyptis/master?logo=gitlab&labelColor=dedede&logoColor=ffffff&style=for-the-badge
    :target: https://gitlab.com/gyptis/gyptis/commits/master
    :alt: pipeline status
 
-.. image:: https://img.shields.io/conda/vn/conda-forge/gyptis?logo=conda-forge&color=CD5C5C&logoColor=white&style=for-the-badge   
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/gyptis?logo=conda-forge&color=CD5C5C&logoColor=white&style=for-the-badge   
    :target: https://anaconda.org/conda-forge/gyptis
    :alt: Conda (channel only)
 
-.. image:: https://img.shields.io/conda/dn/conda-forge/gyptis?logo=conda-forge&logoColor=white&style=for-the-badge
+.. |conda_dl| image:: https://img.shields.io/conda/dn/conda-forge/gyptis?logo=conda-forge&logoColor=white&style=for-the-badge
    :alt: Conda
 
-.. image:: https://img.shields.io/conda/pn/conda-forge/gyptis?logo=conda-forge&logoColor=white&style=for-the-badge
+.. |conda_platform| image:: https://img.shields.io/conda/pn/conda-forge/gyptis?logo=conda-forge&logoColor=white&style=for-the-badge
    :alt: Conda
 
 
-.. image:: https://img.shields.io/pypi/v/gyptis?color=blue&logo=pypi&logoColor=e9d672&style=for-the-badge   
+.. |pip| image:: https://img.shields.io/pypi/v/gyptis?color=blue&logo=pypi&logoColor=e9d672&style=for-the-badge   
   :target: https://pypi.org/project/gyptis/
   :alt: PyPI
   
-.. image:: https://img.shields.io/pypi/dm/gyptis?logo=pypi&logoColor=e9d672&style=for-the-badge   
+.. |pip_dl| image:: https://img.shields.io/pypi/dm/gyptis?logo=pypi&logoColor=e9d672&style=for-the-badge   
    :alt: PyPI - Downloads
    
-.. image:: https://img.shields.io/pypi/status/gyptis?logo=pypi&logoColor=e9d672&style=for-the-badge   
+.. |pip_status| image:: https://img.shields.io/pypi/status/gyptis?logo=pypi&logoColor=e9d672&style=for-the-badge   
   :alt: PyPI - Status
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg?logo=python&logoColor=e9d672&style=for-the-badge
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?logo=python&logoColor=e9d672&style=for-the-badge
    :alt: Code style: black
  
-.. image:: https://img.shields.io/gitlab/coverage/gyptis/gyptis/master?logo=python&logoColor=e9d672&style=for-the-badge
+.. |coverage| image:: https://img.shields.io/gitlab/coverage/gyptis/gyptis/master?logo=python&logoColor=e9d672&style=for-the-badge
  :target: https://gitlab.com/gyptis/gyptis/commits/master
  :alt: coverage report 
 
-.. image:: https://img.shields.io/codeclimate/maintainability/benvial/gyptis?logo=code-climate&style=for-the-badge   
+.. |maintainability| image:: https://img.shields.io/codeclimate/maintainability/benvial/gyptis?logo=code-climate&style=for-the-badge   
    :target: https://codeclimate.com/github/benvial/gyptis
    :alt: Code Climate maintainability
 
-.. image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4938573-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
+.. |zenodo| image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4938573-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
  :target: https://doi.org/10.5281/zenodo.4938573
  
-.. image:: https://img.shields.io/badge/license-MIT-blue?color=bb798f&logo=open-access&logoColor=white&style=for-the-badge
+.. |licence| image:: https://img.shields.io/badge/license-MIT-blue?color=bb798f&logo=open-access&logoColor=white&style=for-the-badge
  :target: https://gitlab.com/gyptis/gyptis/-/blob/master/LICENCE.txt
  :alt: license
+ 
++----------------------+------------+----------------------+
+| Deployment           | |pip|      |        |conda|       |
++----------------------+------------+----------------------+
+| Build Status         |  |GL_CI|                          |
++----------------------+------------+----------------------+
+| Metrics              | |coverage| |   |maintainability|  |
++----------------------+------------+----------------------+
+| Activity             | |pip_dl|   |       |conda_dl|     |
++----------------------+------------+----------------------+
+| Citation             | |zenodo|                          |
++----------------------+------------+----------------------+
+| License              | |licence|                         |
++----------------------+------------+----------------------+
+| Formatter            | |black|                           |
++----------------------+------------+----------------------+
 
-   
+
+
+
+
 .. inclusion-marker-badges
 
 GYPTIS

@@ -157,7 +157,7 @@ class Scatt2D(_ScatteringBase, Simulation):
             evalpoint = eps, evalpoint[1]
         if evalpoint[1] == 0:
             evalpoint = evalpoint[0], eps
-        ldos = -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
+        ldos = -2 * self.source.pulsation / (np.pi * c**2) * u(evalpoint).imag
         return ldos
 
     def check_optical_theorem(cs, rtol=1e-12):

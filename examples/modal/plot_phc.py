@@ -105,7 +105,7 @@ print(ev_norma)
 eig_vects = phc.solution["eigenvectors"]
 for mode, eval in zip(eig_vects, ev_norma):
     gy.plot(mode.real, cmap="gyptis")
-    plt.title(fr"$\omega a/2\pi c = {eval:0.3f}$")
+    plt.title(rf"$\omega a/2\pi c = {eval:0.3f}$")
     H = phc.formulation.get_dual(mode, 1)
     gy.dolfin.plot(H.real, cmap="Greys")
     lattice.plot_subdomains()
@@ -154,7 +154,7 @@ for polarization in ["TE", "TM"]:
 bands_plot = np.zeros(3 * Nb - 2)
 bands_plot[:Nb] = K
 bands_plot[Nb : 2 * Nb - 1] = K[-1] + K[1:]
-bands_plot[2 * Nb - 1 : 3 * Nb - 2] = 2 * K[-1] + 2 ** 0.5 * K[1:]
+bands_plot[2 * Nb - 1 : 3 * Nb - 2] = 2 * K[-1] + 2**0.5 * K[1:]
 
 
 plt.figure(figsize=(3.2, 2.5))
