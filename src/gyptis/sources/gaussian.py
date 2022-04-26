@@ -55,7 +55,7 @@ class GaussianBeam(Source):
                 domain=self.domain,
             ) * Constant(
                 np.exp(
-                    -(t**2)
+                    -(t ** 2)
                     * 4
                     * (np.pi / 2) ** 2
                     * (self.waist / self.wavelength) ** 2

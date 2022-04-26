@@ -20,6 +20,7 @@ __all__ = [
     "Layered",
     "Geometry",
     "Homogenization2D",
+    "Homogenization3D",
 ]
 
 
@@ -121,7 +122,7 @@ class Lattice(Geometry):
     def __new__(self, dim=3, *args, **kwargs):
         _check_dimension(dim)
         if dim == 3:
-            raise NotImplementedError
+            return Lattice3D(*args, **kwargs)
         else:
             return Lattice2D(*args, **kwargs)
 

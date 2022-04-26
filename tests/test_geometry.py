@@ -48,7 +48,7 @@ def test_2D():
     # }
     dx = model.measure["dx"]
     area_cyl = dolfin.assemble(1 * dx("cyl"))
-    assert abs(area_cyl - model.cyl_size**2) < 1e-4
+    assert abs(area_cyl - model.cyl_size ** 2) < 1e-4
 
 
 def test_3D():

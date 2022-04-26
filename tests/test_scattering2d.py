@@ -163,8 +163,8 @@ def test_scatt2d_scs(polarization):
     geom.add_physical(shell, "shell")
     [geom.set_size(pml, lmin * 0.7) for pml in geom.pmls]
     geom.set_size("box", lmin)
-    geom.set_size("core", lmin / eps_core**0.5)
-    geom.set_size("shell", lmin / eps_shell**0.5)
+    geom.set_size("core", lmin / eps_core ** 0.5)
+    geom.set_size("shell", lmin / eps_shell ** 0.5)
     geom.build()
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
     epsilon = dict(box=1, core=eps_core, shell=eps_shell)

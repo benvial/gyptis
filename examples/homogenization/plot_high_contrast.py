@@ -25,12 +25,12 @@ def analytical_mueff(k, eps_i, Nmax=10):
     mu = 1
     for n in nms:
         for m in nms:
-            knm = np.pi / a * (n**2 + m**2) ** 0.5
+            knm = np.pi / a * (n ** 2 + m ** 2) ** 0.5
             qn = np.pi / a * n
             pm = np.pi / a * m
             alpha = 2 / qn * 2 / pm
             norm = (a / 2) ** 2
-            mu += -(k**2 * eps_i) / (k**2 * eps_i - knm**2) * alpha**2 / norm
+            mu += -(k ** 2 * eps_i) / (k ** 2 * eps_i - knm ** 2) * alpha ** 2 / norm
     return mu
 
 
@@ -103,8 +103,8 @@ print(mu_eff_ana)
 
 nms = [n for n in range(1, 6)]
 knm = (
-    np.array([np.pi / a * (n**2 + m**2) ** 0.5 for n in nms for m in nms])
-    / eps_i**0.5
+    np.array([np.pi / a * (n ** 2 + m ** 2) ** 0.5 for n in nms for m in nms])
+    / eps_i ** 0.5
 )
 qnm = hom.eigs["eigenvalues"]
 qnm = qnm[qnm.imag > 0]
@@ -188,7 +188,7 @@ thicknesses = OrderedDict(
     }
 )
 
-n_rod = eps_i.real**0.5
+n_rod = eps_i.real ** 0.5
 pmesh = 6
 mesh_param = dict(
     {

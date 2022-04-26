@@ -102,7 +102,7 @@ plt.show()
 
 domains = geom.subdomains["surfaces"]
 epsilon = {d: 1 for d in domains}
-epsilon["rod"] = n_rod**2
+epsilon["rod"] = n_rod ** 2
 mu = {d: 1 for d in domains}
 
 ######################################################################

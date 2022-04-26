@@ -25,7 +25,7 @@ def test_sampler():
         for p, r in zip(poles, res):
             t += r / (z - p)
         Q = np.abs(t) ** 2
-        return Q / Npoles**2
+        return Q / Npoles ** 2
 
     npts = 2000
     zref = np.linspace(0, 1, npts)
@@ -45,7 +45,7 @@ def test_sampler():
     print("------------")
 
     def f1(z):
-        return f(z), z**2
+        return f(z), z ** 2
 
     z, t = _adaptive_sampler(f1, z0)
     t0 = f(z0)

@@ -154,7 +154,7 @@ for polarization in ["TE", "TM"]:
 bands_plot = np.zeros(3 * Nb - 2)
 bands_plot[:Nb] = K
 bands_plot[Nb : 2 * Nb - 1] = K[-1] + K[1:]
-bands_plot[2 * Nb - 1 : 3 * Nb - 2] = 2 * K[-1] + 2**0.5 * K[1:]
+bands_plot[2 * Nb - 1 : 3 * Nb - 2] = 2 * K[-1] + 2 ** 0.5 * K[1:]
 
 
 plt.figure(figsize=(3.2, 2.5))
