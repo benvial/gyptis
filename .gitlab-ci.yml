@@ -11,8 +11,8 @@ stages:
   - trigdoc
   - trigdocker
   - test
-  
-  
+
+
 
 badge:
   stage: badge
@@ -31,7 +31,7 @@ container:
   trigger: gyptis/docker
   only:
     - tags
-  
+
 
 staging:
   stage: trigdoc
@@ -50,7 +50,9 @@ test:
     - coverage xml
   artifacts:
     reports:
-      cobertura: coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
   only:
     - master
 
