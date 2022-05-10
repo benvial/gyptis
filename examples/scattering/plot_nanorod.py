@@ -48,7 +48,7 @@ def build_geo():
 
 
 def run(geom, polarization):
-    pw = gy.GaussianBeam(
+    gb = gy.GaussianBeam(
         wavelength=wavelength,
         angle=gy.pi,
         waist=wavelength,
@@ -68,7 +68,7 @@ def run(geom, polarization):
         geom,
         epsilon,
         mu,
-        pw,
+        gb,
         degree=degree,
         polarization=polarization,
     )

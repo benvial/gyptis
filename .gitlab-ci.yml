@@ -20,10 +20,12 @@ badge:
     - echo "collecting stats for badges"
     - commits=`git rev-list --all --count`
     - latest_release_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
-    - echo {\"commits\":\"$commits\", \"release_tag\":\"$latest_release_tag\"} > badges.json
+    - echo {\"schemaVersion\":"1", \"logoSvg\":\"$logo\", \"label\":\"release\", \"message\":\"$latest_release_tag\", \"color\":\"d25f5f\", \"labelColor\":\"dedede\", \"style\":\"for-the-badge\"} > logobadge.json
   artifacts:
     paths:
         - badges.json
+        - logobadge.json
+
 
 
 container:
