@@ -143,7 +143,7 @@ geom.add_physical(rods, "rods")
 geom.add_physical(rods_central, "rods_central")
 [geom.set_size(pml, lmin * 0.7) for pml in geom.pmls]
 geom.set_size("box", lmin)
-geom.set_size("rods_central", lmin / eps_i.real ** 0.5)
+geom.set_size("rods_central", lmin / eps_i.real**0.5)
 geom.set_size("rods", lmin)
 geom.build(1)
 

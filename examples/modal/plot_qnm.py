@@ -62,7 +62,7 @@ tri, box = geom.fragment(tri, geom.box)
 geom.add_physical(box, "box")
 geom.add_physical(tri, "rod")
 geom.set_size("box", lmin)
-geom.set_size("rod", lmin / (eps_rod.real ** 0.5))
+geom.set_size("rod", lmin / (eps_rod.real**0.5))
 [geom.set_size(pml, lmin) for pml in geom.pmls]
 
 geom.build()
@@ -143,7 +143,7 @@ for i, mode_index in enumerate([i1, i2]):
     v = modes[mode_index]
     ## normalize
     Kn = gy.assemble(gy.dot(chi * v, v) * form.dx)
-    qnm = v / Kn ** 0.5
+    qnm = v / Kn**0.5
 
     plt.figure()
     gy.plot(qnm.real, cmap="RdBu_r", ax=plt.gca())
@@ -168,7 +168,7 @@ def get_coupling_coeff(scatt, mode_index, pw, Kn=None):
     source = form.maxwell(pw.expression, vn, xi - xi_a, chi - chi_a, domain="rod")
     ss = -source[0] + gy.Constant(k) ** 2 * source[1]
     Jn = gy.assemble(ss) / Kn
-    Pn = Jn / (k ** 2 - kn ** 2)
+    Pn = Jn / (k**2 - kn**2)
     return Pn.real + 1j * Pn.imag
 
 
@@ -294,7 +294,7 @@ s_direct = gy.Scattering(
 )
 
 # LDOS in vaccum
-ldos_vac = 2 * s_direct.source.pulsation / (pi * c ** 2) * 0.25
+ldos_vac = 2 * s_direct.source.pulsation / (pi * c**2) * 0.25
 
 nx, ny = 21, 21
 X = np.linspace(-lbox / 2, lbox / 2, nx)
@@ -332,12 +332,12 @@ for mode_index in mode_indexes_rec:
     vn = project_iterative(vn, s_modal.formulation.real_function_space)
     vn = function2array(vn.real) + 1j * function2array(vn.imag)
     kn = ev[mode_index]
-    ldos_qmem_array += ((vn * vn) / (Kn * (k ** 2 - kn ** 2))).imag
+    ldos_qmem_array += ((vn * vn) / (Kn * (k**2 - kn**2))).imag
 
 ldos_qmem = array2function(ldos_qmem_array, s_modal.formulation.real_function_space)
-ldos_qmem *= -2 * ls.pulsation / (pi * c ** 2)
+ldos_qmem *= -2 * ls.pulsation / (pi * c**2)
 Z = -ldos_qmem / ldos_vac
-Za = 2 * ls.pulsation / (pi * c ** 2) * ldos_qmem_array / ldos_vac
+Za = 2 * ls.pulsation / (pi * c**2) * ldos_qmem_array / ldos_vac
 
 mini = 0.325
 maxi = 2.8  # Za.max()

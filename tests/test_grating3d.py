@@ -63,7 +63,7 @@ def test_grating3d(degree=2):
     ##  ---------- materials ----------
     eps_groove = (1.75 - 1.5j) ** 2
     eps_hole = 1
-    eps_substrate = 1.5 ** 2
+    eps_substrate = 1.5**2
 
     epsilon = dict(
         {

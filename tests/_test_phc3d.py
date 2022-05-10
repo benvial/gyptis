@@ -119,7 +119,7 @@ true_eig = (
     * np.sort(
         np.array(
             [
-                (m ** 2 + n ** 2 + p ** 2) ** 0.5
+                (m**2 + n**2 + p**2) ** 0.5
                 for m in range(6)
                 for n in range(6)
                 for p in range(6)
@@ -132,8 +132,8 @@ true_eig_norma = true_eig * a / (np.pi)
 # print(ev_norma)
 # print(true_eig_norma)
 
-print(ev_norma ** 2)
-print(true_eig_norma ** 2)
+print(ev_norma**2)
+print(true_eig_norma**2)
 
 #
 # @pytest.mark.parametrize(

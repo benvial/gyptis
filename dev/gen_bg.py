@@ -79,7 +79,7 @@ ls = gy.LineSource(
     wavelength=wavelength, position=(-Nx - 1, 0), domain=geom.mesh, degree=2
 )
 
-epsilon = {d: n_cyl ** 2 for d in geom.domains}
+epsilon = {d: n_cyl**2 for d in geom.domains}
 epsilon["box"] = 1
 mu = {d: 1 for d in geom.domains}
 

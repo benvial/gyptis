@@ -84,7 +84,7 @@ geom = create_geometry(wavelength, pml_width=wavelength, group=True)
 
 ls = gy.LineSource(wavelength=wavelength, position=(0, 7.3), domain=geom.mesh, degree=2)
 
-epsilon = {d: n_cyl ** 2 for d in geom.domains}
+epsilon = {d: n_cyl**2 for d in geom.domains}
 epsilon["box"] = 1
 mu = {d: 1 for d in geom.domains}
 
@@ -145,7 +145,7 @@ Y = np.linspace(-8, 8, 2 * ny - 1)
 LX = np.vstack([np.flipud(ldos[1:, :]), ldos])
 LDOS = np.hstack([np.fliplr(LX[:, 1:]), LX])
 
-v = np.log10(LDOS * gy.pi * gy.c ** 2 / (2 * ls.pulsation))
+v = np.log10(LDOS * gy.pi * gy.c**2 / (2 * ls.pulsation))
 
 fig, ax = plt.subplots(figsize=(2.6, 2.2))
 cs = plt.contourf(X, Y, v, cmap="Spectral_r", levels=31)

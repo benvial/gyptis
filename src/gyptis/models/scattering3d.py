@@ -204,7 +204,7 @@ class Scatt3D(_ScatteringBase, Simulation):
                 integrand = dot(Escat, Y.expression.conj)
                 I = assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
-                ) / (Rcalc ** 2)
+                ) / (Rcalc**2)
                 coeff = (
                     I * k * Rcalc / (sh.sph_hn2(n1, k * Rcalc) * (n1 * (n1 + 1)) ** 0.5)
                 )
@@ -220,7 +220,7 @@ class Scatt3D(_ScatteringBase, Simulation):
                 integrand = dot(Escat, Z.expression.conj)
                 I = assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
-                ) / (Rcalc ** 2)
+                ) / (Rcalc**2)
                 xsi_prime = sh.rb_hn2(n1 - 1, k * Rcalc) - n1 * sh.sph_hn2(
                     n1, k * Rcalc
                 )
@@ -240,7 +240,7 @@ class Scatt3D(_ScatteringBase, Simulation):
                 assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
                 )
-                / Rcalc ** 2
+                / Rcalc**2
             )
             coeff = I / (sh.sph_hn2(n1, k * Rcalc))
             return coeff
