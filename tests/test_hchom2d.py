@@ -41,13 +41,13 @@ def test_hchom2d():
         mu = 1
         for n in nms:
             for m in nms:
-                knm = np.pi / a * (n**2 + m**2) ** 0.5
+                knm = np.pi / a * (n ** 2 + m ** 2) ** 0.5
                 qn = np.pi / a * n
                 pm = np.pi / a * m
                 alpha = 2 / qn * 2 / pm
                 norm = (a / 2) ** 2
                 mu += (
-                    -(k**2 * eps_i) / (k**2 * eps_i - knm**2) * alpha**2 / norm
+                    -(k ** 2 * eps_i) / (k ** 2 * eps_i - knm ** 2) * alpha ** 2 / norm
                 )
         return mu
 

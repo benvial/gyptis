@@ -40,11 +40,11 @@ def test_simple(tol=1e-12):
     assert z * q1 == q * z1
     assert abs(z / q1 - q / z1) < tol
     assert abs(z / z1 - q / q1) < tol
-    assert abs(z) == (x**2 + y**2) ** 0.5
+    assert abs(z) == (x ** 2 + y ** 2) ** 0.5
     assert z.conj == q.conj()
     assert z.module == abs(z)
     assert z.phase == np.angle(q)
-    assert abs(z**2 - q**2) < tol
+    assert abs(z ** 2 - q ** 2) < tol
     assert abs(z ** (-3.4) - q ** (-3.4)) < tol
     assert z + q1 == z1 + q
     assert len(Complex(1, 1)) == 0
@@ -55,7 +55,7 @@ def test_simple(tol=1e-12):
         len(Complex([1], [3, 2]))
 
     with pytest.raises(NotImplementedError):
-        z**z
+        z ** z
 
     Z = Complex([1, 2], [3, 2])
     for i, r in enumerate(Z):
@@ -98,11 +98,11 @@ def test_complex(tol=1e-15):
     expr_im = f"{qim}" "+" + expr
     sol = dolfin.Expression((expr_re, expr_im), degree=1, domain=mesh)
     sol = Complex(sol[0], sol[1])
-    source = (k**2) * sol * utest + inner(grad(sol), grad(utest))
+    source = (k ** 2) * sol * utest + inner(grad(sol), grad(utest))
 
     F = (
         inner(grad(utrial), grad(utest)) * dx
-        + k**2 * utrial * utest * dx
+        + k ** 2 * utrial * utest * dx
         - source * dx
     )
     F = F.real + F.imag

@@ -63,8 +63,8 @@ pmesh = 3
 pmesh_hole = pmesh * 1
 mesh_param = dict(
     {
-        "pml_bottom": 1 * pmesh * eps_diel**0.5,
-        "substrate": pmesh * eps_diel**0.5,
+        "pml_bottom": 1 * pmesh * eps_diel ** 0.5,
+        "substrate": pmesh * eps_diel ** 0.5,
         "groove": pmesh * abs(eps_layer) ** 0.5,
         "hole": pmesh_hole,
         "superstrate": pmesh,
