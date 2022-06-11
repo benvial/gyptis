@@ -9,15 +9,10 @@
 import numpy as np
 import pytest
 
-import gyptis
-from gyptis import dolfin
-from gyptis.bc import DirichletBC
-from gyptis.complex import *
-
-np.random.seed(1234)
-
 
 def test_simple(tol=1e-12):
+    from gyptis.complex import Complex, Constant
+
     x, y, x1, y1 = np.random.rand(4) - 0.5
     z = Complex(x, y)
     z1 = Complex(x1, y1)
@@ -61,14 +56,17 @@ def test_simple(tol=1e-12):
     for i, r in enumerate(Z):
         assert r == Z[i]
 
-    ss = Constant((1 + 6 * 1j, 6 - 0.23j), name="test")
-    v = Constant((1 + 6 * 1j, 6 - 0.23j))
-    c = Constant(3 + 1j)
-    c = Constant(12)
-    c = Constant((1, 2))
+    Constant((1 + 6 * 1j, 6 - 0.23j), name="test")
+    Constant((1 + 6 * 1j, 6 - 0.23j))
+    Constant(3 + 1j)
+    Constant(12)
+    Constant((1, 2))
 
 
 def test_complex(tol=1e-15):
+    import gyptis
+    from gyptis import dolfin
+    from gyptis.bc import DirichletBC
 
     nx, ny = 50, 50
     mesh = dolfin.UnitSquareMesh(nx, ny)
@@ -81,13 +79,13 @@ def test_complex(tol=1e-15):
             or x[1] > 1.0 - dolfin.DOLFIN_EPS
         )
 
-    W = ComplexFunctionSpace(mesh, "CG", 1)
+    W = gyptis.ComplexFunctionSpace(mesh, "CG", 1)
     # W0 =  dolfin.FunctionSpace(mesh,W.ufl_element().extract_component(0)[1])
     W0 = dolfin.FunctionSpace(mesh, "DG", 0)
 
     # u = Function(W)
-    utrial = TrialFunction(W)
-    utest = TestFunction(W)
+    utrial = gyptis.TrialFunction(W)
+    utest = gyptis.TestFunction(W)
     dx = dolfin.dx(domain=mesh)
 
     k = 2
@@ -97,11 +95,12 @@ def test_complex(tol=1e-15):
     expr_re = f"{qre}" "+" + expr
     expr_im = f"{qim}" "+" + expr
     sol = dolfin.Expression((expr_re, expr_im), degree=1, domain=mesh)
-    sol = Complex(sol[0], sol[1])
-    source = (k ** 2) * sol * utest + inner(grad(sol), grad(utest))
+    sol = gyptis.Complex(sol[0], sol[1])
+
+    source = (k ** 2) * sol * utest + gyptis.inner(gyptis.grad(sol), gyptis.grad(utest))
 
     F = (
-        inner(grad(utrial), grad(utest)) * dx
+        gyptis.inner(gyptis.grad(utrial), gyptis.grad(utest)) * dx
         + k ** 2 * utrial * utest * dx
         - source * dx
     )
@@ -112,10 +111,10 @@ def test_complex(tol=1e-15):
 
     bcs = [bcre, bcim]
     Lh = dolfin.rhs(F)
-    bh = assemble(Lh)
+    bh = gyptis.assemble(Lh)
     ah = dolfin.lhs(F)
-    Ah = assemble(ah)
-    VV = dolfin.VectorFunctionSpace(mesh, "CG", 2)
+    Ah = gyptis.assemble(ah)
+    dolfin.VectorFunctionSpace(mesh, "CG", 2)
 
     # u = Function(W)
 
@@ -126,18 +125,18 @@ def test_complex(tol=1e-15):
             bc.apply(Ah, bh)
         solver.solve(Ah, u.vector(), bh)
 
-        u = Complex(u[0], u[1])
-        assert abs(assemble((u - sol) * dx)) < tol
+        u = gyptis.Complex(u[0], u[1])
+        assert abs(gyptis.assemble((u - sol) * dx)) < tol
         assert abs((u((0.5, 0.5)) - sol((0.5, 0.5)))) < tol_local
         return u
 
     # _solve(dolfin.LUSolver(Ah), 1e-12, 1e-12)
     u = _solve(dolfin.PETScKrylovSolver(), u, 1e-6, 1e-4)
 
-    uproj = project(u.real, W0)
-    inner(u.real, u)
-    inner(u, u.imag)
-    inner(u.real, u.imag)
+    gyptis.project(u.real, W0)
+    gyptis.inner(u.real, u)
+    gyptis.inner(u, u.imag)
+    gyptis.inner(u.real, u.imag)
 
-    phase = u.phase
-    module = u.module
+    u.phase
+    u.module

@@ -12,7 +12,6 @@ from .geometry import *
 
 def prepare_boundary_conditions(bc_dict):
     valid_bcs = ["PEC"]
-    boundary_conditions = []
     pec_bnds = []
     for bnd, cond in bc_dict.items():
         if cond not in valid_bcs:
@@ -102,26 +101,9 @@ class PeriodicBoundary2DX(dolfin.SubDomain):
     def inside(self, x, on_boundary):
         return bool(dolfin.near(x[0], -self.period / 2) and on_boundary)
 
-    # # Left boundary is "target domain" G
-    # def inside(self, x, on_boundary):
-    #     return bool(
-    #         x[0] - self.period / 2 < dolfin.DOLFIN_EPS
-    #         and x[0] - self.period / 2 > -dolfin.DOLFIN_EPS
-    #         and on_boundary
-    #     )
-
     def map(self, x, y):
         y[0] = x[0] - self.period
         y[1] = x[1]
-
-    #
-    # def map(self, x, y):
-    #     if dolfin.near(x[0], self.period / 2):
-    #         y[0] = x[0] - self.period
-    #         y[1] = x[1]
-    #     else:
-    #         y[0] = -1000
-    #         y[1] = -1000
 
 
 class BiPeriodicBoundary3D(dolfin.SubDomain):
@@ -167,12 +149,10 @@ class Periodic3D(dolfin.SubDomain):
         self.planes = geometry.planes
         super().__init__(map_tol=map_tol)
 
-    # Left boundary is "target domain" G
     def inside(self, x, on_boundary):
-        v = self.vectors
-        ison0 = is_on_plane(x, *self.planes[4], eps=self.eps)  ## -0
-        ison1 = is_on_plane(x, *self.planes[2], eps=self.eps)  ## -1
-        ison2 = is_on_plane(x, *self.planes[0], eps=self.eps)  ## -2
+        ison0 = is_on_plane(x, *self.planes[4], eps=self.eps)
+        ison1 = is_on_plane(x, *self.planes[2], eps=self.eps)
+        ison2 = is_on_plane(x, *self.planes[0], eps=self.eps)
 
         ison_slave0 = is_on_line3D(x, self.planes[4], self.planes[2], eps=self.eps)
         ison_slave1 = is_on_line3D(x, self.planes[4], self.planes[0], eps=self.eps)
@@ -184,7 +164,6 @@ class Periodic3D(dolfin.SubDomain):
             and on_boundary
         )
 
-    # Map right boundary (H) to left boundary (G)
     def map(self, x, y):
         v = self.vectors
 
@@ -193,27 +172,22 @@ class Periodic3D(dolfin.SubDomain):
                 y[i] = x[i]
             return y
 
-        ison0 = is_on_plane(x, *self.planes[5], self.map_tol)  ## -0
-        ison1 = is_on_plane(x, *self.planes[3], self.map_tol)  ## -1
-        ison2 = is_on_plane(x, *self.planes[1], self.map_tol)  ## -2
-        #### define mapping for a single point in the box, such that 3 mappings are required
+        ison0 = is_on_plane(x, *self.planes[5], self.map_tol)
+        ison1 = is_on_plane(x, *self.planes[3], self.map_tol)
+        ison2 = is_on_plane(x, *self.planes[1], self.map_tol)
         if ison0 and ison1 and ison2:
             y = set_coord(x - v[0] - v[1] - v[2], y)
 
-        ##### define mapping for edges in the box, such that mapping in 2 Cartesian coordinates are required
         elif ison0 and ison2:
             y = set_coord(x - v[0] - v[2], y)
         elif ison1 and ison2:
             y = set_coord(x - v[1] - v[2], y)
         elif ison0 and ison1:
             y = set_coord(x - v[0] - v[1], y)
-        #### right maps to left: left/right is defined as the x-direction
         elif ison0:
             y = set_coord(x - v[0], y)
-        ### back maps to front: front/back is defined as the y-direction
         elif ison1:
             y = set_coord(x - v[1], y)
-        #### top maps to bottom: top/bottom is defined as the z-direction
         elif ison2:
             y = set_coord(x - v[2], y)
         else:

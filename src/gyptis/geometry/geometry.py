@@ -47,7 +47,7 @@ def _set_opt_gmsh(name, value):
 def _get_opt_gmsh(name):
     try:
         return gmsh_options.getNumber(name)
-    except:
+    except Exception:
         return gmsh_options.getString(name)
 
 
@@ -132,7 +132,7 @@ class Geometry:
         if finalize:
             try:
                 gmsh.finalize()
-            except:
+            except Exception:
                 pass
 
         self.gmsh_args = gmsh_args

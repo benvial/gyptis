@@ -120,8 +120,6 @@ def download_data(
     data_file_name : str
         File name to save the dataset at.
 
-    config_key: str
-        The configuration key the data path is saved under.
 
     data_path : str | None
         The path to the data dir. ``~/.gyptis/data`` by default.
@@ -134,10 +132,6 @@ def download_data(
     data_file : str
         Full path of the created file.
     """
-    if not isinstance(url, str):
-        raise TypeError(
-            "key must be of type str, got {} instead".format(type(config_key))
-        )
 
     config_path = _get_config_path(config_path)
     config_file = os.path.join(config_path, "gyptis_config.json")

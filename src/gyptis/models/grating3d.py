@@ -202,11 +202,11 @@ class Grating3D(_GratingBase, Simulation):
         effs["B"] = B
 
         if verbose:
-            print(f"  Energy balance")
+            print("  Energy balance")
             print(f"  R = {R:0.6f}")
             print(f"  T = {T:0.6f}")
             print(f"  Q = {Q:0.6f}")
-            print(f"  ------------------------")
+            print("  ------------------------")
             print(f"  B = {B:0.6f}")
 
         return effs

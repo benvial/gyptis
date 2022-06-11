@@ -103,7 +103,7 @@ effs_TM = gratingTM.diffraction_efficiencies(1, orders=True)
 
 E = gratingTM.solution["total"]
 
-### reference
+# reference
 T_ref = dict(TM=[0.0639, 1.0000], TE=[0.1119, 1.0000])
 
 print("Transmission coefficient (TM)")

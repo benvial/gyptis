@@ -24,7 +24,10 @@ def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
     Kplus = vector((alpha0, beta0, 0))
     Kminus = vector((alpha0, -beta0, 0))
     deltaY = vector((0, sp.symbols("yshift", real=True), 0))
-    pw = lambda K: sp.exp(1j * K.dot(X - deltaY))
+
+    def pw(K):
+        return sp.exp(1j * K.dot(X - deltaY))
+
     phi_plus_re, phi_plus_im = sp.symbols("phi_plus_re,phi_plus_im", real=True)
     phi_minus_re, phi_minus_im = sp.symbols("phi_minus_re,phi_minus_im", real=True)
     phi_plus = phi_plus_re + 1j * phi_plus_im
@@ -58,7 +61,10 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
     Kplus = vector((alpha0, beta0, gamma0))
     Kminus = vector((alpha0, beta0, -gamma0))
     deltaZ = vector((0, 0, sp.symbols("zshift", real=True)))
-    pw = lambda K: sp.exp(1j * K.dot(X - deltaZ))
+
+    def pw(K):
+        return sp.exp(1j * K.dot(X - deltaZ))
+
     fields = []
     for comp in ["x", "y", "z"]:
         phi_plus_re, phi_plus_im = sp.symbols(
@@ -112,10 +118,10 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
 
     alpha0 = -k0 * np.sin(theta0) * np.cos(phi0)
     beta0 = -k0 * np.sin(theta0) * np.sin(phi0)
-    gamma0 = -k0 * np.cos(theta0)
+    # gamma0 = -k0 * np.cos(theta0)
     Ex0 = np.cos(psi0) * np.cos(theta0) * np.cos(phi0) - np.sin(psi0) * np.sin(phi0)
     Ey0 = np.cos(psi0) * np.cos(theta0) * np.sin(phi0) + np.sin(psi0) * np.cos(phi0)
-    Ez0 = -np.cos(psi0) * np.sin(theta0)
+    # Ez0 = -np.cos(psi0) * np.sin(theta0)
 
     def _matrix_pi(M, gamma):
         q = gamma * M
@@ -172,13 +178,13 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
         dtype=complex,
     )
 
-    ## solve
+    # solve
     U0 = np.array([Ex0, 0, Ey0, 0], dtype=complex)
     sol = inv(Q) @ U0
 
     # get coefficients by recurrence
     phi_0 = np.array([Ex0, sol[1], Ey0, sol[3]])
-    phi_end = np.array([sol[0], 0, sol[2], 0])
+    # phi_end = np.array([sol[0], 0, sol[2], 0])
     p_prev = Pi[0]
     phi_prev = phi_0
     phi = [phi_0]
@@ -191,7 +197,7 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
 
     # assert np.all(np.abs(phi_j - phi_end)<1e-14)
 
-    ## Ez
+    # Ez
     for i, (p, g, m) in enumerate(zip(phi.copy(), gamma, M)):
         phiz_plus = (m[2, 0] * p[2] - m[2, 1] * p[0]) * g
         phiz_minus = (m[2, 1] * p[1] - m[2, 0] * p[3]) * g
@@ -243,9 +249,9 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
     tcum += [tcum[-1]]
 
     q = [
-        l * e * sum(abs(p) ** 2)
+        loss * e * sum(abs(p) ** 2)
         + 2
-        * l
+        * loss
         * np.real(
             p[0]
             * p[1].conj()
@@ -253,7 +259,7 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
             * (np.exp(-2j * g * zi) - 1)
             / (2j * g)
         )
-        for l, p, e, zi, g in zip(losses, phi, th, tcum, gamma)
+        for loss, p, e, zi, g in zip(losses, phi, th, tcum, gamma)
     ]
 
     Q_ = [-0.5 * epsilon_0 * omega / P0 * q_ for q_ in q]

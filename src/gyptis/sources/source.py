@@ -17,7 +17,8 @@ from dolfin import Constant as ConstantRe
 from scipy.constants import c, epsilon_0, mu_0
 from sympy.vector import CoordSys3D
 
-from ..complex import Complex, Constant, as_tensor, as_vector, dolfin, dot, grad
+from .. import dolfin
+from ..complex import Complex, Constant, as_tensor, as_vector, dot, grad
 from ..plot import *
 
 _COORD = CoordSys3D("N")

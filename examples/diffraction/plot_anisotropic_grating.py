@@ -128,7 +128,7 @@ for jangle, angle in enumerate([0, -20, -40]):
     plt.xlim(-d / 2, nper * d - d / 2)
     plt.axis("off")
 
-    #### TE
+    # TE
 
     grating_TE = gy.Grating(geom, epsilon, mu, source=pw, polarization="TE", degree=2)
 

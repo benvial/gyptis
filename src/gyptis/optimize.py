@@ -80,7 +80,10 @@ class Filter:
             self._rfilt_scaled = df.Constant(self._rfilt_scaled)
 
         lhs = (
-            df.inner(self._rfilt_scaled * df.grad(af), self._rfilt_scaled * df.grad(vf))
+            df.inner(
+                self._rfilt_scaled * df.grad(af),
+                self._rfilt_scaled * df.grad(vf),
+            )
             * df.dx
             + df.inner(af, vf) * df.dx
         )
@@ -94,7 +97,7 @@ class Filter:
             lhs, rhs = self.weak(a)
             af = df.Function(self.function_space, name="Filtered density")
             self.vector = df.assemble(rhs)
-            if self.solver == None:
+            if self.solver is None:
                 self.matrix = df.assemble(lhs)
                 self.solver = df.KrylovSolver(self.matrix, "cg", "jacobi")
             self.solver.solve(af.vector(), self.vector)
@@ -240,8 +243,6 @@ class TopologyOptimizer:
             # density_f = transfer_sub_mesh(density_f, self.geometry, Actrl, Asub, self.design)
 
             ctrl = transfer_function(self.density_f, Actrl)
-            # ctrl = df.interpolate(self.density_f, Actrl)
-            # ctrl = project_iterative(self.density_f, Actrl)
             self.density_fp = (
                 projection(ctrl, beta=df.Constant(2 ** proj_level))
                 if proj
@@ -306,24 +307,17 @@ class TopologyOptimizer:
 
                 if rank == 0:
                     dy = np.hstack(dyall)
-                    # print(f"rank {rank} dy.shape",dy.shape)
                 else:
                     dy = np.empty(self.nvar)
-                    # print(f"rank {rank} dy.shape",dy.shape)
                 comm.Bcast(dy, root=0)
 
                 return dy
 
             def fun_nlopt(x, gradn):
                 y, dy = self.wrapper(x)
-                # print("dy.shape",dy.shape)
                 if self.verbose:
                     mpi_print(f"objective = {y}")
-                # dy = (function2array(array2function(dy,self.fs_sub)))
-                # print("dy.shape",dy.shape)
                 gradn[:] = _get_gradient(dy)
-                # _get_gradient(dy)
-                cbout = []
                 if self.callback is not None:
                     out = self.callback(self)
                     self._cbout.append(out)
@@ -335,8 +329,6 @@ class TopologyOptimizer:
             opt = nlopt.opt(nlopt.LD_MMA, self.nvar)
             opt.set_lower_bounds(lb)
             opt.set_upper_bounds(ub)
-            # opt.set_ftol_rel(1e-16)
-            # opt.set_xtol_rel(1e-16)
             if self.ftol_rel is not None:
                 opt.set_ftol_rel(self.ftol_rel)
             if self.xtol_rel is not None:

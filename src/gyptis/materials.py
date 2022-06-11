@@ -11,6 +11,7 @@ import os
 
 import numpy as np
 
+from . import dolfin
 from .complex import *
 from .plot import plot
 
@@ -118,7 +119,7 @@ def _separate_mapping_parts(mapping):
         try:
             vre = v.real
             vim = v.imag
-        except:
+        except Exception:
             vre = v
             vim = 0 * v
         map_re[k] = vre
@@ -135,11 +136,6 @@ def _apply(item, fun):
 
 def isiter(v):
     return hasattr(v, "__contains__")
-    # test = v.real if iscomplex(v) else v
-    # if hasattr(test, "ufl_shape"):
-    #     return test.ufl_shape != ()
-    # else:
-    #     return hasattr(test, "__contains__")
 
 
 def _make_tensor(mapping):
@@ -171,19 +167,17 @@ def _fldict(k, vflat):
 def _dic2list(dic):
     k = dic.keys()
     val = dic.values()
-    # N = np.shape(list(val)[0])
     N = np.array(list(val)[0]).shape
     nb_keys = len(k)
-    dnew = {}
     L = []
     for k, v in dic.items():
         vflat = _flatten_list(v)
         L.append(_fldict(k, vflat))
     L = np.reshape(L, (nb_keys, np.product(N))).T
     o = []
-    for l in L:
-        d = dict(l[0])
-        for a in l:
+    for elem in L:
+        d = dict(elem[0])
+        for a in elem:
             d.update(a)
         o.append(d)
     o = np.reshape(o, N).tolist()
@@ -208,9 +202,12 @@ class SubdomainTensorReal:
     def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
         mapping_tensor = _make_tensor(mapping)
         mapping_list = _dic2list(mapping_tensor)
-        fun = lambda mapping_list: SubdomainScalarReal(
-            markers, subdomains, mapping_list, cpp=cpp, **kwargs
-        )
+
+        def fun(mapping_list):
+            return SubdomainScalarReal(
+                markers, subdomains, mapping_list, cpp=cpp, **kwargs
+            )
+
         q = _apply(mapping_list, fun)
         return dolfin.as_tensor(q)
 
@@ -222,9 +219,12 @@ class SubdomainTensorComplex:
         a = _apply(d, _separate_mapping_parts)
         mape_re = _apply(a, lambda a: a[0])
         mape_im = _apply(a, lambda a: a[1])
-        fun = lambda mapping_list: SubdomainScalarReal(
-            markers, subdomains, mapping_list, cpp=cpp, **kwargs
-        )
+
+        def fun(mapping_list):
+            return SubdomainScalarReal(
+                markers, subdomains, mapping_list, cpp=cpp, **kwargs
+            )
+
         qre = _apply(mape_re, fun)
         qim = _apply(mape_im, fun)
         Tre = dolfin.as_tensor(qre)
@@ -348,7 +348,6 @@ def complex_vector(V):
     )
 
 
-## xi
 def _get_xi(prop):
     new_prop = {}
     for d, p in prop.items():
@@ -363,7 +362,6 @@ def _get_xi(prop):
     return new_prop
 
 
-## chi
 def _get_chi(prop):
     new_prop = {}
     for d, p in prop.items():
@@ -393,7 +391,6 @@ def _invert_3by3_complex_matrix(m):
         [m6 * m7 - m4 * m9, m1 * m9 - m3 * m7, m3 * m4 - m1 * m6],
         [m4 * m8 - m5 * m7, m2 * m7 - m1 * m8, m1 * m5 - m2 * m4],
     ]
-    # inv_df = dolfin.as_tensor(inv)
     invre = np.zeros((3, 3), dtype=object)
     invim = np.zeros((3, 3), dtype=object)
     for i in range(3):
@@ -417,8 +414,12 @@ def _make_cst_mat(a, b):
 
 def _coefs(a, b):
     # xsi = det Q^T/det Q
-    extract = lambda q: dolfin.as_tensor([[q[0][0], q[1][0]], [q[0][1], q[1][1]]])
-    det = lambda M: M[0][0] * M[1][1] - M[1][0] * M[0][1]
+    def extract(q):
+        return dolfin.as_tensor([[q[0][0], q[1][0]], [q[0][1], q[1][1]]])
+
+    def det(M):
+        return M[0][0] * M[1][1] - M[1][0] * M[0][1]
+
     a2 = Complex(extract(a.real), extract(a.imag))
     xi = a2 / det(a2)
     chi = b[2][2]
@@ -432,8 +433,7 @@ class Coefficient:
         self.pmls = pmls
         self.dim = dim
         self.degree = degree
-        cell_type = "triangle" if dim == 2 else "tetrahedron"
-        self.element = None  # dolfin.FiniteElement("DG", cell_type, self.degree)
+        self.element = None
         if geometry:
             if self.dim == 2:
                 markers_key, mapping_key = "triangle", "surfaces"

@@ -180,11 +180,11 @@ class Grating2D(_GratingBase, Simulation):
         B = T + R + Q  # energy balance
 
         if verbose:
-            print(f"  Energy balance")
+            print("  Energy balance")
             print(f"  R = {R:0.6f}")
             print(f"  T = {T:0.6f}")
             print(f"  Q = {Q:0.6f}")
-            print(f"  ------------------------")
+            print("  ------------------------")
             print(f"  B = {B:0.6f}")
 
         eff = dict()
@@ -255,7 +255,7 @@ class Grating2D(_GratingBase, Simulation):
 
     def plot_geometry(self, nper=1, ax=None, c="k", **kwargs):
 
-        if ax == None:
+        if ax is None:
             ax = plt.gca()
         domains = self.geometry.subdomains["surfaces"]
         scatt = []
@@ -276,7 +276,6 @@ class Grating2D(_GratingBase, Simulation):
                         **kwargs,
                     )
                     scatt_lines.append(s)
-        yend = list(self.geometry.thicknesses.values())[-1]
         layers_lines = []
         for y0 in self.geometry.y_position.values():
             a = ax.axhline(y0, c=c, **kwargs)
@@ -302,7 +301,7 @@ class Grating2D(_GratingBase, Simulation):
     ):
 
         u = self.solution[field]
-        if ax == None:
+        if ax is None:
             ax = plt.gca()
         if "cmap" not in kwargs:
             kwargs["cmap"] = "RdBu_r"

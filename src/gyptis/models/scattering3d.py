@@ -88,7 +88,7 @@ class Scatt3D(_ScatteringBase, Simulation):
     def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
 
         parallel = dolfin.MPI.comm_world.size > 1
-        ### normal vector is messing up in parallel so workaround here:
+        # normal vector is messing up in parallel so workaround here:
         if parallel:
             Rcalc = self.geometry.Rcalc
             n_out = dolfin.Expression(
@@ -111,7 +111,7 @@ class Scatt3D(_ScatteringBase, Simulation):
         )
         inv_mua_coeff = mu_a.invert().as_subdomain()
         Hi = inv_mua_coeff / Complex(0, dolfin.Constant(omega * mu_0)) * curl(Ei)
-        Si = dolfin.Constant(0.5) * cross(Ei, Hi.conj).real
+        # Si = dolfin.Constant(0.5) * cross(Ei, Hi.conj).real
         Se = dolfin.Constant(0.5) * (cross(Ei, Hs.conj) + cross(Es, Hi.conj)).real
 
         Etot = self.solution["total"]
@@ -202,11 +202,14 @@ class Scatt3D(_ScatteringBase, Simulation):
                     degree=degree_source,
                 )
                 integrand = dot(Escat, Y.expression.conj)
-                I = assemble(
+                integral = assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
                 ) / (Rcalc ** 2)
                 coeff = (
-                    I * k * Rcalc / (sh.sph_hn2(n1, k * Rcalc) * (n1 * (n1 + 1)) ** 0.5)
+                    integral
+                    * k
+                    * Rcalc
+                    / (sh.sph_hn2(n1, k * Rcalc) * (n1 * (n1 + 1)) ** 0.5)
                 )
             else:
                 # transverse components
@@ -218,13 +221,13 @@ class Scatt3D(_ScatteringBase, Simulation):
                     degree=degree_source,
                 )
                 integrand = dot(Escat, Z.expression.conj)
-                I = assemble(
+                integral = assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
                 ) / (Rcalc ** 2)
                 xsi_prime = sh.rb_hn2(n1 - 1, k * Rcalc) - n1 * sh.sph_hn2(
                     n1, k * Rcalc
                 )
-                coeff = I * k * Rcalc / xsi_prime
+                coeff = integral * k * Rcalc / xsi_prime
             return coeff
 
         def _postpro_coeff_h():
@@ -236,13 +239,13 @@ class Scatt3D(_ScatteringBase, Simulation):
                 degree=degree_source,
             )
             integrand = dot(Escat, X.expression.conj)
-            I = (
+            integral = (
                 assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
                 )
                 / Rcalc ** 2
             )
-            coeff = I / (sh.sph_hn2(n1, k * Rcalc))
+            coeff = integral / (sh.sph_hn2(n1, k * Rcalc))
             return coeff
 
         if coeff_type == "E":

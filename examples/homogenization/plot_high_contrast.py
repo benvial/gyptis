@@ -6,7 +6,7 @@
 # See the documentation at gyptis.gitlab.io
 
 """
-High contrast homogenization 
+High contrast homogenization
 ============================
 
 Metamaterial with high index inclusions

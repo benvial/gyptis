@@ -5,21 +5,18 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
-import os
-import time
-
-import numpy as np
-import pytest
-
-import gyptis
-from gyptis import BoxPML, Scattering
-from gyptis.models.scattering2d import *
-from gyptis.utils import list_time
-
-gyptis.dolfin.set_log_level(6)
-
 
 def test_flags():
+    import os
+    import time
+
+    import numpy as np
+
+    import gyptis
+    from gyptis import BoxPML, PlaneWave, Scattering
+    from gyptis.utils import list_time
+
+    gyptis.dolfin.set_log_level(6)
 
     # test = "-O3 -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -march=native"
     # test = "-O3 -march=native"
@@ -37,7 +34,7 @@ def test_flags():
         polarization = "TM"
         degree = 2
         wavelength = 0.3
-        pmesh = 25
+        pmesh = 3
         lmin = wavelength / pmesh
 
         geom = BoxPML(
@@ -53,14 +50,11 @@ def test_flags():
         geom.set_size("box", lmin)
         geom.set_size("cyl", lmin)
         geom.build()
-        mesh = geom.mesh_object["mesh"]
-        markers = geom.mesh_object["markers"]["triangle"]
-        mapping = geom.subdomains["surfaces"]
 
         epsilon = dict(box=1, cyl=3)
         mu = dict(box=1, cyl=1)
         pw = PlaneWave(
-            wavelength=wavelength, angle=0, dim=2, domain=mesh, degree=degree
+            wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=degree
         )
 
         for i in range(1, 2):
@@ -75,7 +69,7 @@ def test_flags():
             print(f"elapsed time solve {t:0.3f}s")
             list_time()
             t1 = -time.time()
-            f = assemble(u * s.formulation.dx)
+            gyptis.assemble(u * s.formulation.dx)
             t1 += time.time()
             print(f"elapsed time integral {t1:0.3f}s")
             # list_time()

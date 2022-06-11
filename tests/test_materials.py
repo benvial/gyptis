@@ -20,7 +20,7 @@ model = geom2D(mesh_size=0.1)
 mesh = model.mesh_object["mesh"]
 dx = model.measure["dx"]
 r = model.cyl_size
-l = model.square_size
+lsq = model.square_size
 markers = model.mesh_object["markers"]["triangle"]
 domains = model.subdomains["surfaces"]
 
@@ -40,7 +40,7 @@ def test_subdomain(degree):
     assert a == a_py
 
     a_cyl = r ** 2
-    a_box = l ** 2 - a_cyl
+    a_box = lsq ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
 
     assert abs(a - a_test) ** 2 < tol
@@ -49,9 +49,9 @@ def test_subdomain(degree):
 
     values = dict(cyl=f, box=1)
     sub_with_function = Subdomain(markers, domains, values, degree=degree)
-    I = dolfin.assemble(sub_with_function * dx("cyl"))
+    integral = dolfin.assemble(sub_with_function * dx("cyl"))
     Iexact = 4 / 3 * r ** 3
-    assert abs(I - Iexact) ** 2 < tol
+    assert abs(integral - Iexact) ** 2 < tol
     sub_with_function_python = Subdomain(
         markers, domains, values, degree=degree, cpp=False
     )
@@ -77,7 +77,7 @@ def test_subdomain_complex(degree):
     assert a == a_py
 
     a_cyl = r ** 2
-    a_box = l ** 2 - a_cyl
+    a_box = lsq ** 2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
     tol1 = 1e-2
     assert abs(a - a_test) ** 2 < tol1
@@ -119,7 +119,7 @@ def test_subdomain_complex(degree):
 
 
 def test_pml():
-    pml = PML()
+    PML()
 
 
 def test_coefficient():
@@ -131,9 +131,6 @@ def test_coefficient():
     geom.add_physical(cyl, "cyl")
     geom.set_size("cyl", 0.04)
     geom.build()
-    mesh = geom.mesh_object["mesh"]
-    markers = geom.mesh_object["markers"]["triangle"]
-    mapping = geom.subdomains["surfaces"]
 
     epsilon = dict(box=1, cyl=3)
     eps = Coefficient(epsilon)
@@ -145,7 +142,7 @@ def test_coefficient():
     eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
     eps.appy_pmls()
 
-    eps_subdomain = eps.as_subdomain()
+    eps.as_subdomain()
 
     # eps.plot()
     eps.plot(component=(1, 1))
@@ -156,11 +153,11 @@ def test_coefficient():
 
     eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
 
-    eps_prop = eps.as_property()
-    eps_prop = eps.as_property(dim=3)
+    eps.as_property()
+    eps.as_property(dim=3)
 
-    xi = eps.to_xi()
-    chi = eps.to_chi()
+    eps.to_xi()
+    eps.to_chi()
 
 
 # TODO: be careful here

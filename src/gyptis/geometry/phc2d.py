@@ -31,11 +31,11 @@ class Lattice2D(Geometry):
         p = []
         for v in self.vertices:
             p.append(self.add_point(*v, 0))
-        l = []
+        curves = []
         for i in range(3):
-            l.append(self.add_line(p[i + 1], p[i]))
-        l.append(self.add_line(p[3], p[0]))
-        cl = self.add_curve_loop(l)
+            curves.append(self.add_line(p[i + 1], p[i]))
+        curves.append(self.add_line(p[3], p[0]))
+        cl = self.add_curve_loop(curves)
         ps = self.add_plane_surface([cl])
         self.cell = ps
         # self.add_physical(self.cell, "cell")

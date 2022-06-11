@@ -35,8 +35,6 @@ S_sphere = a ** 2 * np.pi
 circ = 2 * np.pi * a
 
 shared_datadir = "../../tests/data"
-## needed for surface integral in parallel (mpi)
-dolfin.parameters["ghost_mode"] = "shared_facet"
 dolfin.parameters["form_compiler"]["quadrature_degree"] = 3
 
 scs_file = shared_datadir + "/sphere_diel.csv"

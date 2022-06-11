@@ -6,7 +6,7 @@
 # See the documentation at gyptis.gitlab.io
 
 """
-High contrast homogenization 
+High contrast homogenization
 ============================
 
 Metamaterial with high index inclusions
@@ -49,7 +49,7 @@ plt.show()
 v = hom.solution["epsilon"]["y"]
 gy.plot(v)
 plt.show()
-xssx
+
 
 ##############################################################################
 # Build the lattice
@@ -105,7 +105,6 @@ hom = gy.models.HighContrastHomogenization2D(lattice, inclusion, epsilon, mu, de
 
 eps_eff = hom.get_effective_permittivity()
 print(eps_eff)
-xsx
 
 ##############################################################################
 # Slab and negative refraction
@@ -135,7 +134,7 @@ rods = [
 ]
 *rods, box = geom.fragment(box, rods)
 rods_central = [
-    geom.add_square((-Nx / 2 + i) * d, (-Ny / 2 + j) * d, 0, a) for i in range(Nx)
+    geom.add_square((-Nx / 2 + i) * d, (-Ny / 2 + i) * d, 0, a) for i in range(Nx)
 ]
 *rods_central, box = geom.fragment(box, rods_central)
 geom.add_physical(box, "box")

@@ -121,7 +121,7 @@ class Maxwell3D(Formulation):
 
     def build_pec_boundary_conditions(self, applied_function):
         if self.pec_boundaries != []:
-            ## FIXME: project is slow, avoid it.
+            # FIXME: project is slow, avoid it.
             applied_function = project_iterative(
                 applied_function, self.real_function_space
             )

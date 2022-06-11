@@ -5,7 +5,6 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
-# __all__ = ["colors", "pause", "plot", "plot_subdomains"]
 
 import copy
 
@@ -25,34 +24,39 @@ colors = dict(
     red=(210 / 255, 95 / 255, 95 / 255), green=(69 / 255, 149 / 255, 125 / 255)
 )
 
-plt.register_cmap(
-    cmap=LinearSegmentedColormap.from_list(
-        "gyptis", [colors["green"], (1, 1, 1), colors["red"]], N=100
+if "gyptis" in plt.colormaps():
+    plt.register_cmap(
+        cmap=LinearSegmentedColormap.from_list(
+            "gyptis", [colors["green"], (1, 1, 1), colors["red"]], N=100
+        )
     )
-)
-plt.register_cmap(
-    cmap=LinearSegmentedColormap.from_list(
-        "gyptis_r", [colors["red"], (1, 1, 1), colors["green"]], N=100
+if "gyptis_r" in plt.colormaps():
+    plt.register_cmap(
+        cmap=LinearSegmentedColormap.from_list(
+            "gyptis_r", [colors["red"], (1, 1, 1), colors["green"]], N=100
+        )
     )
-)
-plt.register_cmap(
-    cmap=LinearSegmentedColormap.from_list(
-        "gyptis_white", [(1, 1, 1), (1, 1, 1), (1, 1, 1)], N=100
-    )
-)
 
-plt.register_cmap(
-    cmap=LinearSegmentedColormap.from_list(
-        "gyptis_black", [(0, 0, 0), (0, 0, 0), (0, 0, 0)], N=100
+if "gyptis_white" in plt.colormaps():
+    plt.register_cmap(
+        cmap=LinearSegmentedColormap.from_list(
+            "gyptis_white", [(1, 1, 1), (1, 1, 1), (1, 1, 1)], N=100
+        )
     )
-)
+
+if "gyptis_black" in plt.colormaps():
+    plt.register_cmap(
+        cmap=LinearSegmentedColormap.from_list(
+            "gyptis_black", [(0, 0, 0), (0, 0, 0), (0, 0, 0)], N=100
+        )
+    )
 
 
 def get_boundaries(markers, domain=None, shift=(0, 0)):
 
     data = markers.array()
     triang = mesh2triang(markers.mesh())
-    if domain == None:
+    if domain is None:
         ids = np.unique(data)
     else:
         ids = [domain]
@@ -98,11 +102,11 @@ def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
         kwargs["color"] = "k"
     if ax is None:
         ax = plt.gca()
-    l = []
+    lines = []
     for bndpnts in sub_bnds:
-        l_ = ax.plot(*bndpnts, **kwargs)
-        l.append(l_)
-    return l
+        line = ax.plot(*bndpnts, **kwargs)
+        lines.append(line)
+    return lines
 
 
 # def plot_subdomains(markers, alpha=0.3):
@@ -135,7 +139,6 @@ def plot_real(fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **k
 def plot_complex(
     fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **kwargs
 ):
-    proj = proj_space is not None
     if ax is None:
         fig, ax = plt.subplots(1, 2)
     P, C = [], []

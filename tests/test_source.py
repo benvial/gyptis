@@ -69,17 +69,6 @@ def test_gf_2d():
     k0 = 2 * np.pi / lambda0
     Helm = dot(grad(GF), grad(GF)) + k0 ** 2 * GF * GF
     test = abs(assemble(Helm * dolfin.dx))
-    assert test < 5e-3
-
-
-def test_gf_2d():
-    mesh = dolfin.UnitSquareMesh(50, 50)
-    degree = 1
-    lambda0, xs, ys = 0.3, -0.1, -0.1
-    GF = green_function_2d(lambda0, xs, ys, degree=degree, domain=mesh)
-    k0 = 2 * np.pi / lambda0
-    Helm = dot(grad(GF), grad(GF)) + k0 ** 2 * GF * GF
-    test = abs(assemble(Helm * dolfin.dx))
     print(test)
     assert test < 5e-3
 
@@ -87,16 +76,12 @@ def test_gf_2d():
 def test_dipole():
     degree = 1
     mesh = dolfin.UnitSquareMesh(50, 50)
-    dip = Dipole(
+    Dipole(
         wavelength=0.1, position=(0.4, 0.2), angle=np.pi / 8, domain=mesh, degree=degree
     )
-    # W = dolfin.FunctionSpace(mesh, "CG", degree)
-    # dip_ = project(dip.expression, W)
-    # test = Complex(-11.263053291794082, 6.217332750825683)
-    # assert abs(dip_(0, 0) - test) < 1e-12
 
 
 def test_gaussian_beam():
     degree = 1
     mesh = dolfin.UnitSquareMesh(50, 50)
-    gb = GaussianBeam(1, 0.4, 0.2, dim=2, domain=mesh, degree=degree)
+    GaussianBeam(1, 0.4, 0.2, dim=2, domain=mesh, degree=degree)

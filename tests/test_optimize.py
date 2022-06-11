@@ -22,7 +22,6 @@ dx = geom.measure["dx"]
 markers = geom.mesh_object["markers"]["triangle"]
 domains = geom.subdomains["surfaces"]
 r = geom.cyl_size
-l = geom.square_size
 
 
 submesh = df.SubMesh(mesh, markers, domains["cyl"])
@@ -36,8 +35,6 @@ a = array2function(np.random.rand(W.dim()), W)
 
 
 def test_filter():
-    # if __name__ == "__main__":
-    values = dict(cyl=f, box=1)
     af = filtering(a, 0)
     rfilt = r * 0.1
     af = filtering(a, rfilt)
@@ -46,7 +43,7 @@ def test_filter():
     af = filter.apply(a)
 
     filter1 = Filter(rfilt, solver=filter.solver)
-    af1 = filter1.apply(a)
+    filter1.apply(a)
 
     df.plot(af)
     rfilt_aniso = np.diag([0.458 * rfilt, 3 * rfilt])

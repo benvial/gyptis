@@ -8,38 +8,38 @@
 import numpy as np
 import pytest
 
-from gyptis import BoxPML, Scattering, c
-from gyptis.plot import *
-
-wavelength = 14
-pmesh = 3
-lmin = wavelength / pmesh
-
-Rx, Ry = 8, 12
-eps_cyl = 41
-
-geom = BoxPML(
-    dim=2,
-    box_size=(2 * wavelength, 2 * wavelength),
-    pml_width=(2 * wavelength, 2 * wavelength),
-)
-cyl = geom.add_ellipse(0, 0, 0, Rx, Ry)
-cyl, box = geom.fragment(cyl, geom.box)
-geom.add_physical(box, "box")
-geom.add_physical(cyl, "cyl")
-[geom.set_size(pml, lmin) for pml in geom.pmls]
-geom.set_size("box", lmin)
-geom.set_size("cyl", lmin / eps_cyl ** 0.5)
-geom.build()
-
-epsilon = dict(box=1, cyl=eps_cyl)
-mu = dict(box=1, cyl=1)
-
 
 @pytest.mark.parametrize(
     "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_phc(degree, polarization):
+    import gyptis
+    from gyptis import BoxPML, Scattering, c, dolfin
+    from gyptis.plot import plot, plot_subdomains
+
+    wavelength = 14
+    pmesh = 3
+    lmin = wavelength / pmesh
+
+    Rx, Ry = 8, 12
+    eps_cyl = 41
+
+    geom = BoxPML(
+        dim=2,
+        box_size=(2 * wavelength, 2 * wavelength),
+        pml_width=(2 * wavelength, 2 * wavelength),
+    )
+    cyl = geom.add_ellipse(0, 0, 0, Rx, Ry)
+    cyl, box = geom.fragment(cyl, geom.box)
+    geom.add_physical(box, "box")
+    geom.add_physical(cyl, "cyl")
+    [geom.set_size(pml, lmin) for pml in geom.pmls]
+    geom.set_size("box", lmin)
+    geom.set_size("cyl", lmin / eps_cyl ** 0.5)
+    geom.build()
+
+    epsilon = dict(box=1, cyl=eps_cyl)
+    mu = dict(box=1, cyl=1)
     s = Scattering(
         geom,
         epsilon,
@@ -52,24 +52,17 @@ def test_phc(degree, polarization):
     n_eig = 6
     k_target = 2 * np.pi / wavelength_target
     solution = s.eigensolve(n_eig, k_target)
-    KNs = solution["eigenvalues"]
+    solution["eigenvalues"]
     eig_vects = solution["eigenvectors"]
-    KNs = np.array(KNs)
-
-    for mode, eval in zip(eig_vects, KNs):
-        if eval.imag < 0:
-            Q = -eval.real / eval.imag * 0.5
-            kre = eval.real
-            f = kre * c / (2 * np.pi) * 1e-6
-            if Q > 1.5:
-                plot(mode.real, cmap="RdBu_r")
-                H = s.formulation.get_dual(mode, 1)
-                Vvect = dolfin.VectorFunctionSpace(geom.mesh, "CG", 2)
-                H = project(
-                    H,
-                    Vvect,
-                    solver_type="cg",
-                    preconditioner_type="jacobi",
-                )
-                dolfin.plot(H.real, cmap="Greys")
-                geom.plot_subdomains()
+    mode = eig_vects[0]
+    plot(mode.real, cmap="RdBu_r", proj_space=s.formulation.real_function_space)
+    H = s.formulation.get_dual(mode, 1)
+    Vvect = gyptis.dolfin.VectorFunctionSpace(geom.mesh, "CG", 2)
+    H = gyptis.project(
+        H,
+        Vvect,
+        solver_type="cg",
+        preconditioner_type="jacobi",
+    )
+    gyptis.dolfin.plot(H.real, cmap="Greys")
+    geom.plot_subdomains()

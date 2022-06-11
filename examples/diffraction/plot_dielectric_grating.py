@@ -123,7 +123,7 @@ gratingTE.solve()
 effs_TE = gratingTE.diffraction_efficiencies(1, orders=True)
 E = gratingTE.solution["total"]
 
-### reference
+# reference
 T_ref = dict(TM=[0.2070, 1.0001], TE=[0.8187, 1.0001])
 
 

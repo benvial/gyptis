@@ -106,8 +106,8 @@ ev_norma_ref = omega_ref * a * 1e-6 / (2 * pi * c)
 fig, axcp = plt.subplots()
 plt.plot(ev_norma_ref.real, ev_norma_ref.imag, "ok", label="ref.")
 plt.plot(ev_norma.real, ev_norma.imag, "+r", label="gyptis")
-plt.xlabel(rf"Re $\tilde{{\omega}}$")
-plt.ylabel(rf"Im $\tilde{{\omega}}$")
+plt.xlabel(r"Re $\tilde{{\omega}}$")
+plt.ylabel(r"Im $\tilde{{\omega}}$")
 plt.legend()
 plt.tight_layout()
 
@@ -141,7 +141,7 @@ i2 = np.argmin(abs(ev_norma - ev_norma_ref_2))
 
 for i, mode_index in enumerate([i1, i2]):
     v = modes[mode_index]
-    ## normalize
+    # normalize
     Kn = gy.assemble(gy.dot(chi * v, v) * form.dx)
     qnm = v / Kn ** 0.5
 
@@ -182,10 +182,8 @@ for i, mode_index in enumerate([i1, i2]):
     Kn = gy.assemble(gy.dot(chi * vn, vn) * form.dx)
     coupling = []
     for angle in angles:
-        # print(f"θ = {angle*180/pi}°")
         coupling_ = []
         for wavelength in wls:
-            # print(f"λ = {wavelength}μm")
             pw = gy.PlaneWave(
                 wavelength=wavelength,
                 angle=pi / 2 + angle,

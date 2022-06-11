@@ -7,11 +7,9 @@
 
 import os
 
+import numpy as np
 import pytest
 
-from gyptis.models import *
-
-dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 # dolfin.set_log_level(0)
 
 ref = [1.0022840, 1.0374103, 1.0950892, 1.1977349]
@@ -20,6 +18,10 @@ r = [0.1, 0.25, 0.34, 0.43]
 
 @pytest.mark.parametrize("i", range(4))
 def test(i):
+    from gyptis import dolfin
+    from gyptis.models import Homogenization3D, Lattice3D
+
+    dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
     a = 1
     v = (a, 0, 0), (0, a, 0), (0, 0, a)
     R = r[i] * a

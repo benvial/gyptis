@@ -189,7 +189,6 @@ class SphericalSource(Source):
         st = self.sin_theta
         cp = self.cos_phi
         sp = self.sin_phi
-        r = self.r
         rot_mat = [
             [st * cp, ct * cp, -sp],
             [st * sp, ct * sp, cp],

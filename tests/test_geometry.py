@@ -31,7 +31,7 @@ def geom2D(square_size=1, cyl_size=0.3, mesh_size=0.1):
     model.set_size("box", 1 * mesh_size)
     model.set_size("cyl", 1 * mesh_size)
     model.set_size("cyl_bnds", mesh_size, dim=1)
-    mesh_object = model.build()
+    model.build()
     model.cyl_size = cyl_size
     model.square_size = square_size
 
@@ -40,12 +40,6 @@ def geom2D(square_size=1, cyl_size=0.3, mesh_size=0.1):
 
 def test_2D():
     model = geom2D(mesh_size=0.01)
-    # assert model.subdomains == {
-    #     "volumes": {},
-    #     "surfaces": {"cyl": 1, "box": 2},
-    #     "curves": {"outer_bnds": 3, "cyl_bnds": 4},
-    #     "points": {},
-    # }
     dx = model.measure["dx"]
     area_cyl = dolfin.assemble(1 * dx("cyl"))
     assert abs(area_cyl - model.cyl_size ** 2) < 1e-4
@@ -62,7 +56,7 @@ def test_3D():
     model.add_physical(box, "box")
     outer_bnds = model.get_boundaries("box")
     model.add_physical(outer_bnds, "outer_bnds", dim=2)
-    mesh_object = model.build()
+    model.build()
     assert model.subdomains == {
         "volumes": {"sphere": 1, "box": 2},
         "surfaces": {"outer_bnds": 3},
@@ -85,7 +79,7 @@ def test_box_pml_2D():
     model.set_size(model.box, 0.03)
     model.set_size(model.pmls, 0.1)
     model.set_size(cyl, 0.01)
-    mesh_object = model.build()
+    model.build()
 
 
 def test_box_pml_3D():
@@ -97,7 +91,7 @@ def test_box_pml_3D():
     model.set_size(model.box, 0.06)
     model.set_size(model.pmls, 0.1)
     model.set_size(sphere, 0.04)
-    mesh_object = model.build()
+    model.build()
 
 
 def test_spline():

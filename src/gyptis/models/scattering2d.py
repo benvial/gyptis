@@ -91,10 +91,10 @@ class Scatt2D(_ScatteringBase, Simulation):
 
         parallel = dolfin.MPI.comm_world.size > 1
 
-        ### normal vector is messing up in parallel so workaround here:
+        # normal vector is messing up in parallel so workaround here:
         if parallel:
             n_out = dolfin.Expression(
-                (f"x[0]/Rcalc", f"x[1]/Rcalc"),
+                ("x[0]/Rcalc", "x[1]/Rcalc"),
                 degree=self.degree,
                 Rcalc=self.geometry.Rcalc,
             )
@@ -177,7 +177,7 @@ class Scatt2D(_ScatteringBase, Simulation):
     ):
 
         u = self.solution[field]
-        if ax == None:
+        if ax is None:
             ax = plt.gca()
         if "cmap" not in kwargs:
             kwargs["cmap"] = "RdBu_r"

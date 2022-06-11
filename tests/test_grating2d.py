@@ -8,14 +8,10 @@
 
 from pprint import pprint
 
+import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
 
-from gyptis import Grating, Layered
-from gyptis.geometry import *
-from gyptis.models.grating2d import Grating2D, Layered2D, OrderedDict
-from gyptis.plot import *
-from gyptis.sources import *
 from gyptis.utils import list_time
 
 pytest_params = [("TM", 1), ("TE", 1), ("TM", 2), ("TE", 2)]
@@ -26,6 +22,10 @@ pmesh = 13
 
 @pytest.mark.parametrize("polarization,degree", pytest_params)
 def test_grating2d(polarization, degree):
+
+    from gyptis import Grating, Layered
+    from gyptis.models.grating2d import Grating2D, Layered2D, OrderedDict
+    from gyptis.sources import PlaneWave
 
     wavelength = 1
     lmin = wavelength / pmesh
@@ -74,7 +74,7 @@ def test_grating2d(polarization, degree):
     )
     s = Grating(geom, epsilon, mu, source=pw, degree=degree, polarization=polarization)
 
-    u = s.solve()
+    s.solve()
     list_time()
 
     effs = s.diffraction_efficiencies(1, orders=True, subdomain_absorption=True)
@@ -86,7 +86,7 @@ def test_grating2d(polarization, degree):
     s.plot_field(nper=3)
     s.plot_geometry(nper=3, c="k")
 
-    ### modal
+    # modal
 
     s = Grating2D(
         geom,
@@ -98,11 +98,16 @@ def test_grating2d(polarization, degree):
         polarization=polarization,
     )
     s.eigensolve(n_eig=6, wavevector_target=6)
-    uns = s.solution["eigenvectors"]
+    s.solution["eigenvectors"]
 
 
 @pytest.mark.parametrize("polarization,degree", pytest_params)
 def test_grating2dpec(polarization, degree):
+
+    from gyptis import Grating, Layered
+    from gyptis.models.grating2d import Grating2D, Layered2D, OrderedDict
+    from gyptis.sources import PlaneWave
+
     wavelength = 600
     period = 800
     h = 300
@@ -161,11 +166,9 @@ def test_grating2dpec(polarization, degree):
         polarization=polarization,
         boundary_conditions=boundary_conditions,
     )
-    u = s.solve()
+    s.solve()
     list_time()
     effs = s.diffraction_efficiencies(2, orders=True, subdomain_absorption=True)
     pprint(effs)
     if degree == 2:
         assert abs(effs["B"] - 1) < tol_balance, "Unsatified energy balance"
-    # # s.plot_geometry(c="k")
-    #

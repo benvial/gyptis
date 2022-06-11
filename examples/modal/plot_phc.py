@@ -165,7 +165,7 @@ plt.annotate("TE modes", (0.33, 0.33), c="#cf5268")
 plt.ylim(0, 0.8)
 plt.xlim(0, bands_plot[-1])
 plt.xticks(
-    [0, K[-1], 2 * K[-1], bands_plot[-1]], ["$\Gamma$", "$X$", "$M$", "$\Gamma$"]
+    [0, K[-1], 2 * K[-1], bands_plot[-1]], [r"$\Gamma$", r"$X$", r"$M$", r"$\Gamma$"]
 )
 plt.axvline(K[-1], c="k", lw=0.3)
 plt.axvline(2 * K[-1], c="k", lw=0.3)

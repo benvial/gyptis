@@ -19,14 +19,14 @@ def test_grating3d(degree=2):
 
     p = 1000
 
-    ##  ---------- incident wave ----------
+    #  ---------- incident wave ----------
 
     lambda0 = p * 3
     theta0 = 0 * np.pi / 180
     phi0 = 0 * np.pi / 180
     psi0 = 0 * np.pi / 180
 
-    ##  ---------- geometry ----------
+    #  ---------- geometry ----------
 
     period = (p, p)
     grooove_thickness = p / 20
@@ -41,7 +41,7 @@ def test_grating3d(degree=2):
         }
     )
 
-    ##  ---------- mesh ----------
+    #  ---------- mesh ----------
     parmesh = 5
 
     parmesh_hole = parmesh * 1
@@ -60,7 +60,7 @@ def test_grating3d(degree=2):
         }
     )
 
-    ##  ---------- materials ----------
+    #  ---------- materials ----------
     eps_groove = (1.75 - 1.5j) ** 2
     eps_hole = 1
     eps_substrate = 1.5 ** 2
@@ -81,7 +81,7 @@ def test_grating3d(degree=2):
             (np.array(e[1]).real.max() * np.array(m[1]).real.max()) ** 0.5
         ).real
 
-    ##  ---------- build geometry ----------
+    #  ---------- build geometry ----------
     geom = Layered(3, period, thicknesses, finalize=False)
 
     groove = geom.layers["groove"]
@@ -112,11 +112,11 @@ def test_grating3d(degree=2):
     index["pml_bottom"] = index["substrate"]
     pmesh = {k: lambda0 / (index[k] * mesh_params[k]) for k, p in mesh_params.items()}
     geom.set_mesh_size(pmesh)
-    mesh_object = geom.build()
+    geom.build()
 
     pw = PlaneWave(
         wavelength=lambda0,
-        angle=(0, 0, 0),
+        angle=(theta0, phi0, psi0),
         dim=3,
         domain=geom.mesh,
         degree=degree,

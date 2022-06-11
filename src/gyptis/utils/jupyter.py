@@ -58,14 +58,13 @@ class VersionTable(Magics):
         html += "<tr><th>Package</th></tr>"
 
         packages = []
-        qver = gyptis.__version__
         p = []
         p.append("numpy")
         p.append("scipy")
         p.append("matplotlib")
 
-        packages.append((f"<code>gyptis</code>", gyptis.__version__))
-        packages.append((f"<code>dolfin</code>", dolfin.__version__))
+        packages.append(("<code>gyptis</code>", gyptis.__version__))
+        packages.append(("<code>dolfin</code>", dolfin.__version__))
 
         for pkg in p:
             ver = pkg_resources.get_distribution(pkg).version

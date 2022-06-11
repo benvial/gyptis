@@ -68,7 +68,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
                 dolfin_mesh.mpi_comm(), f"{data_dir_xdmf}/{cell_type}.xdmf"
             ) as infile:
                 infile.read(mvc, cell_type)
-        except:
+        except Exception:
             pass
 
         markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)

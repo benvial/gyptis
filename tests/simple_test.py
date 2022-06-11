@@ -41,7 +41,7 @@ def test_simple(pmesh=10):
         wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=degree
     )
     s = Scattering(geom, epsilon, mu, pw, degree=degree, polarization=polarization)
-    u = s.solve()
+    s.solve()
     list_time()
 
 

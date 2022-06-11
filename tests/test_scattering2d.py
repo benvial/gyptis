@@ -11,31 +11,31 @@ import numpy as np
 import pytest
 
 import gyptis
-from gyptis import BoxPML, Scattering
-from gyptis.models.scattering2d import *
-from gyptis.plot import *
 from gyptis.utils import list_time
 
-polarization = "TM"
-degree = 2
 wavelength = 0.3
-pmesh = 3
+pmesh = 5
 lmin = wavelength / pmesh
 
-geom = BoxPML(
-    dim=2, box_size=(4 * wavelength, 4 * wavelength), pml_width=(wavelength, wavelength)
-)
-cyl = geom.add_circle(0, 0, 0, 0.2)
-cyl, box = geom.fragment(cyl, geom.box)
-geom.add_physical(box, "box")
-geom.add_physical(cyl, "cyl")
-[geom.set_size(pml, lmin) for pml in geom.pmls]
-geom.set_size("box", lmin)
-geom.set_size("cyl", lmin)
-geom.build()
-mesh = geom.mesh_object["mesh"]
-markers = geom.mesh_object["markers"]["triangle"]
-mapping = geom.subdomains["surfaces"]
+
+def build_geom():
+    from gyptis import BoxPML
+
+    geom = BoxPML(
+        dim=2,
+        box_size=(4 * wavelength, 4 * wavelength),
+        pml_width=(wavelength, wavelength),
+    )
+    cyl = geom.add_circle(0, 0, 0, 0.2)
+    cyl, box = geom.fragment(cyl, geom.box)
+    geom.add_physical(box, "box")
+    geom.add_physical(cyl, "cyl")
+    [geom.set_size(pml, lmin) for pml in geom.pmls]
+    geom.set_size("box", lmin)
+    geom.set_size("cyl", lmin)
+    geom.build()
+    return geom
+
 
 epsilon = dict(box=1, cyl=3)
 mu = dict(box=1, cyl=1)
@@ -45,14 +45,20 @@ mu = dict(box=1, cyl=1)
     "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_scatt2d_pw(degree, polarization):
+    from gyptis import PlaneWave, Scattering, dolfin
+
+    geom = build_geom()
+    mesh = geom.mesh
 
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=mesh, degree=degree)
 
     s = Scattering(geom, epsilon, mu, pw, degree=degree, polarization=polarization)
     u = s.solve()
     list_time()
-    print(assemble(u * s.formulation.dx))
+    print(gyptis.assemble(u * s.formulation.dx))
     if gyptis.ADJOINT:
+        from gyptis import project
+
         eps_max, eps_min = 3, 1
         Actrl = dolfin.FunctionSpace(mesh, "DG", 0)
         ctrl0 = dolfin.Expression("0.1", degree=2)
@@ -64,9 +70,9 @@ def test_scatt2d_pw(degree, polarization):
         # epsilon["cyl"] = project(eps_lens_func,s.formulation.real_function_space)
         epsilon["cyl"] = eps_lens_func
         # project(eps_lens_func,s.formulation.real_function_space)
-        s = Scatt2D(geom, epsilon, mu, pw, degree=degree, polarization=polarization)
+        s = Scattering(geom, epsilon, mu, pw, degree=degree, polarization=polarization)
         field = s.solve()
-        J = -assemble(inner(field, field.conj) * s.dx("box")).real
+        J = -gyptis.assemble(gyptis.inner(field, field.conj) * s.dx("box")).real
         Jhat = dolfin.ReducedFunctional(J, dolfin.Control(ctrl))
         conv_rate = dolfin.taylor_test(Jhat, ctrl, h)
         print("convergence rate = ", conv_rate)
@@ -77,14 +83,19 @@ def test_scatt2d_pw(degree, polarization):
     "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_scatt2d_ls(degree, polarization):
+
+    from gyptis import LineSource, Scattering
+
+    geom = build_geom()
+    mesh = geom.mesh
     gf = LineSource(wavelength, (-wavelength, 0), domain=mesh, degree=degree)
-    s = Scatt2D(geom, epsilon, mu, gf, degree=degree, polarization=polarization)
+    s = Scattering(geom, epsilon, mu, gf, degree=degree, polarization=polarization)
     u = s.solve()
     list_time()
-    tot = gf.expression + u
+    gf.expression + u
     s.source.position = (0, -wavelength)
     s.assemble_rhs()
-    u1 = s.solve_system(again=True)
+    s.solve_system(again=True)
     list_time()
 
     s.plot_field()
@@ -95,7 +106,10 @@ def test_scatt2d_ls(degree, polarization):
 @pytest.mark.parametrize("polarization", ["TM", "TE"])
 def test_scatt2d_pec(polarization):
 
-    geom = BoxPML2D(
+    from gyptis import BoxPML, PlaneWave, Scattering
+
+    geom = BoxPML(
+        dim=2,
         box_size=(4 * wavelength, 4 * wavelength),
         pml_width=(wavelength, wavelength),
     )
@@ -108,32 +122,32 @@ def test_scatt2d_pec(polarization):
     geom.set_size("box", lmin)
     geom.build(0)
     mesh = geom.mesh_object["mesh"]
-    markers = geom.mesh_object["markers"]["triangle"]
-    mapping = geom.subdomains["surfaces"]
     epsilon = dict(box=1)
     mu = dict(box=1)
 
-    pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=mesh, degree=degree)
+    pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=mesh, degree=2)
 
     bcs = {"cyl_bnds": "PEC"}
-    s = Scatt2D(
+    s = Scattering(
         geom,
         epsilon,
         mu,
         pw,
-        degree=degree,
+        degree=2,
         polarization=polarization,
         boundary_conditions=bcs,
     )
 
     u = s.solve()
     list_time()
-    print(assemble(u * s.formulation.dx))
+    print(gyptis.assemble(u * s.formulation.dx))
 
 
 @pytest.mark.parametrize("polarization", ["TM", "TE"])
 def test_scatt2d_scs(polarization):
-    pmesh = 6
+    from gyptis import BoxPML, PlaneWave, Scattering
+
+    pmesh = 10
     wavelength = 452
     eps_core = 2
     eps_shell = 6
@@ -176,12 +190,12 @@ def test_scatt2d_scs(polarization):
         mu,
         pw,
         degree=2,
-        polarization="TE",
+        polarization=polarization,
     )
     s.solve()
     cs = s.get_cross_sections()
     assert np.allclose(
-        cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-12
+        cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-11
     )
     print(cs["extinction"])
     print(cs["scattering"] + cs["absorption"])

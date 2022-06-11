@@ -7,7 +7,7 @@
 
 """
 Support for complex finite element forms.
-This module provides a :class:`Complex` class and overrides some ``dolfin`` functions
+This module provides a :class:`Complex` class and overrides some ``df`` functions
 to easily deal with complex problems by spliting real and imaginary parts.
 """
 
@@ -16,7 +16,7 @@ from typing import Iterable
 import numpy as np
 import ufl
 
-from . import dolfin
+from . import dolfin as df
 
 
 def _complexcheck(func):
@@ -70,7 +70,7 @@ def _complexify_bilinear(func):
 def _complexify_vector(func):
     def wrapper(*args, **kwargs):
         v = func(*args, **kwargs)
-        re, im = dolfin.split(v)
+        re, im = df.split(v)
         return Complex(re, im)
 
     return wrapper
@@ -175,7 +175,7 @@ class Complex:
         return self.__angle__()
 
     def __abs__(self):
-        return dolfin.sqrt(self.real ** 2 + self.imag ** 2)
+        return df.sqrt(self.real ** 2 + self.imag ** 2)
 
     def __neg__(self):  # defines -c (c is Complex)
         return Complex(-self.real, -self.imag)
@@ -205,14 +205,14 @@ class Complex:
         x, y = self.real, self.imag
         try:
             return np.angle(x + 1j * y)
-        except:
-            return dolfin.conditional(
+        except Exception:
+            return df.conditional(
                 ufl.eq(self.__abs__(), 0),
                 0,
-                dolfin.conditional(
+                df.conditional(
                     ufl.eq(self.__abs__() + x, 0),
-                    dolfin.pi,
-                    2 * dolfin.atan(y / (self.__abs__() + x)),
+                    df.pi,
+                    2 * df.atan(y / (self.__abs__() + x)),
                 ),
             )
 
@@ -243,7 +243,7 @@ class Complex:
             The complex number in cartesian representation.
 
         """
-        return module * Complex(dolfin.cos(phase), dolfin.sin(phase))
+        return module * Complex(df.cos(phase), df.sin(phase))
 
     def polar(self):
         """Polar representation.
@@ -280,7 +280,7 @@ def iscomplex(z):
         return False
 
 
-class ComplexFunctionSpace(dolfin.FunctionSpace):
+class ComplexFunctionSpace(df.FunctionSpace):
     """Complex function space"""
 
     def __init__(self, *args, **kwargs):
@@ -304,58 +304,58 @@ def _cplx_iter(f):
 
 
 def phasor(prop_cst, direction=0, **kwargs):
-    phasor_re = dolfin.Expression(
+    phasor_re = df.Expression(
         f"cos(prop_cst*x[{direction}])", prop_cst=prop_cst, **kwargs
     )
-    phasor_im = dolfin.Expression(
+    phasor_im = df.Expression(
         f"sin(prop_cst*x[{direction}])", prop_cst=prop_cst, **kwargs
     )
     return Complex(phasor_re, phasor_im)
 
 
 def phase_shift(phase, **kargs):
-    phasor_re = dolfin.Expression(f"cos(phase)", phase=phase, **kargs)
-    phasor_im = dolfin.Expression(f"sin(phase)", phase=phase, **kargs)
+    phasor_re = df.Expression("cos(phase)", phase=phase, **kargs)
+    phasor_im = df.Expression("sin(phase)", phase=phase, **kargs)
     return Complex(phasor_re, phasor_im)
 
 
 def phase_shift_constant(phase):
-    phasor_re = dolfin.cos(phase)
-    phasor_im = dolfin.sin(phase)
+    phasor_re = df.cos(phase)
+    phasor_im = df.sin(phase)
     return Complex(phasor_re, phasor_im)
 
 
 def vector(vect):
     vsr = [v.real for v in vect]
     vsi = [v.imag for v in vect]
-    return Complex(dolfin.as_vector(vsr), dolfin.as_vector(vsi))
+    return Complex(df.as_vector(vsr), df.as_vector(vsi))
 
 
 def tensor(tens):
     tsr = [[t.real for t in _t] for _t in tens]
     tsi = [[t.imag for t in _t] for _t in tens]
-    return Complex(dolfin.as_tensor(tsr), dolfin.as_tensor(tsi))
+    return Complex(df.as_tensor(tsr), df.as_tensor(tsi))
 
 
-interpolate = _complexify_linear(dolfin.interpolate)
-assemble = _complexify_linear(dolfin.assemble)
-grad = _complexify_linear(dolfin.grad)
-div = _complexify_linear(dolfin.div)
-curl = _complexify_linear(dolfin.curl)
-project = _complexify_linear(dolfin.project)
+interpolate = _complexify_linear(df.interpolate)
+assemble = _complexify_linear(df.assemble)
+grad = _complexify_linear(df.grad)
+div = _complexify_linear(df.div)
+curl = _complexify_linear(df.curl)
+project = _complexify_linear(df.project)
 
-Dx = _complexify_linear(dolfin.Dx)
-inner = _complexify_bilinear(dolfin.inner)
-dot = _complexify_bilinear(dolfin.dot)
-cross = _complexify_bilinear(dolfin.cross)
-as_tensor = _cplx_iter(dolfin.as_tensor)
-as_vector = _cplx_iter(dolfin.as_vector)
-Constant = _cplx_iter(dolfin.Constant)
-Function = _complexify_vector_alt(dolfin.Function)
-TrialFunction = _complexify_vector(dolfin.TrialFunction)
-TestFunction = _complexify_vector(dolfin.TestFunction)
-TrialFunctions = _complexify_vector(dolfin.TrialFunctions)
-TestFunctions = _complexify_vector(dolfin.TestFunctions)
+Dx = _complexify_linear(df.Dx)
+inner = _complexify_bilinear(df.inner)
+dot = _complexify_bilinear(df.dot)
+cross = _complexify_bilinear(df.cross)
+as_tensor = _cplx_iter(df.as_tensor)
+as_vector = _cplx_iter(df.as_vector)
+Constant = _cplx_iter(df.Constant)
+Function = _complexify_vector_alt(df.Function)
+TrialFunction = _complexify_vector(df.TrialFunction)
+TestFunction = _complexify_vector(df.TestFunction)
+TrialFunctions = _complexify_vector(df.TrialFunctions)
+TestFunctions = _complexify_vector(df.TestFunctions)
 j = Complex(0, 1)
 
 
@@ -368,7 +368,7 @@ def _traverse(a):
 
 
 def to_array(a):
-    l = []
+    values = []
     for e in _traverse(a):
-        l.append(e.to_complex())
-    return np.array(l).reshape(np.array(a).shape[:-1])
+        values.append(e.to_complex())
+    return np.array(values).reshape(np.array(a).shape[:-1])

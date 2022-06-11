@@ -65,8 +65,8 @@ def create_geometry(wavelength, pml_width, group=False):
     [geom.set_size(pml, lmin * 1) for pml in geom.pmls]
     geom.set_size("box", lmin)
     if group:
-        geom.add_physical(cylinders, f"cylinders")
-        geom.set_size(f"cylinders", lmin / n_cyl)
+        geom.add_physical(cylinders, "cylinders")
+        geom.set_size("cylinders", lmin / n_cyl)
     else:
         # we could define physical domains for each rod but that is slower
         # when assembling and solving the sctattering problem

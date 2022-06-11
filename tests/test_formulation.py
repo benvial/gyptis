@@ -5,7 +5,6 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
-from collections import OrderedDict
 
 from gyptis.api import BoxPML
 from gyptis.complex import ComplexFunctionSpace
@@ -35,8 +34,6 @@ def test_maxwell2d():
     geom.set_size("cyl", lmin)
     geom.build()
     mesh = geom.mesh_object["mesh"]
-    markers = geom.mesh_object["markers"]["triangle"]
-    mapping = geom.subdomains["surfaces"]
 
     epsilon = dict(box=1, cyl=3)
     mu = dict(box=1, cyl=1)
@@ -56,7 +53,7 @@ def test_maxwell2d():
 
     bcs = {}
 
-    m = Maxwell2D(
+    Maxwell2D(
         geom,
         coefficients,
         V,
@@ -82,8 +79,6 @@ def test_maxwell2d():
     geom.set_size("box", lmin)
     geom.build(0)
     mesh = geom.mesh_object["mesh"]
-    markers = geom.mesh_object["markers"]["triangle"]
-    mapping = geom.subdomains["surfaces"]
     epsilon = dict(box=1, cyl=3)
     mu = dict(box=1, cyl=1)
 
@@ -163,7 +158,7 @@ def test_maxwell2d_periodic():
         wavelength=lambda0, angle=np.pi / 4, dim=2, domain=geom.mesh, degree=degree
     )
 
-    out = make_stack(
+    make_stack(
         geom,
         coefficients,
         pw,

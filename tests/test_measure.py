@@ -37,7 +37,7 @@ def test_measure(model=model, tol=1e-9):
     area_box = dolfin.assemble(1 * dx("box"))
     assert abs(area_box - (model.square_size ** 2 - model.cyl_size ** 2)) < tol
 
-    ## exterior_facets
+    # exterior_facets
 
     ds = Measure(
         "ds",
@@ -46,7 +46,7 @@ def test_measure(model=model, tol=1e-9):
         subdomain_dict=model.subdomains["curves"],
     )
 
-    ## interior_facets
+    # interior_facets
 
     dS = Measure(
         "dS",

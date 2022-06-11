@@ -60,8 +60,9 @@ def _adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
         tmax = np.max(t)
         b = []
         for iz in range(len(z) - 2):
-            ztmp = z[iz : iz + 3]
-            ttmp = t[iz : iz + 3]
+            jz = iz + 3
+            ztmp = z[iz:jz]
+            ttmp = t[iz:jz]
 
             xp, x0, xn = ztmp
             yp, y0, yn = ttmp
@@ -124,7 +125,8 @@ def _adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
 
                 for isegment in seg:
                     # isegment = np.random.randint(2)
-                    znew = 0.5 * sum(ztmp[isegment : isegment + 2])
+                    jsegment = isegment + 2
+                    znew = 0.5 * sum(ztmp[isegment:jsegment])
                     if znew not in z:
                         z.append(znew)
                         tnew = f(znew)

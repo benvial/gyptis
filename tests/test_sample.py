@@ -29,7 +29,7 @@ def test_sampler():
 
     npts = 2000
     zref = np.linspace(0, 1, npts)
-    tref = f(zref)
+    f(zref)
 
     # adapt
 
@@ -39,7 +39,7 @@ def test_sampler():
     # t0 = f(z0)
 
     z, t = _adaptive_sampler(f, z0)
-    t0 = f(z0)
+    f(z0)
 
     print(f"number of points: {len(z)}")
     print("------------")
@@ -48,7 +48,7 @@ def test_sampler():
         return f(z), z ** 2
 
     z, t = _adaptive_sampler(f1, z0)
-    t0 = f(z0)
+    f(z0)
     assert len(z) == len(t)
 
     print(f"number of points: {len(z)}")
