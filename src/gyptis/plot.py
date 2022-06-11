@@ -24,27 +24,27 @@ colors = dict(
     red=(210 / 255, 95 / 255, 95 / 255), green=(69 / 255, 149 / 255, 125 / 255)
 )
 
-if "gyptis" in plt.colormaps():
+if "gyptis" not in plt.colormaps():
     plt.register_cmap(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis", [colors["green"], (1, 1, 1), colors["red"]], N=100
         )
     )
-if "gyptis_r" in plt.colormaps():
+if "gyptis_r" not in plt.colormaps():
     plt.register_cmap(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis_r", [colors["red"], (1, 1, 1), colors["green"]], N=100
         )
     )
 
-if "gyptis_white" in plt.colormaps():
+if "gyptis_white" not in plt.colormaps():
     plt.register_cmap(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis_white", [(1, 1, 1), (1, 1, 1), (1, 1, 1)], N=100
         )
     )
 
-if "gyptis_black" in plt.colormaps():
+if "gyptis_black" not in plt.colormaps():
     plt.register_cmap(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis_black", [(0, 0, 0), (0, 0, 0), (0, 0, 0)], N=100
