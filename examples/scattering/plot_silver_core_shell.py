@@ -36,10 +36,10 @@ def epsilon_silver(omega):
     delta_eps = 0.76
     epsilon = (
         eps_inf
-        - omega_D**2 / (omega * (omega + 1j * gamma_D))
+        - omega_D ** 2 / (omega * (omega + 1j * gamma_D))
         - delta_eps
-        * Omega_L**2
-        / ((omega**2 - Omega_L**2) + 1j * Gamma_L * omega)
+        * Omega_L ** 2
+        / ((omega ** 2 - Omega_L ** 2) + 1j * Gamma_L * omega)
     )
     return np.conj(epsilon)
 
