@@ -75,7 +75,7 @@ def get_cross_sections_analytical(k0, a, eps_sphere=4, eps_bg=1, Nmax=25):
         Cs += (2 * n + 1) * (np.abs(A) ** 2 + np.abs(B) ** 2)
         Ce += -(2 * n + 1) * ((A) + (B)).real
 
-    Cs *= 2 * np.pi / k1 ** 2
-    Ce *= 2 * np.pi / k1 ** 2
+    Cs *= 2 * np.pi / k1**2
+    Ce *= 2 * np.pi / k1**2
     Ca = Ce - Cs
     return Cs, Ce, Ca
