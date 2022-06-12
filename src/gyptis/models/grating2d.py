@@ -136,7 +136,7 @@ class Grating2D(_GratingBase, Simulation):
             Jn, beta_n, eff = {}, {}, {}
             for d in ["substrate", "superstrate"]:
                 s = 1 if d == "superstrate" else -1
-                beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n ** 2)
+                beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n**2)
                 ph_x = phasor(-qn, direction=0, degree=self.degree, domain=self.mesh)
                 ph_y = phasor(
                     s * beta_n[d].real,

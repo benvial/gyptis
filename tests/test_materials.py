@@ -39,8 +39,8 @@ def test_subdomain(degree):
     a_py = dolfin.assemble(sub_py * dx)
     assert a == a_py
 
-    a_cyl = r ** 2
-    a_box = lsq ** 2 - a_cyl
+    a_cyl = r**2
+    a_box = lsq**2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
 
     assert abs(a - a_test) ** 2 < tol
@@ -50,7 +50,7 @@ def test_subdomain(degree):
     values = dict(cyl=f, box=1)
     sub_with_function = Subdomain(markers, domains, values, degree=degree)
     integral = dolfin.assemble(sub_with_function * dx("cyl"))
-    Iexact = 4 / 3 * r ** 3
+    Iexact = 4 / 3 * r**3
     assert abs(integral - Iexact) ** 2 < tol
     sub_with_function_python = Subdomain(
         markers, domains, values, degree=degree, cpp=False
@@ -76,8 +76,8 @@ def test_subdomain_complex(degree):
     a_py = assemble(sub_py * dx)
     assert a == a_py
 
-    a_cyl = r ** 2
-    a_box = lsq ** 2 - a_cyl
+    a_cyl = r**2
+    a_box = lsq**2 - a_cyl
     a_test = a_cyl * values["cyl"] + a_box * values["box"]
     tol1 = 1e-2
     assert abs(a - a_test) ** 2 < tol1
