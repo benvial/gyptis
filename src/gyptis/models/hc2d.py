@@ -103,5 +103,5 @@ class HighContrastHomogenization2D(Simulation):
                 norm = assemble(eps_ * psi * psi.conj * dx)
                 alpha = assemble(psi * dx)
                 alpha1 = assemble(eps_ * psi.conj * dx)
-                mu_eff += -(k**2 * 1) / (k**2 * 1 - E**2) * alpha * alpha1 / norm
+                mu_eff += -(k ** 2 * 1) / (k ** 2 * 1 - E ** 2) * alpha * alpha1 / norm
         return mu_eff
