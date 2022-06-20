@@ -66,7 +66,7 @@ def test_filter():
 def test_simp(tol=1e-14):
     s_min, s_max, p = 4, 8, 1
     b = simp(a, s_min=s_min, s_max=s_max, p=p, complex=False)
-    diff = project(b, W) - (s_min + (s_max - s_min) * a ** p)
+    diff = project(b, W) - (s_min + (s_max - s_min) * a**p)
     err = assemble(abs(diff) * df.dx)
     assert err < tol
     s_min, s_max, p = 4 - 1j, 8 - 3j, 1
@@ -75,7 +75,7 @@ def test_simp(tol=1e-14):
     for ascalar in A:
         ascalar = 0.5
         b = simp(ascalar, s_min=s_min, s_max=s_max, p=p, complex=True)
-        diff = b - (s_min + (s_max - s_min) * ascalar ** p)
+        diff = b - (s_min + (s_max - s_min) * ascalar**p)
         err = abs(diff)
         assert err < tol
 

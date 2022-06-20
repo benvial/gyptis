@@ -47,7 +47,7 @@ class Maxwell3D(Formulation):
             return [form[0] * self.dx(domain), -form[1] * self.dx(domain)]
         else:
             k0 = Constant(self.source.wavenumber)
-            return (form[0] + k0 ** 2 * form[1]) * self.dx(domain)
+            return (form[0] + k0**2 * form[1]) * self.dx(domain)
 
     def _weak(self, u, v, u1):
         epsilon = self.epsilon.as_subdomain()

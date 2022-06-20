@@ -11,3 +11,4 @@
 
    reference
    examples/index
+   tutorials/index

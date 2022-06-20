@@ -28,6 +28,7 @@ class Simulation:
         self.formulation = formulation
         self.coefficients = formulation.coefficients
         self.function_space = formulation.function_space
+        self.real_function_space = formulation.real_function_space
         self._source = formulation.source
         self.boundary_conditions = formulation.boundary_conditions
         self.mesh = self.geometry.mesh
@@ -178,7 +179,7 @@ class Simulation:
         eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
         # eigensolver.parameters["solver"] = "power"
-        eigensolver.parameters["spectral_shift"] = float(wavevector_target ** 2)
+        eigensolver.parameters["spectral_shift"] = float(wavevector_target**2)
         eigensolver.parameters["spectral_transform"] = "shift-and-invert"
         eigensolver.parameters["tolerance"] = tol
         # eigensolver.parameters["solver"] = "mumps"

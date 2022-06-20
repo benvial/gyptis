@@ -115,6 +115,42 @@ def plot_boundaries(markers, domain=None, shift=(0, 0), ax=None, **kwargs):
 #     # a.set_edgecolors((0.1, 0.2, 0.5, 0.))
 
 
+def plot_markers(markers, subdomains, ax=None, geometry=None, colorbar=True, **kwargs):
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+    if "cmap" not in kwargs:
+        kwargs["cmap"] = "inferno"
+    plt.sca(ax)
+    n = len(subdomains)
+    cmap_disc = plt.cm.get_cmap(kwargs["cmap"])
+    bounds = np.array(list(subdomains.values()))
+    srt = np.argsort(bounds)
+    ids = np.array(list(subdomains.keys()))[srt]
+    bounds = bounds[srt]
+    bounds = np.hstack([bounds, [bounds[-1] + 1]])
+
+    tt = [(bounds[i + 1] + bounds[i]) / 2 for i in range(n)]
+
+    norm = matplotlib.colors.BoundaryNorm(bounds, cmap_disc.N)
+    kwargs["cmap"] = cmap_disc
+    p = dolfin.plot(markers, norm=norm, **kwargs)
+    if colorbar:
+        cbar = plt.colorbar(
+            matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap_disc), ticks=tt
+        )
+
+        cbar.ax.set_yticklabels(ids)
+        cbar.ax.tick_params(length=0)
+    else:
+        cbar = None
+    kwargs.pop("cmap")
+    # cbar = plt.colorbar(p,ticks=list(subdomains.keys()),cmap=cmap_disc) if colorbar else None
+
+    if geometry:
+        geometry.plot_subdomains(**kwargs)
+    return p, cbar
+
+
 def plot_subdomains(markers, **kwargs):
     return plot_boundaries(markers, **kwargs)
 

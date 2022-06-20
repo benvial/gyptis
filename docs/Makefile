@@ -65,14 +65,16 @@ clean:
 ## Postprocess html doc
 postpro-html:
 	@echo "Postprocessing html files."
-	@python postprocess.py html _build/html/*.html
-	@python postprocess.py html _build/html/generated/*.html
-	@python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
-	@python postprocess.py html $(wildcard $(BUILDDIR)/html/examples/**/*.html)
-	@python postprocess.py html $(BUILDDIR)/html/examples/*.html
-	@python caroussel.py
-	@cp -r _assets $(BUILDDIR)/html
-	@cp -r _assets $(BUILDDIR)/html/_static
+	# @python postprocess.py html _build/html/*.html
+	# @python postprocess.py html _build/html/generated/*.html
+	# @python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
+	# @python postprocess.py html $(wildcard $(BUILDDIR)/html/examples/**/*.html)
+	# @python postprocess.py html $(BUILDDIR)/html/examples/*.html
+	# @python postprocess.py html $(wildcard $(BUILDDIR)/html/tutorials/**/*.html)
+	# @python postprocess.py html $(BUILDDIR)/html/tutorials/*.html
+	# @python caroussel.py
+	# @cp -r _assets $(BUILDDIR)/html
+	# @cp -r _assets $(BUILDDIR)/html/_static
 	@echo "Done html postprocessing."
 
 

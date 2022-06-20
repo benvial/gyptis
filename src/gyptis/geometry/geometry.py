@@ -129,17 +129,18 @@ class Geometry:
         self._gmsh_add_spline = self.add_spline
         del self.add_spline
 
-        if finalize:
+        if finalize and gmsh.isInitialized():
             try:
                 gmsh.finalize()
             except Exception:
                 pass
 
         self.gmsh_args = gmsh_args
-        if gmsh_args is not None:
-            gmsh.initialize(self.gmsh_args)
-        else:
-            gmsh.initialize()
+        if not gmsh.isInitialized():
+            if gmsh_args is not None:
+                gmsh.initialize(self.gmsh_args)
+            else:
+                gmsh.initialize()
 
         gmsh_options.set("General.Verbosity", self.verbose)
         for k, v in options.items():
@@ -504,6 +505,31 @@ class Geometry:
         finalize=True,
         check_subdomains=True,
     ):
+        """Build the geometry.
+
+        Parameters
+        ----------
+        interactive : bool
+            Open ``gmsh`` GUI? (the default is False).
+        generate_mesh : type
+            Mesh with ``gmsh``? (the default is True).
+        write_mesh : type
+            Write mesh to disk? (the default is True).
+        read_info : type
+            Read subdomain markers information? (the default is True).
+        read_mesh : type
+            Read mesh information? (the default is True).
+        finalize : type
+            Finalize ``gmsh`` API? (the default is True).
+        check_subdomains : type
+            Sanity check of subdomains names? (the default is True).
+
+        Returns
+        -------
+        type
+            A dictionary containing the mesh and markers.
+
+        """
         if self.comm.size == 1:
             return self._build_serial(
                 interactive=interactive,
@@ -576,11 +602,17 @@ class Geometry:
         if read:
             return self.read_mesh_file()
 
-    def plot_mesh(self, **kwargs):
+    def plot_mesh(self, ax=None, **kwargs):
+        if ax is None:
+            ax = plt.gca()
+        plt.sca(ax)
         return dolfin.plot(self.mesh, **kwargs)
 
-    def plot_subdomains(self, **kwargs):
-        return plot_subdomains(self.markers, **kwargs)
+    def plot_subdomains(self, markers=False, **kwargs):
+        if markers:
+            return plot_markers(self.markers, self.subdomains["surfaces"], **kwargs)
+        else:
+            return plot_subdomains(self.markers, **kwargs)
 
     def set_pml_mesh_size(self, s):
         for pml in self.pml_physical:

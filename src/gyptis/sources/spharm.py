@@ -98,7 +98,7 @@ def nm2p(n, m):
 
 
 def p2nm(p):
-    n = int(p ** 0.5)
+    n = int(p**0.5)
     m = n * (n + 1) - p
     return n, m
 
@@ -107,7 +107,7 @@ def p2nm(p):
 
 
 def P(x, n, m, y=None):
-    y = y or sqrt_safe(1 - x ** 2)
+    y = y or sqrt_safe(1 - x**2)
     if m < 0:
         return (-1) ** (-m) * P(x, n, -m)
     elif n == m == 0:
@@ -117,14 +117,14 @@ def P(x, n, m, y=None):
     elif m == (n - 1):
         return x * (2 * n + 1) ** 0.5 * P(x, n - 1, n - 1)
     else:
-        return (((2 * n + 1) / (n ** 2 - m ** 2)) ** 0.5) * (
+        return (((2 * n + 1) / (n**2 - m**2)) ** 0.5) * (
             (2 * n - 1) ** 0.5 * x * P(x, n - 1, m)
-            - (((n - 1) ** 2 - m ** 2) / (2 * n - 3)) ** 0.5 * P(x, n - 2, m)
+            - (((n - 1) ** 2 - m**2) / (2 * n - 3)) ** 0.5 * P(x, n - 2, m)
         )
 
 
 def u(x, n, m, y=None):
-    y = y or sqrt_safe(1 - x ** 2)
+    y = y or sqrt_safe(1 - x**2)
     if m < 0:
         return (-1) ** (-m + 1) * u(x, n, -m)
     elif m == 0:
@@ -140,15 +140,15 @@ def u(x, n, m, y=None):
     elif m == (n - 1):
         return ((2 * n + 1) * (n - 1) / (n + 1)) ** 0.5 * x * u(x, n - 1, n - 1)
     else:
-        return ((2 * n + 1) * (n - 1) / ((n + 1) * (n ** 2 - m ** 2))) ** 0.5 * (
+        return ((2 * n + 1) * (n - 1) / ((n + 1) * (n**2 - m**2))) ** 0.5 * (
             x * (2 * n - 1) ** 0.5 * u(x, n - 1, m)
-            - ((n - 2) * ((n - 1) ** 2 - m ** 2) / (n * (2 * n - 3))) ** 0.5
+            - ((n - 2) * ((n - 1) ** 2 - m**2) / (n * (2 * n - 3))) ** 0.5
             * u(x, n - 2, m)
         )
 
 
 def s(x, n, m, y=None):
-    y = y or sqrt_safe(1 - x ** 2)
+    y = y or sqrt_safe(1 - x**2)
     if m < 0:
         return (-1) ** (-m) * s(x, n, -m)
     elif n == m:
