@@ -86,6 +86,7 @@ __pycache__/
 _build/
 gen_modules/
 docs/examples/
+docs/tutorials/
 .pytest_cache/
 .hypothesis/
 .coverage
