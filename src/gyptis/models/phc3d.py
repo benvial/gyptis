@@ -12,22 +12,20 @@ class PhotonicCrystal3D(Simulation):
     def __init__(
         self,
         geometry,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         propagation_vector=(0, 0, 0),
         boundary_conditions={},
         degree=1,
     ):
         assert isinstance(geometry, Lattice3D)
-
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.periodic_bcs = Periodic3D(geometry)
         function_space = ComplexFunctionSpace(
             geometry.mesh, "N1curl", degree, constrained_domain=self.periodic_bcs
         )
-        epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
-        mu = {k: m + 1e-16j for k, m in mu.items()}
-        epsilon_coeff = Coefficient(epsilon, geometry, degree=degree, dim=3)
-        mu_coeff = Coefficient(mu, geometry, degree=degree, dim=3)
+        epsilon_coeff = Coefficient(self.epsilon, geometry, degree=degree, dim=3)
+        mu_coeff = Coefficient(self.mu, geometry, degree=degree, dim=3)
 
         coefficients = epsilon_coeff, mu_coeff
         formulation = Maxwell3DBands(

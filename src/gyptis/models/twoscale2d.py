@@ -12,8 +12,8 @@ class Homogenization2D(Simulation):
     def __init__(
         self,
         geometry,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         boundary_conditions={},
         degree=1,
         direction="x",
@@ -22,16 +22,14 @@ class Homogenization2D(Simulation):
         domain="everywhere",
     ):
         # assert isinstance(geometry, Lattice2D)
-
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.domain = domain
         self.periodic_bcs = BiPeriodic2D(geometry) if periodic else None
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )
-        epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
-        mu = {k: m + 1e-16j for k, m in mu.items()}
-        epsilon_coeff = Coefficient(epsilon, geometry, degree=degree)
-        mu_coeff = Coefficient(mu, geometry, degree=degree)
+        epsilon_coeff = Coefficient(self.epsilon, geometry, degree=degree)
+        mu_coeff = Coefficient(self.mu, geometry, degree=degree)
 
         coefficients = epsilon_coeff, mu_coeff
         self.formulations = dict(epsilon={}, mu={})

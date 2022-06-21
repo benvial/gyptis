@@ -13,18 +13,16 @@ class _EigenProblemInclusion2D(Simulation):
     def __init__(
         self,
         geometry,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         boundary_conditions={},
         degree=1,
     ):
         assert isinstance(geometry, Geometry)
-
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         function_space = ComplexFunctionSpace(geometry.mesh, "CG", degree)
-        epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
-        mu = {k: m + 1e-16j for k, m in mu.items()}
-        epsilon_coeff = Coefficient(epsilon, geometry, degree=degree)
-        mu_coeff = Coefficient(mu, geometry, degree=degree)
+        epsilon_coeff = Coefficient(self.epsilon, geometry, degree=degree)
+        mu_coeff = Coefficient(self.mu, geometry, degree=degree)
 
         coefficients = epsilon_coeff, mu_coeff
         formulation = Maxwell2D(
@@ -46,8 +44,8 @@ class HighContrastHomogenization2D(Simulation):
         self,
         background,
         inclusion,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         degree=1,
         direction="x",
         direct=True,
@@ -57,21 +55,23 @@ class HighContrastHomogenization2D(Simulation):
 
         assert isinstance(background, Lattice2D)
         assert isinstance(inclusion, Geometry)
-        self.epsilon = epsilon
-        self.mu = mu
+        self.epsilon, self.mu = init_em_materials(background, epsilon, mu)
+        epsilon_inclusion, mu_inclusion = init_em_materials(inclusion, epsilon, mu)
+        self.epsilon.update(epsilon_inclusion)
+        self.mu.update(mu_inclusion)
         self.background = background
         self.inclusion = inclusion
         # self.epsilon_background = dict(background=self.epsilon["background"])
         # self.mu_background = dict(background=self.mu["background"])
 
-        self.epsilon_background = epsilon.copy()
+        self.epsilon_background = self.epsilon.copy()
         self.epsilon_background.pop("inclusion")
-        self.mu_background = mu.copy()
+        self.mu_background = self.mu.copy()
         self.mu_background.pop("inclusion")
 
-        self.epsilon_inclusion = epsilon.copy()
+        self.epsilon_inclusion = self.epsilon.copy()
         self.epsilon_inclusion.pop("background")
-        self.mu_inclusion = mu.copy()
+        self.mu_inclusion = self.mu.copy()
         self.mu_inclusion.pop("background")
 
         self.hom2scale = Homogenization2D(
@@ -103,5 +103,5 @@ class HighContrastHomogenization2D(Simulation):
                 norm = assemble(eps_ * psi * psi.conj * dx)
                 alpha = assemble(psi * dx)
                 alpha1 = assemble(eps_ * psi.conj * dx)
-                mu_eff += -(k**2 * 1) / (k**2 * 1 - E**2) * alpha * alpha1 / norm
+                mu_eff += -(k ** 2 * 1) / (k ** 2 * 1 - E ** 2) * alpha * alpha1 / norm
         return mu_eff

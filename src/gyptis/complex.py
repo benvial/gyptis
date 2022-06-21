@@ -148,13 +148,13 @@ class Complex:
     @_complexcheck
     def __truediv__(self, other):
         sr, si, tr, ti = self.real, self.imag, other.real, other.imag  # short forms
-        r = tr**2 + ti**2
+        r = tr ** 2 + ti ** 2
         return Complex((sr * tr + si * ti) / r, (si * tr - sr * ti) / r)
 
     @_complexcheck
     def __rtruediv__(self, other):
         sr, si, tr, ti = other.real, other.imag, self.real, self.imag  # short forms
-        r = tr**2 + ti**2
+        r = tr ** 2 + ti ** 2
         return Complex((sr * tr + si * ti) / r, (si * tr - sr * ti) / r)
 
     @property
@@ -175,7 +175,7 @@ class Complex:
         return self.__angle__()
 
     def __abs__(self):
-        return df.sqrt(self.real**2 + self.imag**2)
+        return df.sqrt(self.real ** 2 + self.imag ** 2)
 
     def __neg__(self):  # defines -c (c is Complex)
         return Complex(-self.real, -self.imag)
@@ -199,7 +199,7 @@ class Complex:
             raise NotImplementedError("complex exponent not implemented")
         else:
             A, phi = self.polar()
-            return self.polar2cart(A**power, phi * power)
+            return self.polar2cart(A ** power, phi * power)
 
     def __angle__(self):
         x, y = self.real, self.imag

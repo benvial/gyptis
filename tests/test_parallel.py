@@ -13,7 +13,7 @@ from gyptis.utils.parallel import *
 
 def f(x, y, a=1, b="b"):
     print(f"f called with {x} {y} {a} {b}")
-    y = x**2
+    y = x ** 2
     print(f"output y = {x}^2 = {y}")
     return y
 

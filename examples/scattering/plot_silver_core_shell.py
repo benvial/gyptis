@@ -36,10 +36,10 @@ def epsilon_silver(omega):
     delta_eps = 0.76
     epsilon = (
         eps_inf
-        - omega_D**2 / (omega * (omega + 1j * gamma_D))
+        - omega_D ** 2 / (omega * (omega + 1j * gamma_D))
         - delta_eps
-        * Omega_L**2
-        / ((omega**2 - Omega_L**2) + 1j * Gamma_L * omega)
+        * Omega_L ** 2
+        / ((omega ** 2 - Omega_L ** 2) + 1j * Gamma_L * omega)
     )
     return np.conj(epsilon)
 
@@ -49,17 +49,20 @@ wavelength_max = 800
 wl = np.linspace(wavelength_min, wavelength_max, 100)
 omega = 2 * pi * c / (wl * 1e-9)
 epsAg = epsilon_silver(omega)
-plt.plot(wl, epsAg.real, label="Re", c="#7b6eaf")
-plt.plot(wl, epsAg.imag, label="Im", c="#c63c71")
-plt.xlabel("wavelength (nm)")
-plt.ylabel("silver permittivity")
-plt.legend()
+fig, ax = plt.subplots(1, 2)
+ax[0].plot(wl, epsAg.real, c="#7b6eaf")
+ax[1].plot(wl, epsAg.imag, c="#c63c71")
+ax[0].set_xlabel("wavelength (nm)")
+ax[1].set_xlabel("wavelength (nm)")
+ax[0].set_ylabel(r"Re $\varepsilon$")
+ax[1].set_ylabel(r"Im $\varepsilon$")
+plt.suptitle("silver permittivity")
 plt.tight_layout()
 
 ##############################################################################
 # Now we create the geometry and mesh
 
-pmesh = 23
+pmesh = 20
 degree = 2
 wavelength = 452
 eps_core = 2
@@ -121,8 +124,7 @@ mu = dict(box=1, core=1, shell=1)
 s = gy.Scattering(
     geom,
     epsilon,
-    mu,
-    pw,
+    source=pw,
     degree=degree,
     polarization="TE",
 )
@@ -131,6 +133,7 @@ s.plot_field()
 geom_lines = geom.plot_subdomains()
 plt.xlabel(r"$x$ (nm)")
 plt.ylabel(r"$y$ (nm)")
+plt.title(r"Re $H_z$")
 plt.tight_layout()
 
 ##############################################################################
@@ -148,7 +151,7 @@ assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1
 # (which will be monitored by the sampler) as its first output.
 
 
-@adaptive_sampler()
+@adaptive_sampler(max_bend=10, max_z_rel=0.001, max_df=0.02)
 def cs_vs_wl(wavelength):
     geom = create_geometry(wavelength, pml_width=wavelength)
     pw = gy.PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
@@ -157,8 +160,7 @@ def cs_vs_wl(wavelength):
     s = gy.Scattering(
         geom,
         epsilon,
-        mu,
-        pw,
+        source=pw,
         degree=2,
         polarization="TE",
     )
@@ -167,7 +169,7 @@ def cs_vs_wl(wavelength):
     return cs["absorption"], cs
 
 
-wl = np.linspace(wavelength_min, wavelength_max, 30)
+wl = np.linspace(wavelength_min, wavelength_max, 50)
 wla, out = cs_vs_wl(wl)
 cs = [_[1] for _ in out]
 scs = np.array([d["scattering"] for d in cs])
@@ -216,7 +218,5 @@ plt.xlabel("wavelength (nm)")
 plt.ylabel("cross sections (nm)")
 plt.legend()
 plt.xlim(wavelength_min, wavelength_max)
-plt.ylim(
-    0,
-)
+plt.ylim(0)
 plt.tight_layout()

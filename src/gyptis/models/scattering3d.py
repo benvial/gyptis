@@ -14,8 +14,8 @@ class Scatt3D(_ScatteringBase, Simulation):
     def __init__(
         self,
         geometry,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         source=None,
         boundary_conditions={},
         polarization=None,
@@ -26,6 +26,7 @@ class Scatt3D(_ScatteringBase, Simulation):
     ):
         assert isinstance(geometry, BoxPML3D)
         assert source.dim == 3
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         function_space = ComplexFunctionSpace(geometry.mesh, element, degree)
         pmls = []
         pml_names = []
@@ -42,14 +43,14 @@ class Scatt3D(_ScatteringBase, Simulation):
             )
 
         epsilon_coeff = Coefficient(
-            epsilon,
+            self.epsilon,
             geometry,
             pmls=pmls,
             degree=degree,
             dim=3,
         )
         mu_coeff = Coefficient(
-            mu,
+            self.mu,
             geometry,
             pmls=pmls,
             degree=degree,
@@ -204,7 +205,7 @@ class Scatt3D(_ScatteringBase, Simulation):
                 integrand = dot(Escat, Y.expression.conj)
                 integral = assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
-                ) / (Rcalc**2)
+                ) / (Rcalc ** 2)
                 coeff = (
                     integral
                     * k
@@ -223,7 +224,7 @@ class Scatt3D(_ScatteringBase, Simulation):
                 integrand = dot(Escat, Z.expression.conj)
                 integral = assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
-                ) / (Rcalc**2)
+                ) / (Rcalc ** 2)
                 xsi_prime = sh.rb_hn2(n1 - 1, k * Rcalc) - n1 * sh.sph_hn2(
                     n1, k * Rcalc
                 )
@@ -243,7 +244,7 @@ class Scatt3D(_ScatteringBase, Simulation):
                 assemble(
                     0.5 * (integrand("+")) * self.dS(boundary) + Constant(0) * self.dx
                 )
-                / Rcalc**2
+                / Rcalc ** 2
             )
             coeff = integral / (sh.sph_hn2(n1, k * Rcalc))
             return coeff

@@ -15,8 +15,8 @@ class Grating2D(_GratingBase, Simulation):
     def __init__(
         self,
         geometry,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         source=None,
         boundary_conditions={},
         polarization="TM",
@@ -30,8 +30,7 @@ class Grating2D(_GratingBase, Simulation):
         if source:
             assert isinstance(source, PlaneWave)
             assert source.dim == 2
-        self.epsilon = epsilon
-        self.mu = mu
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.degree = degree
         self.period = geometry.period
         self.periodic_bcs = PeriodicBoundary2DX(self.period)
@@ -51,13 +50,13 @@ class Grating2D(_GratingBase, Simulation):
             applied_domain="pml_bottom",
         )
         epsilon_coeff = Coefficient(
-            epsilon,
+            self.epsilon,
             geometry=geometry,
             pmls=[pml_top, pml_bottom],
             degree=degree,
         )
         mu_coeff = Coefficient(
-            mu, geometry=geometry, pmls=[pml_top, pml_bottom], degree=degree
+            self.mu, geometry=geometry, pmls=[pml_top, pml_bottom], degree=degree
         )
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["substrate", "superstrate", "pml_bottom", "pml_top"]
@@ -136,7 +135,7 @@ class Grating2D(_GratingBase, Simulation):
             Jn, beta_n, eff = {}, {}, {}
             for d in ["substrate", "superstrate"]:
                 s = 1 if d == "superstrate" else -1
-                beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n**2)
+                beta_n[d] = np.sqrt(k[d] ** 2 - alpha_n ** 2)
                 ph_x = phasor(-qn, direction=0, degree=self.degree, domain=self.mesh)
                 ph_y = phasor(
                     s * beta_n[d].real,

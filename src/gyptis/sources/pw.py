@@ -49,6 +49,31 @@ def plane_wave_3d(
 
 
 class PlaneWave(Source):
+    """Short summary.
+
+    Parameters
+    ----------
+    wavelength : float
+        The wavelength of the plane wave.
+    angle : float if `dim=2` tuple of len 3 if `dim=3`
+        Angle(s) in radians.
+    dim : int
+        Dimension (2 or 3, the default is 2).
+    phase : float
+        Phase shift (in radian, the default is 0).
+    amplitude : float
+        Amplitude (the default is 1).
+    degree : int
+        Degree of the functional space (default is 1).
+    domain : dolfin.cpp.mesh.Mesh
+        The mesh for the domain of definition of the function.
+
+    Attributes
+    ----------
+    angle
+
+    """
+
     def __init__(
         self, wavelength, angle, dim=2, phase=0, amplitude=1, degree=1, domain=None
     ):

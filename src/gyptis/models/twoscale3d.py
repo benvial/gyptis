@@ -26,10 +26,10 @@ class Homogenization3D(Simulation):
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )
-        epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
-        mu = {k: m + 1e-16j for k, m in mu.items()}
-        epsilon_coeff = Coefficient(epsilon, geometry, degree=degree, dim=3)
-        mu_coeff = Coefficient(mu, geometry, degree=degree, dim=3)
+
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
+        epsilon_coeff = Coefficient(self.epsilon, geometry, degree=degree, dim=3)
+        mu_coeff = Coefficient(self.mu, geometry, degree=degree, dim=3)
 
         coefficients = epsilon_coeff, mu_coeff
         self.formulations = dict(epsilon={}, mu={})

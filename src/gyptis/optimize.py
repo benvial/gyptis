@@ -24,7 +24,7 @@ def simp(a, s_min=1, s_max=2, p=1, complex=True):
             simp(a, s_min=s_min.imag, s_max=s_max.imag, p=p, complex=False),
         )
     else:
-        return s_min + (s_max - s_min) * a**p
+        return s_min + (s_max - s_min) * a ** p
 
 
 def projection(a, beta=1, nu=0.5):
@@ -54,7 +54,7 @@ class Filter:
         output_function_space=None,
     ):
         self.rfilt = rfilt
-        self._rfilt_scaled = self.rfilt / (2 * 3**0.5)
+        self._rfilt_scaled = self.rfilt / (2 * 3 ** 0.5)
         self.solver = solver
         self.degree = degree
         self._mesh = mesh
@@ -244,7 +244,7 @@ class TopologyOptimizer:
 
             ctrl = transfer_function(self.density_f, Actrl)
             self.density_fp = (
-                projection(ctrl, beta=df.Constant(2**proj_level))
+                projection(ctrl, beta=df.Constant(2 ** proj_level))
                 if proj
                 else self.density_f
             )

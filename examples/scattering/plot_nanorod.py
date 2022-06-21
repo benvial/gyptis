@@ -59,8 +59,8 @@ def run(geom, polarization):
     )
 
     omega = 2 * gy.pi * gy.c / (wavelength * 1e-6)
-    omega_p = 21**0.5 * omega
-    eps_rod = 1 - omega_p**2 / omega**2
+    omega_p = 21 ** 0.5 * omega
+    eps_rod = 1 - omega_p ** 2 / omega ** 2
 
     epsilon = dict(box=1, rods=eps_rod)
     mu = dict(box=1, rods=1)

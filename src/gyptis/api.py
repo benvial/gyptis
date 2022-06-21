@@ -36,7 +36,7 @@ def _check_dimension(dim):
 
 
 class BoxPML(Geometry):
-    """BoxPML(dim, box_size, box_center, pml_width, Rcalc=0, model_name="Box with PMLs", **kwargs)
+    """BoxPML(dim, box_size, box_center, pml_width, Rcalc=0, **kwargs)
     Computational domain with Perfectly Matched Layers (PMLs).
 
     Parameters
@@ -49,8 +49,10 @@ class BoxPML(Geometry):
         Size of the box: :math:`(c_x,c_y)` if `dim=2` or :math:`(c_x, c_y, c_z)` if `dim=3`.
     pml_width : tuple of floats of length `dim`
         Size of the PMLs: :math:`(h_x,h_y)` if `dim=2` or :math:`(h_x, h_y, h_z)` if `dim=3`.
-    model_name : str
-        Name of the model.
+    Rcalc : float
+        Radius of the circle (in 2D) or sphere (in 3D) for the calculation of cross sections.
+        The default is 0 so no geametrical entity will be created but the calculation
+        of cross sections will fail.
     **kwargs : dictionary
         Additional parameters. See the parent class :class:`~gyptis.Geometry`.
 

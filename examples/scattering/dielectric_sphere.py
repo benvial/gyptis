@@ -31,7 +31,7 @@ eps_sphere = (5 - 0.4 * 1j) ** 2
 a = 0.1
 
 eps_bg = 1
-S_sphere = a**2 * np.pi
+S_sphere = a ** 2 * np.pi
 circ = 2 * np.pi * a
 
 shared_datadir = "../../tests/data"
@@ -121,7 +121,7 @@ def build_geometry(pmesh):
 
     geom.set_size(box, s)
     geom.set_size(surfs, s, dim=2)
-    s = min(lambda0 / (eps_sphere.real**0.5 * pmesh_scatt), smin)
+    s = min(lambda0 / (eps_sphere.real ** 0.5 * pmesh_scatt), smin)
     # s =lambda0 / (eps_sphere ** 0.5 * pmesh_scatt)
     geom.set_size(sphere, s)
     geom.build()

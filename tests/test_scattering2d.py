@@ -37,15 +37,14 @@ def build_geom():
     return geom
 
 
-epsilon = dict(box=1, cyl=3)
-mu = dict(box=1, cyl=1)
-
-
 @pytest.mark.parametrize(
     "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_scatt2d_pw(degree, polarization):
     from gyptis import PlaneWave, Scattering, dolfin
+
+    epsilon = dict(box=1, cyl=3)
+    mu = dict(box=1, cyl=1)
 
     geom = build_geom()
     mesh = geom.mesh
@@ -64,6 +63,7 @@ def test_scatt2d_pw(degree, polarization):
         ctrl0 = dolfin.Expression("0.1", degree=2)
         ctrl = project(ctrl0, Actrl)
         eps_lens_func = ctrl * (eps_max - eps_min) + eps_min
+        eps_lens_func *= gyptis.Complex(1, 0)
         dolfin.set_working_tape(dolfin.Tape())
         h = dolfin.Function(Actrl)
         h.vector()[:] = 1e-2 * np.random.rand(Actrl.dim())
@@ -85,6 +85,9 @@ def test_scatt2d_pw(degree, polarization):
 def test_scatt2d_ls(degree, polarization):
 
     from gyptis import LineSource, Scattering
+
+    epsilon = dict(box=1, cyl=3)
+    mu = dict(box=1, cyl=1)
 
     geom = build_geom()
     mesh = geom.mesh
@@ -177,8 +180,8 @@ def test_scatt2d_scs(polarization):
     geom.add_physical(shell, "shell")
     [geom.set_size(pml, lmin * 0.7) for pml in geom.pmls]
     geom.set_size("box", lmin)
-    geom.set_size("core", lmin / eps_core**0.5)
-    geom.set_size("shell", lmin / eps_shell**0.5)
+    geom.set_size("core", lmin / eps_core ** 0.5)
+    geom.set_size("shell", lmin / eps_shell ** 0.5)
     geom.build()
     pw = PlaneWave(wavelength=wavelength, angle=0, dim=2, domain=geom.mesh, degree=2)
     epsilon = dict(box=1, core=eps_core, shell=eps_shell)

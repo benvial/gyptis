@@ -22,6 +22,17 @@ from ..utils import project_iterative
 from ..utils.helpers import array2function
 
 
+def init_em_materials(geometry, epsilon=None, mu=None):
+    if epsilon == None:
+        epsilon = {k: 1 for k in geometry.domains.keys()}
+    if mu == None:
+        mu = {k: 1 for k in geometry.domains.keys()}
+
+    epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
+    mu = {k: m + 1e-16j for k, m in mu.items()}
+    return epsilon, mu
+
+
 class Simulation:
     def __init__(self, geometry, formulation=None, direct=True):
         self.geometry = geometry
@@ -179,7 +190,7 @@ class Simulation:
         eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
         # eigensolver.parameters["solver"] = "power"
-        eigensolver.parameters["spectral_shift"] = float(wavevector_target**2)
+        eigensolver.parameters["spectral_shift"] = float(wavevector_target ** 2)
         eigensolver.parameters["spectral_transform"] = "shift-and-invert"
         eigensolver.parameters["tolerance"] = tol
         # eigensolver.parameters["solver"] = "mumps"

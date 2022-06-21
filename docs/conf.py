@@ -362,14 +362,14 @@ intersphinx_mapping = {
 
 
 sphinx_gallery_conf = {
-    # # path to your examples scripts
-    # "examples_dirs": ["../examples", "../tutorials"],
-    # # path where to save gallery generated examples
-    # "gallery_dirs": ["examples", "tutorials"],
     # path to your examples scripts
-    "examples_dirs": ["../tutorials"],
+    "examples_dirs": ["../examples", "../tutorials"],
     # path where to save gallery generated examples
-    "gallery_dirs": ["tutorials"],
+    "gallery_dirs": ["examples", "tutorials"],
+    # # path to your examples scripts
+    # "examples_dirs": ["../tutorials"],
+    # # path where to save gallery generated examples
+    # "gallery_dirs": ["tutorials"],
     # directory where function granular galleries are stored
     "backreferences_dir": "generated/backreferences",
     "remove_config_comments": True,

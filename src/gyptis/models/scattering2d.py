@@ -14,8 +14,8 @@ class Scatt2D(_ScatteringBase, Simulation):
     def __init__(
         self,
         geometry,
-        epsilon,
-        mu,
+        epsilon=None,
+        mu=None,
         source=None,
         boundary_conditions={},
         polarization="TM",
@@ -28,6 +28,8 @@ class Scatt2D(_ScatteringBase, Simulation):
         if source is not None:
             assert source.dim == 2
         self.element = element
+        self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
+
         function_space = ComplexFunctionSpace(geometry.mesh, self.element, degree)
         pmlx = PML(
             "x", stretch=pml_stretch, matched_domain="box", applied_domain="pmlx"
@@ -40,9 +42,11 @@ class Scatt2D(_ScatteringBase, Simulation):
         )
 
         epsilon_coeff = Coefficient(
-            epsilon, geometry, pmls=[pmlx, pmly, pmlxy], degree=degree
+            self.epsilon, geometry, pmls=[pmlx, pmly, pmlxy], degree=degree
         )
-        mu_coeff = Coefficient(mu, geometry, pmls=[pmlx, pmly, pmlxy], degree=degree)
+        mu_coeff = Coefficient(
+            self.mu, geometry, pmls=[pmlx, pmly, pmlxy], degree=degree
+        )
 
         coefficients = epsilon_coeff, mu_coeff
         no_source_domains = ["box", "pmlx", "pmly", "pmlxy"]
@@ -157,7 +161,7 @@ class Scatt2D(_ScatteringBase, Simulation):
             evalpoint = eps, evalpoint[1]
         if evalpoint[1] == 0:
             evalpoint = evalpoint[0], eps
-        ldos = -2 * self.source.pulsation / (np.pi * c**2) * u(evalpoint).imag
+        ldos = -2 * self.source.pulsation / (np.pi * c ** 2) * u(evalpoint).imag
         return ldos
 
     def check_optical_theorem(cs, rtol=1e-12):

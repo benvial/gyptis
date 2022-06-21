@@ -65,16 +65,16 @@ clean:
 ## Postprocess html doc
 postpro-html:
 	@echo "Postprocessing html files."
-	# @python postprocess.py html _build/html/*.html
-	# @python postprocess.py html _build/html/generated/*.html
-	# @python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
-	# @python postprocess.py html $(wildcard $(BUILDDIR)/html/examples/**/*.html)
-	# @python postprocess.py html $(BUILDDIR)/html/examples/*.html
-	# @python postprocess.py html $(wildcard $(BUILDDIR)/html/tutorials/**/*.html)
-	# @python postprocess.py html $(BUILDDIR)/html/tutorials/*.html
-	# @python caroussel.py
-	# @cp -r _assets $(BUILDDIR)/html
-	# @cp -r _assets $(BUILDDIR)/html/_static
+	@python postprocess.py html _build/html/*.html
+	@python postprocess.py html _build/html/generated/*.html
+	@python postprocess.py html $(wildcard $(BUILDDIR)/html/modules/**/*.html)
+	@python postprocess.py html $(wildcard $(BUILDDIR)/html/examples/**/*.html)
+	@python postprocess.py html $(BUILDDIR)/html/examples/*.html
+	@python postprocess.py html $(wildcard $(BUILDDIR)/html/tutorials/**/*.html)
+	@python postprocess.py html $(BUILDDIR)/html/tutorials/*.html
+	@python caroussel.py
+	@cp -r _assets $(BUILDDIR)/html
+	@cp -r _assets $(BUILDDIR)/html/_static
 	@echo "Done html postprocessing."
 
 
@@ -170,7 +170,7 @@ latexpdf:
 	@echo "Running LaTeX files through xelatex..."
 	$(MAKE) PDFLATEX=xelatex -C $(BUILDDIR)/latex all-pdf
 	@echo "xelatex finished; the PDF files are in $(BUILDDIR)/latex."
-	
+
 latexpdf-noplot: export SPHX_GLR_THEME = $(theme)
 latexpdf-noplot:
 	$(SPHINXBUILD) -D plot_gallery=0 -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
@@ -238,13 +238,13 @@ pseudoxml:
 	$(SPHINXBUILD) -b pseudoxml $(ALLSPHINXOPTS) $(BUILDDIR)/pseudoxml
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
-# 
+#
 # show:
 # 	@python -c "import webbrowser, os; \
 # 	path = os.path.relpath(os.getcwd(),os.path.expanduser(os.getenv('HOME'))) ; \
 # 	webbrowser.get('firefox').open_new_tab(f'http://localhost:8000/{path}/_build/html/index.html')"
 
-	
+
 show:
 	@python -c "import webbrowser; \
 	webbrowser.get('firefox').open_new_tab('$(PWD)/$(BUILDDIR)/html/index.html')"
