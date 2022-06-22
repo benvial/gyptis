@@ -7,8 +7,8 @@
 
 
 """
-Tutorial: a scattering simulation in 2D
----------------------------------------
+A scattering simulation in 2D
+-----------------------------
 
 In this example we will study the diffraction of a plane wave by a nanorod
 
