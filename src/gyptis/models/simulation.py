@@ -190,7 +190,7 @@ class Simulation:
         eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
         # eigensolver.parameters["solver"] = "power"
-        eigensolver.parameters["spectral_shift"] = float(wavevector_target ** 2)
+        eigensolver.parameters["spectral_shift"] = float(wavevector_target**2)
         eigensolver.parameters["spectral_transform"] = "shift-and-invert"
         eigensolver.parameters["tolerance"] = tol
         # eigensolver.parameters["solver"] = "mumps"

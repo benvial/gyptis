@@ -50,8 +50,8 @@ thicknesses = OrderedDict(
 
 mesh_param = dict(
     {
-        "pml_bottom": pmesh * eps_sub ** 0.5,
-        "substrate": pmesh * eps_sub ** 0.5,
+        "pml_bottom": pmesh * eps_sub**0.5,
+        "substrate": pmesh * eps_sub**0.5,
         "groove": pmesh,
         "rod": pmesh * np.max(eps_rod) ** 0.5,
         "superstrate": pmesh,

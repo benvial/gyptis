@@ -14,6 +14,9 @@ In this example we will study the diffraction of a plane wave by a nanorod
 
 """
 
+
+# sphinx_gallery_thumbnail_number = -1
+
 ############################################################################
 # We first need to import the Python packages
 

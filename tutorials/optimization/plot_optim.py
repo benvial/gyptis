@@ -14,6 +14,8 @@ In this tutorial, we will perform a topology optimization of a lens
 
 """
 
+# sphinx_gallery_thumbnail_number = -1
+
 ############################################################################
 # We first need to import the Python packages
 
@@ -49,10 +51,10 @@ yf = -Ly / 2 + pml_dist + ly + f
 waist = 1500
 position = 0, pml_dist + lx / 2
 
-pmesh = 6
+pmesh = 12
 
 epsilon_min = 1
-epsilon_max = 3.48 ** 2
+epsilon_max = 3.48**2
 ################################################################
 # Optimization parameters
 
@@ -103,49 +105,22 @@ geom.set_size("design", wavelength / (pmesh * np.real(epsilon_max) ** 0.5))
 
 geom.build()
 
-############################################################################
-# .. attention::
-#       A geometry object cannot be modified after the method
-#       :meth:`~gyptis.BoxPML.build` has been called: you should create a new object,
-#       define the geometry and set mesh parameters before building.
-
 
 ############################################################################
-# Visualize the mesh:
-
-fig, ax = plt.subplots(figsize=(2, 2))
-geom.plot_subdomains(ax=ax)
-geom.plot_mesh(ax=ax, color="red", lw=0.2)
-plt.axis("equal")
-plt.xlabel("$x$ (μm)")
-plt.ylabel("$y$ (μm)")
-plt.tight_layout()
-
-############################################################################
-# Visualize the subdomains:
-
-fig, ax = plt.subplots(figsize=(3, 2.3))
-out = geom.plot_subdomains(markers=True, ax=ax)
-plt.axis("scaled")
-plt.xlabel("$x$ (μm)")
-plt.ylabel("$y$ (μm)")
-plt.tight_layout()
-
-############################################################################
-# We define the incident plane wave and plot it. The angle is in radian and
+# We define the incident plane wave. The angle is in radian and
 # ``theta=0`` corresponds to a wave travelling from the bottom.
 
 
-gb = gy.GaussianBeam(
-    wavelength=wavelength,
-    angle=0,
-    waist=waist,
-    position=position,
-    Npw=21,
-    dim=2,
-    domain=geom.mesh,
-    degree=2,
-)
+# gb = gy.GaussianBeam(
+#     wavelength=wavelength,
+#     angle=0,
+#     waist=waist,
+#     position=position,
+#     Npw=21,
+#     dim=2,
+#     domain=geom.mesh,
+#     degree=2,
+# )
 gb = gy.PlaneWave(
     wavelength=wavelength,
     angle=0,
@@ -153,33 +128,9 @@ gb = gy.PlaneWave(
     domain=geom.mesh,
     degree=2,
 )
-############################################################################
-# Initialize the simulation. By default, materials properties (``epsilon`` and
-# ``mu`` arguments are ``None``, and they will be initialized to unity in all
-# subdomains). The values for the PMLs are constructed automatically.
-
-epsilon = dict(box=1, target=1, design=epsilon_max)
-
-simulation = gy.Scattering(
-    geom,
-    epsilon=epsilon,
-    source=gb,
-    degree=2,
-    polarization="TE",
-)
 
 ############################################################################
-# We are now ready to solve the problem with the FEM:
-
-simulation.solve()
-
-
-fig, ax = plt.subplots(1, figsize=(2.5, 2))
-simulation.plot_field(ax=ax, field="diffracted", type="module", cmap="inferno")
-geom_lines = geom.plot_subdomains(color="white")
-plt.xlabel(r"$x$ (μm)")
-plt.ylabel(r"$y$ (μm)")
-plt.tight_layout()
+# Define the objective function
 
 
 def objective_function(epsilon_design):
@@ -199,7 +150,7 @@ def objective_function(epsilon_design):
 
     Hz = simulation.solution["total"]
     nrj = gy.assemble((Hz * Hz.conj).real * simulation.dx("target")) / (
-        gy.pi * rtarget ** 2
+        gy.pi * rtarget**2
     )
     return -nrj
 
@@ -214,7 +165,7 @@ def density_proj_filt(self, density, proj, filt, filtering_type):
     else:
         density_f = density
     density_fp = (
-        go.projection(density_f, beta=2 ** self.proj_level) if proj else density_f
+        go.projection(density_f, beta=2**self.proj_level) if proj else density_f
     )
     fs_plot = gy.dolfin.FunctionSpace(self.submesh, "DG", 0)
     return gu.project_iterative(density_fp, fs_plot)
@@ -226,49 +177,55 @@ def density_proj_filt(self, density, proj, filt, filtering_type):
 jopt = 0
 
 
-fig, ax = plt.subplots(1, figsize=(4.5, 2))
-
-
 def callback(self):
     global jopt
     proj = self.proj_level is not None
     filt = self.filter != 0
     density_fp = density_proj_filt(self, self.density, proj, filt, filtering_type)
-    plt.clf()
-    # simulation.plot_field(
-    #     ax=plt.gca(), field="diffracted", type="module", cmap="inferno"
-    # )
 
     Hz = simulation.solution["total"]
     projspace = optimizer.fs_ctrl
     # projspace = simulation.real_function_space
     fieldplot = gu.project_iterative((Hz * Hz.conj).real, projspace)
+    fig = plt.figure(figsize=(4.5, 3))
+    plt.clf()
+    ax = []
+    gs = fig.add_gridspec(3, 1)
+    ax.append(fig.add_subplot(gs[0:2, :]))
+
     gy.plot(
         fieldplot,
-        ax=plt.gca(),
+        ax=ax[0],
         cmap="inferno",
         edgecolors="face",
         vmin=0,
-        vmax=10,
+        vmax=12,
         # norm=mplcolors.LogNorm(vmin=1e-2, vmax=None),
     )
-    geom_lines = geom.plot_subdomains(color="white")
-    gy.plot(density_fp, ax=plt.gca(), vmin=0, vmax=1, cmap="Greys", alpha=1)
+    geom_lines = geom.plot_subdomains(color="white", ax=ax[0])
+    gy.dolfin.plot(density_fp, vmin=0, vmax=1, cmap="Greys", alpha=0.7)
     plt.xlabel(r"$x$ (μm)")
     plt.ylabel(r"$y$ (μm)")
-    plt.tight_layout()
-
-    # plt.xlim(-lx/2, lx/2)
-    # y0 = -Ly+pml_dist
-    # plt.ylim(-y0, y0+ly)
     plt.axis("off")
-    plt.title(f"iteration {jopt}, objective = {-self.objective:.5f}")
     # plt.tight_layout()
+    ax.append(fig.add_subplot(gs[2, :]))
+    plt.sca(ax[1])
+
+    dplot, cb2 = gy.plot(density_fp, ax=ax[1], vmin=0, vmax=1, cmap="Reds", alpha=1)
+    plt.xlim(-lx / 2, lx / 2)
+    y0 = -Ly / 2 + pml_dist
+    plt.ylim(y0, y0 + ly)
+    plt.axis("off")
+    plt.suptitle(f"iteration {jopt}, objective = {-self.objective:.5f}")
+    plt.tight_layout()
     gy.pause(0.1)
 
     jopt += 1
     return self.objective
 
+
+################################################################
+# Initialize the optimizer
 
 optimizer = go.TopologyOptimizer(
     objective_function,
@@ -283,5 +240,12 @@ optimizer = go.TopologyOptimizer(
     maxiter=maxiter,
     threshold=threshold,
 )
+################################################################
+# Initial value
+
 x0 = np.ones(optimizer.nvar) * 0.5
+
+################################################################
+# Optimize!
+
 optimizer.minimize(x0)

@@ -60,7 +60,7 @@ def test_scatterring3d(shared_datadir):
         g.set_size(box, s)
         g.set_size(sphere_cross_sections, s)
         g.set_size(surf, s, dim=2)
-        s = min(lambda0 / (eps_sphere ** 0.5 * pmesh_scatt), smin)
+        s = min(lambda0 / (eps_sphere**0.5 * pmesh_scatt), smin)
         g.set_size(sphere, s)
         g.build()
 
@@ -91,6 +91,6 @@ def test_scatterring3d(shared_datadir):
         Ps = dolfin.Constant(0.5) * cross(Es, Hs.conj).real
         Ws = -assemble(dot(n_out, Ps)("+") * s.dS("calc"))
         Sigma_s = Ws / S0
-        S_sphere = R_sphere ** 2 * np.pi
+        S_sphere = R_sphere**2 * np.pi
         Sigma_s_norm = Sigma_s / S_sphere
         SCSN.append(Sigma_s_norm)

@@ -153,7 +153,7 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
         )
 
     gamma = [
-        np.sqrt(k0 ** 2 * e * m - alpha0 ** 2 - beta0 ** 2) for e, m in zip(eps, mu)
+        np.sqrt(k0**2 * e * m - alpha0**2 - beta0**2) for e, m in zip(eps, mu)
     ]
     B = [_matrix_B(e, m) for e, m in zip(eps, mu)]
     M = [inv(b) for b in B]
@@ -225,8 +225,8 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
         1.0
         / gamma[0] ** 2
         * (
-            (gamma[0] ** 2 + alpha0 ** 2) * abs(phi[0][1]) ** 2
-            + (gamma[0] ** 2 + beta0 ** 2) * abs(phi[0][3]) ** 2
+            (gamma[0] ** 2 + alpha0**2) * abs(phi[0][1]) ** 2
+            + (gamma[0] ** 2 + beta0**2) * abs(phi[0][3]) ** 2
             + 2 * alpha0 * beta0 * np.real(phi[0][1] * phi[0][3].conjugate())
         )
     )
@@ -234,8 +234,8 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
         1.0
         / (gamma[0] * gamma[-1] * mu[-1])
         * (
-            (gamma[-1] ** 2 + alpha0 ** 2) * abs(phi[-1][0]) ** 2
-            + (gamma[-1] ** 2 + beta0 ** 2) * abs(phi[-1][2]) ** 2
+            (gamma[-1] ** 2 + alpha0**2) * abs(phi[-1][0]) ** 2
+            + (gamma[-1] ** 2 + beta0**2) * abs(phi[-1][2]) ** 2
             + 2 * alpha0 * beta0 * np.real(phi[-1][0] * phi[-1][2].conjugate())
         )
     )
