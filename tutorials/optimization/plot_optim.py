@@ -14,6 +14,7 @@ In this tutorial, we will perform a topology optimization of a lens
 
 """
 
+
 # sphinx_gallery_thumbnail_number = -1
 
 ############################################################################
