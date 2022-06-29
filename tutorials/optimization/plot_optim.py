@@ -46,13 +46,13 @@ Lx, Ly = 4800, 1816.2  # box size
 lx, ly = 3000, 250  # lens size
 pml_dist = 250
 f = 726.5
-rtarget = wavelength / 30
+rtarget = wavelength / 20
 yf = -Ly / 2 + pml_dist + ly + f
 
 waist = 1500
 position = 0, pml_dist + lx / 2
 
-pmesh = 12
+pmesh = 8
 
 epsilon_min = 1
 epsilon_max = 3.48**2
@@ -102,7 +102,7 @@ geom.set_pml_mesh_size(wavelength / pmesh)
 geom.set_size("box", wavelength / pmesh)
 geom.set_size("target", wavelength / pmesh)
 # geom.set_size("sub", wavelength / (pmesh * np.real(epsilon_max) ** 0.5))
-geom.set_size("design", wavelength / (pmesh * np.real(epsilon_max) ** 0.5))
+geom.set_size("design", wavelength / (1.5 * pmesh * np.real(epsilon_max) ** 0.5))
 
 geom.build()
 
