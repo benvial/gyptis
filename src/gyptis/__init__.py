@@ -14,16 +14,16 @@ from scipy.constants import c, epsilon_0, mu_0
 from .__about__ import __author__, __description__, __version__
 
 
-def use_adjoint(usadj):
+def use_adjoint(use_adj):
     """Short summary.
 
     Parameters
     ----------
-    usadj : bool
+    use_adj : bool
         Adds automatic differentiation with dolfin-adjoint if True.
 
     """
-    if usadj:
+    if use_adj:
         os.environ["GYPTIS_ADJOINT"] = "1"
     else:
         try:

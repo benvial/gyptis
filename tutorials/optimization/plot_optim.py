@@ -62,7 +62,7 @@ epsilon_max = 3.48**2
 filtering_type = "density"
 # filtering_type = "sensitivity"
 rfilt = ly / 5
-maxiter = 17
+maxiter = 15
 threshold = (0, 7)
 
 
