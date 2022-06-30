@@ -340,7 +340,7 @@ pypi: package
 checksum:
 	$(call message,${@})
 	@echo v$(VERSION)
-	$(eval SHA256 := $(shell curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256 | cut  -c10-))
+	$(eval SHA256 := $(shell curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256 | cut  -c16-))
 	@echo $(SHA256)
 
 ## Update conda-forge package
