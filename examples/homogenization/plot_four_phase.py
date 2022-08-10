@@ -15,16 +15,10 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize, root_scalar
+from scipy.optimize import minimize_scalar
 from scipy.special import ellipk, ellipkm1, lpmv
 
 import gyptis as gy
-
-logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.WARNING)
-np.set_printoptions(precision=4, suppress=True)
-
-##############################################################################
-# Results are compared with :cite:p:`Craster2001`.
 
 
 def _ellipk(m):
@@ -32,6 +26,13 @@ def _ellipk(m):
         return ellipkm1(m)
     else:
         return ellipk(m)
+
+
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.WARNING)
+np.set_printoptions(precision=4, suppress=True)
+
+##############################################################################
+# Results are compared with :cite:p:`Craster2001`.
 
 
 class FourPhaseComposite:
@@ -102,6 +103,7 @@ class FourPhaseComposite:
         return rho_x, rho_y
 
     def _homogenize_analytical(self):
+
         logging.info("Computing homogenization problem analytically")
         m = self.compute_m()
         self.m = m
@@ -128,29 +130,17 @@ class FourPhaseComposite:
         logging.info("Computing parameter m")
 
         def objective(m):
-            m = m[0]
+            # m = m[0]
             obj = np.abs(_ellipk(m) / _ellipk(1 - m) - self.l / self.h)
             logging.info(f"m = {m},  objective = {obj}")
             return obj
 
         logging.info("  Root finding for m")
 
-        opt = minimize(
-            objective,
-            [0.5],
-            args=(),
-            method="L-BFGS-B",
-            jac=None,
-            hess=None,
-            hessp=None,
-            bounds=[(0, 1)],
-            constraints=(),
-            tol=None,
-            callback=None,
-            options=None,
-        )
+        opt = minimize_scalar(objective, bounds=(0, 1), method="bounded")
+        logging.info(opt)
 
-        m = opt.x[0]
+        m = opt.x
 
         return m
 
@@ -177,12 +167,12 @@ for l in L:
     prob.build_geometry(lmin=0.05)
     rho_x, rho_y = prob.homogenize("numerical")
     rho_x_ana, rho_y_ana = prob.homogenize("analytical")
-    prob.check_product([rho_x, rho_y], rtol=1e-1)
+    prob.check_product([rho_x, rho_y], rtol=1e-2)
 
     print(rho_x, rho_y)
     print(rho_x_ana, rho_y_ana)
-    assert np.allclose(rho_x, rho_x_ana, rtol=1e-1)
-    assert np.allclose(rho_y, rho_y_ana, rtol=1e-1)
+    assert np.allclose(rho_x, rho_x_ana, rtol=1e-2)
+    assert np.allclose(rho_y, rho_y_ana, rtol=1e-2)
 
     num.append([rho_x, rho_y])
     ana.append([rho_x_ana, rho_y_ana])
