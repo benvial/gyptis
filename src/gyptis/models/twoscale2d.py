@@ -89,21 +89,19 @@ class Homogenization2D(Simulation):
                 raise ValueError("scalar cannot be used with anisotropic materials")
             xi_mean = []
             for i in range(2):
-                a = [self.unit_cell_mean(x) for x in xi[i]]
-                a = [_.real + 1j * _.imag for _ in a]
+                a = [self.unit_cell_mean(x).tocomplex() for x in xi[i]]
+
                 xi_mean.append(a)
             xi_mean = np.array(xi_mean)
         else:
-            xi_mean = self.unit_cell_mean(xi)
-            xi_mean = xi_mean.real + 1j * xi_mean.imag
+            xi_mean = self.unit_cell_mean(xi).tocomplex()
             if not scalar:
                 xi_mean *= np.eye(2)
         if not scalar:
             A = []
             for phi in self.solution[case].values():
                 integrand = xi * grad(phi)
-                a = [self.unit_cell_mean(g) for g in integrand]
-                a = [_.real + 1j * _.imag for _ in a]
+                a = [self.unit_cell_mean(g).tocomplex() for g in integrand]
                 A.append(a)
             xi_eff = xi_mean + np.array(A)
             param_eff_inplane = xi_eff.T / np.linalg.det(xi_eff)
@@ -111,8 +109,7 @@ class Homogenization2D(Simulation):
         else:
             phi = self.solution[case]["x"]
             integrand = xi * grad(phi)
-            a = self.unit_cell_mean(integrand[0])
-            a = a.real + 1j * a.imag
+            a = self.unit_cell_mean(integrand[0]).tocomplex()
             xi_eff = xi_mean + a
             param_eff_inplane = np.eye(2) / xi_eff
 
@@ -124,8 +121,7 @@ class Homogenization2D(Simulation):
             coeffzz = coeff[2][2]
         else:
             coeffzz = coeff
-        czz = self.unit_cell_mean(coeffzz)
-        param_eff[2, 2] = czz.real + 1j * czz.imag
+        param_eff[2, 2] = self.unit_cell_mean(coeffzz).tocomplex()
         return param_eff
 
     def get_effective_permittivity(self, scalar=False):

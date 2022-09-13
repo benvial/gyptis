@@ -77,7 +77,7 @@ class BiPeriodic2D(dolfin.SubDomain):
 
     def map(self, x, y):
         on_right = is_on_line(x, self.vertices[1], self.vertices[2])
-        on_top = is_on_line(x, self.vertices[2], self.vertices[3])
+        on_top = is_on_line(x, self.vertices[3], self.vertices[2])
 
         if on_right and on_top:
             y[0] = x[0] - self.vectors[0][0] - self.vectors[1][0]

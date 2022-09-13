@@ -399,7 +399,13 @@ class Geometry:
             self.set_mesh_size({id: s}, dim=dim)
 
     def read_mesh_info(self):
-        if self.dim == 2:
+
+        if self.dim == 1:
+            marker_dim = "line"
+            sub_dim = "curves"
+            marker_dim_minus_1 = "point"
+            sub_dim_dim_minus_1 = "points"
+        elif self.dim == 2:
             marker_dim = "triangle"
             sub_dim = "surfaces"
             marker_dim_minus_1 = "line"
@@ -443,7 +449,17 @@ class Geometry:
         self.mesh = self.mesh_object["mesh"]
         self.markers = self.mesh_object["markers"]
 
-        if self.dim == 2:
+        if self.dim == 1:
+            self.domains = self.subdomains["curves"]
+            self.boundaries = {}
+            self.lines = {}
+            self.points = self.subdomains["points"]
+            self.markers = self.mesh_object["markers"]["line"]
+            self.boundary_markers = (
+                self.mesh_object["markers"]["point"] if self.boundaries else []
+            )
+
+        elif self.dim == 2:
             self.domains = self.subdomains["surfaces"]
             self.boundaries = self.subdomains["curves"]
             self.lines = {}

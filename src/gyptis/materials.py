@@ -427,13 +427,13 @@ def _coefs(a, b):
 
 
 class Coefficient:
-    def __init__(self, dict, geometry=None, pmls=[], dim=2, degree=1):
+    def __init__(self, dict, geometry=None, pmls=[], dim=2, degree=1, element=None):
         self.dict = dict
         self.geometry = geometry
         self.pmls = pmls
         self.dim = dim
         self.degree = degree
-        self.element = None
+        self.element = element
         if geometry:
             if self.dim == 2:
                 markers_key, mapping_key = "triangle", "surfaces"

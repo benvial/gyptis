@@ -17,9 +17,14 @@ from .. import ADJOINT, dolfin
 def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=None):
     data_dir_xdmf = data_dir_xdmf or tempfile.mkdtemp()
     meshio_mesh = meshio.read(mesh_file)
-    base_cell_type = "tetra" if dim == 3 else "triangle"
+    if dim == 3:
+        base_cell_type = "tetra"
+    elif dim == 2:
+        base_cell_type = "triangle"
+    else:
+        base_cell_type = "line"
 
-    points = meshio_mesh.points[:, :2] if dim == 2 else meshio_mesh.points
+    points = meshio_mesh.points if dim == 3 else meshio_mesh.points[:, :2]
     physicals = meshio_mesh.cell_data_dict["gmsh:physical"]
 
     cell_types, data_gmsh = zip(*physicals.items())
