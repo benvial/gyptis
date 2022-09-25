@@ -18,10 +18,12 @@ class PhotonicCrystal2D(Simulation):
         boundary_conditions={},
         polarization="TM",
         degree=1,
+        eps=dolfin.DOLFIN_EPS,
+        map_tol=1e-10,
     ):
         assert isinstance(geometry, Lattice2D)
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
-        self.periodic_bcs = BiPeriodic2D(geometry)
+        self.periodic_bcs = BiPeriodic2D(geometry, map_tol=map_tol, eps=eps)
         function_space = ComplexFunctionSpace(
             geometry.mesh, "CG", degree, constrained_domain=self.periodic_bcs
         )

@@ -107,7 +107,7 @@ class Maxwell2D(Formulation):
                     chi_dict[dom] - chi_a_dict[dom],
                     domain=dom,
                 )
-        if self.polarization == "TE":
+        if self.polarization == "TE" and not self.modal:
             for bnd in self.pec_boundaries:
                 normal = self.geometry.unit_normal_vector
                 form -= dot(grad(u1), normal) * v * self.ds(bnd)

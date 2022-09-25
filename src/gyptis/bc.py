@@ -56,28 +56,29 @@ class DirichletBC:
 
 
 class BiPeriodic2D(dolfin.SubDomain):
-    def __init__(self, geometry, *args, **kwargs):
+    def __init__(self, geometry, eps=dolfin.DOLFIN_EPS, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.eps = eps
         self.vectors = geometry.vectors
         self.vertices = geometry.vertices
 
     def inside(self, x, on_boundary):
-        on_bottom = is_on_line(x, self.vertices[0], self.vertices[1])
-        on_left = is_on_line(x, self.vertices[3], self.vertices[0])
+        on_bottom = is_on_line(x, self.vertices[0], self.vertices[1], eps=self.eps)
+        on_left = is_on_line(x, self.vertices[3], self.vertices[0], eps=self.eps)
 
-        on_vert_1 = dolfin.near(x[0], self.vertices[1][0]) and dolfin.near(
-            x[1], self.vertices[1][1]
-        )
-        on_vert_3 = dolfin.near(x[0], self.vertices[3][0]) and dolfin.near(
-            x[1], self.vertices[3][1]
-        )
+        on_vert_1 = dolfin.near(
+            x[0], self.vertices[1][0], eps=self.eps
+        ) and dolfin.near(x[1], self.vertices[1][1], eps=self.eps)
+        on_vert_3 = dolfin.near(
+            x[0], self.vertices[3][0], eps=self.eps
+        ) and dolfin.near(x[1], self.vertices[3][1], eps=self.eps)
         return bool(
             (on_bottom or on_left) and (not (on_vert_1 or on_vert_3)) and on_boundary
         )
 
     def map(self, x, y):
-        on_right = is_on_line(x, self.vertices[1], self.vertices[2])
-        on_top = is_on_line(x, self.vertices[3], self.vertices[2])
+        on_right = is_on_line(x, self.vertices[1], self.vertices[2], eps=self.eps)
+        on_top = is_on_line(x, self.vertices[3], self.vertices[2], eps=self.eps)
 
         if on_right and on_top:
             y[0] = x[0] - self.vectors[0][0] - self.vectors[1][0]

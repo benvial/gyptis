@@ -5,17 +5,15 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
+# sphinx_gallery_thumbnail_number = -1
 
 """
 Optimizing a lens
 -----------------
 
 In this tutorial, we will perform a topology optimization of a lens
-
 """
 
-
-# sphinx_gallery_thumbnail_number = -1
 
 ############################################################################
 # We first need to import the Python packages

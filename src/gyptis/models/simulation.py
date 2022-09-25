@@ -177,6 +177,7 @@ class Simulation:
 
         bcs = self.formulation.build_boundary_conditions()
 
+        # [bc.zero(A) for bc in bcs]
         # [bc.zero(B) for bc in bcs]
 
         dolfin.assemble_system(wf[0], dv, bcs, A_tensor=A, b_tensor=b)
