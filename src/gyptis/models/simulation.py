@@ -217,21 +217,19 @@ class Simulation:
 
         for j in range(nconv):
             ev_re, ev_im, rx, cx = eigensolver.get_eigenpair(j)
-            eig_vec_re = array2function(rx, self.formulation.function_space)
-            eig_vec_im = array2function(cx, self.formulation.function_space)
+            eig_vec_right = array2function(rx, self.formulation.function_space)
+            eig_vec_left = array2function(cx, self.formulation.function_space)
 
             if self.formulation.dim == 1:
-                eig_vec = Complex(*eig_vec_re) + 1j * Complex(*eig_vec_im)
+                eig_vec = Complex(*eig_vec_right)  # + 1j * Complex(*eig_vec_im)
             else:
 
-                eig_vec_re_re = [eig_vec_re[i] for i in range(3)]
-                eig_vec_re_im = [eig_vec_re[i] for i in range(3, 6)]
-                eig_vec_im_re = [eig_vec_im[i] for i in range(3)]
-                eig_vec_im_im = [eig_vec_im[i] for i in range(3, 6)]
+                eig_vec_re = [eig_vec_right[i] for i in range(3)]
+                eig_vec_im = [eig_vec_right[i] for i in range(3, 6)]
+                # eig_vec_im_re = [eig_vec_im[i] for i in range(3)]
+                # eig_vec_im_im = [eig_vec_im[i] for i in range(3, 6)]
 
-                re = Complex(eig_vec_re_re, eig_vec_re_im)
-                im = Complex(eig_vec_im_re, eig_vec_im_im)
-                eig_vec = vector(re) + 1j * vector(im)
+                eig_vec = vector(Complex(eig_vec_re, eig_vec_im))
 
             # eig_vec = Complex(eig_vec_re[0],eig_vec_im[1])
             ev = ev_re + 1j * ev_im
