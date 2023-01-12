@@ -244,28 +244,29 @@ class Subdomain:
         return ClassReturn(markers, subdomains, mapping, cpp=cpp, **kwargs)
 
 
-def _tensor_const_3d(T, real=False):
-    def _treal(T):
-        m = []
-        for i in range(3):
-            col = []
-            for j in range(3):
-                col.append(dolfin.Constant(T[i, j]))
-            m.append(col)
-        return dolfin.as_tensor(m)
+def tensor_const(T, dim=3, real=False, const=True):
+    if dim in (2, 3):
 
-    assert T.shape == (3, 3)
-    if hasattr(T, "real") and hasattr(T, "imag") and not real:
-        return Complex(_treal(T.real), _treal(T.imag))
-    else:
-        return _treal(T)
+        def _treal(T):
+            m = []
+            for i in range(dim):
+                col = []
+                for j in range(dim):
+                    q = dolfin.Constant(T[i][j]) if const else T[i][j]
+                    col.append(q)
+                m.append(col)
+            return dolfin.as_tensor(m)
 
-
-def tensor_const(T, dim=3, real=False):
-    if dim == 3:
-        return _tensor_const_3d(T, real=real)
-    elif dim == 2:
-        return _tensor_const_2d(T, real=real)
+        # assert T.shape == (dim, dim)
+        real1 = np.any(
+            [[hasattr(t, "real") and hasattr(t, "imag") for t in lines] for lines in T]
+        )
+        if real1 and not real:
+            Treal = [[t.real for t in lines] for lines in T]
+            Timag = [[t.imag for t in lines] for lines in T]
+            return Complex(_treal(Treal), _treal(Timag))
+        else:
+            return _treal(T)
     else:
         raise NotImplementedError("only supports dim = 2 or 3")
 
@@ -302,11 +303,19 @@ def _make_constant_property_2d(prop, inv=False, real=False):
     for d, p in prop.items():
         lenp = _check_len(p)
         if lenp > 0:
-            p = np.array(p)
-            if p.shape != (2, 2):
-                p = p[:2, :2]
-            k = np.array(p)
-            new_prop[d] = tensor_const(k, dim=2, real=real)
+            const = True
+            # p = np.array(p)
+            p = p[:2][:2]
+            for i in range(2):
+                for j in range(2):
+                    k = p[i][j]
+                    if callable(k):
+                        const = False
+                        break
+            # if p.shape != (2, 2):
+            #     p = p[:2][:2]
+            # k = np.array(p)
+            new_prop[d] = tensor_const(p, dim=2, real=real, const=const)
         else:
             k = p + 0j
             if callable(k):
@@ -325,23 +334,6 @@ def make_constant_property(*args, dim=3, **kwargs):
         raise NotImplementedError("only supports dim = 2 or 3")
 
 
-def _tensor_const_2d(T, real=False):
-    def _treal(T):
-        m = []
-        for i in range(2):
-            col = []
-            for j in range(2):
-                col.append(dolfin.Constant(T[i, j]))
-            m.append(col)
-        return dolfin.as_tensor(m)
-
-    assert T.shape == (2, 2)
-    if hasattr(T, "real") and hasattr(T, "imag") and not real:
-        return Complex(_treal(T.real), _treal(T.imag))
-    else:
-        return _treal(T)
-
-
 def complex_vector(V):
     return Complex(
         dolfin.as_tensor([q.real for q in V]), dolfin.as_tensor([q.imag for q in V])
@@ -353,9 +345,11 @@ def _get_xi(prop):
     for d, p in prop.items():
         lenp = _check_len(p)
         if lenp > 0:
-            p = np.array(p)
-            k = p[:2, :2].T
-            k = k / np.linalg.det(k)
+            # p = np.array(p)
+            k = [[p[0][0], p[1][0]], [p[0][1], p[1][1]]]
+            detk = p[0][0] * p[1][1] - p[1][0] * p[0][1]
+            k = [[k[0][0] / detk, k[0][1] / detk], [k[1][0] / detk, k[1][1] / detk]]
+
         else:
             k = 1 / p + 0j
         new_prop[d] = k
@@ -367,8 +361,8 @@ def _get_chi(prop):
     for d, p in prop.items():
         lenp = _check_len(p)
         if lenp > 0:
-            p = np.array(p)
-            k = p[2, 2]
+            # p = np.array(p)
+            k = p[2][2]
         else:
             k = p + 0j
         new_prop[d] = k

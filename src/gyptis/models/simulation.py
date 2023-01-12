@@ -17,9 +17,21 @@ from ..complex import *
 from ..formulations import *
 from ..geometry import *
 from ..materials import *
+from ..materials import _check_len
 from ..sources import *
 from ..utils import project_iterative
 from ..utils.helpers import array2function
+
+
+def _complexify_items(dictio):
+    out = {}
+    for k, e in dictio.items():
+        lene = _check_len(e)
+        if lene > 0:
+            out[k] = [[a + 1e-16j for a in b] for b in e]
+        else:
+            out[k] = e + 1e-16j
+    return out
 
 
 def init_em_materials(geometry, epsilon=None, mu=None):
@@ -28,8 +40,8 @@ def init_em_materials(geometry, epsilon=None, mu=None):
     if mu == None:
         mu = {k: 1 for k in geometry.domains.keys()}
 
-    epsilon = {k: e + 1e-16j for k, e in epsilon.items()}
-    mu = {k: m + 1e-16j for k, m in mu.items()}
+    epsilon = _complexify_items(epsilon)
+    mu = _complexify_items(mu)
     return epsilon, mu
 
 
@@ -155,7 +167,9 @@ class Simulation:
         self.apply_boundary_conditions()
         return self.solve_system()
 
-    def eigensolve(self, n_eig=6, wavevector_target=0.0, tol=1e-6, half=True, **kwargs):
+    def eigensolve(
+        self, n_eig=6, wavevector_target=0.0, tol=1e-6, half=True, system=True, **kwargs
+    ):
 
         wf = self.formulation.weak
         if self.formulation.dim == 1:
@@ -177,11 +191,20 @@ class Simulation:
 
         bcs = self.formulation.build_boundary_conditions()
 
+        if system:
+
+            dolfin.assemble_system(wf[0], dv, bcs, A_tensor=A, b_tensor=b)
+            dolfin.assemble_system(wf[1], dv, A_tensor=B, b_tensor=b)
+
+        else:
+
+            dolfin.assemble(wf[0], tensor=A)
+            for bc in bcs:
+                bc.apply(A)
+            dolfin.assemble(wf[1], tensor=B)
+
         # [bc.zero(A) for bc in bcs]
         # [bc.zero(B) for bc in bcs]
-
-        dolfin.assemble_system(wf[0], dv, bcs, A_tensor=A, b_tensor=b)
-        dolfin.assemble_system(wf[1], dv, bcs, A_tensor=B, b_tensor=b)
 
         eigensolver = dolfin.SLEPcEigenSolver(
             dolfin.as_backend_type(A), dolfin.as_backend_type(B)
