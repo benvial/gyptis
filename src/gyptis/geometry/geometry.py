@@ -244,6 +244,23 @@ class Geometry:
     def add_square(self, x, y, z, dx, **kwargs):
         return self.add_rectangle(x, y, z, dx, dx, **kwargs)
 
+    def add_polygon(self, vertices, surface=True, mesh_size=0.0, **kwargs):
+        """Adds a polygon."""
+        x, y = np.array(vertices).T
+        N = len(vertices)
+        points = []
+        for i in range(N):
+            p0 = self.add_point(x[i], y[i], 0, meshSize=mesh_size)
+            points.append(p0)
+        lines = []
+        for i in range(N - 1):
+            lines.append(self.add_line(points[i], points[i + 1]))
+        lines.append(self.add_line(points[i + 1], points[0]))
+        loop = self.add_curve_loop(lines)
+        if surface:
+            return self.add_plane_surface([loop])
+        return loop
+
     def add_spline(self, points, mesh_size=0.0, surface=True, **kwargs):
         """Adds a spline.
 
