@@ -60,6 +60,7 @@ class Simulation:
         self.ds = formulation.ds
         self.dS = formulation.dS
         self.direct = direct
+        self.ndof = self.function_space.dim()
 
     @property
     def source(self):

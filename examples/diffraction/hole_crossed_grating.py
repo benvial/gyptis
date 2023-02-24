@@ -20,9 +20,11 @@ import numpy as np
 
 import gyptis as gy
 
+import pprint
+
 gy.dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 # gy.dolfin.parameters["ghost_mode"] = "shared_facet"
-gy.dolfin.set_log_level(7)
+gy.dolfin.set_log_level(100)
 
 ##############################################################################
 # Structure is the same as in :cite:p:`Demesy2010`.
@@ -63,8 +65,8 @@ pmesh = 3
 pmesh_hole = pmesh * 1
 mesh_param = dict(
     {
-        "pml_bottom": 1 * pmesh * eps_diel**0.5,
-        "substrate": pmesh * eps_diel**0.5,
+        "pml_bottom": 1 * pmesh * eps_diel.real**0.5,
+        "substrate": pmesh * eps_diel.real**0.5,
         "groove": pmesh * abs(eps_layer) ** 0.5,
         "hole": pmesh_hole,
         "superstrate": pmesh,
@@ -114,7 +116,7 @@ epsilon["substrate"] = eps_diel
 # :class:`~gyptis.Grating`,
 
 pw = gy.PlaneWave(lambda0, (theta0, phi0, psi0), dim=3, degree=degree)
-grating = gy.Grating(geom, epsilon, mu, source=pw, degree=degree, periodic_map_tol=1e-8)
+grating = gy.Grating(geom, epsilon, mu, source=pw, degree=degree, periodic_map_tol=1e-12)
 
 # pp = gy.utils.project_iterative(pw.expression,grating.formulation.real_function_space)
 # gy.dolfin.File("test.pvd") << pp.real
@@ -129,5 +131,40 @@ grating = gy.Grating(geom, epsilon, mu, source=pw, degree=degree, periodic_map_t
 # xsx
 
 grating.solve()
-effs = grating.diffraction_efficiencies(2, orders=True)
-print(effs)
+N_d_order = 2
+effs = grating.diffraction_efficiencies(N_d_order, orders=True)
+
+
+print()
+print("Transmission")
+print("------------")
+pprint.pprint(effs["T"])
+print()
+print("Reflection")
+print("----------")
+pprint.pprint(effs["R"])
+print()
+print("Absorption")
+print("----------")
+pprint.pprint(effs["Q"])
+print()
+print("Balance")
+print("-------")
+pprint.pprint(effs["B"])
+print()
+
+R00 = effs["R"][N_d_order][N_d_order]
+print("R00")
+print("-------")
+print(R00)
+print()
+print("T")
+print("-------")
+print(np.sum(effs["T"]))
+print()
+print("R")
+print("-------")
+print(np.sum(effs["R"]))
+print()
+
+

@@ -16,7 +16,7 @@ from .. import ADJOINT, dolfin
 
 def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=None):
     data_dir_xdmf = data_dir_xdmf or tempfile.mkdtemp()
-    meshio_mesh = meshio.read(mesh_file)
+    meshio_mesh = meshio.read(mesh_file,file_format="gmsh")
     if dim == 3:
         base_cell_type = "tetra"
     elif dim == 2:
@@ -77,6 +77,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
             pass
 
         markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
+    
     return dict(mesh=dolfin_mesh, markers=markers)
 
 

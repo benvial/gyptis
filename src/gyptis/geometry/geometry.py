@@ -82,6 +82,8 @@ def _convert_name(name):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
+
+
 class Geometry:
     """Base class for geometry models."""
 
@@ -94,6 +96,7 @@ class Geometry:
         gmsh_args=None,
         finalize=True,
         verbose=0,
+        binary_mesh=True,
         options={},
     ):
         self.model_name = model_name
@@ -108,6 +111,7 @@ class Geometry:
         self.markers = {}
         self.options = options
         self.verbose = verbose
+        self.binary_mesh = binary_mesh
         self.comm = dolfin.MPI.comm_world
 
         self.pml_physical = []
@@ -143,6 +147,7 @@ class Geometry:
                 gmsh.initialize()
 
         gmsh_options.set("General.Verbosity", self.verbose)
+        gmsh_options.set("Mesh.Binary", self.binary_mesh)
         for k, v in options.items():
             gmsh_options.set(k, v)
 
@@ -188,8 +193,14 @@ class Geometry:
             A tuple (dim, tag) or list of such tuples (gmsh DimTag notation).
 
         """
-        dim = dim or self.dim
+        dim = self.dim if dim==None else dim
         return _dimtag(id, dim=dim)
+
+
+    def tagdim(self,x):
+        if not isinstance(x, list):
+            x = list([x])
+        return [t[1] for t in x]
 
     def _translation_matrix(self, t):
         M = [
@@ -245,18 +256,34 @@ class Geometry:
         return self.add_rectangle(x, y, z, dx, dx, **kwargs)
 
     def add_polygon(self, vertices, surface=True, mesh_size=0.0, **kwargs):
-        """Adds a polygon."""
-        x, y = np.array(vertices).T
+        """Adds a polygon.
+
+        Parameters
+        ----------
+        points : array of shape (Npoints,3)
+            Corrdinates of the points.
+        mesh_size : float
+            Mesh sizes at points (the default is 0.0).
+        surface : type
+            If True, creates a plane surface (the default is True).
+
+        Returns
+        -------
+        int
+            The tag of the polygon.
+
+        """
+        x, y, z = np.array(vertices).T
         N = len(vertices)
         points = []
         for i in range(N):
-            p0 = self.add_point(x[i], y[i], 0, meshSize=mesh_size)
+            p0 = self.add_point(x[i], y[i], z[i], meshSize=mesh_size)
             points.append(p0)
         lines = []
         for i in range(N - 1):
             lines.append(self.add_line(points[i], points[i + 1]))
         lines.append(self.add_line(points[i + 1], points[0]))
-        loop = self.add_curve_loop(lines)
+        loop = self.add_curve_loop(lines, **kwargs)
         if surface:
             return self.add_plane_surface([loop])
         return loop
@@ -603,6 +630,7 @@ class Geometry:
         else:
             subdomains_num = subdomains
 
+        
         return read_mesh(
             self.msh_file,
             data_dir=self.data_dir,
