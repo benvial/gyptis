@@ -12,6 +12,7 @@ dependencies:
   - scipy
   - simpy
   - matplotlib
+  - pyvista
   - joblib
   - psutil
   - ipython

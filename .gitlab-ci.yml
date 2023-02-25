@@ -1,6 +1,11 @@
 
 image: gyptis/gyptis:dev
 
+variables:
+  TERM: "xterm"
+  DISPLAY: ":99.0"
+  PYVISTA_OFF_SCREEN: "true"
+
 
 include:
   - template: Code-Quality.gitlab-ci.yml
