@@ -13,13 +13,13 @@ Example of a dielectric bi-periodic diffraction grating.
 # sphinx_gallery_thumbnail_number = 2
 
 
+import time
 from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import gyptis as gy
-import time
 
 gy.dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 # gy.dolfin.parameters["ghost_mode"] = "shared_facet"
@@ -33,13 +33,14 @@ gy.dolfin.set_log_level(100)
 
 
 lambda0 = 1
-dx = dy = 5 * lambda0 * 2**0.5 / 4  # periods of the grating
+dy = 1.8
+dx = dy / 10
 h = lambda0
 theta0 = 0
 phi0 = 0
-psi0 = gy.pi / 4
-eps_diel = 2.25
-eps_layer = 1
+psi0 = 1 * gy.pi / 2
+eps_diel = 4
+l_pillar = dy / 2
 
 ##############################################################################
 # The thicknesses of the different layers are specified with an
@@ -48,11 +49,9 @@ eps_layer = 1
 thicknesses = OrderedDict(
     {
         "pml_bottom": lambda0,
-        "substrate": lambda0  * 0.5,
-        "substrate1": lambda0  * 0.5,
+        "substrate": lambda0 * 1,
         "groove": h,
-        "superstrate1": lambda0 * 0.1,
-        "superstrate": lambda0 * 0.1,
+        "superstrate": lambda0 * 1,
         "pml_top": lambda0,
     }
 )
@@ -62,17 +61,15 @@ thicknesses = OrderedDict(
 # ``parmesh`` cells per wavelength of the field inside each subdomain
 
 degree = 2
-pmesh = 3
+pmesh = 6
 pmesh_pillar = pmesh * 1
 pmesh_groove = pmesh * 1
 mesh_param = dict(
     {
         "pml_bottom": 1 * pmesh * eps_diel**0.5,
         "substrate": pmesh * eps_diel**0.5,
-        "substrate1": pmesh * eps_diel**0.5,
-        "groove": pmesh_groove * eps_layer**0.5,
-        "pillar": pmesh_pillar * eps_diel**0.5,
-        "superstrate1": pmesh,
+        "groove": pmesh_groove * eps_diel**0.5,
+        "rod": pmesh_pillar * eps_diel**0.5,
         "superstrate": pmesh,
         "pml_top": 1 * pmesh,
     }
@@ -83,26 +80,22 @@ mesh_param = dict(
 # class:
 geom = gy.Layered(3, (dx, dy), thicknesses)
 z0 = geom.z_position["groove"]  # + h/10
-l_pillar = dx * 2**0.5 / 2
-pillar = geom.add_box(-l_pillar / 2, -l_pillar / 2, z0, l_pillar, l_pillar, h)
-geom.rotate(pillar, (0, 0, 0), (0, 0, 1), np.pi / 4)
+# pillar = geom.add_box(-l_pillar / 2, -l_pillar / 2, z0, l_pillar, l_pillar, h)
+pillar = geom.add_box(-dx / 2, -l_pillar / 2, z0, dx, l_pillar, h)
+# geom.rotate(pillar, (0, 0, 0), (0, 0, 1), np.pi / 4)
 groove = geom.layers["groove"]
-sub = geom.layers["substrate1"]
-sup = geom.layers["superstrate1"]
+sub = geom.layers["substrate"]
+sup = geom.layers["superstrate"]
 # sub, sup, pillar, groove = geom.fragment([sub, sup, groove], pillar)
 out = geom.fragment([sub, sup, groove], pillar)
 sub = out[0]
 sup = out[1]
 pillar = out[2]
 groove = out[3:]
-geom.add_physical(pillar, "pillar")
+geom.add_physical(pillar, "rod")
 geom.add_physical(groove, "groove")
-geom.add_physical(sub, "substrate1")
-geom.add_physical(sup, "superstrate1")
-sub = geom.layers["substrate1"]
-sup = geom.layers["superstrate1"]
-# geom.add_physical(sub, "substrate")
-# geom.add_physical(sup, "superstrate")
+geom.add_physical(sub, "substrate")
+geom.add_physical(sup, "superstrate")
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 geom.set_mesh_size(mesh_size)
 # geom.remove_all_duplicates()
@@ -118,10 +111,8 @@ geom.build(interactive=False)
 
 mu = {d: 1 for d in geom.domains}
 epsilon = {d: 1 for d in geom.domains}
-epsilon["pillar"] = 1
-epsilon["superstrate"] = 1
-epsilon["superstrate1"] = 1
-# epsilon["substrate1"] = eps_diel
+epsilon["rod"] = eps_diel
+# epsilon["groove"] = eps_diel
 epsilon["substrate"] = eps_diel
 
 ######################################################################
@@ -163,17 +154,38 @@ t = -time.time()
 grating.solve()
 
 
-V = gy.dolfin.FunctionSpace(geom.mesh,"CG",2)
+V = gy.dolfin.FunctionSpace(geom.mesh, "CG", 2)
 
-reEx = grating.solution["total"][0].real
-pp = gy.project_iterative(reEx,V)
+comp = 0 if psi0 == 0 else 1
+
+reEx = grating.solution["total"][1].real
+pp = gy.project_iterative(reEx, V)
 gy.dolfin.File("reEx.pvd") << pp
+
+
+import pyvista
+
+reader = pyvista.get_reader("reEx.pvd")
+mesh = reader.read()
+pl = pyvista.Plotter()
+_ = pl.add_mesh(mesh, cmap="RdBu_r")
+pl.view_xy()
+pl.show()
+
+
 import os
+
 os.system("paraview reEx.pvd")
 
-N = 1
+N = 3
 effs = grating.diffraction_efficiencies(N, orders=True)
-# print(effs)
+print(effs)
+
+
+import sys
+
+sys.exit(0)
+
 t += time.time()
 
 Tfmm = [

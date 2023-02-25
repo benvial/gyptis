@@ -15,6 +15,7 @@ import os
 import sys
 from datetime import date
 
+import pyvista
 import sphinx_gallery
 from pybtex.plugin import register_plugin
 from pybtex.style.formatting.unsrt import Style as UnsrtStyle
@@ -22,6 +23,12 @@ from pybtex.style.labels import BaseLabelStyle
 
 import gyptis as package
 
+# necessary when building the sphinx gallery
+pyvista.BUILDING_GALLERY = True
+pyvista.OFF_SCREEN = True
+
+# Optional - set parameters like theme or window size
+pyvista.set_plot_theme("document")
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -377,6 +384,7 @@ sphinx_gallery_conf = {
         "sphinx_gallery": None,
     },
     "reset_modules": (),
+    "image_scrapers": ("pyvista", "matplotlib"),
     # "pypandoc": True,
     # "pypandoc": {"extra_args": ["-C","--bibliography=_custom/latex/biblio.bib"], "filters": []},
     # "filename_pattern": "plot_homogenization\.py",

@@ -112,6 +112,12 @@ class Maxwell3D(Formulation):
             weak = form.real + form.imag
         return weak
 
+    def get_magnetic_field(self, E):
+        omega = 1 if self.modal else self.source.pulsation
+        j = Complex(0, 1)
+        mu_inv = self.mu.invert().as_subdomain()
+        return -mu_inv / (j * omega * mu_0) * curl(E)
+
     @property
     def weak(self):
         u1 = self.source.expression

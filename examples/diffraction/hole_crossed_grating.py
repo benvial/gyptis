@@ -13,14 +13,13 @@ Example of a dielectric bi-periodic diffraction grating.
 # sphinx_gallery_thumbnail_number = 2
 
 
+import pprint
 from collections import OrderedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import gyptis as gy
-
-import pprint
 
 gy.dolfin.parameters["form_compiler"]["quadrature_degree"] = 5
 # gy.dolfin.parameters["ghost_mode"] = "shared_facet"
@@ -116,7 +115,9 @@ epsilon["substrate"] = eps_diel
 # :class:`~gyptis.Grating`,
 
 pw = gy.PlaneWave(lambda0, (theta0, phi0, psi0), dim=3, degree=degree)
-grating = gy.Grating(geom, epsilon, mu, source=pw, degree=degree, periodic_map_tol=1e-12)
+grating = gy.Grating(
+    geom, epsilon, mu, source=pw, degree=degree, periodic_map_tol=1e-12
+)
 
 # pp = gy.utils.project_iterative(pw.expression,grating.formulation.real_function_space)
 # gy.dolfin.File("test.pvd") << pp.real
@@ -166,5 +167,3 @@ print("R")
 print("-------")
 print(np.sum(effs["R"]))
 print()
-
-

@@ -339,8 +339,10 @@ def make_stack(
         for dom in source_domains:
             estack[dom] = estack["superstrate"]
 
-        estack["pml_bottom"] = estack["substrate"]
-        estack["pml_top"] = estack["superstrate"]
+        # estack["pml_bottom"] = estack["substrate"]
+        # estack["pml_top"] = estack["superstrate"]
+
+        estack["pml_top"] = estack["pml_bottom"] = Complex(0, 0)
 
         # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
         e0 = {"superstrate": u_0}
@@ -397,10 +399,10 @@ def make_stack(
             for dom in source_domains:
                 estack[dom] = estack["superstrate"]
 
-            estack["pml_bottom"] = estack["substrate"]
-            estack["pml_top"] = estack["superstrate"]
+            # estack["pml_bottom"] = estack["substrate"]
+            # estack["pml_top"] = estack["superstrate"]
+            estack["pml_bottom"] = estack["pml_top"] = Complex(0, 0)
 
-            # estack["pml_bottom"] = estack["pml_top"]= Complex(0, 0)
             e0 = {"superstrate": u_0}
             for dom in source_domains:
                 e0[dom] = e0["superstrate"]

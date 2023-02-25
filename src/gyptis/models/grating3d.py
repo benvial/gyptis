@@ -164,7 +164,9 @@ class Grating3D(_GratingBase, Simulation):
                             assemble(Eper[comp] * ph_xy * ph_z * self.dx(d))
                             / (self.period[0] * self.period[1])
                         )
-                    ph_pos = np.exp(-1 * 1j * gamma_nm * self.geometry.z_position["superstrate"])
+                    ph_pos = np.exp(
+                        -1 * 1j * gamma_nm * self.geometry.z_position["superstrate"]
+                    )
                     ph_pos = 1 if d == "superstrate" else ph_pos
                     eff, sqnorm_eff = [], 0
                     for comp in range(3):

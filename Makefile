@@ -243,13 +243,13 @@ doc-fast: less
 ## Build html documentation (only updated examples)
 doc: less
 	$(call message,${@})
-	@cd docs && make -s html && make -s postpro-html
+	@cd docs && PYVISTA_OFF_SCREEN=true make -s html && make -s postpro-html
 
 
 ## Build html documentation (without examples)
 doc-noplot: less
 	$(call message,${@})
-	@cd docs && make -s clean && make -s html-noplot && make -s postpro-html
+	@cd docs && make -s clean && PYVISTA_OFF_SCREEN=true make -s html-noplot && make -s postpro-html
 
 ## Show locally built html documentation in a browser
 show-doc:

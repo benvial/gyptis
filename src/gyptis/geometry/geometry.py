@@ -82,8 +82,6 @@ def _convert_name(name):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
-
-
 class Geometry:
     """Base class for geometry models."""
 
@@ -193,11 +191,10 @@ class Geometry:
             A tuple (dim, tag) or list of such tuples (gmsh DimTag notation).
 
         """
-        dim = self.dim if dim==None else dim
+        dim = self.dim if dim == None else dim
         return _dimtag(id, dim=dim)
 
-
-    def tagdim(self,x):
+    def tagdim(self, x):
         if not isinstance(x, list):
             x = list([x])
         return [t[1] for t in x]
@@ -630,7 +627,6 @@ class Geometry:
         else:
             subdomains_num = subdomains
 
-        
         return read_mesh(
             self.msh_file,
             data_dir=self.data_dir,
