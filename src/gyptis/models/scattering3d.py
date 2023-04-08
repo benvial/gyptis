@@ -87,7 +87,6 @@ class Scatt3D(_ScatteringBase, Simulation):
         return E
 
     def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
-
         parallel = dolfin.MPI.comm_world.size > 1
         # normal vector is messing up in parallel so workaround here:
         if parallel:
@@ -263,7 +262,6 @@ class Scatt3D(_ScatteringBase, Simulation):
         component="transverse",
         boundary="calc_bnds",
     ):
-
         T11 = np.zeros((p_max, p_max)).tolist()
         T21 = np.zeros((p_max, p_max)).tolist()
         T12 = np.zeros((p_max, p_max)).tolist()

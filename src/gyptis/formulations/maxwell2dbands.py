@@ -10,8 +10,8 @@ from .maxwell2d import *
 
 
 class Maxwell2DBands(Maxwell2D):
-    def __init__(self, *args, propagation_vector=(0, 0), **kwargs):
-        super().__init__(*args, **kwargs, modal=True)
+    def __init__(self, *args, propagation_vector=(0, 0), modal=True, **kwargs):
+        super().__init__(*args, **kwargs, modal=modal)
         self.propagation_vector = propagation_vector
 
     @property

@@ -179,7 +179,6 @@ class Scatt2D(_ScatteringBase, Simulation):
         callback=None,
         **kwargs,
     ):
-
         u = self.solution[field]
         if ax is None:
             ax = plt.gca()

@@ -64,7 +64,6 @@ class MatchLabelStyle(BaseLabelStyle):
 
 
 class GyptisStyle(UnsrtStyle):
-
     default_label_style = MatchLabelStyle
 
 

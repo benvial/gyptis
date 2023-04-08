@@ -39,7 +39,6 @@ class Maxwell3D(Formulation):
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
     def maxwell(self, u, v, epsilon, inv_mu, domain="everywhere"):
-
         form = []
         form.append(-inner(inv_mu * curl(u), curl(v)))
         form.append(inner(epsilon * u, v))

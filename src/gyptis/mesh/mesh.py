@@ -63,7 +63,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
         infile.read(dolfin_mesh)
 
     markers = {}
-    dim_map = dict(line=1, triangle=2, tetra=3)
+    dim_map = dict(vertex=0, line=1, triangle=2, tetra=3)
     if subdomains is not None:
         cell_types = [base_cell_type]
     for cell_type in cell_types:

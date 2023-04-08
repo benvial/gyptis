@@ -14,7 +14,6 @@ np.random.seed(13)
 
 
 def test_sampler():
-
     Npoles = 100
 
     poles = np.random.rand(Npoles) + 1j * np.random.rand(Npoles)

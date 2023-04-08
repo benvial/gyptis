@@ -103,7 +103,6 @@ class FourPhaseComposite:
         return rho_x, rho_y
 
     def _homogenize_analytical(self):
-
         logging.info("Computing homogenization problem analytically")
         m = self.compute_m()
         self.m = m

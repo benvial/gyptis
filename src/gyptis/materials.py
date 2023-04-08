@@ -85,7 +85,6 @@ class _SubdomainPy(dolfin.UserExpression):
 
 class _SubdomainCpp(dolfin.CompiledExpression):
     def __init__(self, markers, subdomains, mapping, **kwargs):
-
         here = os.path.dirname(os.path.realpath(__file__))
         with open(os.path.join(here, "subdomain.cpp")) as f:
             subdomain_code = f.read()
@@ -492,7 +491,6 @@ class Coefficient:
         return new
 
     def plot(self, component=None, **kwargs):
-
         proj_space = dolfin.FunctionSpace(self.geometry.mesh_object["mesh"], "DG", 0)
         eps_subdomain = self.as_subdomain()
         eps_plot = (

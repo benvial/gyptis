@@ -83,7 +83,6 @@ def test_scatt2d_pw(degree, polarization):
     "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_scatt2d_ls(degree, polarization):
-
     from gyptis import LineSource, Scattering
 
     epsilon = dict(box=1, cyl=3)
@@ -108,7 +107,6 @@ def test_scatt2d_ls(degree, polarization):
 
 @pytest.mark.parametrize("polarization", ["TM", "TE"])
 def test_scatt2d_pec(polarization):
-
     from gyptis import BoxPML, PlaneWave, Scattering
 
     geom = BoxPML(

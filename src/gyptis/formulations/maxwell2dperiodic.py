@@ -49,7 +49,6 @@ class Maxwell2DPeriodic(Maxwell2D):
         return super()._weak(u, v, u1)
 
     def build_boundary_conditions(self):
-
         applied_function = (
             Constant(0)
             if self.modal

@@ -101,7 +101,6 @@ epsilon["rod"] = eps_rod
 
 
 for jangle, angle in enumerate([0, -20, -40]):
-
     angle_degree = angle * np.pi / 180
 
     pw = gy.PlaneWave(lambda0, angle_degree, dim=2)

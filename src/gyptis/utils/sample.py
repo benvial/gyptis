@@ -37,7 +37,6 @@ def adaptive_sampler(max_bend=10, max_z_rel=1e-3, max_df=0.05):
 
 
 def _adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
-
     z0 = np.sort(z0)
     zmin = min(z0)
     zmax = max(z0)

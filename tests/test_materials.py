@@ -123,7 +123,6 @@ def test_pml():
 
 
 def test_coefficient():
-
     geom = BoxPML(dim=2)
     cyl = geom.add_circle(0, 0, 0, 0.2)
     cyl, box = geom.fragment(cyl, geom.box)

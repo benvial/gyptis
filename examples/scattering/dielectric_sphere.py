@@ -81,7 +81,6 @@ if plot_scs and rank == 0:
 
 
 def build_geometry(pmesh):
-
     pmesh_scatt = 1 * pmesh
 
     b = a * 2 * 1.2
@@ -129,7 +128,6 @@ def build_geometry(pmesh):
 
 
 def compute_scs(lambda0, pmesh=2, degree=1):
-
     # Rcalc=0.9*b/2
     mpi_print("####################################")
     mpi_print("MESHING")

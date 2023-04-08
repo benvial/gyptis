@@ -19,7 +19,6 @@ class Measure(dolfin.Measure):
         subdomain_data=None,
         subdomain_dict=None,
     ):
-
         self.subdomain_dict = subdomain_dict
         if (
             self.subdomain_dict

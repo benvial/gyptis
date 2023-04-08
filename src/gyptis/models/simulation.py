@@ -171,7 +171,6 @@ class Simulation:
     def eigensolve(
         self, n_eig=6, wavevector_target=0.0, tol=1e-6, half=True, system=True, **kwargs
     ):
-
         wf = self.formulation.weak
         if self.formulation.dim == 1:
             dummy_vector = (
@@ -193,12 +192,10 @@ class Simulation:
         bcs = self.formulation.build_boundary_conditions()
 
         if system:
-
             dolfin.assemble_system(wf[0], dv, bcs, A_tensor=A, b_tensor=b)
             dolfin.assemble_system(wf[1], dv, A_tensor=B, b_tensor=b)
 
         else:
-
             dolfin.assemble(wf[0], tensor=A)
             for bc in bcs:
                 bc.apply(A)
@@ -247,7 +244,6 @@ class Simulation:
             if self.formulation.dim == 1:
                 eig_vec = Complex(*eig_vec_right)  # + 1j * Complex(*eig_vec_im)
             else:
-
                 eig_vec_re = [eig_vec_right[i] for i in range(3)]
                 eig_vec_im = [eig_vec_right[i] for i in range(3, 6)]
                 # eig_vec_im_re = [eig_vec_im[i] for i in range(3)]

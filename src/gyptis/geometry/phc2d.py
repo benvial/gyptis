@@ -48,7 +48,6 @@ class Lattice2D(Geometry):
         )
 
     def get_periodic_bnds(self):
-
         # define lines equations
         def _is_on_line(p, p1, p2):
             x, y = p

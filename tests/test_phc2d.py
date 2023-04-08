@@ -13,7 +13,6 @@ import pytest
     "degree,polarization", [(1, "TM"), (2, "TM"), (1, "TE"), (2, "TE")]
 )
 def test_phc(degree, polarization):
-
     from gyptis import dolfin, project
     from gyptis.models.phc2d import Lattice2D, PhotonicCrystal2D
 

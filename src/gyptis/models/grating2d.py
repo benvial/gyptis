@@ -101,7 +101,6 @@ class Grating2D(_GratingBase, Simulation):
         subdomain_absorption=False,
         verbose=False,
     ):
-
         if self.formulation.polarization == "TM":
             nu = 1 / self.mu["substrate"]
         else:
@@ -215,7 +214,6 @@ class Grating2D(_GratingBase, Simulation):
             chi = self.formulation.chi.as_property()
             xi = self.formulation.xi.as_property()
             for d in doms_no_pml:
-
                 nrj_chi_dens = (
                     dolfin.Constant(-0.5 * chi_0 * omega) * chi[d] * abs(u_tot) ** 2
                 ).imag
@@ -253,7 +251,6 @@ class Grating2D(_GratingBase, Simulation):
         return Q, Qdomains
 
     def plot_geometry(self, nper=1, ax=None, c="k", **kwargs):
-
         if ax is None:
             ax = plt.gca()
         domains = self.geometry.subdomains["surfaces"]
@@ -298,7 +295,6 @@ class Grating2D(_GratingBase, Simulation):
         callback=None,
         **kwargs,
     ):
-
         u = self.solution[field]
         if ax is None:
             ax = plt.gca()

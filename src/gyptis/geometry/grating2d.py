@@ -58,7 +58,6 @@ class Layered2D(Geometry):
         return box
 
     def build(self, *args, **kwargs):
-
         s = self.get_periodic_bnds(self.y0, self.total_thickness)
         periodic_id = {}
         for k, v in s.items():

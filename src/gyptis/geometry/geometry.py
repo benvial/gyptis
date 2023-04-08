@@ -149,6 +149,9 @@ class Geometry:
         for k, v in options.items():
             gmsh_options.set(k, v)
 
+    def _check_dim(self, dim):
+        return self.dim if dim is None else dim
+
     def rotate(self, tag, point, axis, angle, dim=None):
         dt = self.dimtag(tag, dim=dim)
         return occ.rotate(dt, *point, *axis, angle)
@@ -165,7 +168,7 @@ class Geometry:
         dim : int
             Dimension.
         """
-        dim = dim if dim else self.dim
+        dim = self._check_dim(dim)
         dicname = list(self.subdomains)[3 - dim]
         if not isinstance(id, list):
             id = list([id])
@@ -191,7 +194,7 @@ class Geometry:
             A tuple (dim, tag) or list of such tuples (gmsh DimTag notation).
 
         """
-        dim = self.dim if dim == None else dim
+        dim = self._check_dim(dim)
         return _dimtag(id, dim=dim)
 
     def tagdim(self, x):
@@ -318,8 +321,8 @@ class Geometry:
             return self._gmsh_add_spline(dt, **kwargs)
 
     def fragment(self, id1, id2, dim1=None, dim2=None, sync=True, map=False, **kwargs):
-        dim1 = dim1 if dim1 else self.dim
-        dim2 = dim2 if dim2 else self.dim
+        dim1 = self._check_dim(dim1)
+        dim2 = self._check_dim(dim2)
         a1 = self.dimtag(id1, dim1)
         a2 = self.dimtag(id2, dim2)
         dimtags, mapping = occ.fragment(a1, a2, **kwargs)
@@ -332,8 +335,8 @@ class Geometry:
             return tags
 
     def intersect(self, id1, id2, dim1=None, dim2=None, sync=True, map=False, **kwargs):
-        dim1 = dim1 if dim1 else self.dim
-        dim2 = dim2 if dim2 else self.dim
+        dim1 = self._check_dim(dim1)
+        dim2 = self._check_dim(dim2)
         a1 = self.dimtag(id1, dim1)
         a2 = self.dimtag(id2, dim2)
         dimtags, mapping = occ.intersect(a1, a2, **kwargs)
@@ -346,8 +349,8 @@ class Geometry:
             return tags
 
     def cut(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
-        dim1 = dim1 if dim1 else self.dim
-        dim2 = dim2 if dim2 else self.dim
+        dim1 = self._check_dim(dim1)
+        dim2 = self._check_dim(dim2)
         a1 = self.dimtag(id1, dim1)
         a2 = self.dimtag(id2, dim2)
         ov, ovv = occ.cut(a1, a2, **kwargs)
@@ -356,8 +359,8 @@ class Geometry:
         return [o[1] for o in ov]
 
     def fuse(self, id1, id2, dim1=None, dim2=None, sync=True):
-        dim1 = dim1 if dim1 else self.dim
-        dim2 = dim2 if dim2 else self.dim
+        dim1 = self._check_dim(dim1)
+        dim2 = self._check_dim(dim2)
         a1 = self.dimtag(id1, dim1)
         a2 = self.dimtag(id2, dim2)
         ov, ovv = occ.fuse(a1, a2)
@@ -366,7 +369,7 @@ class Geometry:
         return [o[1] for o in ov]
 
     def get_boundaries(self, id, dim=None, physical=True):
-        dim = dim if dim else self.dim
+        dim = self._check_dim(dim)
         if isinstance(id, str):
             if dim == 3:
                 type_entity = "volumes"
@@ -388,7 +391,7 @@ class Geometry:
             return _get_bnd(n, dim=dim)
 
     def _set_size(self, id, s, dim=None):
-        dim = dim if dim else self.dim
+        dim = self._check_dim(dim)
         p = gmsh.model.getBoundary(
             self.dimtag(id, dim=dim), False, False, True
         )  # Get all points
@@ -403,7 +406,7 @@ class Geometry:
                     subitems.pop(id)
 
     def set_mesh_size(self, params, dim=None):
-        dim = dim if dim else self.dim
+        dim = self._check_dim(dim)
         if dim == 3:
             type_entity = "volumes"
         elif dim == 2:
@@ -440,7 +443,6 @@ class Geometry:
             self.set_mesh_size({id: s}, dim=dim)
 
     def read_mesh_info(self):
-
         if self.dim == 1:
             marker_dim = "line"
             sub_dim = "curves"

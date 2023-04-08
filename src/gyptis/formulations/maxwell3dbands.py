@@ -16,7 +16,6 @@ class Maxwell3DBands(Maxwell3D):
 
     @property
     def phasor_vect(self):
-
         return [
             phasor(
                 self.propagation_vector[i],

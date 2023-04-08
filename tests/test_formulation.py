@@ -110,7 +110,6 @@ def test_maxwell2d():
 
 
 def test_maxwell2d_periodic():
-
     lambda0, period = 1, 1
 
     from gyptis.models.grating2d import Layered2D, OrderedDict

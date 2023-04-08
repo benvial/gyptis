@@ -58,7 +58,6 @@ def test_flags():
         )
 
         for i in range(1, 2):
-
             s = Scattering(
                 geom, epsilon, mu, pw, degree=degree, polarization=polarization
             )

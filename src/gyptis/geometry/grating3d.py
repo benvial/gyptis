@@ -85,7 +85,6 @@ class Layered3D(Geometry):
         super().build(**kwargs)
 
     def get_periodic_bnds(self, z_position, thickness, eps=None):
-
         eps = eps or self.periodic_tol
 
         s = {}

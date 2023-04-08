@@ -16,6 +16,7 @@ stages:
   - trigdoc
   - trigdocker
   - test
+  - deploy
 
 
 
@@ -99,3 +100,16 @@ sonarcloud-check:
     - merge_requests
     - master
     - develop
+
+
+
+pypi:
+  image: python:latest
+  stage: deploy
+  cache: {}
+  script:
+    - pip install twine build
+    - python3 -m build --sdist --wheel .
+    - twine upload dist/*
+  only:
+    - tags

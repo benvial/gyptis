@@ -35,7 +35,6 @@ def test_hom(degree, epsincl, muincl):
     for eps_inclusion, mu_inclusion in zip(
         [epsincl, epsincl * np.eye(3)], [muincl, muincl * np.eye(3)]
     ):
-
         epsilon = dict(background=1.25, inclusion=eps_inclusion)
         mu = dict(background=1, inclusion=mu_inclusion)
 

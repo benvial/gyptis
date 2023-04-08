@@ -52,7 +52,6 @@ class HighContrastHomogenization2D(Simulation):
         inclusion_boundaries="inclusion_bnds",
         boundary_conditions=None,
     ):
-
         assert isinstance(background, Lattice2D)
         assert isinstance(inclusion, Geometry)
         self.epsilon, self.mu = init_em_materials(background, epsilon, mu)

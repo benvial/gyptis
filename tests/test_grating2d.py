@@ -22,7 +22,6 @@ pmesh = 13
 
 @pytest.mark.parametrize("polarization,degree", pytest_params)
 def test_grating2d(polarization, degree):
-
     from gyptis import Grating, Layered
     from gyptis.models.grating2d import Grating2D, Layered2D, OrderedDict
     from gyptis.sources import PlaneWave
@@ -103,7 +102,6 @@ def test_grating2d(polarization, degree):
 
 @pytest.mark.parametrize("polarization,degree", pytest_params)
 def test_grating2dpec(polarization, degree):
-
     from gyptis import Grating, Layered
     from gyptis.models.grating2d import Grating2D, Layered2D, OrderedDict
     from gyptis.sources import PlaneWave

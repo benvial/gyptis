@@ -20,7 +20,6 @@ def plane_wave_2d(wavelength, theta, phase=0, amplitude=1, degree=1, domain=None
 def plane_wave_3d(
     wavelength, theta, phi, psi, phase=(0, 0, 0), amplitude=1, degree=1, domain=None
 ):
-
     cx = np.cos(psi) * np.cos(theta) * np.cos(phi) - np.sin(psi) * np.sin(phi)
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)
     cz = -np.cos(psi) * np.sin(theta)

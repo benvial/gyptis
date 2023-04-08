@@ -53,7 +53,6 @@ if "gyptis_black" not in plt.colormaps():
 
 
 def get_boundaries(markers, domain=None, shift=(0, 0)):
-
     data = markers.array()
     triang = mesh2triang(markers.mesh())
     if domain is None:

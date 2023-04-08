@@ -11,7 +11,6 @@ from gyptis.sources.stack import *
 
 
 def test_stack():
-
     lambda0 = 1.1
     theta0 = -0.0 * pi
     phi0 = 0 * pi / 3
