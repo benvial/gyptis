@@ -28,12 +28,8 @@ class Lattice2D(Geometry):
             ),
             (self.vectors[1][0], self.vectors[1][1]),
         ]
-        p = []
-        for v in self.vertices:
-            p.append(self.add_point(*v, 0))
-        curves = []
-        for i in range(3):
-            curves.append(self.add_line(p[i + 1], p[i]))
+        p = [self.add_point(*v, 0) for v in self.vertices]
+        curves = [self.add_line(p[i + 1], p[i]) for i in range(3)]
         curves.append(self.add_line(p[3], p[0]))
         cl = self.add_curve_loop(curves)
         ps = self.add_plane_surface([cl])
@@ -71,7 +67,7 @@ class Lattice2D(Geometry):
                 B = []
                 for p in qb:
                     val = gmsh.model.getValue(1, b[-1], p)
-                    p = val[0:2]
+                    p = val[:2]
                     belongs = _is_on_line(p, verts[i + 1], verts[i])
                     B.append(belongs)
                 alls = np.all(B)

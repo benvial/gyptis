@@ -18,7 +18,7 @@ __all__ = [
 
 import numpy as np
 
-from .. import dolfin
+from .. import ADJOINT, dolfin
 from ..complex import project
 
 
@@ -40,6 +40,9 @@ def array2function(values, function_space):
     """
 
     # print(len(values))
+
+    if np.isscalar(values):
+        values = np.ones(function_space.dim()) * values
 
     u = dolfin.Function(function_space)
     dofmap = function_space.dofmap()
@@ -108,22 +111,20 @@ def function2array(f, space=None):
         The converted function.
 
     """
+    if space is not None:
+        f = project_iterative(f, space)
     values = f.vector().get_local()
     function_space = f.function_space()
     dofmap = function_space.dofmap()
     my_first, my_last = dofmap.ownership_range()
-    sub_array = values  # [my_first:my_last]
-
-    return sub_array
+    return values
 
 
 def project_iterative(applied_function, function_space):
-    return project(
-        applied_function,
-        function_space,
-        solver_type="cg",
-        preconditioner_type="jacobi",
-    )
+    kwargs = dict(solver_type="cg", preconditioner_type="jacobi")
+    if ADJOINT:
+        kwargs["annotate"] = False
+    return project(applied_function, function_space, **kwargs)
 
 
 def get_coordinates(A):

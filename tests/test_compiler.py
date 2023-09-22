@@ -26,15 +26,15 @@ def test_flags():
     tsolve = []
     tint = []
 
+    polarization = "TM"
+    degree = 2
+    wavelength = 0.3
+    pmesh = 3
     for cppflag in flags:
         print(f"-------   { cppflag }   --------")
 
         gyptis.dolfin.parameters["form_compiler"]["cpp_optimize_flags"] = cppflag
 
-        polarization = "TM"
-        degree = 2
-        wavelength = 0.3
-        pmesh = 3
         lmin = wavelength / pmesh
 
         geom = BoxPML(

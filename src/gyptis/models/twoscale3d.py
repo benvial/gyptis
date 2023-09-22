@@ -14,11 +14,13 @@ class Homogenization3D(Simulation):
         geometry,
         epsilon,
         mu,
-        boundary_conditions={},
+        boundary_conditions=None,
         degree=1,
         direction="x",
         direct=True,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, Lattice3D)
 
         self.geometry = geometry
@@ -96,8 +98,7 @@ class Homogenization3D(Simulation):
             a = [self.unit_cell_mean(g) for g in integrand]
             a = [_.real + 1j * _.imag for _ in a]
             A.append(a)
-        param_eff = param_mean - np.array(A)
-        return param_eff
+        return param_mean - np.array(A)
 
     def get_effective_permittivity(self):
         return self._get_effective_param("epsilon")

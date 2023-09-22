@@ -75,12 +75,12 @@ def test_grating3d(degree=2):
     )
     mu = dict({"substrate": 1, "groove": 1, "hole": 1, "superstrate": 1})
 
-    index = dict()
-    for e, m in zip(epsilon.items(), mu.items()):
-        index[e[0]] = np.mean(
+    index = {
+        e[0]: np.mean(
             (np.array(e[1]).real.max() * np.array(m[1]).real.max()) ** 0.5
         ).real
-
+        for e, m in zip(epsilon.items(), mu.items())
+    }
     #  ---------- build geometry ----------
     geom = Layered(3, period, thicknesses, finalize=False)
 
@@ -110,7 +110,7 @@ def test_grating3d(degree=2):
 
     index["pml_top"] = index["substrate"]
     index["pml_bottom"] = index["substrate"]
-    pmesh = {k: lambda0 / (index[k] * mesh_params[k]) for k, p in mesh_params.items()}
+    pmesh = {k: lambda0 / (index[k] * mesh_params[k]) for k in mesh_params}
     geom.set_mesh_size(pmesh)
     geom.build()
 
@@ -142,7 +142,7 @@ def test_grating3d(degree=2):
     pprint(effs)
     R = np.sum(effs["R"])
     T = np.sum(effs["T"])
-    Q = sum([q for t in effs["Q"].values() for q in t.values()])
+    Q = sum(q for t in effs["Q"].values() for q in t.values())
     print("sum R = ", R)
     print("sum T = ", T)
     print("sum Q = ", Q)

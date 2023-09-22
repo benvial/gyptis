@@ -55,11 +55,7 @@ if "gyptis_black" not in plt.colormaps():
 def get_boundaries(markers, domain=None, shift=(0, 0)):
     data = markers.array()
     triang = mesh2triang(markers.mesh())
-    if domain is None:
-        ids = np.unique(data)
-    else:
-        ids = [domain]
-
+    ids = np.unique(data) if domain is None else [domain]
     triangulations = []
     for id in ids:
         triang_ = copy.deepcopy(triang)
@@ -75,14 +71,14 @@ def get_boundaries(markers, domain=None, shift=(0, 0)):
 
         boundaries = []
         for i in range(len(sub_triang.triangles)):
-            for j in range(3):
-                if sub_triang.neighbors[i, j] < 0:
-                    boundaries.append(
-                        (
-                            sub_triang.triangles[i, j],
-                            sub_triang.triangles[i, (j + 1) % 3],
-                        )
-                    )
+            boundaries.extend(
+                (
+                    sub_triang.triangles[i, j],
+                    sub_triang.triangles[i, (j + 1) % 3],
+                )
+                for j in range(3)
+                if sub_triang.neighbors[i, j] < 0
+            )
         boundaries = np.asarray(boundaries)
 
         bndpnts = (

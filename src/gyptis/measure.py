@@ -45,12 +45,11 @@ class Measure(dolfin.Measure):
 
     def __call__(self, subdomain_id=None, **kwargs):
         subdomain_id = None if subdomain_id == [] else subdomain_id
-        if isinstance(subdomain_id, list):
-            for i, sid in enumerate(subdomain_id):
-                if i == 0:
-                    out = self.__call_single__(subdomain_id=sid, **kwargs)
-                else:
-                    out += self.__call_single__(subdomain_id=sid, **kwargs)
-            return out
-        else:
+        if not isinstance(subdomain_id, list):
             return self.__call_single__(subdomain_id=subdomain_id, **kwargs)
+        for i, sid in enumerate(subdomain_id):
+            if i == 0:
+                out = self.__call_single__(subdomain_id=sid, **kwargs)
+            else:
+                out += self.__call_single__(subdomain_id=sid, **kwargs)
+        return out

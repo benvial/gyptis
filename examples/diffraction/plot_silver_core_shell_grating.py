@@ -128,7 +128,7 @@ def solve(wavelength, geom):
         groove=1,
         superstrate=1,
     )
-    mu = {d: 1 for d in epsilon.keys()}
+    mu = {d: 1 for d in epsilon}
     g = gy.Grating(
         geom,
         epsilon,

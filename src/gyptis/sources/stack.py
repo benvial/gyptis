@@ -287,10 +287,12 @@ def make_stack(
     coefficients,
     plane_wave,
     polarization="TM",
-    source_domains=[],
+    source_domains=None,
     degree=1,
     dim=2,
 ):
+    if source_domains is None:
+        source_domains = []
     epsilon, mu = coefficients
     config = OrderedDict(
         {
@@ -304,6 +306,8 @@ def make_stack(
             },
         }
     )
+    inc_field = {}
+    stack_field = {}
     if dim == 2:
         if polarization == "TM":
             _psi = np.pi / 2
@@ -334,7 +338,7 @@ def make_stack(
         ]
         phi0 = [phi[0][0], 0]
         u_0 = field_stack_2D(phi0, alpha0, beta[0], yshift=0, domain=geometry.mesh)
-        estack = {k: v for k, v in zip(config.keys(), u_stack)}
+        estack = dict(zip(config.keys(), u_stack))
 
         for dom in source_domains:
             estack[dom] = estack["superstrate"]
@@ -361,8 +365,6 @@ def make_stack(
             geometry.markers, geometry.domains, e0, degree=degree, domain=geometry.mesh
         )
 
-        inc_field = {}
-        stack_field = {}
         for dom in epsilon.dict.keys():
             inc_field[dom] = e0[dom]
             stack_field[dom] = estack[dom]
@@ -430,8 +432,6 @@ def make_stack(
         ustack_coeff = complex_vector(ustack_coeff)
         u0_coeff = complex_vector(u0_coeff)
 
-        inc_field = {}
-        stack_field = {}
         for dom in epsilon.dict.keys():
             inc_field[dom] = complex_vector([e0[dom] for e0 in e0_list])
             stack_field[dom] = complex_vector([estack[dom] for estack in estack_list])

@@ -11,6 +11,7 @@ PEC cylinder
 An example of scattering from a perfectly conducting cylinder
 """
 
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -27,7 +28,7 @@ R = 1
 kR = np.linspace(0.09, 10, 15)
 wl = 2 * gy.pi * R / kR
 
-scs_gyptis = dict()
+scs_gyptis = {}
 for polarization in ["TM", "TE"]:
     scsnorm = []
 

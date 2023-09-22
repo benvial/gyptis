@@ -9,6 +9,7 @@ Introduction to electromagnetic scattering: tutorial
 https://www.osapublishing.org/josaa/fulltext.cfm?uri=josaa-35-1-163&id=380136
 """
 
+
 import numpy as np
 from dolfin import MPI
 from mie import get_cross_sections_analytical
@@ -37,7 +38,7 @@ circ = 2 * np.pi * a
 shared_datadir = "../../tests/data"
 dolfin.parameters["form_compiler"]["quadrature_degree"] = 3
 
-scs_file = shared_datadir + "/sphere_diel.csv"
+scs_file = f"{shared_datadir}/sphere_diel.csv"
 benchmark = np.loadtxt(scs_file, delimiter=",")
 
 GAMMA = benchmark[:, 0]
@@ -116,7 +117,7 @@ def build_geometry(pmesh):
     smin_pml = lambda0 / (0.7 * pmesh)
 
     for coord in ["x", "y", "z", "xy", "xz", "yz", "xyz"]:
-        geom.set_mesh_size({"pml" + coord: smin_pml})
+        geom.set_mesh_size({f"pml{coord}": smin_pml})
 
     geom.set_size(box, s)
     geom.set_size(surfs, s, dim=2)

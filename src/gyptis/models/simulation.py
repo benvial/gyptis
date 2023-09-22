@@ -27,17 +27,14 @@ def _complexify_items(dictio):
     out = {}
     for k, e in dictio.items():
         lene = _check_len(e)
-        if lene > 0:
-            out[k] = [[a + 1e-16j for a in b] for b in e]
-        else:
-            out[k] = e + 1e-16j
+        out[k] = [[a + 1e-16j for a in b] for b in e] if lene > 0 else e + 1e-16j
     return out
 
 
 def init_em_materials(geometry, epsilon=None, mu=None):
-    if epsilon == None:
+    if epsilon is None:
         epsilon = {k: 1 for k in geometry.domains.keys()}
-    if mu == None:
+    if mu is None:
         mu = {k: 1 for k in geometry.domains.keys()}
 
     epsilon = _complexify_items(epsilon)
@@ -151,8 +148,7 @@ class Simulation:
                 # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
                 self.solver = dolfin.KrylovSolver(self.matrix)
         self.solver.solve(u.vector(), self.vector)
-        solution = Complex(*u.split())
-        return solution
+        return Complex(*u.split())
 
     def solve(self):
         """Assemble, apply boundary conditions and computes the solution.
@@ -228,9 +224,7 @@ class Simulation:
 
         nconv = eigensolver.get_number_converged()
 
-        self.solution = {}
-        self.solution["converged"] = nconv
-
+        self.solution = {"converged": nconv}
         KNs = []
         UNs = []
 

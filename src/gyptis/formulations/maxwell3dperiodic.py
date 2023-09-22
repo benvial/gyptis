@@ -13,7 +13,7 @@ class Maxwell3DPeriodic(Maxwell3D):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         k0 = self.source.wavenumber
-        theta0, phi0 = self.source.angle[0:2]
+        theta0, phi0 = self.source.angle[:2]
         alpha0 = -k0 * np.sin(theta0) * np.cos(phi0)
         beta0 = -k0 * np.sin(theta0) * np.sin(phi0)
         gamma0 = -k0 * np.cos(theta0)

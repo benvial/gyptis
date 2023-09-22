@@ -19,8 +19,8 @@ from .. import dolfin
 def set_log_level(level, level_dolfin=logging.ERROR):
     global logger
     logger.remove()
-    format = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> -- <level>{message}</level>"
-    logger.add(sys.stderr, format=format, level=level, colorize=True)
+    logformat = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> -- <level>{message}</level>"
+    logger.add(sys.stderr, format=logformat, level=level, colorize=True)
     dolfin.set_log_level(level_dolfin)
 
 

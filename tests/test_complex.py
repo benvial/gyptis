@@ -19,7 +19,7 @@ def test_simple(tol=1e-12):
     q = x + 1j * y
     q1 = x1 + 1j * y1
     assert str(z) == f"({x} + {y}j)"
-    assert repr(z) == "Complex" + f"({x}, {y})"
+    assert repr(z) == f"Complex({x}, {y})"
     assert z == q
     assert -z == Complex(-x, -y)
     assert z != Complex(x / 2, y)
@@ -92,8 +92,8 @@ def test_complex(tol=1e-15):
     qre, qim = 2, -1
     gamma = 0.05
     expr = f"exp(-pow((x[0]-0.5)/{gamma},2)-pow((x[1]-0.5)/{gamma},2))"
-    expr_re = f"{qre}" "+" + expr
-    expr_im = f"{qim}" "+" + expr
+    expr_re = f"{qre}+{expr}"
+    expr_im = f"{qim}+{expr}"
     sol = dolfin.Expression((expr_re, expr_im), degree=1, domain=mesh)
     sol = gyptis.Complex(sol[0], sol[1])
 

@@ -16,11 +16,11 @@ with open(fn, "r") as file:
 title = []
 tooltip = []
 img = []
+#
+first_tag = " .. figure:: "
+second_tag = ".png"
+reg = f"(?<={first_tag}).*?(?={second_tag})"
 for line in lines:
-    #
-    first_tag = " .. figure:: "
-    second_tag = ".png"
-    reg = "(?<=%s).*?(?=%s)" % (first_tag, second_tag)
     #
 
     if line.startswith('    <div class="sphx-glr-thumbcontainer" tooltip="'):
@@ -65,8 +65,7 @@ def car_item(src, title, tooltip):
 
 inner = []
 ind = []
-i = 0
-for im, tit, tool in zip(img, title, tooltip):
+for i, (im, tit, tool) in enumerate(zip(img, title, tooltip)):
     if i == 0:
         s = car_item_active(im, tit, tool)
         ind.append(
@@ -78,9 +77,6 @@ for im, tit, tool in zip(img, title, tooltip):
             f'<li data-target="#carouselExampleIndicators" data-slide-to="{i}"></li>'
         )
     inner.append(s)
-    i += 1
-
-
 inner = "\n".join(inner)
 ind = "\n".join(ind)
 

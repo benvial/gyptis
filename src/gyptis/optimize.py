@@ -93,24 +93,23 @@ class Filter:
     def apply(self, a):
         if np.all(self.rfilt == 0):
             return a
-        else:
-            lhs, rhs = self.weak(a)
-            af = df.Function(self.function_space, name="Filtered density")
-            self.vector = df.assemble(rhs)
-            if self.solver is None:
-                self.matrix = df.assemble(lhs)
-                self.solver = df.KrylovSolver(self.matrix, "cg", "jacobi")
-            self.solver.solve(af.vector(), self.vector)
-            self.solution = af
-            if self.output_function_space is not None:
-                return project_iterative(af, self.output_function_space)
-            else:
-                return af
+        lhs, rhs = self.weak(a)
+        af = df.Function(self.function_space, name="Filtered density")
+        self.vector = df.assemble(rhs)
+        if self.solver is None:
+            self.matrix = df.assemble(lhs)
+            self.solver = df.KrylovSolver(self.matrix, "cg", "jacobi")
+        self.solver.solve(af.vector(), self.vector)
+        self.solution = af
+        return (
+            project_iterative(af, self.output_function_space)
+            if self.output_function_space is not None
+            else af
+        )
 
 
 def filtering(a, rfilt=0, function_space=None, degree=1, solver=None, mesh=None):
-    filter = Filter(rfilt, function_space, degree, solver, mesh)
-    return filter.apply(a)
+    return Filter(rfilt, function_space, degree, solver, mesh).apply(a)
 
 
 def transfer_function(fromFunc, Vto):
@@ -128,10 +127,7 @@ def derivative(f, x, ctrl_space=None, array=False):
     dfdx = df.compute_gradient(f, df.Control(x))
     if ctrl_space is not None:
         dfdx = transfer_function(dfdx, ctrl_space)
-    if array:
-        return function2array(dfdx)
-    else:
-        return dfdx
+    return function2array(dfdx) if array else dfdx
 
 
 def transfer_sub_mesh(x, geometry, source_space, target_space, subdomain):
@@ -255,11 +251,10 @@ class TopologyOptimizer:
 
             if grad:
                 dobjective_dx = derivative(objective, ctrl)
-                if filt:
-                    if filtering_type == "sensitivity":
-                        f = project_iterative(density * dobjective_dx, Asub)
-                        dfdd = filter.apply(f)
-                        dobjective_dx = dfdd / (density + 1e-3)
+                if filt and filtering_type == "sensitivity":
+                    f = project_iterative(density * dobjective_dx, Asub)
+                    dfdd = filter.apply(f)
+                    dobjective_dx = dfdd / (density + 1e-3)
                 dobjective_dx = project_iterative(dobjective_dx, Asub)
                 dobjective_dx = function2array(dobjective_dx)
                 self.dobjective_dx = dobjective_dx
@@ -305,10 +300,7 @@ class TopologyOptimizer:
                 rank = df.MPI.rank(comm)
                 dyall = comm.gather(dy, root=0)
 
-                if rank == 0:
-                    dy = np.hstack(dyall)
-                else:
-                    dy = np.empty(self.nvar)
+                dy = np.hstack(dyall) if rank == 0 else np.empty(self.nvar)
                 comm.Bcast(dy, root=0)
 
                 return dy

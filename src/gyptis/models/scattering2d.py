@@ -17,13 +17,15 @@ class Scatt2D(_ScatteringBase, Simulation):
         epsilon=None,
         mu=None,
         source=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         polarization="TM",
         modal=False,
         degree=1,
         pml_stretch=1 - 1j,
         element="CG",
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, BoxPML2D)
         if source is not None:
             assert source.dim == 2
@@ -74,16 +76,13 @@ class Scatt2D(_ScatteringBase, Simulation):
 
     def solve_system(self, again=False):
         u = super().solve_system(again=again, vector_function=False)
-        self.solution = {}
-        self.solution["diffracted"] = u
-        self.solution["total"] = u + self.source.expression
+        self.solution = {"diffracted": u, "total": u + self.source.expression}
         return u
 
     @property
     def time_average_incident_poynting_vector_norm(self):
         Z0 = np.sqrt(mu_0 / epsilon_0)
-        S0 = 1 / (2 * Z0) if self.formulation.polarization == "TM" else 0.5 * Z0
-        return S0
+        return 1 / (2 * Z0) if self.formulation.polarization == "TM" else 0.5 * Z0
 
     def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
         uscatt = self.solution["diffracted"]
@@ -161,11 +160,12 @@ class Scatt2D(_ScatteringBase, Simulation):
             evalpoint = eps, evalpoint[1]
         if evalpoint[1] == 0:
             evalpoint = evalpoint[0], eps
-        ldos = -2 * self.source.pulsation / (np.pi * c**2) * u(evalpoint).imag
-        return ldos
+        return -2 * self.source.pulsation / (np.pi * c**2) * u(evalpoint).imag
 
-    def check_optical_theorem(cs, rtol=1e-12):
-        np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=rtol)
+    def check_optical_theorem(self, rtol=1e-12):
+        np.allclose(
+            self["extinction"], self["scattering"] + self["absorption"], rtol=rtol
+        )
 
     def plot_field(
         self,

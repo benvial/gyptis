@@ -104,7 +104,7 @@ print(mu_eff_ana)
 ##############################################################################
 # Plot eigenvalue spectrum
 
-nms = [n for n in range(1, 6)]
+nms = list(range(1, 6))
 knm = (
     np.array([np.pi / a * (n**2 + m**2) ** 0.5 for n in nms for m in nms])
     / eps_i**0.5

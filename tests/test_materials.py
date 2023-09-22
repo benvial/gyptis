@@ -139,7 +139,7 @@ def test_coefficient():
     pmlxy = PML("xy", stretch=1 - 1j, matched_domain="box", applied_domain="pmlxy")
 
     eps = Coefficient(epsilon, geometry=geom, pmls=[pmlx, pmly, pmlxy])
-    eps.appy_pmls()
+    eps.apply_pmls()
 
     eps.as_subdomain()
 

@@ -39,7 +39,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
 
     icell = np.where(np.array(cell_types) == base_cell_type)[0][0]
     if subdomains is not None:
-        doms = subdomains if hasattr(subdomains, "__len__") else list([subdomains])
+        doms = subdomains if hasattr(subdomains, "__len__") else [subdomains]
         mask = np.hstack([np.where(data_gmsh[icell] == i) for i in doms])[0]
         data_gmsh_ = data_gmsh[icell][mask]
         data_gmsh[icell] = data_gmsh_

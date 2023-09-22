@@ -90,8 +90,8 @@ class PlaneWave(Source):
 
     @property
     def expression(self):
-        if self.dim == 2:
-            _expression = plane_wave_2d(
+        return (
+            plane_wave_2d(
                 self.wavelength,
                 self.angle,
                 phase=self.phase,
@@ -99,8 +99,8 @@ class PlaneWave(Source):
                 degree=self.degree,
                 domain=self.domain,
             )
-        else:
-            _expression = plane_wave_3d(
+            if self.dim == 2
+            else plane_wave_3d(
                 self.wavelength,
                 *self.angle,
                 phase=self.phase,
@@ -108,4 +108,4 @@ class PlaneWave(Source):
                 degree=self.degree,
                 domain=self.domain,
             )
-        return _expression
+        )

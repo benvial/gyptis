@@ -67,9 +67,7 @@ class Layered3D(Geometry):
     def set_periodic_mesh(self, eps=None):
         s = self.get_periodic_bnds(self.z0, self.total_thickness, eps=eps)
 
-        periodic_id = {}
-        for k, v in s.items():
-            periodic_id[k] = [S[-1] for S in v]
+        periodic_id = {k: [S[-1] for S in v] for k, v in s.items()}
         gmsh.model.mesh.setPeriodic(
             2, periodic_id["+x"], periodic_id["-x"], self.translation_x
         )
@@ -87,13 +85,11 @@ class Layered3D(Geometry):
     def get_periodic_bnds(self, z_position, thickness, eps=None):
         eps = eps or self.periodic_tol
 
-        s = {}
         dx, dy = self.period
 
         pmin = -dx / 2 - eps, -dy / 2 - eps, z_position - eps
         pmax = -dx / 2 + eps, +dy / 2 + eps, thickness + eps
-        s["-x"] = gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 2)
-
+        s = {"-x": gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 2)}
         pmin = +dx / 2 - eps, -dy / 2 - eps, z_position - eps
         pmax = +dx / 2 + eps, +dy / 2 + eps, thickness + eps
         s["+x"] = gmsh.model.getEntitiesInBoundingBox(*pmin, *pmax, 2)

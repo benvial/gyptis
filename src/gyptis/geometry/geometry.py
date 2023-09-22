@@ -36,7 +36,7 @@ gmsh_options = gmsh.option
 def _set_opt_gmsh(name, value):
     if isinstance(value, str):
         return gmsh_options.setString(name, value)
-    elif isinstance(value, numbers.Number) or isinstance(value, bool):
+    elif isinstance(value, (numbers.Number, bool)):
         if isinstance(value, bool):
             value = int(value)
         return gmsh_options.setNumber(name, value)
@@ -69,12 +69,12 @@ def _add_method(cls, func, name):
 
 def _dimtag(tag, dim=3):
     if not isinstance(tag, list):
-        tag = list([tag])
+        tag = [tag]
     return [(dim, t) for t in tag]
 
 
-def _get_bnd(id, dim):
-    out = gmsh.model.getBoundary(_dimtag(id, dim=dim), False, False, False)
+def _get_bnd(idf, dim):
+    out = gmsh.model.getBoundary(_dimtag(idf, dim=dim), False, False, False)
     return [b[1] for b in out]
 
 
@@ -95,13 +95,15 @@ class Geometry:
         finalize=True,
         verbose=0,
         binary_mesh=True,
-        options={},
+        options=None,
     ):
+        if options is None:
+            options = {}
         self.model_name = model_name
         self.mesh_name = mesh_name
         self.dim = dim
         self.subdomains = dict(volumes={}, surfaces={}, curves={}, points={})
-        self.data_dir = data_dir if data_dir else tempfile.mkdtemp()
+        self.data_dir = data_dir or tempfile.mkdtemp()
         self.occ = occ
         self.mesh_object = {}
         self.measure = {}
@@ -156,12 +158,12 @@ class Geometry:
         dt = self.dimtag(tag, dim=dim)
         return occ.rotate(dt, *point, *axis, angle)
 
-    def add_physical(self, id, name, dim=None):
+    def add_physical(self, idf, name, dim=None):
         """Add a physical domain.
 
         Parameters
         ----------
-        id : int or list of int
+        idf : int or list of int
             The identifiant(s) of elementary entities making the physical domain.
         name : str
             Name of the domain.
@@ -170,20 +172,20 @@ class Geometry:
         """
         dim = self._check_dim(dim)
         dicname = list(self.subdomains)[3 - dim]
-        if not isinstance(id, list):
-            id = list([id])
-        num = gmsh.model.addPhysicalGroup(dim, id)
+        if not isinstance(idf, list):
+            idf = [idf]
+        num = gmsh.model.addPhysicalGroup(dim, idf)
         self.subdomains[dicname][name] = num
         gmsh.model.removePhysicalName(name)
         gmsh.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
         return num
 
-    def dimtag(self, id, dim=None):
+    def dimtag(self, idf, dim=None):
         """Convert an integer or list of integer to gmsh DimTag notation.
 
         Parameters
         ----------
-        id : int or list of int
+        idf : int or list of int
             Label or list of labels.
         dim : type
             Dimension.
@@ -195,11 +197,11 @@ class Geometry:
 
         """
         dim = self._check_dim(dim)
-        return _dimtag(id, dim=dim)
+        return _dimtag(idf, dim=dim)
 
     def tagdim(self, x):
         if not isinstance(x, list):
-            x = list([x])
+            x = [x]
         return [t[1] for t in x]
 
     def _translation_matrix(self, t):
@@ -230,12 +232,11 @@ class Geometry:
     #     return self.add_plane_surface([ell])
 
     def add_circle(self, x, y, z, r, surface=True, **kwargs):
-        if surface:
-            circ = self._gmsh_add_circle(x, y, z, r, **kwargs)
-            circ = self.add_curve_loop([circ])
-            return self.add_plane_surface([circ])
-        else:
+        if not surface:
             return self._gmsh_add_circle(x, y, z, r, **kwargs)
+        circ = self._gmsh_add_circle(x, y, z, r, **kwargs)
+        circ = self.add_curve_loop([circ])
+        return self.add_plane_surface([circ])
 
     def add_ellipse(self, x, y, z, ax, ay, surface=True, **kwargs):
         if ax == ay:
@@ -245,12 +246,11 @@ class Geometry:
             self.rotate(ell, (x, y, z), (0, 0, 1), np.pi / 2, dim=2)
             return ell
         else:
-            if surface:
-                ell = self._gmsh_add_ellipse(x, y, z, ax, ay, **kwargs)
-                ell = self.add_curve_loop([ell])
-                return self.add_plane_surface([ell])
-            else:
+            if not surface:
                 return self._gmsh_add_ellipse(x, y, z, ax, ay, **kwargs)
+            ell = self._gmsh_add_ellipse(x, y, z, ax, ay, **kwargs)
+            ell = self.add_curve_loop([ell])
+            return self.add_plane_surface([ell])
 
     def add_square(self, x, y, z, dx, **kwargs):
         return self.add_rectangle(x, y, z, dx, dx, **kwargs)
@@ -284,9 +284,7 @@ class Geometry:
             lines.append(self.add_line(points[i], points[i + 1]))
         lines.append(self.add_line(points[i + 1], points[0]))
         loop = self.add_curve_loop(lines, **kwargs)
-        if surface:
-            return self.add_plane_surface([loop])
-        return loop
+        return self.add_plane_surface([loop]) if surface else loop
 
     def add_spline(self, points, mesh_size=0.0, surface=True, **kwargs):
         """Adds a spline.
@@ -306,19 +304,15 @@ class Geometry:
             The tag of the spline.
 
         """
-        dt = []
-        for p in points:
-            dt.append(self.add_point(*p, meshSize=mesh_size))
-
+        dt = [self.add_point(*p, meshSize=mesh_size) for p in points]
         if np.allclose(points[0], points[-1]):
             dt[-1] = dt[0]
 
-        if surface:
-            spl = self._gmsh_add_spline(dt, **kwargs)
-            spl = self.add_curve_loop([spl])
-            return self.add_plane_surface([spl])
-        else:
+        if not surface:
             return self._gmsh_add_spline(dt, **kwargs)
+        spl = self._gmsh_add_spline(dt, **kwargs)
+        spl = self.add_curve_loop([spl])
+        return self.add_plane_surface([spl])
 
     def fragment(self, id1, id2, dim1=None, dim2=None, sync=True, map=False, **kwargs):
         dim1 = self._check_dim(dim1)
@@ -329,10 +323,7 @@ class Geometry:
         if sync:
             occ.synchronize()
         tags = [_[1] for _ in dimtags]
-        if map:
-            return tags, mapping
-        else:
-            return tags
+        return (tags, mapping) if map else tags
 
     def intersect(self, id1, id2, dim1=None, dim2=None, sync=True, map=False, **kwargs):
         dim1 = self._check_dim(dim1)
@@ -343,10 +334,7 @@ class Geometry:
         if sync:
             occ.synchronize()
         tags = [_[1] for _ in dimtags]
-        if map:
-            return tags, mapping
-        else:
-            return tags
+        return (tags, mapping) if map else tags
 
     def cut(self, id1, id2, dim1=None, dim2=None, sync=True, **kwargs):
         dim1 = self._check_dim(dim1)
@@ -368,32 +356,29 @@ class Geometry:
             occ.synchronize()
         return [o[1] for o in ov]
 
-    def get_boundaries(self, id, dim=None, physical=True):
+    def get_boundaries(self, idf, dim=None, physical=True):
         dim = self._check_dim(dim)
-        if isinstance(id, str):
-            if dim == 3:
-                type_entity = "volumes"
-            elif dim == 2:
+        if isinstance(idf, str):
+            if dim == 2:
                 type_entity = "surfaces"
+            elif dim == 3:
+                type_entity = "volumes"
             else:
                 type_entity = "curves"
-            id = self.subdomains[type_entity][id]
+            idf = self.subdomains[type_entity][idf]
 
-            n = gmsh.model.getEntitiesForPhysicalGroup(dim, id)
+            n = gmsh.model.getEntitiesForPhysicalGroup(dim, idf)
             bnds = [_get_bnd(n_, dim=dim) for n_ in n]
             bnds = [item for sublist in bnds for item in sublist]
             return list(dict.fromkeys(bnds))
         else:
-            if physical:
-                n = gmsh.model.getEntitiesForPhysicalGroup(dim, id)[0]
-            else:
-                n = id
+            n = gmsh.model.getEntitiesForPhysicalGroup(dim, idf)[0] if physical else idf
             return _get_bnd(n, dim=dim)
 
-    def _set_size(self, id, s, dim=None):
+    def _set_size(self, idf, s, dim=None):
         dim = self._check_dim(dim)
         p = gmsh.model.getBoundary(
-            self.dimtag(id, dim=dim), False, False, True
+            self.dimtag(idf, dim=dim), False, False, True
         )  # Get all points
         gmsh.model.mesh.setSize(p, s)
 
@@ -401,9 +386,9 @@ class Geometry:
         groups = gmsh.model.getPhysicalGroups()
         names = [gmsh.model.getPhysicalName(*g) for g in groups]
         for subtype, subitems in self.subdomains.items():
-            for id in subitems.copy().keys():
-                if id not in names:
-                    subitems.pop(id)
+            for idf in subitems.copy().keys():
+                if idf not in names:
+                    subitems.pop(idf)
 
     def set_mesh_size(self, params, dim=None):
         dim = self._check_dim(dim)
@@ -421,26 +406,23 @@ class Geometry:
             sorted(params.items(), key=lambda item: float(item[1]), reverse=True)
         )
 
-        for id, p in params.items():
-            if isinstance(id, str):
-                num = self.subdomains[type_entity][id]
+        for idf, p in params.items():
+            if isinstance(idf, str):
+                num = self.subdomains[type_entity][idf]
                 n = gmsh.model.getEntitiesForPhysicalGroup(dim, num)
                 for n_ in n:
                     self._set_size(n_, p, dim=dim)
             else:
-                self._set_size(id, p, dim=dim)
+                self._set_size(idf, p, dim=dim)
 
-    def set_size(self, id, s, dim=None):
-        if hasattr(id, "__len__") and not isinstance(id, str):
-            for i, id_ in enumerate(id):
-                if hasattr(s, "__len__"):
-                    s_ = s[i]
-                else:
-                    s_ = s
+    def set_size(self, idf, s, dim=None):
+        if hasattr(idf, "__len__") and not isinstance(idf, str):
+            for i, id_ in enumerate(idf):
+                s_ = s[i] if hasattr(s, "__len__") else s
                 params = {id_: s_}
                 self.set_mesh_size(params, dim=dim)
         else:
-            self.set_mesh_size({id: s}, dim=dim)
+            self.set_mesh_size({idf: s}, dim=dim)
 
     def read_mesh_info(self):
         if self.dim == 1:
@@ -494,34 +476,32 @@ class Geometry:
 
         if self.dim == 1:
             self.domains = self.subdomains["curves"]
-            self.boundaries = {}
             self.lines = {}
-            self.points = self.subdomains["points"]
             self.markers = self.mesh_object["markers"]["line"]
+            self.boundaries = {}
             self.boundary_markers = (
                 self.mesh_object["markers"]["point"] if self.boundaries else []
             )
 
         elif self.dim == 2:
             self.domains = self.subdomains["surfaces"]
-            self.boundaries = self.subdomains["curves"]
             self.lines = {}
-            self.points = self.subdomains["points"]
             self.markers = self.mesh_object["markers"]["triangle"]
+            self.boundaries = self.subdomains["curves"]
             self.boundary_markers = (
                 self.mesh_object["markers"]["line"] if self.boundaries else []
             )
 
         else:
             self.domains = self.subdomains["volumes"]
-            self.boundaries = self.subdomains["surfaces"]
             self.lines = self.subdomains["curves"]
-            self.points = self.subdomains["points"]
             self.markers = self.mesh_object["markers"]["tetra"]
+            self.boundaries = self.subdomains["surfaces"]
             self.boundary_markers = (
                 self.mesh_object["markers"]["triangle"] if self.boundaries else []
             )
 
+        self.points = self.subdomains["points"]
         self.unit_normal_vector = dolfin.FacetNormal(self.mesh)
 
     @property
@@ -599,26 +579,25 @@ class Geometry:
                 finalize=finalize,
                 check_subdomains=check_subdomains,
             )
+        if self.comm.rank == 0:
+            self._build_serial(
+                interactive=interactive,
+                generate_mesh=generate_mesh,
+                write_mesh=write_mesh,
+                read_info=False,
+                read_mesh=False,
+                finalize=finalize,
+                check_subdomains=check_subdomains,
+            )
+            tmp = self.data_dir
         else:
-            if self.comm.rank == 0:
-                self._build_serial(
-                    interactive=interactive,
-                    generate_mesh=generate_mesh,
-                    write_mesh=write_mesh,
-                    read_info=False,
-                    read_mesh=False,
-                    finalize=finalize,
-                    check_subdomains=check_subdomains,
-                )
-                tmp = self.data_dir
-            else:
-                tmp = None
-            tmp = self.comm.bcast(tmp, root=0)
-            self.data_dir = tmp
-            self.mesh_object = self.read_mesh_file()
-            self.read_mesh_info()
+            tmp = None
+        tmp = self.comm.bcast(tmp, root=0)
+        self.data_dir = tmp
+        self.mesh_object = self.read_mesh_file()
+        self.read_mesh_info()
 
-            return self.mesh_object
+        return self.mesh_object
 
     def read_mesh_file(self, subdomains=None):
         if subdomains is not None:
@@ -640,18 +619,15 @@ class Geometry:
     #     return self.read_mesh_file(subdomains=subdomains)["mesh"]
 
     def extract_sub_mesh(self, subdomains):
-        key = "volumes" if self.dim == 3 else "surfaces"
-        subdomains_num = self.subdomains[key][subdomains]
         if self.comm.size == 1:
+            key = "volumes" if self.dim == 3 else "surfaces"
+            subdomains_num = self.subdomains[key][subdomains]
             return dolfin.SubMesh(self.mesh, self.markers, subdomains_num)
-        else:
-            if self.comm.rank == 0:
-                outpath = run_submesh(self, subdomains, outpath=None)
-            else:
-                outpath = None
-            outpath = self.comm.bcast(outpath, root=0)
-            submesh = read_xdmf_mesh(outpath)
-            return submesh
+        outpath = (
+            run_submesh(self, subdomains, outpath=None) if self.comm.rank == 0 else None
+        )
+        outpath = self.comm.bcast(outpath, root=0)
+        return read_xdmf_mesh(outpath)
 
     def generate_mesh(self, generate=True, write=True, read=True):
         if generate:

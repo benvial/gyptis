@@ -31,8 +31,8 @@ def test_scatterring3d(shared_datadir):
     SCSN = []
     Gamma = np.linspace(0.1, 5, 100)
     Gamma = [2]
+    R_sphere = 0.25
     for gamma in Gamma:
-        R_sphere = 0.25
         circ = 2 * np.pi * R_sphere
         lambda0 = circ / gamma
         b = R_sphere * 3
@@ -55,7 +55,7 @@ def test_scatterring3d(shared_datadir):
         s = min(lambda0 / pmesh, smin)
         smin_pml = lambda0 / (0.66 * pmesh)
         for coord in ["x", "y", "z", "xy", "xz", "yz", "xyz"]:
-            g.set_mesh_size({"pml" + coord: smin_pml})
+            g.set_mesh_size({f"pml{coord}": smin_pml})
 
         g.set_size(box, s)
         g.set_size(sphere_cross_sections, s)

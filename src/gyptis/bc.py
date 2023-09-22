@@ -46,7 +46,7 @@ class _DirichletBC(dolfin.DirichletBC):
 
 
 class DirichletBC:
-    def __new__(self, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):
         W = args[0]
         value = args[1]
         Wre, Wim = W.split()
@@ -73,7 +73,7 @@ class BiPeriodic2D(dolfin.SubDomain):
             x[0], self.vertices[3][0], eps=self.eps
         ) and dolfin.near(x[1], self.vertices[3][1], eps=self.eps)
         return bool(
-            (on_bottom or on_left) and (not (on_vert_1 or on_vert_3)) and on_boundary
+            (on_bottom or on_left) and not on_vert_1 and not on_vert_3 and on_boundary
         )
 
     def map(self, x, y):
@@ -125,19 +125,11 @@ class BiPeriodicBoundary3D(dolfin.SubDomain):
         if on_boundary:
             if self.on_it(x, 0, "-") and not self.on_it(x, 1, "+"):
                 return True
-            if self.on_it(x, 1, "-") and not self.on_it(x, 0, "+"):
-                return True
-            return False
+            return bool(self.on_it(x, 1, "-") and not self.on_it(x, 0, "+"))
 
     def map(self, x, y):
-        if self.on_it(x, 0, "+"):
-            y[0] = x[0] - self.period[0]
-        else:
-            y[0] = x[0]
-        if self.on_it(x, 1, "+"):
-            y[1] = x[1] - self.period[1]
-        else:
-            y[1] = x[1]
+        y[0] = x[0] - self.period[0] if self.on_it(x, 0, "+") else x[0]
+        y[1] = x[1] - self.period[1] if self.on_it(x, 1, "+") else x[1]
         y[2] = x[2]
 
 

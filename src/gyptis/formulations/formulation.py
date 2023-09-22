@@ -28,11 +28,13 @@ class Formulation(ABC):
         coefficients,
         function_space,
         source=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         modal=False,
         degree=1,
         dim=1,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         self.geometry = geometry
         self.coefficients = coefficients
         self.function_space = function_space
@@ -86,11 +88,11 @@ class Formulation(ABC):
 
 
 def is_dolfin_function(f):
-    if iscomplex(f):
-        out = hasattr(f.real, "ufl_shape") or hasattr(f.imag, "ufl_shape")
-    else:
-        out = hasattr(f, "ufl_shape")
-    return out
+    return (
+        hasattr(f.real, "ufl_shape") or hasattr(f.imag, "ufl_shape")
+        if iscomplex(f)
+        else hasattr(f, "ufl_shape")
+    )
 
 
 def find_domains_function(coeffs, list_domains=None):

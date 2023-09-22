@@ -28,7 +28,9 @@ class Maxwell2DPeriodic(Maxwell2D):
             domain=self.geometry.mesh,
         )
         self.annex_field = (
-            make_stack(
+            None
+            if self.modal
+            else make_stack(
                 self.geometry,
                 self.coefficients,
                 self.source,
@@ -37,13 +39,11 @@ class Maxwell2DPeriodic(Maxwell2D):
                 degree=self.degree,
                 dim=2,
             )
-            if not self.modal
-            else None
         )
 
     @property
     def weak(self):
-        u1 = self.annex_field["as_subdomain"]["stack"] if not self.modal else 0
+        u1 = 0 if self.modal else self.annex_field["as_subdomain"]["stack"]
         u = self.trial * self.phasor
         v = self.test * self.phasor.conj
         return super()._weak(u, v, u1)

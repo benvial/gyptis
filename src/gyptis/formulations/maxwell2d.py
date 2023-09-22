@@ -16,13 +16,17 @@ class Maxwell2D(Formulation):
         coefficients,
         function_space,
         source=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         polarization="TM",
-        source_domains=[],
+        source_domains=None,
         reference=None,
         modal=False,
         degree=1,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
+        if source_domains is None:
+            source_domains = []
         super().__init__(
             geometry,
             coefficients,
@@ -49,14 +53,14 @@ class Maxwell2D(Formulation):
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
     def maxwell(self, u, v, xi, chi, domain="everywhere"):
-        form = []
-        form.append(-inner(xi * grad(u), grad(v)))
+        if domain == []:
+            return [0, 0] if self.modal else 0
+        form = [-inner(xi * grad(u), grad(v))]
         form.append(chi * u * v)
         if self.modal:
             return [form[0] * self.dx(domain), -form[1] * self.dx(domain)]
-        else:
-            k0 = Constant(self.source.wavenumber)
-            return (form[0] + k0**2 * form[1]) * self.dx(domain)
+        k0 = Constant(self.source.wavenumber)
+        return (form[0] + k0**2 * form[1]) * self.dx(domain)
 
     def _weak(self, u, v, u1):
         xi = self.xi.as_subdomain()
@@ -111,15 +115,11 @@ class Maxwell2D(Formulation):
                 normal = self.geometry.unit_normal_vector
                 form -= dot(grad(u1), normal) * v * self.ds(bnd)
 
-        if self.modal:
-            weak = [f.real + f.imag for f in form]
-        else:
-            weak = form.real + form.imag
-        return weak
+        return [f.real + f.imag for f in form] if self.modal else form.real + form.imag
 
     @property
     def weak(self):
-        u1 = self.source.expression if not self.modal else 0
+        u1 = 0 if self.modal else self.source.expression
         u = self.trial
         v = self.test
         return self._weak(u, v, u1)
@@ -130,16 +130,14 @@ class Maxwell2D(Formulation):
             applied_function = project_iterative(
                 applied_function, self.real_function_space
             )
-            _boundary_conditions = build_pec_boundary_conditions(
+            return build_pec_boundary_conditions(
                 self.pec_boundaries,
                 self.geometry,
                 self.function_space,
                 applied_function,
             )
         else:
-            _boundary_conditions = []
-
-        return _boundary_conditions
+            return []
 
     def build_boundary_conditions(self):
         applied_function = Constant(0) if self.modal else -self.source.expression

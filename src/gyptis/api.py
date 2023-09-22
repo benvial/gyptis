@@ -58,13 +58,10 @@ class BoxPML(Geometry):
 
     """
 
-    def __new__(self, dim=3, *args, **kwargs):
+    def __new__(cls, dim=3, *args, **kwargs):
         if dim not in [2, 3]:
             raise ValueError("dimension must be 2 or 3")
-        if dim == 3:
-            return BoxPML3D(*args, **kwargs)
-        else:
-            return BoxPML2D(*args, **kwargs)
+        return BoxPML3D(*args, **kwargs) if dim == 3 else BoxPML2D(*args, **kwargs)
 
 
 class Layered(Geometry):
@@ -98,12 +95,9 @@ class Layered(Geometry):
 
     """
 
-    def __new__(self, dim=3, *args, **kwargs):
+    def __new__(cls, dim=3, *args, **kwargs):
         _check_dimension(dim)
-        if dim == 3:
-            return Layered3D(*args, **kwargs)
-        else:
-            return Layered2D(*args, **kwargs)
+        return Layered3D(*args, **kwargs) if dim == 3 else Layered2D(*args, **kwargs)
 
 
 class Lattice(Geometry):
@@ -121,12 +115,9 @@ class Lattice(Geometry):
         Additional parameters. See the parent class :class:`~gyptis.Geometry`.
     """
 
-    def __new__(self, dim=3, *args, **kwargs):
+    def __new__(cls, dim=3, *args, **kwargs):
         _check_dimension(dim)
-        if dim == 3:
-            return Lattice3D(*args, **kwargs)
-        else:
-            return Lattice2D(*args, **kwargs)
+        return Lattice3D(*args, **kwargs) if dim == 3 else Lattice2D(*args, **kwargs)
 
 
 class Scattering(_ScatteringBase, Simulation):
@@ -157,13 +148,10 @@ class Scattering(_ScatteringBase, Simulation):
 
     """
 
-    def __new__(self, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
         _check_dimension(geom.dim)
-        if geom.dim == 3:
-            return Scatt3D(*args, **kwargs)
-        else:
-            return Scatt2D(*args, **kwargs)
+        return Scatt3D(*args, **kwargs) if geom.dim == 3 else Scatt2D(*args, **kwargs)
 
 
 class Grating(_GratingBase, Simulation):
@@ -200,7 +188,7 @@ class Grating(_GratingBase, Simulation):
 
     """
 
-    def __new__(self, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
         _check_dimension(geom.dim)
         if geom.dim == 3:
@@ -210,7 +198,7 @@ class Grating(_GratingBase, Simulation):
 
 
 class PhotonicCrystal:
-    def __new__(self, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
         _check_dimension(geom.dim)
         if geom.dim == 3:

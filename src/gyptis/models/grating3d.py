@@ -16,13 +16,15 @@ class Grating3D(_GratingBase, Simulation):
         epsilon=None,
         mu=None,
         source=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         polarization=None,
         degree=1,
         pml_stretch=1 - 1j,
         periodic_map_tol=1e-8,
         eps_bc=1e-8,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, Layered3D)
         assert source.dim == 3
 
@@ -86,10 +88,7 @@ class Grating3D(_GratingBase, Simulation):
         uper = super().solve_system(again=again, vector_function=False)
         u_annex = self.formulation.annex_field["as_subdomain"]["stack"]
         u = uper * self.formulation.phasor
-        self.solution = {}
-        self.solution["periodic"] = uper
-        self.solution["diffracted"] = u
-        self.solution["total"] = u + u_annex
+        self.solution = {"periodic": uper, "diffracted": u, "total": u + u_annex}
         return u
 
     def diffraction_efficiencies(
@@ -158,12 +157,11 @@ class Grating3D(_GratingBase, Simulation):
                         domain=self.mesh,
                     )
                     ph_xy = ph_x * ph_y
-                    Jnm = []
-                    for comp in range(3):
-                        Jnm.append(
-                            assemble(Eper[comp] * ph_xy * ph_z * self.dx(d))
-                            / (self.period[0] * self.period[1])
-                        )
+                    Jnm = [
+                        assemble(Eper[comp] * ph_xy * ph_z * self.dx(d))
+                        / (self.period[0] * self.period[1])
+                        for comp in range(3)
+                    ]
                     ph_pos = np.exp(
                         -1 * 1j * gamma_nm * self.geometry.z_position["superstrate"]
                     )
@@ -193,17 +191,17 @@ class Grating3D(_GratingBase, Simulation):
         t_nm = [[e["substrate"] for e in b] for b in effn_cplx]
         r_nm = [[e["superstrate"] for e in b] for b in effn_cplx]
 
-        T = sum([sum(_) for _ in T_nm])
-        R = sum([sum(_) for _ in R_nm])
+        T = sum(sum(_) for _ in T_nm)
+        R = sum(sum(_) for _ in R_nm)
 
         B = R + T + Q
 
-        effs = dict()
-        effs["R"] = r_nm if cplx_effs else (R_nm if orders else R)
-        effs["T"] = t_nm if cplx_effs else (T_nm if orders else T)
-        effs["Q"] = Qdomains if subdomain_absorption else Q
-        effs["B"] = B
-
+        effs = {
+            "R": r_nm if cplx_effs else R_nm if orders else R,
+            "T": t_nm if cplx_effs else T_nm if orders else T,
+            "Q": Qdomains if subdomain_absorption else Q,
+            "B": B,
+        }
         if verbose:
             print("  Energy balance")
             print(f"  R = {R:0.6f}")

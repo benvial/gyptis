@@ -15,11 +15,13 @@ class TwoScale2D(Formulation):
         geometry,
         coefficients,
         function_space,
-        boundary_conditions={},
+        boundary_conditions=None,
         degree=1,
         direction="x",
         case="epsilon",
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         super().__init__(
             geometry,
             coefficients,
@@ -27,7 +29,6 @@ class TwoScale2D(Formulation):
             boundary_conditions=boundary_conditions,
             degree=degree,
         )
-
         self.epsilon, self.mu = self.coefficients
         self.direction = direction
         self.case = case
@@ -38,30 +39,24 @@ class TwoScale2D(Formulation):
         else:
             self.xi = self.epsilon.to_xi()
             self.chi = self.mu.to_chi()
-
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
     def poisson(self, u, v, xi, domain="everywhere"):
+        if domain == []:
+            return 0
         e = Constant((1, 0)) if self.direction == "x" else Constant((0, 1))
-
-        form = []
-        form.append(inner(xi * grad(u), grad(v)))
+        form = [inner(xi * grad(u), grad(v))]
         form.append(dot(xi * e, grad(v)))
         return (form[0] + form[1]) * self.dx(domain)
 
     def _weak(self, u, v):
         xi = self.xi.as_subdomain()
-
         xi_dict = self.xi.as_property()
-
         dom_func, dom_no_func = find_domains_function((self.xi, self.chi))
-
         form = self.poisson(u, v, xi, domain=dom_no_func)
         for dom in dom_func:
             form += self.poisson(u, v, xi_dict[dom], domain=dom)
-
-        weak = form.real + form.imag
-        return weak
+        return form.real + form.imag
 
     @property
     def weak(self):
@@ -75,16 +70,14 @@ class TwoScale2D(Formulation):
             applied_function = project_iterative(
                 applied_function, self.real_function_space
             )
-            _boundary_conditions = build_pec_boundary_conditions(
+            return build_pec_boundary_conditions(
                 self.pec_boundaries,
                 self.geometry,
                 self.function_space,
                 applied_function,
             )
         else:
-            _boundary_conditions = []
-
-        return _boundary_conditions
+            return []
 
     def build_boundary_conditions(self):
         applied_function = Constant(0)

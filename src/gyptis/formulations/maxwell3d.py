@@ -16,12 +16,16 @@ class Maxwell3D(Formulation):
         coefficients,
         function_space,
         source=None,
-        boundary_conditions={},
-        source_domains=[],
+        boundary_conditions=None,
+        source_domains=None,
         reference=None,
         modal=False,
         degree=1,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
+        if source_domains is None:
+            source_domains = []
         super().__init__(
             geometry,
             coefficients,
@@ -39,14 +43,14 @@ class Maxwell3D(Formulation):
         self.pec_boundaries = prepare_boundary_conditions(boundary_conditions)
 
     def maxwell(self, u, v, epsilon, inv_mu, domain="everywhere"):
-        form = []
-        form.append(-inner(inv_mu * curl(u), curl(v)))
+        if domain == []:
+            return [0, 0] if self.modal else 0
+        form = [-inner(inv_mu * curl(u), curl(v))]
         form.append(inner(epsilon * u, v))
         if self.modal:
             return [form[0] * self.dx(domain), -form[1] * self.dx(domain)]
-        else:
-            k0 = Constant(self.source.wavenumber)
-            return (form[0] + k0**2 * form[1]) * self.dx(domain)
+        k0 = Constant(self.source.wavenumber)
+        return (form[0] + k0**2 * form[1]) * self.dx(domain)
 
     def _weak(self, u, v, u1):
         epsilon = self.epsilon.as_subdomain()
@@ -105,11 +109,7 @@ class Maxwell3D(Formulation):
                     inv_mu_dict[dom] - inv_mu_a_dict[dom],
                     domain=dom,
                 )
-        if self.modal:
-            weak = [f.real + f.imag for f in form]
-        else:
-            weak = form.real + form.imag
-        return weak
+        return [f.real + f.imag for f in form] if self.modal else form.real + form.imag
 
     def get_magnetic_field(self, E):
         omega = 1 if self.modal else self.source.pulsation
@@ -130,15 +130,14 @@ class Maxwell3D(Formulation):
             applied_function = project_iterative(
                 applied_function, self.real_function_space
             )
-            _boundary_conditions = build_pec_boundary_conditions(
+            return build_pec_boundary_conditions(
                 self.pec_boundaries,
                 self.geometry,
                 self.function_space,
                 applied_function,
             )
         else:
-            _boundary_conditions = []
-        return _boundary_conditions
+            return []
 
     def build_boundary_conditions(self):
         applied_function = (

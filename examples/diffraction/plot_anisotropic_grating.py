@@ -64,8 +64,7 @@ geom = gy.Layered(2, period, thicknesses)
 groove = geom.layers["groove"]
 substrate = geom.layers["substrate"]
 y0 = geom.y_position["groove"]
-P = []
-P.append(geom.add_point(-width_bottom / 2, y0, 0))
+P = [geom.add_point(-width_bottom / 2, y0, 0)]
 P.append(geom.add_point(width_bottom / 2, y0, 0))
 P.append(geom.add_point(width_top / 2, y0 + height, 0))
 P.append(geom.add_point(-width_top / 2, y0 + height, 0))
@@ -100,6 +99,8 @@ epsilon["substrate"] = eps_sub
 epsilon["rod"] = eps_rod
 
 
+nper = 8
+
 for jangle, angle in enumerate([0, -20, -40]):
     angle_degree = angle * np.pi / 180
 
@@ -115,8 +116,6 @@ for jangle, angle in enumerate([0, -20, -40]):
 
     ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
     d = grating_TM.period
-    nper = 8
-
     vmin_TM, vmax_TM = -1.5, 1.7
     plt.sca(ax[jangle][0])
     per_plots, cb = grating_TM.plot_field(nper=nper)

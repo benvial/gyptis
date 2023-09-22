@@ -11,13 +11,10 @@ from .twoscale2d import *
 
 class _EigenProblemInclusion2D(Simulation):
     def __init__(
-        self,
-        geometry,
-        epsilon=None,
-        mu=None,
-        boundary_conditions={},
-        degree=1,
+        self, geometry, epsilon=None, mu=None, boundary_conditions=None, degree=1
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, Geometry)
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         function_space = ComplexFunctionSpace(geometry.mesh, "CG", degree)

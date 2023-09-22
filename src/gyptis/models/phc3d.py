@@ -15,9 +15,11 @@ class PhotonicCrystal3D(Simulation):
         epsilon=None,
         mu=None,
         propagation_vector=(0, 0, 0),
-        boundary_conditions={},
+        boundary_conditions=None,
         degree=1,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, Lattice3D)
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.periodic_bcs = Periodic3D(geometry)

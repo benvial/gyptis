@@ -41,53 +41,35 @@ class Lattice3D(Geometry):
             ),
             (v[2][0] + v[1][0], v[2][1] + v[1][1], v[2][2] + v[1][2]),
         ]
-        p = []
-        for v in self.vertices:
-            p.append(self.add_point(*v))
-        l0 = []
-        for i in range(3):
-            l0.append(self.add_line(p[i + 1], p[i]))
+        p = [self.add_point(*v) for v in self.vertices]
+        l0 = [self.add_line(p[i + 1], p[i]) for i in range(3)]
         l0.append(self.add_line(p[3], p[0]))
         cl = self.add_curve_loop(l0)
         ps0 = self.add_plane_surface([cl])
 
-        l1 = []
-        for i in range(4, 7):
-            l1.append(self.add_line(p[i + 1], p[i]))
+        l1 = [self.add_line(p[i + 1], p[i]) for i in range(4, 7)]
         l1.append(self.add_line(p[7], p[4]))
         cl = self.add_curve_loop(l1)
         ps1 = self.add_plane_surface([cl])
         #
         #
-        l2 = []
-        l2.append(l0[0])
-        l2.append(self.add_line(p[1], p[5]))
+        l2 = [l0[0], self.add_line(p[1], p[5])]
         l2.append(l1[0])
         l2.append(self.add_line(p[4], p[0]))
         cl = self.add_curve_loop(l2)
         ps2 = self.add_plane_surface([cl])
 
-        l3 = []
-        l3.append(l0[2])
-        l3.append(self.add_line(p[3], p[7]))
+        l3 = [l0[2], self.add_line(p[3], p[7])]
         l3.append(l1[2])
         l3.append(self.add_line(p[6], p[2]))
         cl = self.add_curve_loop(l3)
         ps3 = self.add_plane_surface([cl])
 
-        l4 = []
-        l4.append(l2[3])
-        l4.append(l0[3])
-        l4.append(l3[1])
-        l4.append(l1[3])
+        l4 = [l2[3], l0[3], l3[1], l1[3]]
         cl = self.add_curve_loop(l4)
         ps4 = self.add_plane_surface([cl])
 
-        l5 = []
-        l5.append(l2[1])
-        l5.append(l0[1])
-        l5.append(l3[3])
-        l5.append(l1[1])
+        l5 = [l2[1], l0[1], l3[3], l1[1]]
         cl = self.add_curve_loop(l5)
         ps5 = self.add_plane_surface([cl])
         self.perbnds = [ps0, ps1, ps2, ps3, ps4, ps5]
@@ -127,18 +109,17 @@ class Lattice3D(Geometry):
                     P = gmsh.model.getValue(2, b[-1], p)
                     belongs = is_on_plane(P, *pl, eps=self.periodic_tol)
                     B.append(belongs)
-                alls = np.all(B)
-                if alls:
+                if alls := np.all(B):
                     wheres.append(b)
             maps.append(wheres)
-        s = {}
-        s["-0"] = [m[-1] for m in maps[4]]
-        s["+0"] = [m[-1] for m in maps[5]]
-        s["-1"] = [m[-1] for m in maps[2]]
-        s["+1"] = [m[-1] for m in maps[3]]
-        s["-2"] = [m[-1] for m in maps[0]]
-        s["+2"] = [m[-1] for m in maps[1]]
-        return s
+        return {
+            "-0": [m[-1] for m in maps[4]],
+            "+0": [m[-1] for m in maps[5]],
+            "-1": [m[-1] for m in maps[2]],
+            "+1": [m[-1] for m in maps[3]],
+            "-2": [m[-1] for m in maps[0]],
+            "+2": [m[-1] for m in maps[1]],
+        }
 
     def build(self, *args, periodic=True, **kwargs):
         if periodic:

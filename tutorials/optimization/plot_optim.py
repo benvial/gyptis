@@ -188,10 +188,8 @@ def callback(self):
     fieldplot = gu.project_iterative((Hz * Hz.conj).real, projspace)
     fig = plt.figure(figsize=(4.5, 3))
     plt.clf()
-    ax = []
     gs = fig.add_gridspec(3, 1)
-    ax.append(fig.add_subplot(gs[0:2, :]))
-
+    ax = [fig.add_subplot(gs[0:2, :])]
     gy.plot(
         fieldplot,
         ax=ax[0],

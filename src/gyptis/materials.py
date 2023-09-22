@@ -74,10 +74,7 @@ class _SubdomainPy(dolfin.UserExpression):
     def eval_cell(self, values, x, cell):
         for sub, val in self.mapping.items():
             if self.markers[cell.index] == self.subdomains[sub]:
-                if callable(val):
-                    values[:] = val(x)
-                else:
-                    values[:] = val
+                values[:] = val(x) if callable(val) else val
 
     def value_shape(self):
         return ()
@@ -102,7 +99,7 @@ class _SubdomainCpp(dolfin.CompiledExpression):
 
 
 def _flatten_list(k):
-    result = list()
+    result = []
     for i in k:
         if isinstance(i, list):
             result.extend(_flatten_list(i))  # Recursive call
@@ -127,10 +124,7 @@ def _separate_mapping_parts(mapping):
 
 
 def _apply(item, fun):
-    if isinstance(item, list):
-        return [_apply(x, fun) for x in item]
-    else:
-        return fun(item)
+    return [_apply(x, fun) for x in item] if isinstance(item, list) else fun(item)
 
 
 def isiter(v):
@@ -139,17 +133,17 @@ def isiter(v):
 
 def _make_tensor(mapping):
     mapping_tens = mapping.copy()
-    N = max([len(v) for v in mapping.values() if isiter(v)])
-    id = np.eye(N).tolist()
+    N = max(len(v) for v in mapping.values() if isiter(v))
+    idf = np.eye(N).tolist()
     for k, v in mapping.items():
         if not isiter(v):
 
-            def fun(id):
-                if id == 1:
-                    id = v
-                return id
+            def fun(idf):
+                if idf == 1:
+                    idf = v
+                return idf
 
-            mapping_tens[k] = _apply(id, fun)
+            mapping_tens[k] = _apply(idf, fun)
         else:
             if type(v) == np.ndarray:
                 mapping_tens[k] = v.tolist()
@@ -157,10 +151,7 @@ def _make_tensor(mapping):
 
 
 def _fldict(k, vflat):
-    lnew = []
-    for val in vflat:
-        lnew.append({k: val})
-    return lnew
+    return [{k: val} for val in vflat]
 
 
 def _dic2list(dic):
@@ -177,20 +168,20 @@ def _dic2list(dic):
     for elem in L:
         d = dict(elem[0])
         for a in elem:
-            d.update(a)
+            d |= a
         o.append(d)
     o = np.reshape(o, N).tolist()
     return o
 
 
 class SubdomainScalarReal:
-    def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
+    def __new__(cls, markers, subdomains, mapping, cpp=True, **kwargs):
         ClassReturn = _SubdomainCpp if cpp else _SubdomainPy
         return ClassReturn(markers, subdomains, mapping, **kwargs)
 
 
 class SubdomainScalarComplex:
-    def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
+    def __new__(cls, markers, subdomains, mapping, cpp=True, **kwargs):
         mapping_re, mapping_im = _separate_mapping_parts(mapping)
         re = SubdomainScalarReal(markers, subdomains, mapping_re, cpp=cpp, **kwargs)
         im = SubdomainScalarReal(markers, subdomains, mapping_im, cpp=cpp, **kwargs)
@@ -232,10 +223,10 @@ class SubdomainTensorComplex:
 
 
 class Subdomain:
-    def __new__(self, markers, subdomains, mapping, cpp=True, **kwargs):
-        iterable = any([isiter(v) for v in mapping.values()])
+    def __new__(cls, markers, subdomains, mapping, cpp=True, **kwargs):
+        iterable = any(isiter(v) for v in mapping.values())
         flatvals = _flatten_list(mapping.values())
-        cplx = any([iscomplex(v) and np.any(v.imag != 0) for v in flatvals])
+        cplx = any(iscomplex(v) and np.any(v.imag != 0) for v in flatvals)
         if iterable:
             ClassReturn = SubdomainTensorComplex if cplx else SubdomainTensorReal
         else:
@@ -244,41 +235,39 @@ class Subdomain:
 
 
 def tensor_const(T, dim=3, real=False, const=True):
-    if dim in (2, 3):
-
-        def _treal(T):
-            m = []
-            for i in range(dim):
-                col = []
-                for j in range(dim):
-                    q = dolfin.Constant(T[i][j]) if const else T[i][j]
-                    col.append(q)
-                m.append(col)
-            return dolfin.as_tensor(m)
-
-        # assert T.shape == (dim, dim)
-        real1 = np.any(
-            [[hasattr(t, "real") and hasattr(t, "imag") for t in lines] for lines in T]
-        )
-        if real1 and not real:
-            Treal = [[t.real for t in lines] for lines in T]
-            Timag = [[t.imag for t in lines] for lines in T]
-            return Complex(_treal(Treal), _treal(Timag))
-        else:
-            return _treal(T)
-    else:
+    if dim not in (2, 3):
         raise NotImplementedError("only supports dim = 2 or 3")
+
+    def _treal(T):
+        m = []
+        for i in range(dim):
+            col = []
+            for j in range(dim):
+                q = dolfin.Constant(T[i][j]) if const else T[i][j]
+                col.append(q)
+            m.append(col)
+        return dolfin.as_tensor(m)
+
+    # assert T.shape == (dim, dim)
+    real1 = np.any(
+        [[hasattr(t, "real") and hasattr(t, "imag") for t in lines] for lines in T]
+    )
+    if real1 and not real:
+        Treal = [[t.real for t in lines] for lines in T]
+        Timag = [[t.imag for t in lines] for lines in T]
+        return Complex(_treal(Treal), _treal(Timag))
+    else:
+        return _treal(T)
 
 
 def _check_len(p):
-    if hasattr(p, "__len__"):
-        try:
-            lenp = len(p)
-        except NotImplementedError:
-            lenp = 0
-        return lenp
-    else:
+    if not hasattr(p, "__len__"):
         return 0
+    try:
+        lenp = len(p)
+    except NotImplementedError:
+        lenp = 0
+    return lenp
 
 
 def _make_constant_property_3d(prop, inv=False, real=False):
@@ -290,10 +279,7 @@ def _make_constant_property_3d(prop, inv=False, real=False):
             new_prop[d] = tensor_const(k, dim=3, real=real)
         else:
             k = 1 / p + 0j if inv else p + 0j
-            if callable(k):
-                new_prop[d] = k
-            else:
-                new_prop[d] = Constant(k)
+            new_prop[d] = k if callable(k) else Constant(k)
     return new_prop
 
 
@@ -317,10 +303,7 @@ def _make_constant_property_2d(prop, inv=False, real=False):
             new_prop[d] = tensor_const(p, dim=2, real=real, const=const)
         else:
             k = p + 0j
-            if callable(k):
-                new_prop[d] = k
-            else:
-                new_prop[d] = Constant(k)
+            new_prop[d] = k if callable(k) else Constant(k)
     return new_prop
 
 
@@ -359,11 +342,7 @@ def _get_chi(prop):
     new_prop = {}
     for d, p in prop.items():
         lenp = _check_len(p)
-        if lenp > 0:
-            # p = np.array(p)
-            k = p[2][2]
-        else:
-            k = p + 0j
+        k = p[2][2] if lenp > 0 else p + 0j
         new_prop[d] = k
     return new_prop
 
@@ -420,7 +399,9 @@ def _coefs(a, b):
 
 
 class Coefficient:
-    def __init__(self, dict, geometry=None, pmls=[], dim=2, degree=1, element=None):
+    def __init__(self, dict, geometry=None, pmls=None, dim=2, degree=1, element=None):
+        if pmls is None:
+            pmls = []
         self.dict = dict
         self.geometry = geometry
         self.pmls = pmls
@@ -437,10 +418,10 @@ class Coefficient:
             self.mapping = geometry.subdomains[mapping_key]
 
         if pmls is not []:
-            self.appy_pmls()
+            self.apply_pmls()
 
     def __repr__(self):
-        return "Coefficient " + self.dict.__repr__()
+        return f"Coefficient {self.dict.__repr__()}"
 
     def build_pmls(self):
         new_material_dict = self.dict.copy()
@@ -463,7 +444,7 @@ class Coefficient:
         annex.dict = annex_material_dict
         return annex
 
-    def appy_pmls(self):
+    def apply_pmls(self):
         self.dict.update(self.build_pmls())
 
     def as_subdomain(self, **kwargs):
@@ -504,7 +485,7 @@ class Coefficient:
         new = copy.copy(self)
         for dom, val in new.dict.items():
             val_shape = np.array(val).shape
-            if val_shape == (2, 2) or val_shape == (3, 3):
+            if val_shape in [(2, 2), (3, 3)]:
                 new.dict[dom] = np.linalg.inv(val)
             else:
                 new.dict[dom] = 1 / val

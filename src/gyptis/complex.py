@@ -192,14 +192,13 @@ class Complex:
         return f"({self.real.__str__()} + {self.imag.__str__()}j)"
 
     def __repr__(self):
-        return "Complex" + f"({self.real.__repr__()}, {self.imag.__repr__()})"
+        return f"Complex({self.real.__repr__()}, {self.imag.__repr__()})"
 
     def __pow__(self, power):
         if iscomplex(power) and power.imag != 0:
             raise NotImplementedError("complex exponent not implemented")
-        else:
-            A, phi = self.polar()
-            return self.polar2cart(A**power, phi * power)
+        A, phi = self.polar()
+        return self.polar2cart(A**power, phi * power)
 
     def __angle__(self):
         x, y = self.real, self.imag
@@ -274,10 +273,7 @@ def iscomplex(z):
         True if z is complex, else False.
 
     """
-    if hasattr(z, "real") and hasattr(z, "imag") and z.imag is not None:
-        return True
-    else:
-        return False
+    return bool(hasattr(z, "real") and hasattr(z, "imag") and z.imag is not None)
 
 
 class ComplexFunctionSpace(df.FunctionSpace):
@@ -292,7 +288,7 @@ class ComplexFunctionSpace(df.FunctionSpace):
 def _cplx_iter(f):
     def wrapper(v, *args, **kwargs):
         iterable = isinstance(v, Iterable)
-        cplx = any([iscomplex(v_) for v_ in v]) if iterable else iscomplex(v)
+        cplx = any(iscomplex(v_) for v_ in v) if iterable else iscomplex(v)
         if cplx:
             if iterable:
                 v = np.array(v)
@@ -368,7 +364,5 @@ def _traverse(a):
 
 
 def to_array(a):
-    values = []
-    for e in _traverse(a):
-        values.append(e.to_complex())
+    values = [e.to_complex() for e in _traverse(a)]
     return np.array(values).reshape(np.array(a).shape[:-1])

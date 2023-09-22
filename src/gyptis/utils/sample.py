@@ -115,10 +115,7 @@ def _adaptive_sampler(f, z0, max_bend=10, max_z_rel=1e-3, max_df=0.05):
                 if xn - x0 < min_dz:
                     isegment = 0
                     seg.append(isegment)
-                if x0 - xp > xn - x0:
-                    isegment = 0
-                else:
-                    isegment = 1
+                isegment = 0 if x0 - xp > xn - x0 else 1
                 seg.append(isegment)
                 seg = np.unique(seg)
 

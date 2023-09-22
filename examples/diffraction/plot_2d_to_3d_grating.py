@@ -121,16 +121,20 @@ def init_simu(geom, polarization):
     epsilon["substrate"] = eps_diel
     if dim == 2:
         pw = gy.PlaneWave(lambda0, theta0, dim=2)
-        grating = gy.Grating(
-            geom, epsilon, mu, source=pw, polarization=polarization, degree=degree
+        return gy.Grating(
+            geom,
+            epsilon,
+            mu,
+            source=pw,
+            polarization=polarization,
+            degree=degree,
         )
     else:
         psi0 = 0 if polarization == "TM" else gy.pi / 2
         pw = gy.PlaneWave(lambda0, (theta0, phi0, psi0), dim=3, degree=degree)
-        grating = gy.Grating(
+        return gy.Grating(
             geom, epsilon, mu, source=pw, degree=degree, periodic_map_tol=1e-12
         )
-    return grating
 
 
 ######################################################################
@@ -177,26 +181,22 @@ def run(polarization):
     print("=========================================")
     print(f"             {polarization} polarization")
     print("=========================================")
-    k = 0
     print()
     print("                    2D           3D      ")
     print("-----------------------------------------")
 
     print("Transmission")
-    for i in range(-nord, nord + 1):
+    for k, i in enumerate(range(-nord, nord + 1)):
         i1 = f"+{i}" if i > 0 else i
         spacex = "" if i != 0 else " "
         print(f"T({i1}) {spacex}            {T2D[k]:.5f}      {T3D[k]:.5f}  ")
-        k += 1
     print(f"T                 {sum(T2D):.5f}      {sum(T3D):.5f}  ")
-    k = 2
     print()
     print("Reflection")
-    for i in range(-1, 2):
+    for k, i in enumerate(range(-1, 2), start=2):
         i1 = f"+{i}" if i > 0 else i
         spacex = "" if i != 0 else " "
         print(f"R({i1}) {spacex}            {R2D[k]:.5f}      {R3D[k]:.5f}  ")
-        k += 1
     print(f"R                 {sum(R2D):.5f}      {sum(R3D):.5f}  ")
     print()
     print("Absorption")

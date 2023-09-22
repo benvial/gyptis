@@ -14,13 +14,15 @@ class Homogenization2D(Simulation):
         geometry,
         epsilon=None,
         mu=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         degree=1,
         direction="x",
         direct=True,
         periodic=True,
         domain="everywhere",
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         # assert isinstance(geometry, Lattice2D)
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.domain = domain
@@ -117,10 +119,7 @@ class Homogenization2D(Simulation):
         param_eff[:2, :2] = param_eff_inplane
         i = 0 if case == "epsilon" else 1
         coeff = self.formulation.coefficients[i].as_subdomain()
-        if coeff.real.ufl_shape == (3, 3):
-            coeffzz = coeff[2][2]
-        else:
-            coeffzz = coeff
+        coeffzz = coeff[2][2] if coeff.real.ufl_shape == (3, 3) else coeff
         param_eff[2, 2] = self.unit_cell_mean(coeffzz).tocomplex()
         return param_eff
 

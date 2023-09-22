@@ -22,10 +22,7 @@ import gyptis as gy
 
 
 def _ellipk(m):
-    if np.abs(m - 1) < 1e-6:
-        return ellipkm1(m)
-    else:
-        return ellipk(m)
+    return ellipkm1(m) if np.abs(m - 1) < 1e-6 else ellipk(m)
 
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.WARNING)
@@ -144,12 +141,14 @@ class FourPhaseComposite:
         return m
 
     def homogenize(self, method):
-        if method not in ["numerical", "analytical"]:
-            raise ValueError("Wrong method: choose between analytical or numerical.")
-        if method == "numerical":
-            return self._homogenize_numerical()
+        if method in ["numerical", "analytical"]:
+            return (
+                self._homogenize_numerical()
+                if method == "numerical"
+                else self._homogenize_analytical()
+            )
         else:
-            return self._homogenize_analytical()
+            raise ValueError("Wrong method: choose between analytical or numerical.")
 
 
 ##############################################################################

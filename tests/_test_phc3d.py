@@ -37,64 +37,7 @@ lattice.set_size("inclusion", 0.1)
 
 lattice.build()
 
-#
-# a = 1
-# v = (a, 0, 0), (0, a, 0), (0, 0, a)
-# R = 0.325 * a
-# n_eig = 6
-#
-# lattice = Lattice3D(v)
-# cell = lattice.cell
-# spheres = []
-# i = 0
-# for p in lattice.vertices:
-#     sphere = lattice.add_sphere(*p, R)
-#     *sphere, cell = lattice.fragment(sphere, cell)
-#     j = 1 if i == 0 else 0
-#     lattice.remove(lattice.dimtag(sphere[j]), recursive=1)
-#     k = 0 if i == 0 else 1
-#     spheres.append(sphere[k])
-#     i += 1
-#
-# face_centers = [
-#     (0, a / 2, a / 2),
-#     (a / 2, 0, a / 2),
-#     (a / 2, a / 2, 0),
-#     (a, a / 2, a / 2),
-#     (a / 2, a, a / 2),
-#     (a / 2, a / 2, a),
-# ]
-# i = 0
-# for p in face_centers[:]:
-#     sphere = lattice.add_sphere(*p, R)
-#     *sphere, cell = lattice.fragment(sphere, cell)
-#     j = 1 if i < 3 else 0
-#     lattice.remove(lattice.dimtag(sphere[j]), recursive=1)
-#     k = 0 if i < 3 else 1
-#     spheres.append(sphere[k])
-#     i += 1
-# # print(spheres)
-# lattice.add_physical(spheres, "inclusion")
-# lattice.add_physical(cell, "background")
-
-# lattice.build(1, 1, 1, 1, 1, periodic=False)
-# lattice.build(1, 0, 0, 0, 0, periodic=False)
-#
-# periodic_id = lattice.get_periodic_bnds()
-#
-# for k, v in periodic_id.items():
-#     lattice.add_physical(v, k, 2)
-#
-# lattice.set_size("background", 0.1)
-# lattice.set_size("inclusion", 0.1)
-#
-# lattice.build(1)
-
-
-bcs = {}
-for k, v in periodic_id.items():
-    bcs[k] = "PEC"  # Constant((0,0,0))
-
+bcs = {k: "PEC" for k, v in periodic_id.items()}
 # pbc = Periodic3D(lattice)
 
 eps_inclusion = 1

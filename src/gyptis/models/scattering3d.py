@@ -17,13 +17,15 @@ class Scatt3D(_ScatteringBase, Simulation):
         epsilon=None,
         mu=None,
         source=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         polarization=None,
         modal=False,
         degree=1,
         pml_stretch=1 - 1j,
         element="N1curl",
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, BoxPML3D)
         assert source.dim == 3
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
@@ -81,9 +83,7 @@ class Scatt3D(_ScatteringBase, Simulation):
 
     def solve_system(self, again=False):
         E = super().solve_system(again=again, vector_function=False)
-        self.solution = {}
-        self.solution["diffracted"] = E
-        self.solution["total"] = E + self.source.expression
+        self.solution = {"diffracted": E, "total": E + self.source.expression}
         return E
 
     def _cross_section_helper(self, return_type="s", boundaries="calc_bnds"):
@@ -120,18 +120,13 @@ class Scatt3D(_ScatteringBase, Simulation):
 
         if return_type == "s":
             Ws = assemble(dot(n_out("+"), Ss("+")) * self.dS(boundaries))
-            Sigma_s = Ws / self.S0
-            return Sigma_s
-
+            return Ws / self.S0
         if return_type == "e":
             We = -assemble(dot(n_out("+"), Se("+")) * self.dS(boundaries))
-            Sigma_e = We / self.S0
-            return Sigma_e
-
+            return We / self.S0
         if return_type == "a":
             Wa = -assemble(dot(n_out("+"), Stot("+")) * self.dS(boundaries))
-            Sigma_a = Wa / self.S0
-            return Sigma_a
+            return Wa / self.S0
 
     def scattering_cross_section(self, **kwargs):
         return self._cross_section_helper("s", **kwargs)
@@ -290,5 +285,4 @@ class Scatt3D(_ScatteringBase, Simulation):
                         T12[p0 - 1][p1 - 1] = fh
                         T22[p0 - 1][p1 - 1] = fe
 
-        Tmatrix = [[T11, T12], [T21, T22]]
-        return Tmatrix
+        return [[T11, T12], [T21, T22]]

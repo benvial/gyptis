@@ -57,14 +57,10 @@ def _load_config(config_path):
     with open(config_path, "r") as fid:
         try:
             config = json.load(fid)
-        except ValueError:
+        except ValueError as e:
             # No JSON object could be decoded --> corrupt file?
-            msg = (
-                "The config file ({}) is not a valid JSON "
-                "file and might be corrupted".format(config_path)
-            )
-            raise RuntimeError(msg)
-            config = dict()
+            msg = f"The config file ({config_path}) is not a valid JSON file and might be corrupted"
+            raise RuntimeError(msg) from e
     return config
 
 
@@ -82,9 +78,9 @@ def _set_config(config, key, value, config_file):
         The path to the .gyptis directory.
     """
     if not isinstance(key, str):
-        raise TypeError("key must be of type str, got {} instead".format(type(key)))
+        raise TypeError(f"key must be of type str, got {type(key)} instead")
     if not isinstance(value, str):
-        raise TypeError("value must be of type str, got {} instead".format(type(value)))
+        raise TypeError(f"value must be of type str, got {type(value)} instead")
 
     if value is None:
         config.pop(key, None)
@@ -135,19 +131,9 @@ def download_data(
 
     config_path = _get_config_path(config_path)
     config_file = os.path.join(config_path, "gyptis_config.json")
-    if not os.path.isfile(config_file):
-        config = {}
-    else:
-        config = _load_config(config_file)
-
-    data_path = config.get(data_key, None)
-
-    if data_path:
-        data_file = os.path.join(data_path, data_file_name)
-    else:
-        data_path = _get_data_path(data_path=data_path)
-        data_file = os.path.join(data_path, data_file_name)
-
+    config = _load_config(config_file) if os.path.isfile(config_file) else {}
+    data_path = config.get(data_key, None) or _get_data_path(data_path=data_path)
+    data_file = os.path.join(data_path, data_file_name)
     # Download file if it doesn't exist
     if not os.path.exists(data_file):
         urlretrieve(url, data_file)

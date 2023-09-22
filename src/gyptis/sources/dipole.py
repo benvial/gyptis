@@ -48,5 +48,4 @@ class Dipole(Source):
             [ConstantRe(-np.sin(self.angle)), ConstantRe(-np.cos(self.angle))]
         )
         dls = grad(ls.expression)
-        _expression = dot(dls, n) / Constant(1j * self.wavenumber)
-        return _expression
+        return dot(dls, n) / Constant(1j * self.wavenumber)

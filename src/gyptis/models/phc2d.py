@@ -15,12 +15,14 @@ class PhotonicCrystal2D(Simulation):
         epsilon=None,
         mu=None,
         propagation_vector=(0, 0),
-        boundary_conditions={},
+        boundary_conditions=None,
         polarization="TM",
         degree=1,
         eps=dolfin.DOLFIN_EPS,
         map_tol=1e-10,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, Lattice2D)
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.periodic_bcs = BiPeriodic2D(geometry, map_tol=map_tol, eps=eps)

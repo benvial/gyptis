@@ -236,19 +236,13 @@ sf = s_direct.solution["diffracted"]
 Nmodes = 50
 mode_indexes = range(neig)
 
-PNS = []
-for mode_index in mode_indexes:
-    PNS.append(get_coupling_coeff(s_modal, mode_index, pw))
+PNS = [get_coupling_coeff(s_modal, mode_index, pw) for mode_index in mode_indexes]
 mode_indexes_rec = np.argsort(np.abs(PNS))
 mode_indexes_rec = np.flipud(mode_indexes_rec)[:Nmodes]
 ev_qmem = ev_norma[mode_indexes_rec]
-# axcp.plot(ev_qmem.real, ev_qmem.imag, "xg")
-
-reconstr = 0
-for mode_index in mode_indexes_rec:
-    reconstr += gy.Constant(PNS[mode_index]) * modes[mode_index]
-
-
+reconstr = sum(
+    gy.Constant(PNS[mode_index]) * modes[mode_index] for mode_index in mode_indexes_rec
+)
 ##############################################################################
 # Vizualize the total field for the direct problem:
 

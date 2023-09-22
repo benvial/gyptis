@@ -18,7 +18,7 @@ class Grating2D(_GratingBase, Simulation):
         epsilon=None,
         mu=None,
         source=None,
-        boundary_conditions={},
+        boundary_conditions=None,
         polarization="TM",
         modal=False,
         degree=1,
@@ -26,9 +26,11 @@ class Grating2D(_GratingBase, Simulation):
         periodic_map_tol=1e-8,
         propagation_constant=0.0,
     ):
+        if boundary_conditions is None:
+            boundary_conditions = {}
         assert isinstance(geometry, Layered2D)
-        if source:
-            assert isinstance(source, PlaneWave)
+        if source is not None:
+            assert isinstance(source, (PlaneWave, LineSource))
             assert source.dim == 2
         self.epsilon, self.mu = init_em_materials(geometry, epsilon, mu)
         self.degree = degree
@@ -87,10 +89,7 @@ class Grating2D(_GratingBase, Simulation):
         uper = super().solve_system(again=again, vector_function=False)
         u_annex = self.formulation.annex_field["as_subdomain"]["stack"]
         u = uper * self.formulation.phasor
-        self.solution = {}
-        self.solution["periodic"] = uper
-        self.solution["diffracted"] = u
-        self.solution["total"] = u + u_annex
+        self.solution = {"periodic": uper, "diffracted": u, "total": u + u_annex}
         return u
 
     def diffraction_efficiencies(
@@ -185,7 +184,7 @@ class Grating2D(_GratingBase, Simulation):
             print("  ------------------------")
             print(f"  B = {B:0.6f}")
 
-        eff = dict()
+        eff = {}
         eff["R"] = r_n if cplx_effs else (R_n if orders else R)
         eff["T"] = t_n if cplx_effs else (T_n if orders else T)
         eff["Q"] = Qdomains if subdomain_absorption else Q
@@ -254,14 +253,11 @@ class Grating2D(_GratingBase, Simulation):
         if ax is None:
             ax = plt.gca()
         domains = self.geometry.subdomains["surfaces"]
-        scatt = []
-        for d in domains:
-            if d not in self.geometry.layers:
-                scatt.append(d)
+        scatt = [d for d in domains if d not in self.geometry.layers]
         scatt_ids = [domains[d] for d in scatt]
         scatt_lines = []
 
-        if len(scatt_ids) > 0:
+        if scatt_ids:
             for i in range(nper):
                 for sid in scatt_ids:
                     s = plot_subdomains(

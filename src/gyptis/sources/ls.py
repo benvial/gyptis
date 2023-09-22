@@ -46,7 +46,7 @@ class LineSource(Source):
 
     @property
     def expression(self):
-        _expression = green_function_2d(
+        return green_function_2d(
             self.wavelength,
             *self.position,
             phase=self.phase,
@@ -54,4 +54,3 @@ class LineSource(Source):
             degree=self.degree,
             domain=self.domain,
         )
-        return _expression
