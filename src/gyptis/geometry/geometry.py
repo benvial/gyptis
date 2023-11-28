@@ -12,6 +12,7 @@ For more information see Gmsh's `documentation <https://gmsh.info/doc/texinfo/gm
 """
 
 import numbers
+import os
 import re
 import sys
 import tempfile
@@ -506,7 +507,7 @@ class Geometry:
 
     @property
     def msh_file(self):
-        return f"{self.data_dir}/{self.mesh_name}"
+        return os.path.join(self.data_dir, self.mesh_name)
 
     def _build_serial(
         self,

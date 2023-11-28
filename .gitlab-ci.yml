@@ -5,6 +5,10 @@ variables:
   TERM: "xterm"
   DISPLAY: ":99.0"
   PYVISTA_OFF_SCREEN: "true"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
+
 
 
 include:
@@ -82,9 +86,21 @@ send-snapshot:
     - tags
 
 
-variables:
-  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
+
+pypi:
+  image: python:latest
+  stage: deploy
+  cache: {}
+  script:
+    - pip install twine build
+    - python3 -m build --sdist --wheel .
+    - twine upload dist/*
+  only:
+    - tags
+
+
+
 sonarcloud-check:
   stage: test
   image:
@@ -100,16 +116,3 @@ sonarcloud-check:
     - merge_requests
     - master
     - develop
-
-
-
-pypi:
-  image: python:latest
-  stage: deploy
-  cache: {}
-  script:
-    - pip install twine build
-    - python3 -m build --sdist --wheel .
-    - twine upload dist/*
-  only:
-    - tags

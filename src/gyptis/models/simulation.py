@@ -103,7 +103,7 @@ class Simulation:
         Returns
         -------
         tuple (PETSc matrix, PETSc vector)
-            The assembled matix and vector.
+            The assembled matrix and vector.
 
         """
         self.matrix = self.assemble_lhs()
@@ -143,7 +143,14 @@ class Simulation:
 
         if not again:
             if self.direct:
-                self.solver = dolfin.LUSolver(self.matrix, "mumps")
+                self.solver = dolfin.PETScLUSolver(
+                    dolfin.as_backend_type(self.matrix), "mumps"
+                )
+                ksp = self.solver.ksp()
+                ksp.setType(ksp.Type.PREONLY)
+                ksp.pc.setType(ksp.pc.Type.LU)
+                # ksp.pc.setFactorSolverType("MUMPS")
+                ksp.setFromOptions()
             else:
                 # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
                 self.solver = dolfin.KrylovSolver(self.matrix)
@@ -165,7 +172,14 @@ class Simulation:
         return self.solve_system()
 
     def eigensolve(
-        self, n_eig=6, wavevector_target=0.0, tol=1e-6, half=True, system=True, **kwargs
+        self,
+        n_eig=6,
+        wavevector_target=0.0,
+        tol=1e-6,
+        half=True,
+        system=True,
+        sqrt=True,
+        **kwargs
     ):
         wf = self.formulation.weak
         if self.formulation.dim == 1:
@@ -203,32 +217,22 @@ class Simulation:
         eigensolver = dolfin.SLEPcEigenSolver(
             dolfin.as_backend_type(A), dolfin.as_backend_type(B)
         )
-        # eigensolver.parameters["problem_type"] = "gen_hermitian"
-        # eigensolver.parameters["spectrum"] = "target real"
         eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
-        # eigensolver.parameters["solver"] = "power"
         eigensolver.parameters["spectral_shift"] = float(wavevector_target**2)
         eigensolver.parameters["spectral_transform"] = "shift-and-invert"
         eigensolver.parameters["tolerance"] = tol
-        # eigensolver.parameters["solver"] = "mumps"
-        dolfin.PETScOptions.set("st_ksp_type", "preonly")
-        dolfin.PETScOptions.set("st_pc_type", "lu")
-        # dolfin.PETScOptions.set("st_pc_factor_mat_solver_type", "mumps")
-        # dolfin.PETScOptions.set("eps_max_it", "300")
-        # dolfin.PETScOptions.set("eps_target", "0.00001")
-        # dolfin.PETScOptions.set("eps_mpd", "600")
-        # dolfin.PETScOptions.set("eps_nev", "400")
         eigensolver.parameters.update(kwargs)
-        eigensolver.solve(2 * n_eig)
-
+        eigensolver.set_from_options()
+        NEIG = 2 * n_eig if half else n_eig
+        eigensolver.solve(NEIG)
         nconv = eigensolver.get_number_converged()
 
         self.solution = {"converged": nconv}
         KNs = []
         UNs = []
 
-        nconv = min(2 * n_eig, nconv)
+        nconv = min(NEIG, nconv)
 
         for j in range(nconv):
             ev_re, ev_im, rx, cx = eigensolver.get_eigenpair(j)
@@ -247,10 +251,11 @@ class Simulation:
 
             # eig_vec = Complex(eig_vec_re[0],eig_vec_im[1])
             ev = ev_re + 1j * ev_im
-            kn = (ev) ** 0.5
+            kn = (ev) ** 0.5 if sqrt else ev
             KNs.append(kn)
             UNs.append(eig_vec)
         KNs = np.array(KNs)
+
         # HACK: We get the complex conjugates as well so compute twice
         # as much eigenvalues and return only half
         if half:

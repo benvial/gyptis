@@ -150,7 +150,15 @@ def plot_subdomains(markers, **kwargs):
     return plot_boundaries(markers, **kwargs)
 
 
-def plot_real(fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **kwargs):
+def plot_real(
+    fplot,
+    ax=None,
+    geometry=None,
+    proj_space=None,
+    colorbar=True,
+    orientation="vertical",
+    **kwargs,
+):
     proj = proj_space is not None
     if "cmap" not in kwargs:
         kwargs["cmap"] = "RdBu_r"
@@ -160,7 +168,7 @@ def plot_real(fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **k
         fplot = project_iterative(fplot, proj_space)
     plt.sca(ax)
     p = dolfin.plot(fplot, **kwargs)
-    cbar = plt.colorbar(p) if colorbar else None
+    cbar = plt.colorbar(p, orientation=orientation) if colorbar else None
     kwargs.pop("cmap")
     if geometry:
         geometry.plot_subdomains(**kwargs)
@@ -168,7 +176,13 @@ def plot_real(fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **k
 
 
 def plot_complex(
-    fplot, ax=None, geometry=None, proj_space=None, colorbar=True, **kwargs
+    fplot,
+    ax=None,
+    geometry=None,
+    proj_space=None,
+    colorbar=True,
+    orientation="vertical",
+    **kwargs,
 ):
     if ax is None:
         fig, ax = plt.subplots(1, 2)
@@ -180,6 +194,7 @@ def plot_complex(
             geometry=geometry,
             proj_space=proj_space,
             colorbar=colorbar,
+            orientation=orientation,
             **kwargs,
         )
         P.append(p)

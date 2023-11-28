@@ -85,8 +85,7 @@ https://gyptis.gitlab.io
 
 
 Gyptis is a package to solve Maxwell's equations with the finite element method. 
-It is in early stage and currently being actively developed, so features might 
-come and go.
+It includes predefined models and setup commonly used in Photonics.
 
 
 
