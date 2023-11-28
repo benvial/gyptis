@@ -25,27 +25,27 @@ colors = dict(
 )
 
 if "gyptis" not in plt.colormaps():
-    plt.register_cmap(
+    matplotlib.colormaps.register(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis", [colors["green"], (1, 1, 1), colors["red"]], N=100
         )
     )
 if "gyptis_r" not in plt.colormaps():
-    plt.register_cmap(
+    matplotlib.colormaps.register(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis_r", [colors["red"], (1, 1, 1), colors["green"]], N=100
         )
     )
 
 if "gyptis_white" not in plt.colormaps():
-    plt.register_cmap(
+    matplotlib.colormaps.register(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis_white", [(1, 1, 1), (1, 1, 1), (1, 1, 1)], N=100
         )
     )
 
 if "gyptis_black" not in plt.colormaps():
-    plt.register_cmap(
+    matplotlib.colormaps.register(
         cmap=LinearSegmentedColormap.from_list(
             "gyptis_black", [(0, 0, 0), (0, 0, 0), (0, 0, 0)], N=100
         )
@@ -131,7 +131,7 @@ def plot_markers(markers, subdomains, ax=None, geometry=None, colorbar=True, **k
     p = dolfin.plot(markers, norm=norm, **kwargs)
     if colorbar:
         cbar = plt.colorbar(
-            matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap_disc), ticks=tt
+            matplotlib.cm.ScalarMappable(norm=norm, cmap=cmap_disc), ticks=tt, ax=ax
         )
 
         cbar.ax.set_yticklabels(ids)

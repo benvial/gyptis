@@ -118,7 +118,9 @@ def transfer_function(fromFunc, Vto):
     A = df.PETScDMCollection.create_transfer_matrix(
         fromFunc.ufl_function_space(), toFunc.ufl_function_space()
     )
-    toFunc.vector()[:] = A * fromFunc.vector()
+    # toFunc.vector()[:] = A * fromFunc.vector()
+
+    A.mat().mult(fromFunc.vector().vec(), toFunc.vector().vec())
 
     return toFunc
 

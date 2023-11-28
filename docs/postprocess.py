@@ -75,8 +75,8 @@ def process_html(fn, lines):
     new_lines = []
     for line in lines:
         # Remove escaped arguments from the html files.
-        line = line.replace("\*args", "*args")
-        line = line.replace("\*\*kwargs", "**kwargs")
+        line = line.replace(r"\*args", "*args")
+        line = line.replace(r"\*\*kwargs", "**kwargs")
         line = line.replace("col-md-3", "col-md-2")
 
         line = line.replace(
@@ -85,8 +85,8 @@ def process_html(fn, lines):
         )
 
         line = line.replace(
-            "&#8212; __WEBPAGE_TITLE_PLACEHOLDER__",
-            f"| Gyptis: {package.__description__}",
+            "__WEBPAGE_TITLE_PLACEHOLDER__",
+            f"Gyptis",
         )
 
         line = line.replace(". URL: ", ".")

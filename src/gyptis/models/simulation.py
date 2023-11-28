@@ -143,18 +143,24 @@ class Simulation:
 
         if not again:
             if self.direct:
-                self.solver = dolfin.PETScLUSolver(
-                    dolfin.as_backend_type(self.matrix), "mumps"
-                )
-                ksp = self.solver.ksp()
-                ksp.setType(ksp.Type.PREONLY)
-                ksp.pc.setType(ksp.pc.Type.LU)
-                # ksp.pc.setFactorSolverType("MUMPS")
-                ksp.setFromOptions()
+                # self.solver = dolfin.PETScLUSolver(
+                #     dolfin.as_backend_type(self.matrix), "mumps"
+                # )
+                # ksp = self.solver.ksp()
+                # ksp.setType(ksp.Type.PREONLY)
+                # ksp.pc.setType(ksp.pc.Type.LU)
+                # # ksp.pc.setFactorSolverType("MUMPS")
+                dolfin.PETScOptions.set("petsc_prealloc", "200")
+                dolfin.PETScOptions.set("ksp_type", "preonly")
+                dolfin.PETScOptions.set("pc_type", "lu")
+                dolfin.PETScOptions.set("pc_factor_mat_solver_type", "mumps")
+                self.solver = dolfin.LUSolver(self.matrix, "mumps")
+                # ksp.setFromOptions()
             else:
                 # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
                 self.solver = dolfin.KrylovSolver(self.matrix)
         self.solver.solve(u.vector(), self.vector)
+        dolfin.PETScOptions.clear()
         return Complex(*u.split())
 
     def solve(self):

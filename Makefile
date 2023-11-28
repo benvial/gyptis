@@ -340,14 +340,16 @@ pypi: package
 checksum:
 	$(call message,${@})
 	@echo v$(VERSION)
-	$(eval SHA256 := $(shell curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256 | cut  -c16-))
+	$(eval SHA256 := $(shell curl -sL https://gitlab.com/gyptis/gyptis/-/archive/v$(VERSION)/gyptis-v$(VERSION).tar.gz | openssl sha256 | cut  -c18-))
 	@echo $(SHA256)
 
 ## Update conda-forge package
 conda: checksum
 	$(call message,${@})
 	cd .. && rm -rf gyptis-feedstock && \
-	git clone https://github.com/benvial/gyptis-feedstock && cd gyptis-feedstock  && \
+	git clone git@github.com:benvial/gyptis-feedstock.git && cd gyptis-feedstock && \
+	git remote add upstream git@github.com:conda-forge/gyptis-feedstock.git  && \
+	git fetch upstream && \
 	git branch v$(VERSION) && git checkout v$(VERSION) && \
 	sed -i "s/sha256: .*/sha256: $(SHA256)/" recipe/meta.yaml && \
 	sed -i "s/number: .*/number: 0/" recipe/meta.yaml && \

@@ -57,7 +57,7 @@ def test_hchom2d():
     eps_eff = hom.get_effective_permittivity(scalar=True)
     print(eps_eff)
     assert np.abs(eps_eff[0][0] - 1.73) < 1e-3
-    neigs = 40
+    neigs = 50
     wavevector_target = 0.1
     lambdas = np.linspace(4, 15, 1000) * d
     k = 2 * np.pi / lambdas
@@ -67,5 +67,6 @@ def test_hchom2d():
     ).tocomplex()
     mu_eff_ana = analytical_mueff(k)
     err = np.mean(np.abs(mu_eff - mu_eff_ana))
+    print(err)
     assert np.allclose(mu_eff, mu_eff_ana, atol=5e-3)
     assert err < 1e-3

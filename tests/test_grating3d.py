@@ -11,10 +11,9 @@ from pprint import pprint
 import numpy as np
 
 from gyptis import Grating, Layered, PlaneWave, dolfin
-from gyptis.utils import list_time
 
 
-def test_grating3d(degree=2):
+def test_grating3d(degree=1):
     dolfin.parameters["form_compiler"]["quadrature_degree"] = 2
 
     p = 1000
@@ -42,7 +41,7 @@ def test_grating3d(degree=2):
     )
 
     #  ---------- mesh ----------
-    parmesh = 5
+    parmesh = 2
 
     parmesh_hole = parmesh * 1
 
@@ -133,12 +132,10 @@ def test_grating3d(degree=2):
     )
 
     s.solve()
-    list_time()
     print("  >> computing diffraction efficiencies")
     print("---------------------------------------")
 
     effs = s.diffraction_efficiencies(1, subdomain_absorption=True, orders=True)
-    # effs = s.diffraction_efficiencies(2, subdomain_absorption=False, orders=True)
     pprint(effs)
     R = np.sum(effs["R"])
     T = np.sum(effs["T"])
@@ -147,4 +144,3 @@ def test_grating3d(degree=2):
     print("sum T = ", T)
     print("sum Q = ", Q)
     print("B  = ", effs["B"])
-    list_time()
