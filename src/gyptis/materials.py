@@ -168,7 +168,8 @@ def _dic2list(dic):
     for elem in L:
         d = dict(elem[0])
         for a in elem:
-            d |= a
+            # d |= a
+            d.update(a)
         o.append(d)
     o = np.reshape(o, N).tolist()
     return o
