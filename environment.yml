@@ -6,7 +6,6 @@ dependencies:
   - pip
   - fenics
   - dolfin-adjoint
-  - nlopt
   - meshio
   - numpy
   - scipy
@@ -17,6 +16,8 @@ dependencies:
   - psutil
   - ipython
   - loguru
+  - gmsh
+  - python-gmsh
+  - nlopt
   - pip:
-    - gmsh
     - git+https://gitlab.com/gyptis/gyptis.git
