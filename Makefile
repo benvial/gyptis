@@ -212,7 +212,7 @@ save-noci: style gl-noci
 	
 
 ## Update header
-header:
+header: install
 	$(call message,${@})
 	@cd dev && python update_header.py
 
@@ -362,7 +362,7 @@ conda: checksum
 
 
 ## Publish release on pypi and conda-forge
-publish: tag release pypi conda
+publish: header tag release pypi conda
 	$(call message,${@})
 
 	
