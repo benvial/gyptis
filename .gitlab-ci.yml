@@ -110,8 +110,6 @@ test-python-3.12:
 send-snapshot:
   stage: zenodo
   image: python:3.6
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v?[0-9]+\.[0-9]+/
   script:
     - pip install gitlab2zenodo
     - git archive --format zip --output ${CI_COMMIT_TAG#v}.zip ${CI_COMMIT_TAG}
