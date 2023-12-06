@@ -13,7 +13,7 @@ from .source import *
 def plane_wave_2d(wavelength, theta, phase=0, amplitude=1, degree=1, domain=None):
     k0 = 2 * np.pi / wavelength
     K = k0 * np.array((-np.sin(theta), -np.cos(theta)))
-    K_ = vector(sp.symbols("kx, ky, 0", real=True))
+    K_ = sympyvector(sp.symbols("kx, ky, 0", real=True))
     expr = amplitude * sp.exp(1j * (K_.dot(X) + phase))
     return expression2complex_2d(expr, kx=K[0], ky=K[1], degree=degree, domain=domain)
 
@@ -33,7 +33,7 @@ def plane_wave_3d(
             -np.cos(theta),
         )
     )
-    K_ = vector(sp.symbols("kx, ky, kz", real=True))
+    K_ = sympyvector(sp.symbols("kx, ky, kz", real=True))
 
     phase_shifts = [np.exp((phis)) for phis in phase]
     Propp = amplitude * sp.exp(1j * (K_.dot(X)))

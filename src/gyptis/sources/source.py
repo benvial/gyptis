@@ -25,14 +25,14 @@ from ..plot import *
 _COORD = CoordSys3D("N")
 
 
-def vector(components):
+def sympyvector(components):
     return (
         components[0] * _COORD.i + components[1] * _COORD.j + components[2] * _COORD.k
     )
 
 
 x = sp.symbols("x[0] x[1] x[2]", real=True)
-X = vector(np.array(x))
+X = sympyvector(np.array(x))
 
 
 def expression2complex_2d(expr, **kwargs):

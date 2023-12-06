@@ -22,9 +22,9 @@ def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
     )
     alpha0 = alpha0_re + 1j * alpha0_im
     beta0 = beta0_re + 1j * beta0_im
-    Kplus = vector((alpha0, beta0, 0))
-    Kminus = vector((alpha0, -beta0, 0))
-    deltaY = vector((0, sp.symbols("yshift", real=True), 0))
+    Kplus = sympyvector((alpha0, beta0, 0))
+    Kminus = sympyvector((alpha0, -beta0, 0))
+    deltaY = sympyvector((0, sp.symbols("yshift", real=True), 0))
 
     def pw(K):
         return sp.exp(1j * K.dot(X - deltaY))
@@ -59,9 +59,9 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
     alpha0 = alpha0_re + 1j * alpha0_im
     beta0 = beta0_re + 1j * beta0_im
     gamma0 = gamma0_re + 1j * gamma0_im
-    Kplus = vector((alpha0, beta0, gamma0))
-    Kminus = vector((alpha0, beta0, -gamma0))
-    deltaZ = vector((0, 0, sp.symbols("zshift", real=True)))
+    Kplus = sympyvector((alpha0, beta0, gamma0))
+    Kminus = sympyvector((alpha0, beta0, -gamma0))
+    deltaZ = sympyvector((0, 0, sp.symbols("zshift", real=True)))
 
     def pw(K):
         return sp.exp(1j * K.dot(X - deltaZ))

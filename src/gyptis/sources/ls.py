@@ -10,7 +10,7 @@ from .source import *
 
 
 def green_function_2d(wavelength, xs, ys, phase=0, amplitude=1, degree=1, domain=None):
-    Xs = vector(sp.symbols("xs, ys, 0", real=True))
+    Xs = sympyvector(sp.symbols("xs, ys, 0", real=True))
     k0 = sp.symbols("k0", real=True)
     Xshift = X - Xs
     rho = sp.sqrt(Xshift.dot(Xshift))
