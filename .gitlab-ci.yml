@@ -40,6 +40,8 @@ badge:
     paths:
         - badges.json
         - logobadge.json
+  only:
+    - tags
 
 
 
@@ -54,7 +56,7 @@ staging:
   stage: trigdoc
   trigger: gyptis/gyptis.gitlab.io
   only:
-    - master
+    - tags
 
 
 .test-script: &test-script
@@ -75,25 +77,25 @@ staging:
     - master
 
 
-test-python-3.8:
-  extends: .test
-  before_script:
-    - sed -i 's/python>3.7/python=3.8/g' environment.yml
+# test-python-3.8:
+#   extends: .test
+#   before_script:
+#     - sed -i 's/python>3.7/python=3.8/g' environment.yml
 
-test-python-3.9:
-  extends: .test
-  before_script:
-    - sed -i 's/python>3.7/python=3.9/g' environment.yml
+# test-python-3.9:
+#   extends: .test
+#   before_script:
+#     - sed -i 's/python>3.7/python=3.9/g' environment.yml
 
-test-python-3.10:
-  extends: .test
-  before_script:
-    - sed -i 's/python>3.7/python=3.10/g' environment.yml
+# test-python-3.10:
+#   extends: .test
+#   before_script:
+#     - sed -i 's/python>3.7/python=3.10/g' environment.yml
 
-test-python-3.11:
-  extends: .test
-  before_script:
-    - sed -i 's/python>3.7/python=3.11/g' environment.yml
+# test-python-3.11:
+#   extends: .test
+#   before_script:
+#     - sed -i 's/python>3.7/python=3.11/g' environment.yml
 
 test-python-3.12:
   extends: .test

@@ -24,6 +24,7 @@ class Scatt3D(_ScatteringBase, Simulation):
         degree=1,
         pml_stretch=1 - 1j,
         element="N1curl",
+        **kwargs,
     ):
         if boundary_conditions is None:
             boundary_conditions = {}
@@ -76,7 +77,7 @@ class Scatt3D(_ScatteringBase, Simulation):
             boundary_conditions=boundary_conditions,
         )
 
-        super().__init__(geometry, formulation)
+        super().__init__(geometry, formulation, **kwargs)
 
         self.Z0 = np.sqrt(mu_0 / epsilon_0)
         self.S0 = 1 / (2 * self.Z0)

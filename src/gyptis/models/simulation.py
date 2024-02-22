@@ -159,7 +159,9 @@ class Simulation:
                 # ksp.setFromOptions()
             else:
                 # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
-                self.solver = dolfin.KrylovSolver(self.matrix)
+                self.solver = dolfin.KrylovSolver(
+                    self.matrix, method="default", preconditioner="petsc_amg"
+                )
         self.solver.solve(u.vector(), self.vector)
         dolfin.PETScOptions.clear()
         return Complex(*u.split())

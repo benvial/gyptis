@@ -141,14 +141,16 @@ plt.tight_layout()
 # Compute cross sections and check energy conservation (optical theorem)
 
 cs = s.get_cross_sections()
-print(cs["extinction"])
-print(cs["scattering"] + cs["absorption"])
-print(abs(cs["scattering"] + cs["absorption"] - cs["extinction"]))
+print("cross sections")
+print("--------------")
+for k, v in cs.items():
+    print(f"{k} {v:.3f}nm")
+print("energy balance", (cs["scattering"] + cs["absorption"]) / cs["extinction"])
 assert np.allclose(cs["extinction"], cs["scattering"] + cs["absorption"], rtol=1e-12)
 
 
 ##############################################################################
-# Compute spectra using adaptive sampling. The function needs to return a scalar
+# Compute spectra using adaptive sampling. The function must return a scalar
 # (which will be monitored by the sampler) as its first output.
 
 
@@ -176,6 +178,23 @@ cs = [_[1] for _ in out]
 scs = np.array([d["scattering"] for d in cs])
 acs = np.array([d["absorption"] for d in cs])
 ecs = np.array([d["extinction"] for d in cs])
+balance = (scs + acs) / ecs
+
+##############################################################################
+# Plot energy balance
+
+
+plt.figure()
+plt.plot(
+    wla,
+    balance,
+    c="#df6482",
+)
+plt.ylabel("energy balance")
+plt.xlabel("wavelength (nm)")
+plt.xlim(wavelength_min, wavelength_max)
+plt.tight_layout()
+plt.show()
 
 ##############################################################################
 # Plot and comparison with benchmark

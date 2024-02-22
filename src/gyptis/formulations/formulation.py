@@ -39,6 +39,8 @@ class Formulation(ABC):
         self.geometry = geometry
         self.coefficients = coefficients
         self.function_space = function_space
+        if source is not None:
+            source.domain = geometry.mesh
         self.source = source
         self.trial = TrialFunction(self.function_space)
         self.test = TestFunction(self.function_space)

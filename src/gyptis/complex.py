@@ -341,6 +341,9 @@ div = _complexify_linear(df.div)
 curl = _complexify_linear(df.curl)
 project = _complexify_linear(df.project)
 
+sym = _complexify_linear(df.sym)
+tr = _complexify_linear(df.tr)
+
 Dx = _complexify_linear(df.Dx)
 inner = _complexify_bilinear(df.inner)
 dot = _complexify_bilinear(df.dot)
