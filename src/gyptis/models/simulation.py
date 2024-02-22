@@ -160,7 +160,7 @@ class Simulation:
             else:
                 # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
                 self.solver = dolfin.KrylovSolver(
-                    self.matrix, method="default", preconditioner="petsc_amg"
+                    self.matrix, method="default", preconditioner="default"
                 )
         self.solver.solve(u.vector(), self.vector)
         dolfin.PETScOptions.clear()
