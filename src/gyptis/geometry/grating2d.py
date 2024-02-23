@@ -40,11 +40,11 @@ class Layered2D(Geometry):
             self.y_position[id] = y0
             self.add_physical(layer, id)
             self._phys_groups.append(layer)
+            # gmsh.model.removePhysicalName(id)
             y0 += thickness
 
         self.remove_all_duplicates()
-        self.synchronize()
-
+        # print(self._phys_groups)
         for sub, num in self.subdomains["surfaces"].items():
             self.add_physical(num, sub)
 

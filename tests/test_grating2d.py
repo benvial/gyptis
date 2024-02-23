@@ -6,9 +6,9 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
-
 from pprint import pprint
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
@@ -30,7 +30,7 @@ def test_grating2d(polarization, degree):
     wavelength = 1
     lmin = wavelength / pmesh
     period = 0.8
-    R = period / 3
+    R = period / 4
 
     thicknesses = OrderedDict(
         {
@@ -48,25 +48,23 @@ def test_grating2d(polarization, degree):
 
     mu_groove = rmat @ np.diag((2 - 0.1j, 9 - 0.1j, 3 - 0.2j)) @ rmat.T
 
-    epsilon = dict({"substrate": 2.1, "groove": 1, "superstrate": 1, "diff": eps_diff})
+    epsilon = dict({"substrate": 1, "groove": 1, "superstrate": 1, "diff": eps_diff})
     mu = dict({"substrate": 1.6, "groove": mu_groove, "superstrate": 1, "diff": 1})
 
     geom = Layered(2, period, thicknesses)
-
     yc = geom.y_position["groove"] + thicknesses["groove"] / 2
     diff = geom.add_circle(0, yc, 0, R)
     diff, groove = geom.fragment(diff, geom.layers["groove"])
-    geom.add_physical(groove, "groove")
     geom.add_physical(diff, "diff")
-
+    geom.add_physical(groove, "groove")
     [geom.set_size(pml, lmin) for pml in ["pml_bottom", "pml_top"]]
     geom.set_size("groove", lmin)
     geom.set_size("diff", lmin)
-
+    geom.set_size("superstrate", lmin)
+    geom.set_size("substrate", lmin)
     geom.build()
 
     theta0 = 10
-
     angle = theta0 * np.pi / 180
 
     pw = PlaneWave(
@@ -75,6 +73,8 @@ def test_grating2d(polarization, degree):
     s = Grating(geom, epsilon, mu, source=pw, degree=degree, polarization=polarization)
 
     s.solve()
+    s.plot_field(field="diffracted")
+
     list_time()
 
     effs = s.diffraction_efficiencies(1, orders=True, subdomain_absorption=True)

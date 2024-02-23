@@ -22,6 +22,7 @@ from functools import wraps
 
 import gmsh
 import numpy as np
+from packaging import version
 
 from .. import dolfin
 from ..measure import Measure
@@ -102,6 +103,7 @@ class Geometry:
         if options is None:
             options = {}
         self.model_name = model_name
+        self.model = gmsh.model
         self.mesh_name = mesh_name
         self.dim = dim
         self.subdomains = dict(volumes={}, surfaces={}, curves={}, points={})
@@ -150,6 +152,14 @@ class Geometry:
 
         gmsh_options.set("General.Verbosity", self.verbose)
         gmsh_options.set("Mesh.Binary", self.binary_mesh)
+
+        OCCBooleanPreserveNumbering = (
+            True if version.parse(gmsh.__version__) < version.parse("4.11.0") else False
+        )
+        gmsh_options.set(
+            "Geometry.OCCBooleanPreserveNumbering", OCCBooleanPreserveNumbering
+        )
+
         for k, v in options.items():
             gmsh_options.set(k, v)
 
@@ -176,10 +186,10 @@ class Geometry:
         dicname = list(self.subdomains)[3 - dim]
         if not isinstance(idf, list):
             idf = [idf]
-        num = gmsh.model.addPhysicalGroup(dim, idf)
+        num = self.model.addPhysicalGroup(dim, idf)
         self.subdomains[dicname][name] = num
-        gmsh.model.removePhysicalName(name)
-        gmsh.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
+        self.model.removePhysicalName(name)
+        self.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
         return num
 
     def dimtag(self, idf, dim=None):
@@ -369,24 +379,24 @@ class Geometry:
                 type_entity = "curves"
             idf = self.subdomains[type_entity][idf]
 
-            n = gmsh.model.getEntitiesForPhysicalGroup(dim, idf)
+            n = self.model.getEntitiesForPhysicalGroup(dim, idf)
             bnds = [_get_bnd(n_, dim=dim) for n_ in n]
             bnds = [item for sublist in bnds for item in sublist]
             return list(dict.fromkeys(bnds))
         else:
-            n = gmsh.model.getEntitiesForPhysicalGroup(dim, idf)[0] if physical else idf
+            n = self.model.getEntitiesForPhysicalGroup(dim, idf)[0] if physical else idf
             return _get_bnd(n, dim=dim)
 
     def _set_size(self, idf, s, dim=None):
         dim = self._check_dim(dim)
-        p = gmsh.model.getBoundary(
+        p = self.model.getBoundary(
             self.dimtag(idf, dim=dim), False, False, True
         )  # Get all points
-        gmsh.model.mesh.setSize(p, s)
+        self.model.mesh.setSize(p, s)
 
     def _check_subdomains(self):
-        groups = gmsh.model.getPhysicalGroups()
-        names = [gmsh.model.getPhysicalName(*g) for g in groups]
+        groups = self.model.getPhysicalGroups()
+        names = [self.model.getPhysicalName(*g) for g in groups]
         for subtype, subitems in self.subdomains.items():
             for idf in subitems.copy().keys():
                 if idf not in names:
@@ -411,7 +421,7 @@ class Geometry:
         for idf, p in params.items():
             if isinstance(idf, str):
                 num = self.subdomains[type_entity][idf]
-                n = gmsh.model.getEntitiesForPhysicalGroup(dim, num)
+                n = self.model.getEntitiesForPhysicalGroup(dim, num)
                 for n_ in n:
                     self._set_size(n_, p, dim=dim)
             else:
@@ -633,7 +643,7 @@ class Geometry:
 
     def generate_mesh(self, generate=True, write=True, read=True):
         if generate:
-            gmsh.model.mesh.generate(self.dim)
+            self.model.mesh.generate(self.dim)
         if write:
             gmsh.write(self.msh_file)
         if read:
