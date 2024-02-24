@@ -29,6 +29,8 @@ from ..measure import Measure
 from ..mesh import *
 from ..plot import *
 
+_newer_gmsh = version.parse(gmsh.__version__) >= version.parse("4.11.0")
+
 _geometry_module = sys.modules[__name__]
 geo = gmsh.model.geo
 occ = gmsh.model.occ
@@ -153,9 +155,7 @@ class Geometry:
         gmsh_options.set("General.Verbosity", self.verbose)
         gmsh_options.set("Mesh.Binary", self.binary_mesh)
 
-        OCCBooleanPreserveNumbering = (
-            True if version.parse(gmsh.__version__) < version.parse("4.11.0") else False
-        )
+        OCCBooleanPreserveNumbering = False if _newer_gmsh else True
         gmsh_options.set(
             "Geometry.OCCBooleanPreserveNumbering", OCCBooleanPreserveNumbering
         )

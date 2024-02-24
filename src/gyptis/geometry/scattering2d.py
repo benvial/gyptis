@@ -8,6 +8,7 @@
 
 
 from .geometry import *
+from .geometry import _newer_gmsh
 
 
 class BoxPML2D(Geometry):
@@ -102,3 +103,11 @@ class BoxPML2D(Geometry):
             bnds = self.get_boundaries("box")
             self.calc_bnds = bnds[0]
             self.add_physical(self.calc_bnds, "calc_bnds", dim=1)
+
+    def build(self, *args, **kwargs):
+        if _newer_gmsh:
+            if self.Rcalc > 0:
+                bnds = self.get_boundaries("box")
+                self.calc_bnds = bnds[-2]
+                self.add_physical(self.calc_bnds, "calc_bnds", dim=1)
+        super().build(*args, **kwargs)

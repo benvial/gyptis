@@ -122,7 +122,7 @@ def test_scatt2d_pec(polarization):
     geom.add_physical(cyl_bnds, "cyl_bnds", dim=1)
     [geom.set_size(pml, lmin) for pml in geom.pmls]
     geom.set_size("box", lmin)
-    geom.build(0)
+    geom.build()
     mesh = geom.mesh_object["mesh"]
     epsilon = dict(box=1)
     mu = dict(box=1)
