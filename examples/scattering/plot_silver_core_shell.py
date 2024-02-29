@@ -116,7 +116,6 @@ pw = gy.PlaneWave(
 )
 omega = 2 * pi * c / (wavelength * 1e-9)
 epsilon = dict(box=1, core=eps_core, shell=epsilon_silver(omega))
-mu = dict(box=1, core=1, shell=1)
 
 
 ##############################################################################

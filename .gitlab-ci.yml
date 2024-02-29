@@ -40,8 +40,6 @@ badge:
     paths:
         - badges.json
         - logobadge.json
-  only:
-    - tags
 
 
 
