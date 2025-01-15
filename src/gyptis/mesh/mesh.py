@@ -11,6 +11,7 @@ import tempfile
 
 import meshio
 import numpy as np
+from dolfin.cpp.mesh import MeshFunctionSizet
 
 from .. import ADJOINT, dolfin
 
@@ -77,7 +78,7 @@ def read_mesh(mesh_file, data_dir=None, data_dir_xdmf=None, dim=3, subdomains=No
         except Exception:
             pass
 
-        markers[cell_type] = dolfin.cpp.mesh.MeshFunctionSizet(dolfin_mesh, mvc)
+        markers[cell_type] = MeshFunctionSizet(dolfin_mesh, mvc)
 
     return dict(mesh=dolfin_mesh, markers=markers)
 

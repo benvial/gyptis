@@ -69,7 +69,7 @@ thicknesses = OrderedDict(
 # ``parmesh`` cells per wavelength of the field inside each subdomain
 
 degree = 2
-pmesh = 8
+pmesh = 20
 pmesh_torus = pmesh * 1.0
 mesh_param = dict(
     {
@@ -99,8 +99,10 @@ geom.add_physical(sub, "substrate")
 geom.add_physical(sup, "superstrate")
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 geom.set_mesh_size(mesh_size)
-geom.build(interactive=0)
+geom.build(interactive=1)
 # geom.build(interactive=1)
+
+xsxs
 
 
 ######################################################################

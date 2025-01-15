@@ -461,7 +461,7 @@ class Coefficient:
 
     def as_property(self, dim=None, **kwargs):
         dim = dim or self.dim
-        return make_constant_property(self.dict, dim=self.dim, **kwargs)
+        return make_constant_property(self.dict, dim=dim, **kwargs)
 
     def to_xi(self):
         new = copy.copy(self)

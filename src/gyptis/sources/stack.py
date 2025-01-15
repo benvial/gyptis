@@ -17,6 +17,29 @@ from .source import *
 
 
 def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
+    """
+    Compute the electric field associated with a stack of 2D layers.
+
+    Parameters
+    ----------
+    phi : complex of shape (2,)
+        The coefficients of the + and - going waves.
+    alpha : complex
+        The x component of the wavevector.
+    beta : complex
+        The y component of the wavevector.
+    yshift : float, optional
+        The shift of the stack along the y-axis. Default is 0.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : Optional[Domain]
+        The domain of the output Expression. Default is None.
+
+    Returns
+    -------
+    expr : Expression
+        The electric field associated with the stack of 2D layers.
+    """
     alpha0_re, alpha0_im, beta0_re, beta0_im = sp.symbols(
         "alpha0_re,alpha0_im,beta0_re,beta0_im", real=True
     )
@@ -53,6 +76,33 @@ def field_stack_2D(phi, alpha, beta, yshift=0, degree=1, domain=None):
 
 
 def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
+    """
+    Compute the electric field associated with a stack of 3D layers.
+
+    Parameters
+    ----------
+    phi : list of complex
+        The coefficients of the + and - going waves for each component (x, y, z).
+    alpha : complex
+        The x component of the wavevector.
+    beta : complex
+        The y component of the wavevector.
+    gamma : complex
+        The z component of the wavevector.
+    zshift : float, optional
+        The shift of the stack along the z-axis. Default is 0.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : Optional[Domain]
+        The domain of the output Expression. Default is None.
+
+    Returns
+    -------
+    Complex
+        The electric field associated with the stack of 3D layers expressed
+        as a complex tensor.
+    """
+
     alpha0_re, alpha0_im, beta0_re, beta0_im, gamma0_re, gamma0_im = sp.symbols(
         "alpha0_re, alpha0_im, beta0_re, beta0_im, gamma0_re, gamma0_im", real=True
     )
@@ -114,6 +164,37 @@ def field_stack_3D(phi, alpha, beta, gamma, zshift=0, degree=1, domain=None):
 
 
 def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
+    """
+    Solve the electromagnetic field transmission and reflection through a stack of layers.
+
+    Parameters
+    ----------
+    thicknesses : list of float
+        The thickness of each layer in the stack.
+    eps : list of complex
+        The permittivity of each layer in the stack.
+    mu : list of complex
+        The permeability of each layer in the stack.
+    lambda0 : float
+        The wavelength of the incident wave.
+    theta0 : float
+        The incident angle of the wave in radians.
+    phi0 : float
+        The azimuthal angle of the wave in radians.
+    psi0 : float
+        The polarization angle of the wave in radians.
+
+    Returns
+    -------
+    phi : list of ndarray
+        The field coefficients for each layer in the stack.
+    propagation_constants : tuple
+        The propagation constants (alpha0, beta0, gamma) for the stack.
+    efficiencies : dict
+        A dictionary containing the reflection (R), transmission (T), and
+        absorption (Q) efficiencies.
+    """
+
     k0 = 2 * pi / lambda0
     omega = k0 * c
 
@@ -153,9 +234,7 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
             ]
         )
 
-    gamma = [
-        np.sqrt(k0**2 * e * m - alpha0**2 - beta0**2) for e, m in zip(eps, mu)
-    ]
+    gamma = [np.sqrt(k0**2 * e * m - alpha0**2 - beta0**2) for e, m in zip(eps, mu)]
     B = [_matrix_B(e, m) for e, m in zip(eps, mu)]
     M = [inv(b) for b in B]
     Pi = [_matrix_pi(m, g) for m, g in zip(M, gamma)]
@@ -272,6 +351,31 @@ def solve(thicknesses, eps, mu, lambda0, theta0, phi0, psi0):
 
 
 def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
+    """
+    Compute the coefficients of the stack of layers.
+
+    Parameters
+    ----------
+    config : OrderedDict
+        A dictionary containing the configuration of the stack.
+    lambda0 : float
+        The wavelength of the incident wave.
+    theta0 : float
+        The angle of incidence.
+    phi0 : float
+        The angle of the electric field.
+    psi0 : float
+        The angle of the magnetic field.
+
+    Returns
+    -------
+    coeffs : list of 4 arrays
+        The coefficients of the stack of layers.
+    propagation_constants : tuple of 3 floats
+        The propagation constants of the stack of layers.
+    efficiencies : dict
+        The efficiencies of the stack of layers.
+    """
     eps = [d["epsilon"] for d in config.values()]
     mu = [d["mu"] for d in config.values()]
     thicknesses = [d["thickness"] for d in config.values() if "thickness" in d.keys()]
@@ -279,6 +383,27 @@ def get_coeffs_stack(config, lambda0, theta0, phi0, psi0):
 
 
 def get_stack_efficiencies(thicknesses, epsilon, mu, lambda0, angles):
+    """
+    Compute the efficiencies of the stack of layers.
+
+    Parameters
+    ----------
+    thicknesses : list of float
+        The thicknesses of the layers.
+    epsilon : Complex
+        The relative permittivity of each layer.
+    mu : Complex
+        The relative permeability of each layer.
+    lambda0 : float
+        The wavelength of the incident wave.
+    angles : tuple of 3 floats
+        The angles of incidence, electric field and magnetic field.
+
+    Returns
+    -------
+    efficiencies : dict
+        The efficiencies of the stack of layers.
+    """
     out = solve(thicknesses, epsilon, mu, lambda0, *angles)
     return out[-1]
 
@@ -292,6 +417,31 @@ def make_stack(
     degree=1,
     dim=2,
 ):
+    """
+    Build a stack of layers.
+
+    Parameters
+    ----------
+    geometry : Geometry
+        The geometry of the problem.
+    coefficients : tuple of Coefficients
+        The coefficients of the materials.
+    plane_wave : PlaneWave
+        The incident plane wave.
+    polarization : str, optional
+        The polarization of the incident wave. Default is "TM".
+    source_domains : list of str, optional
+        The domains where the source is applied. Default is an empty list.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    dim : int, optional
+        The dimension of the problem. Default is 2.
+
+    Returns
+    -------
+    annex_field : dict
+        A dictionary containing the incident and stack fields.
+    """
     if source_domains is None:
         source_domains = []
     epsilon, mu = coefficients

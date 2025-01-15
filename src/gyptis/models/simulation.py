@@ -196,8 +196,13 @@ class Simulation:
                 dolfin.Constant(0) * self.formulation.test * self.formulation.dx
             )
         else:
+            zero = [0 for i in range(self.formulation.dim)]
+
             dummy_vector = (
-                dot(dolfin.Constant((0, 0, 0)), self.formulation.test)
+                dot(
+                    dolfin.Constant(zero),
+                    self.formulation.test,
+                )
                 * self.formulation.dx
             )
 

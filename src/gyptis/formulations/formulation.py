@@ -32,7 +32,7 @@ class Formulation(ABC):
         boundary_conditions=None,
         modal=False,
         degree=1,
-        dim=1,
+        dim=None,
     ):
         if boundary_conditions is None:
             boundary_conditions = {}
@@ -47,8 +47,9 @@ class Formulation(ABC):
         self.boundary_conditions = boundary_conditions
         self.modal = modal
         self.degree = degree
-        self.dim = dim  # 1: scalar problem, 3: vectorial
-
+        _dim = self.trial.real.ufl_shape
+        _dim = 1 if _dim == () else _dim[0]
+        self.dim = dim or _dim
         self.measure = geometry.measure
         self.dx = self.measure["dx"]
         self.ds = self.measure["ds"]

@@ -10,6 +10,31 @@ from .simulation import *
 
 
 class PhotonicCrystal2D(Simulation):
+    """
+    2D photonic crystal class
+
+    Parameters
+    ----------
+    geometry : Lattice2D
+        The geometry of the photonic crystal
+    epsilon : dict
+        Permittivity in various subdomains.
+    mu : dict
+        Permeability in various subdomains.
+    propagation_vector : tuple of float
+        The propagation vector of the mode
+    boundary_conditions : dict or list of dict
+        Boundary conditions of the simulation
+    polarization : str
+        Polarization of the mode
+    degree : int
+        The degree of the function space
+    eps : float
+        The tolerance for the periodic boundary conditions values
+    map_tol : float
+        The tolerance for the periodic boundary conditions mesh
+    """
+
     def __init__(
         self,
         geometry,

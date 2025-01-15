@@ -10,6 +10,32 @@ from .source import *
 
 
 def green_function_2d(wavelength, xs, ys, phase=0, amplitude=1, degree=1, domain=None):
+    """
+    Compute the 2D Green function associated with a point source.
+
+    Parameters
+    ----------
+    wavelength : float
+        The wavelength of the Green function.
+    xs : float
+        The x-coordinate of the point source.
+    ys : float
+        The y-coordinate of the point source.
+    phase : float, optional
+        The phase shift of the Green function. Default is 0.
+    amplitude : float, optional
+        The amplitude of the Green function. Default is 1.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : dolfin.cpp.mesh.Mesh, optional
+        The mesh for the domain of definition of the function.
+
+    Returns
+    -------
+    expr : Expression
+        The Green function as a dolfin Expression.
+    """
+
     Xs = sympyvector(sp.symbols("xs, ys, 0", real=True))
     k0 = sp.symbols("k0", real=True)
     Xshift = X - Xs
@@ -30,6 +56,32 @@ def green_function_2d(wavelength, xs, ys, phase=0, amplitude=1, degree=1, domain
 
 
 class LineSource(Source):
+    """
+    LineSource class.
+
+    Parameters
+    ----------
+    wavelength : float
+        The wavelength of the line source.
+    position : tuple of float
+        The (x, y) coordinates of the line source position.
+    dim : int, optional
+        The dimension of the line source. Default is 2.
+    phase : float, optional
+        The phase shift of the line source. Default is 0.
+    amplitude : float, optional
+        The amplitude of the line source. Default is 1.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : dolfin.cpp.mesh.Mesh, optional
+        The mesh for the domain of definition of the function.
+
+    Raises
+    ------
+    NotImplementedError
+        If the dimension `dim` is 3, since LineSource is not implemented in 3D.
+    """
+
     def __init__(
         self, wavelength, position, dim=2, phase=0, amplitude=1, degree=1, domain=None
     ):
@@ -47,6 +99,14 @@ class LineSource(Source):
 
     @property
     def expression(self):
+        """
+        The expression of the line source.
+
+        Returns
+        -------
+        expr : Expression
+            The expression of the line source as a dolfin Expression.
+        """
         return green_function_2d(
             self.wavelength,
             *self.position,

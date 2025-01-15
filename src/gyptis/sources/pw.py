@@ -11,6 +11,30 @@ from .source import *
 
 
 def plane_wave_2d(wavelength, theta, phase=0, amplitude=1, degree=1, domain=None):
+    """
+    Compute a 2D plane wave.
+
+    Parameters
+    ----------
+    wavelength : float
+        The wavelength of the plane wave.
+    theta : float
+        The angle of incidence in radians.
+    phase : float, optional
+        The phase shift of the plane wave. Default is 0.
+    amplitude : float, optional
+        The amplitude of the plane wave. Default is 1.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : dolfin.cpp.mesh.Mesh, optional
+        The mesh for the domain of definition of the function.
+
+    Returns
+    -------
+    expr : Expression
+        The 2D plane wave as a dolfin Expression.
+    """
+
     k0 = 2 * np.pi / wavelength
     K = k0 * np.array((-np.sin(theta), -np.cos(theta)))
     K_ = sympyvector(sp.symbols("kx, ky, 0", real=True))
@@ -21,6 +45,34 @@ def plane_wave_2d(wavelength, theta, phase=0, amplitude=1, degree=1, domain=None
 def plane_wave_3d(
     wavelength, theta, phi, psi, phase=(0, 0, 0), amplitude=1, degree=1, domain=None
 ):
+    """
+    Compute a 3D plane wave.
+
+    Parameters
+    ----------
+    wavelength : float
+        The wavelength of the plane wave.
+    theta : float
+        The angle of incidence in radians.
+    phi : float
+        The azimuthal angle of incidence in radians.
+    psi : float
+        The polarization angle of incidence in radians.
+    phase : tuple of float, optional
+        The phase shifts of the x, y, and z components of the plane wave.
+        Default is (0, 0, 0).
+    amplitude : float, optional
+        The amplitude of the plane wave. Default is 1.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : dolfin.cpp.mesh.Mesh, optional
+        The mesh for the domain of definition of the function.
+
+    Returns
+    -------
+    expr : Expression
+        The 3D plane wave as a dolfin Expression.
+    """
     cx = np.cos(psi) * np.cos(theta) * np.cos(phi) - np.sin(psi) * np.sin(phi)
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)
     cz = -np.cos(psi) * np.sin(theta)
@@ -49,29 +101,31 @@ def plane_wave_3d(
 
 
 class PlaneWave(Source):
-    """Short summary.
+    """
+    PlaneWave class.
 
     Parameters
     ----------
     wavelength : float
         The wavelength of the plane wave.
-    angle : float if `dim=2` tuple of len 3 if `dim=3`
-        Angle(s) in radians.
-    dim : int
-        Dimension (2 or 3, the default is 2).
-    phase : float
-        Phase shift (in radian, the default is 0).
-    amplitude : float
-        Amplitude (the default is 1).
-    degree : int
-        Degree of the functional space (default is 1).
-    domain : dolfin.cpp.mesh.Mesh
+    angle : float
+        The angle of incidence in radians.
+    dim : int, optional
+        The dimension of the plane wave. Default is 2.
+    phase : float or list of float, optional
+        The phase shift of the plane wave. Default is 0.
+        If dim is 3, phase can be a list of three floats.
+    amplitude : float, optional
+        The amplitude of the plane wave. Default is 1.
+    degree : int, optional
+        The degree of the output Expression. Default is 1.
+    domain : dolfin.cpp.mesh.Mesh, optional
         The mesh for the domain of definition of the function.
 
-    Attributes
-    ----------
-    angle
-
+    Returns
+    -------
+    expr : Expression
+        The plane wave as a dolfin Expression.
     """
 
     def __init__(
@@ -91,6 +145,15 @@ class PlaneWave(Source):
 
     @property
     def expression(self):
+        """
+        The plane wave as a dolfin Expression.
+
+        Returns
+        -------
+        expr : Expression
+            The plane wave as a dolfin Expression.
+        """
+
         return (
             plane_wave_2d(
                 self.wavelength,

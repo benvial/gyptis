@@ -36,3 +36,19 @@ Physics classes
   Scattering
   Grating
   PhotonicCrystal
+
+Sources classes
+"""""""""""""""
+
+.. currentmodule:: gyptis
+
+.. autosummary::
+  :nosignatures:
+  :toctree: generated/
+  :template: class.rst
+
+  PlaneWave
+  LineSource
+  Dipole
+  GaussianBeam
+  Source

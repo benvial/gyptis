@@ -16,6 +16,7 @@ __all__ = [
     "PlaneWave",
     "LineSource",
     "GaussianBeam",
+    "Source",
     "Dipole",
     "BoxPML",
     "Layered",
@@ -133,7 +134,7 @@ class Scattering(_ScatteringBase, Simulation):
         Permittivity in various subdomains.
     mu : dict
         Permeability in various subdomains.
-    source : :class:`~gyptis.source.Source`
+    source : :class:`~gyptis.Source`
         Excitation (the default is None).
     boundary_conditions : dict
         Boundary conditions {"boundary": "condition"} (the default is {}).
@@ -167,7 +168,7 @@ class Grating(_GratingBase, Simulation):
         Permittivity in various subdomains.
     mu : dict
         Permeability in various subdomains.
-    source : :class:`~gyptis.source.Source`
+    source : :class:`~gyptis.Source`
         Excitation (the default is None).
     boundary_conditions : dict
         Boundary conditions {"boundary": "condition"} (the default is {}).
@@ -199,6 +200,36 @@ class Grating(_GratingBase, Simulation):
 
 
 class PhotonicCrystal:
+    """PhotonicCrystal(geometry, epsilon, mu, propagation_vector, boundary_conditions={}, polarization="TM", degree=1, eps=dolfin.DOLFIN_EPS, map_tol=1e-10)
+
+    Photonic crystal class.
+
+    Parameters
+    ----------
+    geometry : :class:`~gyptis.Geometry`
+        The meshed geometry
+    epsilon : dict
+        Permittivity in various subdomains.
+    mu : dict
+        Permeability in various subdomains.
+    propagation_vector : tuple of float
+        The propagation vector of the mode
+    boundary_conditions : dict or list of dict
+        Boundary conditions of the simulation
+    polarization : str
+        Polarization of the mode
+    degree : int
+        The degree of the function space
+    eps : float
+        The tolerance for the periodic boundary conditions values
+    map_tol : float
+        The tolerance for the periodic boundary conditions mesh
+
+    Notes
+    -----
+    Only 2D problems are supported for now.
+    """
+
     def __new__(cls, *args, **kwargs):
         geom = kwargs.get("geometry") or args[0]
         _check_dimension(geom.dim)

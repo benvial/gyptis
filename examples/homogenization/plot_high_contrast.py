@@ -107,8 +107,7 @@ print(mu_eff_ana)
 
 nms = list(range(1, 6))
 knm = (
-    np.array([np.pi / a * (n**2 + m**2) ** 0.5 for n in nms for m in nms])
-    / eps_i**0.5
+    np.array([np.pi / a * (n**2 + m**2) ** 0.5 for n in nms for m in nms]) / eps_i**0.5
 )
 qnm = hom.eigs["eigenvalues"]
 qnm = qnm[qnm.imag > 0]
