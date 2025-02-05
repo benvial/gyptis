@@ -168,7 +168,6 @@ def env_get_outdated(app, env, added, changed, removed):
 
 def setup(app):
     app.connect("env-get-outdated", env_get_outdated)
-    # app.add_css_file("css/theme.css")
     app.add_css_file("css/custom_styles.css")
     app.add_css_file("css/custom_gallery.css")
     app.add_css_file("css/custom_pygments.css")
@@ -187,13 +186,10 @@ html_theme_options = {
     "show_prev_next": False,
     "show_nav_level": 2,
     "navbar_end": ["navbar-icon-links"],
+    "logo": {
+        "image_light": "_assets/gyptis-name.png",
+    },
 }
-
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
 
 
 # The name for this set of Sphinx documents.  If None, it defaults to

@@ -1,11 +1,6 @@
 {%- extends "layout.html" %}
 
 {%- block content %}
-{% block docs_navbar %}
-<nav class="navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main">
-  {%- include "sections/header.html" %}
-</nav>
-{% endblock %}
 <section class="color-header">
   <div class="container">
 
@@ -66,7 +61,7 @@
       <div class="col-md-6 vcenter">
         <div class="media">
           <span class="media-left">
-            <img src="_assets/gmsh.svg" alt="mesh">
+            <img src="_static/_assets/gmsh.svg" alt="gmsh" width="128px">
           </span>
           <div class="media-body">
             <h4 class="media-heading">Constructive solid geometry and high
@@ -78,7 +73,7 @@
       <div class="col-md-6 vcenter">
         <div class="media">
           <span class="media-left">
-            <img src="_assets/fenics.svg" alt="fenics">
+            <img src="_static/_assets/fenics.svg" alt="fenics" width="128px">
           </span>
           <div class="media-body">
             <h4 class="media-heading">Solve Maxwell's equations with the powerful
@@ -103,18 +98,18 @@
       <div class="col-md-12 vcenter text-center models-list">
         <h2>Features</h2>
         <ul>
-        <li>Scattering models in 2D and 3D with computation of cross sections and LDOS</li>
-        <li>Grating models in 2D and 3D with computation of diffraction efficiencies and absorption</li>
-        <li>Modal analysis for non dispersive materials</li>
-        <li>Two scale convergence homogenization of metamaterials in 2D and 3D</li>
-        <li>Band diagrams of photonic crystals in 2D</li>
-        <li>Parallelization using MPI with domain decompostion</li>
-        <li>Parametric studies with embarrassingly parallel loops</li>
-        <li>Spectrum sampler utility</li>
-        <li>Automatic differentiation for inverse design</li>
-          
+          <li>Scattering models in 2D and 3D with computation of cross sections and LDOS</li>
+          <li>Grating models in 2D and 3D with computation of diffraction efficiencies and absorption</li>
+          <li>Modal analysis for non dispersive materials</li>
+          <li>Two scale convergence homogenization of metamaterials in 2D and 3D</li>
+          <li>Band diagrams of photonic crystals in 2D</li>
+          <li>Parallelization using MPI with domain decompostion</li>
+          <li>Parametric studies with embarrassingly parallel loops</li>
+          <li>Spectrum sampler utility</li>
+          <li>Automatic differentiation for inverse design</li>
+
         </ul>
-        
+
       </div>
 
     </div>
@@ -137,37 +132,49 @@
 
       <div class="col-md-5 offset-md-1 install-container pl-5 pr-5">
         <h2>Install gyptis</h2>
-        
-        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=condaforge&logoColor=d25f5f"/>
-        <span><h4>conda</h4></span>
+
+        <img class="install-icon"
+          src="https://img.shields.io/badge/-white?style=for-the-badge&logo=condaforge&logoColor=d25f5f" />
+        <span>
+          <h4>conda</h4>
+        </span>
         <div class="highlight-bash notranslate install-homepage">
           <div class="highlight">
-<pre><span></span>conda install gyptis -c conda-forge</pre>
+            <pre><span></span>conda install gyptis -c conda-forge</pre>
           </div>
         </div>
 
-        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=pypy&logoColor=d25f5f"/>
-        <span><h4>pypi</h4></span>
-        <div class="highlight-bash notranslate install-homepage">
-        <div class="highlight">
-<pre><span></span>pip install gyptis</pre>
-          </div>
-        </div>
-        
-        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=docker&logoColor=d25f5f"/>
-        <span><h4>docker</h4></span>
+        <img class="install-icon"
+          src="https://img.shields.io/badge/-white?style=for-the-badge&logo=pypy&logoColor=d25f5f" />
+        <span>
+          <h4>pypi</h4>
+        </span>
         <div class="highlight-bash notranslate install-homepage">
           <div class="highlight">
-<pre><span></span>curl -s https://gyptis.gitlab.io/get <span class="p">|</span> bash
+            <pre><span></span>pip install gyptis</pre>
+          </div>
+        </div>
+
+        <img class="install-icon"
+          src="https://img.shields.io/badge/-white?style=for-the-badge&logo=docker&logoColor=d25f5f" />
+        <span>
+          <h4>docker</h4>
+        </span>
+        <div class="highlight-bash notranslate install-homepage">
+          <div class="highlight">
+            <pre><span></span>curl -s https://gyptis.gitlab.io/get <span class="p">|</span> bash
 gyptis run</pre>
           </div>
         </div>
-            
-        <img class="install-icon" src="https://img.shields.io/badge/-white?style=for-the-badge&logo=git&logoColor=d25f5f"/>
-        <span><h4>from source</h4></span>
+
+        <img class="install-icon"
+          src="https://img.shields.io/badge/-white?style=for-the-badge&logo=git&logoColor=d25f5f" />
+        <span>
+          <h4>from source</h4>
+        </span>
         <div class="highlight-bash notranslate install-homepage">
           <div class="highlight">
-<pre><span></span>git clone https://gitlab.com/gyptis/gyptis.git
+            <pre><span></span>git clone https://gitlab.com/gyptis/gyptis.git
 cd gyptis && pip install -e .</pre>
           </div>
         </div>

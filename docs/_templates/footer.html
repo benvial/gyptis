@@ -7,13 +7,14 @@
       <div class="col-md-6">
         <div class="foot-fa">
           <a href=https://gitlab.com/{{repo}} target="_blank">
-            <i class="fab fa-gitlab"></i>
+            <i class="fa-brands fa-gitlab fa-xl"></i>
           </a>
           <a href=https://pypi.org/project/{{pipname}} target="_blank">
-            <i class="fab fa-python"></i>
+            <i class="fa-brands fa-python fa-xl"></i>
           </a>
           <a href=https://hub.docker.com/r/{{dockername}} target="_blank">
-            <i class="fab fa-docker"></i>
+            <i class="fa-brands fa-docker fa-xl"></i>
+            
           </a>
         </div>
       </div>
@@ -21,7 +22,7 @@
 
         <div class="footer-copyright">
           
-          <img src={{ pathto('_assets/gyptis-name-white.svg', 1) }} alt="gyptis">
+          <img src={{ pathto('_static/_assets/gyptis-name-white.svg', 1) }} alt="gyptis">
           <p>v{{version}} | 
           {% trans copyright=copyright|e %}&copy;{{ copyright }}{% endtrans %}</p>
         </div>

@@ -49,11 +49,11 @@ def main():
         f.write("".join(lines))
         f.close()
 
-        try:
-            if mode == "html":
-                postpro_download_links(fn)
-        finally:
-            pass
+        # try:
+        #     if mode == "html":
+        #         postpro_download_links(fn)
+        # finally:
+        #     pass
 
 
 def postpro_download_links(fn):
@@ -93,6 +93,11 @@ def process_html(fn, lines):
         line = line.replace(". URL: ", ".")
         if line.startswith("<dd><p>") and line.endswith("</a>.</p>\n"):
             line = line.replace("</a>.</p>", "</a></p>")
+
+        line = line.replace(
+            "<h3>This Page</h3>",
+            "",
+        )
 
         line = line.replace(
             "https://mybinder.org/v2/gh/gyptis/gyptis.gitlab.io",
