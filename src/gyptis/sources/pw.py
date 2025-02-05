@@ -77,6 +77,11 @@ def plane_wave_3d(
     cy = np.cos(psi) * np.cos(theta) * np.sin(phi) + np.sin(psi) * np.cos(phi)
     cz = -np.cos(psi) * np.sin(theta)
 
+    c = np.array([cx, cy, cz])
+    phase_shifts = np.array([np.exp((phis)) for phis in phase])
+    Carray = c * phase_shifts
+    C = dolfin.as_tensor([df.Constant(_c) for _c in Carray])
+
     k0 = 2 * np.pi / wavelength
     K = k0 * np.array(
         (
@@ -87,16 +92,13 @@ def plane_wave_3d(
     )
     K_ = sympyvector(sp.symbols("kx, ky, kz", real=True))
 
-    phase_shifts = [np.exp((phis)) for phis in phase]
     Propp = amplitude * sp.exp(1j * (K_.dot(X)))
 
     code = [sp.printing.ccode(p) for p in Propp.as_real_imag()]
     prop = dolfin.Expression(
         code, kx=K[0], ky=K[1], kz=K[2], degree=degree, domain=domain
     )
-    C = dolfin.as_tensor(
-        [cx * phase_shifts[0], cy * phase_shifts[1], cz * phase_shifts[2]]
-    )
+
     return Complex(prop[0] * C, prop[1] * C)
 
 

@@ -69,6 +69,7 @@ class Scatt2D(_ScatteringBase, Simulation):
             polarization=polarization,
             modal=modal,
             boundary_conditions=boundary_conditions,
+            degree=degree,
         )
 
         super().__init__(geometry, formulation)
@@ -144,10 +145,12 @@ class Scatt2D(_ScatteringBase, Simulation):
             The local density of states.
 
         """
-        # self.source =  LineSource(
-        #     wavelength=self.source.wavelength, position=(x, y),domain=self.mesh, degree=self.degree,
-        # )
-        self.source.position = x, y
+        self.source = LineSource(
+            wavelength=self.source.wavelength,
+            position=(x, y),
+            domain=self.mesh,
+            degree=self.degree,
+        )
         if hasattr(self, "solution"):
             self.assemble_rhs()
             self.solve_system(again=True)

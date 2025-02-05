@@ -1,4 +1,4 @@
-sphinx==5.2.1
+sphinx
 pydata-sphinx-theme<0.10
 sphinx_gallery==v0.10.1 
 sphinx-copybutton

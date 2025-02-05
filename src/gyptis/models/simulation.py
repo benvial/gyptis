@@ -44,7 +44,7 @@ def init_em_materials(geometry, epsilon=None, mu=None):
 
 
 class Simulation:
-    def __init__(self, geometry, formulation=None, direct=True):
+    def __init__(self, geometry, formulation=None, direct=True, solver=None):
         self.geometry = geometry
         self.formulation = formulation
         self.coefficients = formulation.coefficients
@@ -59,6 +59,7 @@ class Simulation:
         self.dS = formulation.dS
         self.direct = direct
         self.ndof = self.function_space.dim()
+        self.solver = solver
 
     @property
     def source(self):
@@ -143,25 +144,14 @@ class Simulation:
             u = dolfin.Function(self.function_space)
 
         if not again:
-            if self.direct:
-                # self.solver = dolfin.PETScLUSolver(
-                #     dolfin.as_backend_type(self.matrix), "mumps"
-                # )
-                # ksp = self.solver.ksp()
-                # ksp.setType(ksp.Type.PREONLY)
-                # ksp.pc.setType(ksp.pc.Type.LU)
-                # # ksp.pc.setFactorSolverType("MUMPS")
-                dolfin.PETScOptions.set("petsc_prealloc", "200")
-                dolfin.PETScOptions.set("ksp_type", "preonly")
-                dolfin.PETScOptions.set("pc_type", "lu")
-                dolfin.PETScOptions.set("pc_factor_mat_solver_type", "mumps")
-                self.solver = dolfin.LUSolver(self.matrix, "mumps")
-                # ksp.setFromOptions()
-            else:
-                # self.solver = dolfin.KrylovSolver(self.matrix,"cg", "jacobi")
-                self.solver = dolfin.KrylovSolver(
-                    self.matrix, method="default", preconditioner="default"
-                )
+            if self.solver is None:
+                if self.direct:
+                    self.solver = dolfin.LUSolver("mumps")
+                else:
+                    self.solver = dolfin.KrylovSolver(
+                        method="default", preconditioner="default"
+                    )
+        self.solver.set_operator(self.matrix)
         self.solver.solve(u.vector(), self.vector)
         dolfin.PETScOptions.clear()
         return Complex(*u.split())

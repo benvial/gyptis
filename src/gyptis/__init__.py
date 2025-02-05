@@ -74,6 +74,10 @@ dolfin.parameters["form_compiler"]["cpp_optimize_flags"] = "-O2"
 dolfin.parameters["reorder_dofs_serial"] = False
 dolfin.parameters["ghost_mode"] = "shared_facet"
 
+dolfin.PETScOptions.set("petsc_prealloc", "200")
+dolfin.PETScOptions.set("ksp_type", "preonly")
+dolfin.PETScOptions.set("pc_type", "lu")
+dolfin.PETScOptions.set("pc_factor_mat_solver_type", "mumps")
 
 from .api import *
 from .complex import *
