@@ -164,7 +164,7 @@ def _dic2list(dic):
     for k, v in dic.items():
         vflat = _flatten_list(v)
         L.append(_fldict(k, vflat))
-    L = np.reshape(L, (nb_keys, np.product(N))).T
+    L = np.reshape(L, (nb_keys, np.prod(N))).T
     o = []
     for elem in L:
         d = dict(elem[0])
