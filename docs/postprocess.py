@@ -6,34 +6,35 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 """
-%prog MODE FILES...
-
 Post-processes HTML and Latex files output by Sphinx.
 MODE is either 'html' or 'tex'.
 
 """
 from __future__ import absolute_import, division, print_function
 
+import argparse
 import io
-import optparse
 import re
 
 from bs4 import BeautifulSoup
 
 import gyptis as package
 
+parser = argparse.ArgumentParser()
+
 
 def main():
-    p = optparse.OptionParser(__doc__)
-    options, args = p.parse_args()
+    parser.add_argument("mode")
+    parser.add_argument("filename")
+    args = parser.parse_args()
 
     if len(args) < 1:
-        p.error("no mode given")
+        raise ValueError("no mode given")
 
     mode = args.pop(0)
 
     if mode not in ("html", "tex"):
-        p.error(f"unknown mode {mode}")
+        raise ValueError(f"unknown mode {mode}")
 
     for fn in args:
         f = io.open(fn, "r", encoding="utf-8")

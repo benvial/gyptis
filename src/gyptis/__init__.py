@@ -6,20 +6,33 @@
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
+
 import importlib
 import os
 import sys
 from math import e, pi
 
+import petsc4py
 from scipy.constants import c, epsilon_0, mu_0
 
-from .__about__ import __author__, __description__, __version__
+# Set PETSc options before initializing PETSc
+petsc4py.init(
+    [
+        "petsc_prealloc",
+        "200",
+        "ksp_type",
+        "preonly",
+        "pc_type",
+        "lu",
+        "pc_factor_mat_solver_type",
+        "mumps",
+        # "options_left",
+        # " 0",
+    ]
+)
 
-## HACK:
-# disable petsc warnings for unused options
-# see https://github.com/firedrakeproject/firedrake/discussions/3770
-sys.argv.insert(-1, "-options_left")
-sys.argv.insert(-1, "0")
+
+from .__about__ import __author__, __description__, __version__
 
 
 def use_adjoint(use_adj):
