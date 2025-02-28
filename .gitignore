@@ -100,6 +100,8 @@ pylint.json
 docs/_custom/static/css/*.css
 docs/generated
 
+.vscode
+
 
 # include test data directory
 !tests/data/
