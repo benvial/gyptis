@@ -8,11 +8,18 @@
 
 import importlib
 import os
+import sys
 from math import e, pi
 
 from scipy.constants import c, epsilon_0, mu_0
 
 from .__about__ import __author__, __description__, __version__
+
+## HACK:
+# disable petsc warnings for unused options
+# see https://github.com/firedrakeproject/firedrake/discussions/3770
+sys.argv.insert(-1, "-options_left")
+sys.argv.insert(-1, "0")
 
 
 def use_adjoint(use_adj):
@@ -74,10 +81,10 @@ dolfin.parameters["form_compiler"]["cpp_optimize_flags"] = "-O2"
 dolfin.parameters["reorder_dofs_serial"] = False
 dolfin.parameters["ghost_mode"] = "shared_facet"
 
-dolfin.PETScOptions.set("petsc_prealloc", "200")
-dolfin.PETScOptions.set("ksp_type", "preonly")
-dolfin.PETScOptions.set("pc_type", "lu")
-dolfin.PETScOptions.set("pc_factor_mat_solver_type", "mumps")
+# dolfin.PETScOptions.set("petsc_prealloc", "200")
+# dolfin.PETScOptions.set("ksp_type", "preonly")
+# dolfin.PETScOptions.set("pc_type", "lu")
+# dolfin.PETScOptions.set("pc_factor_mat_solver_type", "mumps")
 
 from .api import *
 from .complex import *

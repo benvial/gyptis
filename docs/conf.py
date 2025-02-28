@@ -14,6 +14,7 @@
 
 import os
 import sys
+import warnings
 from datetime import date
 
 import pyvista
@@ -415,3 +416,9 @@ sphinx_gallery_conf = {
         "use_jupyter_lab": False,
     },
 }
+
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message="FigureCanvasAgg is non-interactive, and thus cannot be shown",
+)
