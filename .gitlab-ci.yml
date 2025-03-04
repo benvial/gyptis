@@ -59,7 +59,7 @@ staging:
 
 .test-script: &test-script
     - mamba env create -n gyptis -f environment.yml
-    - gyptis activate gyptis
+    - mamba activate gyptis
     - python --version
     - pip install -e .
     - make test-req
