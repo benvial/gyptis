@@ -58,8 +58,8 @@ staging:
 
 
 .test-script: &test-script
-    - mamba env create -n env_name -f environment.yml
-    - conda activate gyptis
+    - mamba env create -n gyptis -f environment.yml
+    - gyptis activate gyptis
     - python --version
     - pip install -e .
     - make test-req
