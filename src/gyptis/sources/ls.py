@@ -46,10 +46,12 @@ def green_function_2d(wavelength, xs, ys, phase=0, amplitude=1, degree=1, domain
     KR = dolfin.Expression(
         sp.printing.ccode(kr), k0=k0_, xs=xs, ys=ys, degree=degree, domain=domain
     )
+    re = dolfin.Expression("y0(KR)", KR=KR, degree=degree, domain=domain)
+    im = dolfin.Expression("j0(KR)", KR=KR, degree=degree, domain=domain)
     return (
         -1
         / 4
-        * Complex(dolfin.bessel_Y(0, KR), dolfin.bessel_J(0, KR))
+        * Complex(re, im)
         * Constant(amplitude)
         * phase_shift_constant(ConstantRe(phase))
     )

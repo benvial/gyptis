@@ -15,12 +15,13 @@ def test_simple(tol=1e-12):
     from gyptis.complex import Complex, Constant
 
     x, y, x1, y1 = np.random.rand(4) - 0.5
+
     z = Complex(x, y)
     z1 = Complex(x1, y1)
     q = x + 1j * y
     q1 = x1 + 1j * y1
     assert str(z) == f"({x} + {y}j)"
-    assert repr(z) == f"Complex({x}, {y})"
+    assert repr(z) == f"Complex({repr(x)}, {repr(y)})"
     assert z == q
     assert -z == Complex(-x, -y)
     assert z != Complex(x / 2, y)
