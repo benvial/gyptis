@@ -9,7 +9,7 @@
 Information about the package.
 """
 
-import importlib_metadata as metadata
+import importlib.metadata as metadata
 
 try:
     data = metadata.metadata("gyptis")
