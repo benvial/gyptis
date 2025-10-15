@@ -690,8 +690,20 @@ ul.search li {
 .bd-sidebar {
   background: @body-bg-darker;
   padding-top: 3rem;
-  padding-left: 1.4rem;
+  padding-left: 3.4rem;
   padding-right: 1.4rem;
+  margin-top: 0;
+  max-width: 20%;
+}
+
+@media (min-width: 960px) {
+  .bd-page-width {
+    max-width: 100%;
+  }
+}
+
+.bd-main .bd-content .bd-article-container {
+  margin-top: 1.6rem;
 }
 
 .bd-content.col-12.col-md-9.col-xl-7 {

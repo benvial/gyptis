@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -84,7 +84,7 @@ s_modal = gy.Scattering(
     degree=2,
 )
 
-s_modal.eigensolve(neig, wavevector_target=0.4)
+s_modal.eigensolve(neig, target=0.4)
 ev = s_modal.solution["eigenvalues"]
 modes = s_modal.solution["eigenvectors"]
 

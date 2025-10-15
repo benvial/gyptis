@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -53,7 +53,7 @@ phc = PhotonicCrystal3D(
     degree=2,
     boundary_conditions=bcs,
 )
-phc.eigensolve(n_eig=12, wavevector_target=1)
+phc.eigensolve(n_eig=12, target=1)
 ev_norma = np.array(phc.solution["eigenvalues"]) * a / (np.pi)
 ev = np.array(phc.solution["eigenvalues"])
 
@@ -93,7 +93,7 @@ print(true_eig_norma**2)
 #         polarization=polarization,
 #         degree=degree,
 #     )
-#     phc.eigensolve(n_eig=6, wavevector_target=0.1)
+#     phc.eigensolve(n_eig=6, target=0.1)
 #     ev_norma = np.array(phc.solution["eigenvalues"]) * a / (2 * np.pi)
 #     ev_norma = ev_norma[:n_eig].real
 #

@@ -101,6 +101,12 @@ testenv:
 	$(PYTHON_INTERPRETER) dev/testenv.py
 
 
+
+## Install Python package locally
+conda-env:
+	@mamba env create -f environment.yml
+
+
 ## Install Python package locally
 install:
 	@pip install -e .

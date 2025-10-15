@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -109,6 +109,7 @@ class Geometry:
         self.mesh_name = mesh_name
         self.dim = dim
         self.subdomains = dict(volumes={}, surfaces={}, curves={}, points={})
+        self.subdomains_entities = dict(volumes={}, surfaces={}, curves={}, points={})
         self.data_dir = data_dir or tempfile.mkdtemp()
         self.occ = occ
         self.mesh_object = {}
@@ -188,6 +189,7 @@ class Geometry:
             idf = [idf]
         num = self.model.addPhysicalGroup(dim, idf)
         self.subdomains[dicname][name] = num
+        self.subdomains_entities[dicname][name] = idf
         self.model.removePhysicalName(name)
         self.model.setPhysicalName(dim, self.subdomains[dicname][name], name)
         return num
@@ -273,7 +275,7 @@ class Geometry:
         Parameters
         ----------
         points : array of shape (Npoints,3)
-            Corrdinates of the points.
+            Coordinates of the points.
         mesh_size : float
             Mesh sizes at points (the default is 0.0).
         surface : type
@@ -304,7 +306,7 @@ class Geometry:
         Parameters
         ----------
         points : array of shape (Npoints,3)
-            Corrdinates of the points.
+            Coordinates of the points.
         mesh_size : float
             Mesh sizes at points (the default is 0.0).
         surface : type

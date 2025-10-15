@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -88,8 +88,8 @@ class HighContrastHomogenization2D(Simulation):
     def get_effective_permittivity(self, **kwargs):
         return self.hom2scale.get_effective_permittivity(**kwargs)
 
-    def get_effective_permeability(self, k, neigs=10, wavevector_target=0, tol=1e-12):
-        self.eigs = self.epb.eigensolve(neigs, wavevector_target, tol, half=False)
+    def get_effective_permeability(self, k, neigs=10, target=0, tol=1e-12):
+        self.eigs = self.epb.eigensolve(neigs, target, tol, half=False)
         Es = self.eigs["eigenvalues"]
         psis = self.eigs["eigenvectors"]
         mu_eff = 1

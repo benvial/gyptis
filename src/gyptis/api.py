@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -19,10 +19,12 @@ __all__ = [
     "Source",
     "Dipole",
     "BoxPML",
+    "LayeredBoxPML",
     "Layered",
     "Geometry",
     "Homogenization2D",
     "Homogenization3D",
+    "Waveguide",
 ]
 
 
@@ -80,7 +82,7 @@ class Layered(Geometry):
         In 3D, periodicity of the grating :math:`(d_x,d_y)` along :math:`x`
         and :math:`y` (tuple of floats of lenght 2).
     thicknesses : :class:`~collections.OrderedDict`
-        Dictionary containing physical names and thicknesses from top to bottom.
+        Dictionary containing physical names and thicknesses from bottom to top.
         (``thicknesses["phyiscal_name"]=thickness_value``)
     **kwargs : dictionary
         Additional parameters. See the parent class :class:`~gyptis.Geometry`.
@@ -91,7 +93,7 @@ class Layered(Geometry):
 
     >>> from collections import OrderedDict
     >>> from gyptis import Layered
-    >>> t = OrderedDict(pml_top=1, slab=3, pml_bot=1)
+    >>> t = OrderedDict(pml_bot=1, slab=3, pml_top=1)
     >>> lays = Layered(dim=2, period=1.3, thicknesses=t)
     >>> lays.build()
 
@@ -237,3 +239,67 @@ class PhotonicCrystal:
             raise NotImplementedError
         else:
             return PhotonicCrystal2D(*args, **kwargs)
+
+
+class LayeredBoxPML(Geometry):
+    """LayeredBoxPML(dim, width, thicknesses, pml_width, **kwargs)
+    Layered computational domain with Perfectly Matched Layers (PMLs).
+
+    Parameters
+    ----------
+    dim : int
+        Geometric dimension (either 2 or 3, the default is 3).
+    width : float
+        Lateral size of the box.
+    thicknesses : :class:`~collections.OrderedDict`
+        Dictionary containing physical names and thicknesses from bottom to top.
+        (``thicknesses["phyiscal_name"]=thickness_value``)
+    pml_width : tuple of floats of length `dim`
+        Size of the PMLs: :math:`(h_x,h_y)`.
+    **kwargs : dictionary
+        Additional parameters. See the parent class :class:`~gyptis.Geometry`.
+
+    """
+
+    def __new__(cls, dim=2, *args, **kwargs):
+        if dim not in [2, 3]:
+            raise ValueError("dimension must be 2 or 3")
+        if dim == 3:
+            raise NotImplementedError
+        return LayeredBoxPML2D(*args, **kwargs)
+
+
+class Waveguide:
+    """Waveguide(geometry, epsilon, mu, wavenumber, boundary_conditions={}, degree=(1,1), pml_stretch=1 - 1j,)
+
+    Waveguide class.
+
+    Parameters
+    ----------
+    geometry : :class:`~gyptis.LayeredBoxPML2D`
+        The meshed geometry
+    epsilon : dict
+        Permittivity in various subdomains.
+    mu : dict
+        Permeability in various subdomains.
+    wavenumber : tuple of float
+        The wavenumber
+    boundary_conditions : dict or list of dict
+        Boundary conditions of the simulation
+    degree : (int,int)
+        The degrees of the function space
+    pml_stretch : complex
+        Complex coordinate stretch for te PMLs (the default is 1 - 1j).
+
+    Notes
+    -----
+    Only 2D problems are supported for now.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        geom = kwargs.get("geometry") or args[0]
+        _check_dimension(geom.dim)
+        if geom.dim == 3:
+            raise NotImplementedError
+        else:
+            return Waveguide(*args, **kwargs)

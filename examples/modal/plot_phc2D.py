@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -89,7 +89,7 @@ phc = gy.PhotonicCrystal(
 # To calculate the eigenvalues and eigenvectors, we call the
 # :meth:`~gyptis.PhotonicCrystal.eigensolve` method.
 
-solution = phc.eigensolve(n_eig=6, wavevector_target=0.5)
+solution = phc.eigensolve(n_eig=6, target=0.5)
 
 
 ##############################################################################
@@ -139,7 +139,7 @@ for polarization in ["TE", "TM"]:
             polarization=polarization,
             degree=1,
         )
-        phc.eigensolve(n_eig=6, wavevector_target=0.1)
+        phc.eigensolve(n_eig=6, target=0.1)
         ev_norma = phc.solution["eigenvalues"].real * a / (2 * pi)
         evs.append(ev_norma)
     band_diag[polarization] = evs

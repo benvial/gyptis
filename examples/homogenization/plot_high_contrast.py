@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -93,10 +93,8 @@ print(eps_eff[0][0])
 # Effective permeability
 
 neigs = 20
-wavevector_target = 0.2
-mu_eff = hom.get_effective_permeability(
-    0.5, neigs=neigs, wavevector_target=wavevector_target
-)
+target = 0.2
+mu_eff = hom.get_effective_permeability(0.5, neigs=neigs, target=target)
 mu_eff_ana = analytical_mueff(0.5, eps_i)
 print(mu_eff)
 print(mu_eff_ana)
@@ -140,9 +138,7 @@ plt.tight_layout()
 
 lambdas = np.linspace(4, 15, 1000) * d
 k = 2 * np.pi / lambdas
-mu_eff = hom.get_effective_permeability(
-    k, neigs=neigs, wavevector_target=wavevector_target
-)
+mu_eff = hom.get_effective_permeability(k, neigs=neigs, target=target)
 mu_eff_ana = analytical_mueff(k, eps_i)
 
 fig, ax = plt.subplots(2, 1, figsize=(2.7, 3.5))

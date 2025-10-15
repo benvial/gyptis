@@ -18,6 +18,7 @@ Geometry classes
 
    Geometry
    BoxPML
+   LayeredBoxPML
    Layered
    Lattice
  
@@ -36,6 +37,7 @@ Physics classes
   Scattering
   Grating
   PhotonicCrystal
+  Waveguide
 
 Sources classes
 """""""""""""""

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -12,9 +12,10 @@ from .geometry import *
 
 
 def prepare_boundary_conditions(bc_dict):
-    valid_bcs = ["PEC"]
+    valid_bcs = ["pec"]
     pec_bnds = []
     for bnd, cond in bc_dict.items():
+        cond = cond.lower()
         if cond not in valid_bcs:
             raise ValueError(f"Unknown boundary condition {cond}")
         else:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -97,7 +97,7 @@ def test_grating2d(polarization, degree):
         degree=degree,
         polarization=polarization,
     )
-    s.eigensolve(n_eig=6, wavevector_target=6)
+    s.eigensolve(n_eig=6, target=6)
     s.solution["eigenvectors"]
 
 

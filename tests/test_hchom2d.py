@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -57,13 +57,11 @@ def test_hchom2d():
     print(eps_eff)
     assert np.abs(eps_eff[0][0] - 1.73) < 1e-3
     neigs = 50
-    wavevector_target = 0.1
+    target = 0.1
     lambdas = np.linspace(4, 15, 1000) * d
     k = 2 * np.pi / lambdas
 
-    mu_eff = hom.get_effective_permeability(
-        k, neigs=neigs, wavevector_target=wavevector_target
-    ).tocomplex()
+    mu_eff = hom.get_effective_permeability(k, neigs=neigs, target=target).tocomplex()
     mu_eff_ana = analytical_mueff(k)
     err = np.mean(np.abs(mu_eff - mu_eff_ana))
     print(err)

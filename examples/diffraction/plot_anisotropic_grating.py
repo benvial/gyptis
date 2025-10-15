@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 """
@@ -77,19 +77,14 @@ L = [
 ]
 cl = geom.add_curve_loop(L)
 rod = geom.add_plane_surface(geom.dimtag(cl, 1)[0])
-substrate, groove, rod = geom.cut([substrate, groove], rod)
+substrate, groove, rod = geom.fragment([substrate, groove], rod)
 geom.add_physical(rod, "rod")
 geom.add_physical(groove, "groove")
 geom.add_physical(substrate, "substrate")
 mesh_size = {d: lambda0 / param for d, param in mesh_param.items()}
 geom.set_mesh_size(mesh_size)
 
-geom.build(
-    interactive=False,
-    generate_mesh=True,
-    write_mesh=True,
-    read_info=True,
-)
+geom.build()
 all_domains = geom.subdomains["surfaces"]
 domains = [k for k in all_domains.keys() if k not in ["pml_bottom", "pml_top"]]
 
@@ -112,8 +107,12 @@ for jangle, angle in enumerate([0, -20, -40]):
 
     print(f"angle = {angle}, TM polarization")
     print("--------------------------------")
-    print("R: ", effs_TM["R"])
-    print("T: ", effs_TM["T"])
+    for i in range(5):
+        print(f"T {i-2}: {effs_TM["T"][i]:.6f}")
+    for i in range(5):
+        print(f"R {i-2}: {effs_TM["R"][i]:.6f}")
+    B = sum(effs_TM["T"]) + sum(effs_TM["R"])
+    print(f"B: {B:.6f}")
 
     ylim = geom.y_position["substrate"], geom.y_position["pml_top"]
     d = grating_TM.period
@@ -137,8 +136,12 @@ for jangle, angle in enumerate([0, -20, -40]):
     H = grating_TE.solution["total"]
     print(f"angle = {angle}, TE polarization")
     print("--------------------------------")
-    print("R: ", effs_TE["R"])
-    print("T: ", effs_TE["T"])
+    for i in range(5):
+        print(f"T {i-2}: {effs_TE["T"][i]:.6f}")
+    for i in range(5):
+        print(f"R {i-2}: {effs_TE["R"][i]:.6f}")
+    B = sum(effs_TE["T"]) + sum(effs_TE["R"])
+    print(f"B: {B:.6f}")
 
     vmin_TE, vmax_TE = -2.5, 2.5
     plt.sca(ax[jangle][1])

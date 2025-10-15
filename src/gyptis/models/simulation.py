@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -171,14 +171,7 @@ class Simulation:
         return self.solve_system()
 
     def eigensolve(
-        self,
-        n_eig=6,
-        wavevector_target=0.0,
-        tol=1e-6,
-        half=True,
-        system=True,
-        sqrt=True,
-        **kwargs
+        self, n_eig=6, target=0.0, tol=1e-6, half=True, system=True, sqrt=True, **kwargs
     ):
         wf = self.formulation.weak
         if self.formulation.dim == 1:
@@ -223,7 +216,7 @@ class Simulation:
         )
         eigensolver.parameters["spectrum"] = "target magnitude"
         eigensolver.parameters["solver"] = "krylov-schur"
-        eigensolver.parameters["spectral_shift"] = float(wavevector_target**2)
+        eigensolver.parameters["spectral_shift"] = float(target**2)
         eigensolver.parameters["spectral_transform"] = "shift-and-invert"
         eigensolver.parameters["tolerance"] = tol
         eigensolver.parameters.update(kwargs)

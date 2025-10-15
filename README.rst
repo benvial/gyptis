@@ -36,10 +36,6 @@
   :target: https://gitlab.com/gyptis/gyptis/commits/master
   :alt: coverage report 
 
-.. |maintainability| image:: https://img.shields.io/codeclimate/maintainability/benvial/gyptis?logo=code-climate&style=for-the-badge   
-  :target: https://codeclimate.com/github/benvial/gyptis
-  :alt: Code Climate maintainability
-
 .. |zenodo| image:: https://img.shields.io/badge/DOI-10.5281/zenodo.4938573-5fadad?logo=google-scholar&logoColor=ffffff&style=for-the-badge
   :target: https://doi.org/10.5281/zenodo.4938573
  
@@ -54,7 +50,7 @@
 +----------------------+----------------------+----------------------+
 | Build Status         |            |GL_CI|                          |
 +----------------------+----------------------+----------------------+
-| Metrics              | |coverage|           |   |maintainability|  |
+| Metrics              |                |coverage|                   |
 +----------------------+----------------------+----------------------+
 | Activity             |     |pip_dl|         |      |conda_dl|      |
 +----------------------+----------------------+----------------------+

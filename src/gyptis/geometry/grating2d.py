@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -25,8 +25,6 @@ class Layered2D(Geometry):
         # assert isinstance(self.thicknesses == OrderedDict)
         self.thicknesses = thicknesses
 
-        self.layers = list(thicknesses.keys())
-
         self.total_thickness = sum(self.thicknesses.values())
 
         self.y0 = -sum(list(self.thicknesses.values())[:2])
@@ -45,7 +43,7 @@ class Layered2D(Geometry):
 
         self.remove_all_duplicates()
         # print(self._phys_groups)
-        for sub, num in self.subdomains["surfaces"].items():
+        for sub, num in self.subdomains_entities["surfaces"].items():
             self.add_physical(num, sub)
 
     @property

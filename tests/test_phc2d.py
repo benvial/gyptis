@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -44,7 +44,7 @@ def test_phc(degree, polarization):
         polarization=polarization,
         degree=degree,
     )
-    phc.eigensolve(n_eig=n_eig, wavevector_target=0.1)
+    phc.eigensolve(n_eig=n_eig, target=0.1)
     eig_vects = phc.solution["eigenvectors"]
     mode = eig_vects[4]
     fplot = project(mode.real, phc.formulation.real_function_space)

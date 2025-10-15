@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.2
+# Version: 1.0.3
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 """
@@ -19,8 +19,6 @@ import optparse
 import re
 
 from bs4 import BeautifulSoup
-
-import gyptis as package
 
 
 def main():
@@ -82,7 +80,7 @@ def process_html(fn, lines):
 
         line = line.replace(
             "<title> &#8212; __WEBPAGE_TITLE_PLACEHOLDER__</title>",
-            f"<title>Gyptis: {package.__description__}</title>",
+            f"<title>Gyptis: Open Source Computational Photonics</title>",
         )
 
         line = line.replace(
