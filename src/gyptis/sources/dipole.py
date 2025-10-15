@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.1.1
+# Version: 1.1.2
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -52,10 +52,13 @@ def grad_green_function_2d(
         sp.printing.ccode(rho), xs=xs, ys=ys, degree=degree, domain=domain
     )
     Xshift_list = list(Xshift.components.values())
+
+    re = dolfin.Expression("y1(KR)", KR=KR, degree=degree, domain=domain)
+    im = dolfin.Expression("j1(KR)", KR=KR, degree=degree, domain=domain)
     A = (
         1
         / 4
-        * Complex(dolfin.bessel_Y(1, KR), dolfin.bessel_J(1, KR))
+        * Complex(re, im)
         * Constant(amplitude * k0_)
         / R
         * phase_shift_constant(ConstantRe(phase))

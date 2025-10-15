@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.1.1
+# Version: 1.1.2
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -47,7 +47,7 @@ def sqrt_safe(x):
     return df.sqrt(x.module) * Complex(df.cos(t / 2), df.sin(t / 2))
 
 
-def sph_bessel_J(nu, f):
+def sph_bessel_J(nu, f, degree=1, domain=None):
     """
     Compute the spherical Bessel function of the first kind of order nu.
 
@@ -63,7 +63,10 @@ def sph_bessel_J(nu, f):
     Complex
         The spherical Bessel function of the first kind of order nu.
     """
-    return df.sqrt(pi / (2 * f)) * df.bessel_J(nu + 0.5, f)
+
+    return df.Expression(
+        "sqrt(pi / (2 * f)) * jn(nu + 0.5, f)", nu=nu, f=f, degree=degree, domain=domain
+    )
 
 
 def sph_bessel_Y(nu, f):
@@ -82,7 +85,9 @@ def sph_bessel_Y(nu, f):
     Complex
         The spherical Bessel function of the second kind of order nu.
     """
-    return df.sqrt(pi / (2 * f)) * df.bessel_Y(nu + 0.5, f)
+    return df.Expression(
+        "sqrt(pi / (2 * f)) * yn(nu + 0.5, f)", nu=nu, f=f, degree=degree, domain=domain
+    )
 
 
 def sph_bessel_H1(nu, f):

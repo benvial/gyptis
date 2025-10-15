@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.1.1
+# Version: 1.1.2
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -366,7 +366,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "matplotlib": ("https://matplotlib.org/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "scipy": (" https://docs.scipy.org/doc/scipy", None),
     "gyptis": ("https://gyptis.gitlab.io/", None),
 }
 
