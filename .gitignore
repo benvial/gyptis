@@ -101,6 +101,7 @@ docs/_custom/static/css/*.css
 docs/generated
 
 .vscode
+jitfailure*
 
 
 # include test data directory
