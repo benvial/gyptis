@@ -103,7 +103,6 @@ docs/generated
 .vscode
 jitfailure*
 
-
 # include test data directory
 !tests/data/
 !tests/data/*
