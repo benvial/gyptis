@@ -3,7 +3,6 @@ channels:
   - conda-forge
 dependencies:
   - python>3.10
-  - boost==1.84.0
   - pip
   - fenics
   - dolfin-adjoint

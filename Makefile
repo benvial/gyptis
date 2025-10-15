@@ -312,7 +312,7 @@ covdoc:
 	
 
 ## Tag and push tags
-tag: style install
+tag: header style install
 	$(call message,${@})
 	@if [ "$(shell git rev-parse --abbrev-ref HEAD)" != "master" ]; then exit 1; fi
 	@echo "Version v$(VERSION)"

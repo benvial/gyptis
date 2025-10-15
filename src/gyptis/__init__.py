@@ -2,18 +2,24 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.3
+# Version: 1.1.0
 # License: MIT
 # See the documentation at gyptis.gitlab.io
-
 
 import importlib
 import os
 import sys
+import warnings
 from math import e, pi
 
 import petsc4py
 from scipy.constants import c, epsilon_0, mu_0
+
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated",
+    category=UserWarning,
+)
 
 # Set PETSc options before initializing PETSc
 petsc4py.init(
@@ -94,10 +100,6 @@ dolfin.parameters["form_compiler"]["cpp_optimize_flags"] = "-O2"
 dolfin.parameters["reorder_dofs_serial"] = False
 dolfin.parameters["ghost_mode"] = "shared_facet"
 
-# dolfin.PETScOptions.set("petsc_prealloc", "200")
-# dolfin.PETScOptions.set("ksp_type", "preonly")
-# dolfin.PETScOptions.set("pc_type", "lu")
-# dolfin.PETScOptions.set("pc_factor_mat_solver_type", "mumps")
 
 from .api import *
 from .complex import *

@@ -2,18 +2,14 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.3
+# Version: 1.1.0
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 """
 Information about the package.
 """
 
-try:
-    # Python 3.8
-    from importlib import metadata
-except ImportError:
-    import importlib_metadata as metadata
+import importlib_metadata as metadata
 
 try:
     data = metadata.metadata("gyptis")

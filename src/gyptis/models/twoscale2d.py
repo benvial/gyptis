@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.0.3
+# Version: 1.1.0
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -54,7 +54,8 @@ class Homogenization2D(Simulation):
         self.direct = direct
         self.direction = direction
         self.degree = degree
-        self.cell_volume = np.cross(*geometry.vectors)
+        u1, u2 = geometry.vectors
+        self.cell_volume = abs(u1[0] * u2[1] - u1[1] * u2[0])
         # self.cell_volume = assemble(1 * geometry.measure["dx"])
 
     def solve_system(self, again=False):
