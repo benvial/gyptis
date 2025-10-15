@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Benjamin Vial
 # This file is part of gyptis
-# Version: 1.1.0
+# Version: 1.1.1
 # License: MIT
 # See the documentation at gyptis.gitlab.io
 
@@ -10,7 +10,7 @@
 from .simulation import *
 
 
-class Waveguide(Simulation):
+class Waveguide2D(Simulation):
     def __init__(
         self,
         geometry,
