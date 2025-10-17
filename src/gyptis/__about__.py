@@ -10,11 +10,12 @@ Information about the package.
 """
 
 import importlib.metadata as metadata
+from email.utils import parseaddr
 
 try:
     data = metadata.metadata("gyptis")
     __version__ = metadata.version("gyptis")
-    __author__ = data.get("author")
+    __author__, _ = parseaddr(data.get("Author-Email"))
     __description__ = data.get("summary")
 except Exception:
     __version__ = "unknown"

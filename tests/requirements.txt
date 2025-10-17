@@ -1,6 +1,0 @@
-pytest
-pytest-cov
-pytest-datadir
-pytest-sugar
-pytest-xdist[psutil]
-coverage

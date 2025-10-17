@@ -272,21 +272,6 @@ div.sphx-glr-download-link-note.admonition.note {
     text-transform: uppercase;
 
 }
-.sphx-glr-thumbcontainer[tooltip]:hover::after {
-  background: @gray-base !important;
-  opacity: 0.8;
-  border-radius: 0px !important;
-  padding-top: 5% !important;
-  position: absolute !important;
-  width: 94% !important;
-  height: 20% !important;
-  bottom: 3% !important;
-  left: 3% !important;
-  text-align: center !important;
-  font-style: oblique;
-font-size: inherit;
-}
-
 
 .sphx-glr-thumbcontainer img {
   padding-top: 32px;
@@ -295,4 +280,25 @@ font-size: inherit;
 
 .sphx-glr-multi-img {
   max-width: 100% !important;
+}
+
+.sphx-glr-thumbcontainer[tooltip]:hover::after {
+  background: #333333 !important;
+  opacity: 0.8;
+  border-radius: 0px !important;
+  padding-top: 15% !important;
+  position: absolute !important;
+  width: 94% !important;
+  height: 99% !important;
+  bottom: 3% !important;
+  left: 3% !important;
+  text-align: center !important;
+  font-style: oblique;
+  font-size: inherit;
+  color: white !important;
+}
+
+
+a.reference.download::before {
+  content: none;
 }

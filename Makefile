@@ -11,7 +11,6 @@ SHELL := /bin/bash
 
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROJECT_NAME = gyptis
-PYTHON_INTERPRETER = python3
 HOSTING = gitlab
 VERSION=$(shell python3 -c "import gyptis; print(gyptis.__version__)")
 BRANCH=$(shell git branch --show-current)
@@ -76,31 +75,6 @@ printmessage:
 #################################################################################
 
 
-## Set up python interpreter environment
-env:
-ifeq (True,$(HAS_CONDA))
-		@echo -e ">>> Detected conda, creating conda environment."
-ifeq (3,$(findstring 3,$(PYTHON_INTERPRETER)))
-	conda create --name $(PROJECT_NAME) python=3
-else
-	conda create --name $(PROJECT_NAME) python=2.7
-endif
-		@echo -e ">>> New conda env created. Activate with:\nsource activate $(PROJECT_NAME)"
-else
-	$(PYTHON_INTERPRETER) -m pip install -q virtualenv virtualenvwrapper
-	@echo -e ">>> Installing virtualenvwrapper if not already intalled.\nMake sure the following lines are in shell startup file\n\
-	export WORKON_HOME=$$HOME/.virtualenvs\nexport PROJECT_HOME=$$HOME/Devel\nsource /usr/local/bin/virtualenvwrapper.sh\n"
-	@bash -c "source `which virtualenvwrapper.sh`;mkvirtualenv $(PROJECT_NAME) --python=$(PYTHON_INTERPRETER)"
-	@echo -e ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
-endif
-
-## Test if python environment is setup correctly
-testenv:
-	$(call message,${@})
-	source activate $(PROJECT_NAME); \
-	$(PYTHON_INTERPRETER) dev/testenv.py
-
-
 
 ## Install Python package locally
 conda-env:
@@ -111,14 +85,9 @@ conda-env:
 install:
 	@pip install -e .
 
-## Install Python dependencies
-req:
-	$(call message,${@})
-	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
-
 ## Install Python dependencies for dev and test
 dev:
-	@$(PYTHON_INTERPRETER) -m pip install -r dev/requirements.txt
+	@pip install -e .[dev]
 	
 ## Clean generated files
 cleangen:
@@ -238,7 +207,7 @@ watch-less:
 ## Install requirements for building documentation
 doc-req:
 	$(call message,${@})
-	@cd docs && pip install -r requirements.txt && mamba install nodejs && npm install lessc
+	@pip install -e .[docs]  && cd docs && mamba install nodejs && npm install lessc
 
 
 ## Build html documentation for development and styling
@@ -286,7 +255,7 @@ cleantest:
 ## Install requirements for testing
 test-req:
 	$(call message,${@})
-	@cd tests && pip install --upgrade -r requirements.txt
+	@pip install -e .[test]
 
 
 ## Run the test suite

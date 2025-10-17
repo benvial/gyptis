@@ -121,6 +121,10 @@ def process_html(fn, lines):
             '<span class="pre">notebooks:</span>',
             '<span class="pre">notebooks</span>',
         )
+        line = line.replace(
+            '<span class="pre">zipped:</span>',
+            '<span class="pre">archive</span>',
+        )
 
         line = line.replace(
             '<span class="pre">examples_jupyter.zip</span>',
@@ -135,6 +139,7 @@ def process_html(fn, lines):
 
         icon_python = '<i class="icondld icon-python"></i>'
         icon_jupyter = '<i class="icondld icon-jupyter"></i>'
+        icon_download = '<i class="icondld icon-download"></i>'
 
         first_tag = '<span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code'
         second_tag = "</span></code></a></p>"
@@ -154,6 +159,13 @@ def process_html(fn, lines):
         # if icon_jupyter in line:
         if icon_jupyter not in line:
             line = line.replace(first_tag, icon_jupyter + first_tag)
+
+        first_tag = '<span class="pre">Download</span> <span class="pre">archive</span>'
+        reg = f"(?<={first_tag}).*?(?={second_tag})"
+        line = re.sub(reg, "", line, flags=re.DOTALL)
+        # if icon_jupyter in line:
+        if icon_download not in line:
+            line = line.replace(first_tag, icon_download + first_tag)
 
         first_tag = '<span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code'
         second_tag = "</span></code></a></p>"

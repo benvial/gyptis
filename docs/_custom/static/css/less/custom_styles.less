@@ -15,7 +15,7 @@
   --pst-color-text-base: 51, 51, 51;
   --pst-font-family-heading: @font-family-sans-serif;
   --pst-color-secondary: @brand-secondary;
-  --pst-color-link-hover: @brand-secondary;
+  --pst-color-link-hover: @brand-secondary !important;
 }
 
 
@@ -786,14 +786,19 @@ i.fab {
 
 .icon-python {
   background: @gray-base;
-  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg");
-  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/python.svg");
+  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@15.16.1/icons/python.svg");
+  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@15.16.1/icons/python.svg");
 }
 
 .icon-jupyter {
   background: @gray-base;
-  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg");
-  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@v4/icons/jupyter.svg");
+  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@15.16.1/icons/jupyter.svg");
+  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@15.16.1/icons/jupyter.svg");
+}
+.icon-download {
+  background: @gray-base;
+  -webkit-mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@15.16.1/icons/transmission.svg");
+  mask-image: url("https://cdn.jsdelivr.net/npm/simple-icons@15.16.1/icons/transmission.svg");
 }
 
 a.copybtn {
@@ -1258,7 +1263,7 @@ div.d-none.d-xl-block.col-xl-2.bd-toc {
 }
 
 .bd-container {
-  padding-top: 40px;
+  margin-top: 40px;
 }
 
 .bd-links__title {

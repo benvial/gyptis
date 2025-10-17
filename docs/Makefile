@@ -244,10 +244,15 @@ pseudoxml:
 # 	path = os.path.relpath(os.getcwd(),os.path.expanduser(os.getenv('HOME'))) ; \
 # 	webbrowser.get('firefox').open_new_tab(f'http://localhost:8000/{path}/_build/html/index.html')"
 
+PORT ?= 8012
 
 show:
-	@python -c "import webbrowser; \
-	webbrowser.get('firefox').open_new_tab('$(PWD)/$(BUILDDIR)/html/index.html')"
+	@(lsof -i :$(PORT) -t 2>/dev/null | xargs -r kill -9) || true; \
+	sleep 1; \
+	python serve.py $(PORT) $(BUILDDIR)/html & \
+	sleep 1 && \
+	python -c "import webbrowser; webbrowser.get('firefox').open_new_tab('http://localhost:$(PORT)')" && \
+	wait
 
 show-pdf:
 	@xdg-open $(PWD)/$(BUILDDIR)/latex/gyptis.pdf

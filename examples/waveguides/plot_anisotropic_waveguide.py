@@ -99,7 +99,6 @@ rot7 = Rotation.from_euler("z", 0, degrees=True)
 # rotation: +45° about x-axis (optic axis goes into yz-plane)
 rot8 = Rotation.from_euler("x", 45, degrees=True)
 
-
 rot_cases = {"3": rot3, "4": rot4, "7": rot7, "8": rot8}
 
 

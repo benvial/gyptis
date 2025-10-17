@@ -186,9 +186,11 @@ html_theme_options = {
     "show_toc_level": 3,
     "show_prev_next": False,
     "show_nav_level": 2,
+    "default_mode": "light",  # this is also enforced in _templates/layout.html
     "navbar_end": ["navbar-icon-links"],
     "logo": {
-        "image_light": "_assets/gyptis-name.png",
+        "image_light": "_assets/gyptis-name.svg",
+        "image_dark": "_assets/gyptis-name-white.svg",
     },
 }
 

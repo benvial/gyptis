@@ -4,6 +4,13 @@
 
 {% block extrahead %}
   
+<script>
+    localStorage.removeItem('mode');
+    localStorage.removeItem('theme');
+    document.documentElement.dataset.mode = 'light';
+    document.documentElement.dataset.theme = 'light';
+</script>
+
 <script  type="text/x-mathjax-config">
   MathJax.Hub.Config({
   TeX: { 
